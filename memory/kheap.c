@@ -6,9 +6,11 @@
 #include "kheap.h"
 
 // end is defined in the linker script.
+extern uint32_t end;
 uint32_t placement_address = 0x100000;
 
-uint32_t kmalloc_int(uint32_t sz, int align, uint32_t *phys)
+uint32_t
+kmalloc_int(uint32_t sz, int align, uint32_t *phys)
 {
   // This will eventually call malloc() on the kernel heap.
   // For now, though, we just assign memory at placement_address

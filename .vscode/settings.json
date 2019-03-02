@@ -1,9 +1,0 @@
-{
-  "files.associations": {
-    "utils.h": "c",
-    "screen.h": "c",
-    "kheap.h": "c",
-    "stdint.h": "c",
-    "string.h": "c"
-  }
-}

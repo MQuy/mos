@@ -58,7 +58,7 @@ void region_c()
         if (i > 0 && region[i].startLo == 0)
             break;
 
-        fprint("region %i: start: 0x%x%x length (bytes): 0x%x%x type: %i (%s)\n", i,
+        fprint("region %i: start: 0x%x %x length (bytes): 0x%x %x type: %i (%s)\n", i,
                region[i].startHi, region[i].startLo,
                region[i].sizeHi, region[i].sizeLo,
                region[i].type, strMemoryTypes[region[i].type - 1]);
