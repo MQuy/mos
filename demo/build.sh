@@ -6,7 +6,6 @@ rm -rf ./tmp-loop
 
 cd Stage1 && nasm -f bin -o Boot1.bin Boot1.asm && cd ../
 cd Stage2 && nasm -f bin -o KRNLDR.SYS Stage2.asm && cd ../
-# cd Kernel && nasm -f bin -o KRNL.SYS Stage3.asm && cd ../
 cd kernel && make clean && make && cd ../
 dd if=/dev/zero bs=512 count=2880 > floppy.img
 dd conv=notrunc if=Stage1/Boot1.bin of=floppy.img

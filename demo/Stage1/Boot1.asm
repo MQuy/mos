@@ -44,14 +44,14 @@ bsFileSystem: 	        DB "FAT12   "
 ;	DS=>SI: 0 terminated string
 ;************************************************;
 Print:
-			lodsb				; load next byte from string from SI to AL
-			or	al, al			; Does AL=0?
-			jz	PrintDone		; Yep, null terminator found-bail out
-			mov	ah, 0eh			; Nope-Print the character
-			int	10h
-			jmp	Print			; Repeat until null terminator found
-	PrintDone:
-			ret				; we are done, so return
+	lodsb						; load next byte from string from SI to AL
+	or	al, al					; Does AL=0?
+	jz	PrintDone				; Yep, null terminator found-bail out
+	mov	ah, 0eh					; Nope-Print the character
+	int	10h
+	jmp	Print					; Repeat until null terminator found
+PrintDone:
+	ret						; we are done, so return
 
 
 absoluteSector db 0x00
@@ -162,13 +162,8 @@ main:
           mov     sp, 0xFFFF
           sti						; restore interrupts
 
-     ;----------------------------------------------------
-     ; Display loading message
-     ;----------------------------------------------------
-     
-          mov     si, msgLoading
-          call    Print
-          
+          mov  [bootdevice], dl
+
      ;----------------------------------------------------
      ; Load root directory table
      ;----------------------------------------------------
@@ -297,6 +292,7 @@ main:
      
           mov     si, msgCRLF
           call    Print
+	  mov	  dl, [bootdevice]
           push    WORD 0x0050
           push    WORD 0x0000
           retf
@@ -310,10 +306,10 @@ main:
           int     0x19                                ; warm boot computer
 
 
+     bootdevice  db 0
      datasector  dw 0x0000
      cluster     dw 0x0000
      ImageName   db "KRNLDR  SYS"
-     msgLoading  db 0x0D, 0x0A, "Loading Boot Image ", 0x00
      msgCRLF     db 0x0D, 0x0A, 0x00
      msgProgress db ".", 0x00
      msgFailure  db 0x0D, 0x0A, "MISSING OR CURRUPT KRNLDR. Press Any Key to Reboot", 0x0D, 0x0A, 0x00

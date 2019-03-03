@@ -1,21 +1,16 @@
-#ifndef _DEBUGDISPLAY_H
-#define _DEBUGDISPLAY_H
+#ifndef _STRING_H
+#define _STRING_H
 //****************************************************************************
 //**
-//**    DebugDisplay.h
-//**    - Provides display capabilities for debugging. Because it is
-//**	  specifically for debugging and not final release, we don't
-//** 	  care for portability here
+//**    [string.h]
+//**    - Standard C String routines
 //**
 //****************************************************************************
-
 //============================================================================
 //    INTERFACE REQUIRED HEADERS
 //============================================================================
 
-#include <stdarg.h>
-#include <stdint.h>
-#include "string.h"
+#include <stddef.h>
 
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
@@ -33,12 +28,12 @@
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
 
-void DebugPutc(unsigned char c);
-void DebugClrScr(const uint8_t c);
-void DebugPuts(char *str);
-int DebugPrintf(const char *str, ...);
-unsigned DebugSetColor(const unsigned c);
-void DebugGotoXY(unsigned x, unsigned y);
+extern char *strcpy(char *s1, const char *s2);
+extern size_t strlen(const char *str);
+
+extern void *memcpy(void *dest, const void *src, size_t count);
+extern void *memset(void *dest, char val, size_t count);
+extern unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count);
 
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
@@ -48,7 +43,8 @@ void DebugGotoXY(unsigned x, unsigned y);
 //============================================================================
 //****************************************************************************
 //**
-//**    END [FILE NAME]
+//**    END [string.h]
 //**
 //****************************************************************************
+
 #endif

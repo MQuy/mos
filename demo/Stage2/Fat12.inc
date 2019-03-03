@@ -141,41 +141,40 @@ FindFile:
 ; parm/ ES:SI => File to load
 ; parm/ EBX:BP => Buffer to load file to
 ; ret/ AX => -1 on error, 0 on success
-; ret/ CX => number of sectors read
 ;*******************************************
 
 LoadFile:
 
-	xor	ecx, ecx		; size of file in sectors
+	xor		ecx, ecx					; size of file in sectors
 	push	ecx
 
 .FIND_FILE:
 
-	push	bx			; BX=>BP points to buffer to write to; store it for later
+	push	bx						; BX=>BP points to buffer to write to; store it for later
 	push	bp
-	call	FindFile		; find our file. ES:SI contains our filename
-	cmp	ax, -1
-	jne	.LOAD_IMAGE_PRE
-	pop	bp
-	pop	bx
-	pop	ecx
-	mov	ax, -1
+	call	FindFile				; find our file. ES:SI contains our filename
+	cmp		ax, -1
+	jne		.LOAD_IMAGE_PRE
+	pop		bp
+	pop		bx
+	pop		ecx
+	mov		ax, -1
 	ret
 
 .LOAD_IMAGE_PRE:
 
-	sub	edi, ROOT_OFFSET
-	sub	eax, ROOT_OFFSET
+	sub		edi, ROOT_OFFSET
+	sub		eax, ROOT_OFFSET
 
 	; get starting cluster
 
-	push	word ROOT_SEG		;root segment loc
-	pop	es
-	mov	dx, WORD [es:di + 0x001A]; DI points to file entry in root directory table. Refrence the table...
-	mov	WORD [cluster], dx	; file's first cluster
-	pop	bx			; get location to write to so we dont screw up the stack
-	pop	es
-	push    bx			; store location for later again
+	push	word ROOT_SEG				;root segment loc
+	pop		es
+	mov		dx, WORD [es:di + 0x001A]	; DI points to file entry in root directory table. Refrence the table...
+	mov		WORD [cluster], dx			; file's first cluster
+	pop		bx							; get location to write to so we dont screw up the stack
+	pop		es
+	push    bx							; store location for later again
 	push	es
 	call	LoadFAT
 
@@ -183,56 +182,60 @@ LoadFile:
 
 	; load the cluster
 
-	mov	ax, WORD [cluster]	; cluster to read
-	pop	es			; bx:bp=es:bx
-	pop	bx
+	mov		ax, WORD [cluster]		; cluster to read
+	pop		es						; bx:bp=es:bx
+	pop		bx
 	call	ClusterLBA
-	xor	cx, cx
+	xor		cx, cx
 	mov     cl, BYTE [bpbSectorsPerCluster]
+
 	call	ReadSectors
-	pop	ecx
-	inc	ecx			; add one more sector to counter
+
+	pop		ecx
+	inc		ecx
 	push	ecx
+
 	push	bx
 	push	es
-	mov	ax, FAT_SEG		;start reading from fat
-	mov	es, ax
-	xor	bx, bx
+
+	mov		ax, FAT_SEG						;start reading from fat
+	mov		es, ax
+	xor		bx, bx
 
 	; get next cluster
 
-	mov     ax, WORD [cluster]	; identify current cluster
-	mov     cx, ax			; copy current cluster
-	mov     dx, ax
-	shr     dx, 0x0001		; divide by two
-	add     cx, dx			; sum for (3/2)
+	mov     ax, WORD [cluster]				; identify current cluster
+	mov     cx, ax							; copy current cluster
+	mov     dx, ax							; copy current cluster
+	shr     dx, 0x0001						; divide by two
+	add     cx, dx							; sum for (3/2)
 
-	mov	bx, 0			;location of fat in memory
-	add	bx, cx
-	mov	dx, WORD [es:bx]
-	test	ax, 0x0001		; test for odd or even cluster
-	jnz	.ODD_CLUSTER
+	mov		bx, 0							;location of fat in memory
+	add		bx, cx
+	mov		dx, WORD [es:bx]
+	test	ax, 0x0001						; test for odd or even cluster
+	jnz		.ODD_CLUSTER
 
 .EVEN_CLUSTER:
 
-	and	dx, 0000111111111111b	; take low 12 bits
-	jmp	.DONE
+	and		dx, 0000111111111111b	; take low 12 bits
+	jmp		.DONE
 
 .ODD_CLUSTER:
 
-	shr	dx, 0x0004		; take high 12 bits
+	shr		dx, 0x0004				; take high 12 bits
 
 .DONE:
 
-	mov	WORD [cluster], dx
-	cmp	dx, 0x0ff0		; test for end of file marker
-	jb	.LOAD_IMAGE
+	mov		WORD [cluster], dx
+	cmp		dx, 0x0ff0				; test for end of file marker
+	jb		.LOAD_IMAGE
 
 .SUCCESS:
-	pop	es
-	pop	bx
-	pop	ecx
-	xor	ax, ax
+	pop		es
+	pop		bx
+	pop		ecx
+	xor		ax, ax
 	ret
 
 %endif		;__FAT12_INC_67343546FDCC56AAB872_INCLUDED__
