@@ -18,4 +18,4 @@ echo 'unmounted folder'
 hdiutil detach ${dev}
 rm -rf ./tmp-loop
 echo 'done'
-qemu-system-i386 -boot a -drive format=raw,file=./floppy.img,index=0,if=floppy
+qemu-system-i386 -boot a -drive format=raw,file=./floppy.img,index=0,if=floppy -d guest_errors,int

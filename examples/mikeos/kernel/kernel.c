@@ -5,8 +5,9 @@
 //****************************************************************************
 
 #include "bootinfo.h"
-#include "DebugDisplay.h"
 #include "mmngr_phys.h"
+#include "mmngr_virtual.h"
+#include "DebugDisplay.h"
 
 //! format of a memory region
 typedef struct
@@ -39,77 +40,52 @@ int start(multiboot_info *bootinfo)
   // __asm__ __volatile__(""
   //                      : "=ed"(kernelSize));
 
-  //! make demo look nice :)
+  //! clear and init display
   DebugClrScr(0x13);
   DebugGotoXY(0, 0);
+  DebugSetColor(0x17);
+  DebugPrintf("M.O.S. Kernel is starting up...\n");
 
-  DebugSetColor(0x3F);
-  DebugPrintf("                    ~[ Physical Memory Manager Demo ]~                          ");
+  pmmngr_init(bootinfo->m_memorySize, 0xC0000000 + kernelSize * 512);
 
-  DebugGotoXY(0, 24);
-  DebugSetColor(0x3F);
-  DebugPrintf("                                                                                ");
-
-  //! get memory size in KB
-  uint32_t memSize = 1024 + bootinfo->m_memoryLo + bootinfo->m_memoryHi * 64;
-
-  //! initialize the physical memory manager
-  //! we place the memory bit map used by the PMM at the end of the kernel in memory
-  pmmngr_init(memSize, 0x100000 + kernelSize * 512);
-
-  DebugGotoXY(0, 2);
+  DebugGotoXY(0, 3);
   DebugSetColor(0x19);
-  DebugPrintf("pmm initialized with %i KB physical memory; memLo: %i memHi: %i\n\n",
-              memSize, bootinfo->m_memoryLo, bootinfo->m_memoryHi);
-
-  DebugPrintf("Physical Memory Map:\n");
+  DebugPrintf("pmm initialized with %i KB\n", bootinfo->m_memorySize);
 
   memory_region *region = (memory_region *)0x1000;
 
-  for (int i = 0; i < 15; ++i)
+  for (int i = 0; i < 10; ++i)
   {
-    //! sanity check; if type is > 4 mark it reserved
-    if (region[i].type > 4)
-      region[i].type = 1;
 
-    //! if start address is 0, there is no more entries, break out
+    if (region[i].type > 4)
+      break;
+
     if (i > 0 && region[i].startLo == 0)
       break;
 
-    //! display entry
     DebugPrintf("region %i: start: 0x%x%x length (bytes): 0x%x%x type: %i (%s)\n", i,
                 region[i].startHi, region[i].startLo,
                 region[i].sizeHi, region[i].sizeLo,
                 region[i].type, strMemoryTypes[region[i].type - 1]);
 
-    //! if region is avilable memory, initialize the region for use
-    if (region[i].type == 1)
-      pmmngr_init_region(region[i].startLo, region[i].sizeLo);
+    pmmngr_init_region(region[i].startLo, region[i].sizeLo);
   }
-
-  //! deinit the region the kernel is in as its in use
   pmmngr_deinit_region(0x100000, kernelSize * 512);
+  // NOTE: Why we need to deinit region 0x0->0x10000? if not it doesn't work
+  pmmngr_deinit_region(0x0, 0x10000);
+  DebugPrintf("pmm regions initialized: %i allocation blocks; block size: %i bytes",
+              pmmngr_get_block_count(), pmmngr_get_block_size());
 
-  DebugSetColor(0x17);
+  //! initialize our vmm
+  vmmngr_initialize();
 
-  DebugPrintf("\npmm regions initialized: %i allocation blocks; used or reserved blocks: %i\nfree blocks: %i\n",
-              pmmngr_get_block_count(), pmmngr_get_use_block_count(), pmmngr_get_free_block_count());
-
-  //! allocating and deallocating memory examples...
-
-  DebugSetColor(0x12);
-
-  uint32_t *p = (uint32_t *)pmmngr_alloc_block();
-  DebugPrintf("\np allocated at 0x%x", p);
-
-  uint32_t *p2 = (uint32_t *)pmmngr_alloc_blocks(2);
-  DebugPrintf("\nallocated 2 blocks for p2 at 0x%x", p2);
-
-  pmmngr_free_block(p);
-  p = (uint32_t *)pmmngr_alloc_block();
-  DebugPrintf("\nUnallocated p to free block 1. p is reallocated to 0x%x", p);
-
-  pmmngr_free_block(p);
-  pmmngr_free_blocks(p2, 2);
+  if (pmmngr_is_paging())
+  {
+    DebugPrintf("\nPDT's address: 0x%x", pmmngr_get_PDBR());
+  }
+  else
+  {
+    DebugPrintf("\nPaging is failed");
+  }
   return 0;
 }

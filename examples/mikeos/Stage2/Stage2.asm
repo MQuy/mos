@@ -38,25 +38,25 @@ istruc multiboot_info
 	at multiboot_info.memoryLo,			dd 0
 	at multiboot_info.memoryHi,			dd 0
 	at multiboot_info.kernel_size, dw 0
-	at multiboot_info.bootDevice,		dd 0
+	at multiboot_info.bootDevice,			dd 0
 	at multiboot_info.cmdLine,			dd 0
-	at multiboot_info.mods_count,		dd 0
-	at multiboot_info.mods_addr,		dd 0
+	at multiboot_info.mods_count,			dd 0
+	at multiboot_info.mods_addr,			dd 0
 	at multiboot_info.syms0,			dd 0
 	at multiboot_info.syms1,			dd 0
 	at multiboot_info.syms2,			dd 0
-	at multiboot_info.mmap_length,		dd 0
-	at multiboot_info.mmap_addr,		dd 0
-	at multiboot_info.drives_length,	dd 0
-	at multiboot_info.drives_addr,		dd 0
-	at multiboot_info.config_table,		dd 0
-	at multiboot_info.bootloader_name,	dd 0
-	at multiboot_info.apm_table,		dd 0
-	at multiboot_info.vbe_control_info,	dd 0
-	at multiboot_info.vbe_mode_info,	dw 0
-	at multiboot_info.vbe_interface_seg,dw 0
-	at multiboot_info.vbe_interface_off,dw 0
-	at multiboot_info.vbe_interface_len,dw 0
+	at multiboot_info.mmap_length,			dd 0
+	at multiboot_info.mmap_addr,			dd 0
+	at multiboot_info.drives_length,		dd 0
+	at multiboot_info.drives_addr,			dd 0
+	at multiboot_info.config_table,			dd 0
+	at multiboot_info.bootloader_name,		dd 0
+	at multiboot_info.apm_table,			dd 0
+	at multiboot_info.vbe_control_info,		dd 0
+	at multiboot_info.vbe_mode_info,		dw 0
+	at multiboot_info.vbe_interface_seg,		dw 0
+	at multiboot_info.vbe_interface_off,		dw 0
+	at multiboot_info.vbe_interface_len,		dw 0
 iend
 
 main:
@@ -74,37 +74,45 @@ main:
 	mov		sp, 0xFFFF
 	sti	                   ; enable interrupts
 
-	mov     [boot_info+multiboot_info.bootDevice], dl
+	mov     	[boot_info+multiboot_info.bootDevice], dl
 
-	call	_EnableA20
-	call	InstallGDT
+	call		_EnableA20
+	call		InstallGDT
 	sti
 
 	xor		eax, eax
 	xor		ebx, ebx
-	call	BiosGetMemorySize64MB
+	call		BiosGetMemorySize64MB
 
-	mov		word [boot_info+multiboot_info.memoryHi], bx
-	mov		word [boot_info+multiboot_info.memoryLo], ax
+	push		eax
+	mov		eax, 64
+	mul		ebx
+	mov		ecx, eax
+	pop		eax
+	add		eax, ecx
+	add		eax, 1024		; the routine doesnt add the KB between 0-1MB; add it
+
+	mov		dword [boot_info+multiboot_info.memoryHi], 0
+	mov		dword [boot_info+multiboot_info.memoryLo], eax
 
 	mov		eax, 0x0
 	mov		ds, ax
 	mov		di, 0x1000
-	call	BiosGetMemoryMap
+	call		BiosGetMemoryMap
 
-	call	LoadRoot
-   	mov    	ebx, 0
+	call		LoadRoot
+   	mov    		ebx, 0
    	mov		ebp, IMAGE_RMODE_BASE
-   	mov 	esi, ImageName
-	call	LoadFile		; load our file
-   	mov   	dword [ImageSize], ecx	; save size of kernel
+   	mov 	   	esi, ImageName
+	call		LoadFile		; load our file
+   	mov   		dword [ImageSize], ecx
 	cmp		ax, 0
 	je		EnterStage3
 	mov		si, msgFailure
-	call   	Puts16
+	call   		Puts16
 	mov		ah, 0
-	int     0x16                    ; await keypress
-	int     0x19                    ; warm boot computer
+;	int     	0x16                    ; await keypress
+;	int     	0x19                    ; warm boot computer
 
 	;-------------------------------;
 	;   Go into pmode               ;
@@ -128,6 +136,10 @@ EnterStage3:
 
 bits 32
 
+%include "Paging.inc"
+
+BadImage db "*** FATAL: Invalid or corrupt kernel image. Halting system.", 0
+
 Stage3:
 
 	;-------------------------------;
@@ -141,6 +153,8 @@ Stage3:
 	mov	esp, 90000h		; stack begins from 90000h
 
 	call	ClrScr32
+
+	call	EnablePaging
 
 CopyImage:
   	 mov	eax, dword [ImageSize]
@@ -166,12 +180,10 @@ EXECUTE:
 	mov		ebx, 0
 	mov		edx, [ImageSize]
 	mov		dword [boot_info+multiboot_info.kernel_size], edx
-	
 
-	push	dword boot_info
-
-	call	ebp               	      ; Execute Kernel
+	push		dword boot_info
+	call		ebp               	      ; Execute Kernel
 	add		esp, 4
 
-    cli
+    	cli
 	hlt

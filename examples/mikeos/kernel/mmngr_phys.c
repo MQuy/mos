@@ -51,10 +51,6 @@ static uint32_t _mmngr_max_blocks = 0;
 static uint32_t *_mmngr_memory_map = 0;
 
 //============================================================================
-//    INTERFACE DATA
-//============================================================================
-
-//============================================================================
 //    IMPLEMENTATION PRIVATE FUNCTIONS
 //============================================================================
 
@@ -84,7 +80,7 @@ int mmap_first_free()
 {
 
 	//! find the first free bit
-	for (uint32_t i = 0; i < pmmngr_get_block_count() / 32; i++)
+	for (uint32_t i = 0; i < pmmngr_get_block_count(); i++)
 		if (_mmngr_memory_map[i] != 0xffffffff)
 			for (int j = 0; j < 32; j++)
 			{ //! test each bit in the dword
@@ -107,7 +103,7 @@ int mmap_first_free_s(size_t size)
 	if (size == 1)
 		return mmap_first_free();
 
-	for (uint32_t i = 0; i < pmmngr_get_block_count() / 32; i++)
+	for (uint32_t i = 0; i < pmmngr_get_block_count(); i++)
 		if (_mmngr_memory_map[i] != 0xffffffff)
 			for (int j = 0; j < 32; j++)
 			{ //! test each bit in the dword
@@ -145,7 +141,7 @@ void pmmngr_init(size_t memSize, physical_addr bitmap)
 	_mmngr_memory_size = memSize;
 	_mmngr_memory_map = (uint32_t *)bitmap;
 	_mmngr_max_blocks = (pmmngr_get_memory_size() * 1024) / PMMNGR_BLOCK_SIZE;
-	_mmngr_used_blocks = _mmngr_max_blocks;
+	_mmngr_used_blocks = pmmngr_get_block_count();
 
 	//! By default, all of memory is in use
 	memset(_mmngr_memory_map, 0xf, pmmngr_get_block_count() / PMMNGR_BLOCKS_PER_BYTE);
@@ -157,7 +153,7 @@ void pmmngr_init_region(physical_addr base, size_t size)
 	int align = base / PMMNGR_BLOCK_SIZE;
 	int blocks = size / PMMNGR_BLOCK_SIZE;
 
-	for (; blocks >= 0; blocks--)
+	for (; blocks > 0; blocks--)
 	{
 		mmap_unset(align++);
 		_mmngr_used_blocks--;
@@ -172,11 +168,13 @@ void pmmngr_deinit_region(physical_addr base, size_t size)
 	int align = base / PMMNGR_BLOCK_SIZE;
 	int blocks = size / PMMNGR_BLOCK_SIZE;
 
-	for (; blocks >= 0; blocks--)
+	for (; blocks > 0; blocks--)
 	{
 		mmap_set(align++);
 		_mmngr_used_blocks++;
 	}
+
+	mmap_set(0); //first block is always set. This insures allocs cant be 0
 }
 
 void *pmmngr_alloc_block()
@@ -273,58 +271,42 @@ uint32_t pmmngr_get_block_size()
 
 void pmmngr_paging_enable(bool b)
 {
-
-#ifdef _MSC_VER
-	_asm {
-		mov	eax, cr0
-		cmp [b], 1
-		je	enable
-		jmp disable
-enable:
-		or eax, 0x80000000 //set bit 31
-		mov	cr0, eax
-		jmp done
-disable:
-		and eax, 0x7FFFFFFF //clear bit 31
-		mov	cr0, eax
-done:
+	uint32_t cr0 = 0;
+	asm volatile("mov %%cr0, %0"
+							 : "=r"(cr0));
+	if (b)
+	{
+		cr0 |= 0x80000000; // Enable paging!
 	}
-#endif
+	else
+	{
+		cr0 |= 0x7FFFFFFF;
+	}
+	asm volatile("mov %0, %%cr0" ::"r"(cr0));
 }
 
 bool pmmngr_is_paging()
 {
 
-	uint32_t res = 0;
-
-#ifdef _MSC_VER
-	_asm {
-		mov	eax, cr0
-		mov	[res], eax
-	}
-#endif
-
-	return (res & 0x80000000) ? false : true;
+	uint32_t cr0;
+	asm volatile("mov %%cr0, %0"
+							 : "=r"(cr0));
+	return (cr0 & 0x80000000) ? true : false;
 }
 
-void pmmngr_load_PDBR(physical_addr addr){
+void pmmngr_load_PDBR(physical_addr addr)
+{
 
-#ifdef _MSC_VER
-		_asm {
-				mov eax, [addr] mov cr3, eax // PDBR is cr3 register in i86
-		}
-#endif
+	asm volatile("mov %0, %%cr3" ::"r"(addr));
 }
 
 physical_addr pmmngr_get_PDBR()
 {
 
-#ifdef _MSC_VER
-	_asm {
-		mov	eax, cr3
-		ret
-	}
-#endif
+	uint32_t cr3;
+	asm volatile("mov %%cr3, %0"
+							 : "=r"(cr3));
+	return cr3;
 }
 
 //============================================================================
