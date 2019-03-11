@@ -98,7 +98,9 @@ main:
 	mov		eax, 0x0
 	mov		ds, ax
 	mov		di, 0x1000
+	mov 	dword [boot_info+multiboot_info.mmap_addr], edi
 	call		BiosGetMemoryMap
+	mov 	dword [boot_info+multiboot_info.mmap_length], ebp
 
 	call		LoadRoot
    	mov    		ebx, 0

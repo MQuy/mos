@@ -52,9 +52,9 @@ int start(multiboot_info *bootinfo)
   DebugSetColor(0x19);
   DebugPrintf("pmm initialized with %i KB\n", bootinfo->m_memorySize);
 
-  memory_region *region = (memory_region *)0x1000;
+  memory_region *region = (memory_region *)bootinfo->m_mmap_addr;
 
-  for (int i = 0; i < 10; ++i)
+  for (int i = 0; i < bootinfo->m_mmap_length; ++i)
   {
 
     if (region[i].type > 4)
