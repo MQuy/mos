@@ -2,3 +2,7 @@
 *.swp
 *.swo
 *.DS_Store
+*.img
+*.SYS
+*.o
+*.bin
