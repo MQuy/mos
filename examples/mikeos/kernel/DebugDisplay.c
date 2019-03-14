@@ -147,7 +147,8 @@ void itoa(unsigned i, unsigned base, char *buf)
 	buf[opos] = 0;
 }
 
-void itoa_s(int i, unsigned base, char *buf)
+// NOTE: Using long long to prevent sign is changed due to hex memory address beyonds long's scope
+void itoa_s(long long i, unsigned base, char *buf)
 {
 	if (base > 16)
 		return;
@@ -296,7 +297,7 @@ int DebugPrintf(const char *str, ...)
 			case 'X':
 			case 'x':
 			{
-				int c = va_arg(args, int);
+				unsigned int c = va_arg(args, unsigned int);
 				char str[32] = {0};
 				itoa_s(c, 16, str);
 				DebugPuts(str);
