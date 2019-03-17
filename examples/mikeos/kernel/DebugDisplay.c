@@ -264,7 +264,7 @@ int DebugPrintf(const char *str, ...)
 			/*** characters ***/
 			case 'c':
 			{
-				char c = va_arg(args, char);
+				char c = va_arg(args, int);
 				DebugPutc(c);
 				i++; // go to next character
 				break;

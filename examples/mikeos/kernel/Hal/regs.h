@@ -1,11 +1,11 @@
-#ifndef _DEBUGDISPLAY_H
-#define _DEBUGDISPLAY_H
+#ifndef _REGS_H_INCLUDED
+#define _REGS_H_INCLUDED
 //****************************************************************************
 //**
-//**    DebugDisplay.h
-//**    - Provides display capabilities for debugging. Because it is
-//**	  specifically for debugging and not final release, we don't
-//** 	  care for portability here
+//**    regs.h
+//**
+//**	processor register structures and declarations. This interface abstracts
+//**	register names behind a common, portable interface
 //**
 //****************************************************************************
 
@@ -13,9 +13,7 @@
 //    INTERFACE REQUIRED HEADERS
 //============================================================================
 
-#include <stdarg.h>
 #include <stdint.h>
-#include "./Include/string.h"
 
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
@@ -26,20 +24,83 @@
 //============================================================================
 //    INTERFACE STRUCTURES / UTILITY CLASSES
 //============================================================================
+
+//! 32 bit registers
+struct _R32BIT
+{
+    uint32_t eax, ebx, ecx, edx, esi, edi, ebp, esp, eflags;
+    uint8_t cflag;
+};
+
+//! 16 bit registers
+struct _R16BIT
+{
+    uint16_t ax, bx, cx, dx, si, di, bp, sp, es, cs, ss, ds, flags;
+    uint8_t cflag;
+};
+
+//! 16 bit registers expressed in 32 bit registers
+struct _R16BIT32
+{
+    uint16_t ax, axh, bx, bxh, cx, cxh, dx, dxh;
+    uint16_t si, di, bp, sp, es, cs, ss, ds, flags;
+    uint8_t cflags;
+};
+
+//! 8 bit registers
+struct _R8BIT
+{
+    uint8_t al, ah, bl, bh, cl, ch, dl, dh;
+};
+
+//! 8 bit registers expressed in 32 bit registers
+struct _R8BIT32
+{
+    uint8_t al, ah;
+    uint16_t axh;
+    uint8_t bl, bh;
+    uint16_t bxh;
+    uint8_t cl, ch;
+    uint16_t cxh;
+    uint8_t dl, dh;
+    uint16_t dxh;
+};
+
+//! 8 and 16 bit registers union
+union _INTR16 {
+    struct _R16BIT x;
+    struct _R8BIT h;
+};
+
+//! 32 bit, 16 bit and 8 bit registers union
+union _INTR32 {
+    struct _R32BIT x;
+    struct _R16BIT32 l;
+    struct _R8BIT32 h;
+};
+
+//! interrupt handler w/o error code
+//! Note: interrupt handlers are called by the processor. The stack setup may change
+//! so we leave it up to the interrupts' implimentation to handle it and properly return
+typedef void (*I86_IRQ_HANDLER)(void);
+
+/* Struct which aggregates many registers */
+typedef struct interrupt_registers
+{
+    uint32_t ds;                                /* Data segment selector */
+    uint32_t edi, esi, ebp, ebx, edx, ecx, eax; /* Pushed by pusha. */
+    uint32_t int_no,
+        err_code; /* Interrupt number and error code (if applicable) */
+    uint32_t eip, cs, eflags, useresp,
+        ss; /* Pushed by the processor automatically */
+} __attribute__((packed)) interrupt_registers;
+
 //============================================================================
 //    INTERFACE DATA DECLARATIONS
 //============================================================================
 //============================================================================
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
-
-void DebugPutc(unsigned char c);
-void DebugClrScr(const uint8_t c);
-void DebugPuts(char *str);
-int DebugPrintf(const char *str, ...);
-unsigned DebugSetColor(const unsigned c);
-void DebugGotoXY(unsigned x, unsigned y);
-
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
 //============================================================================
@@ -48,7 +109,7 @@ void DebugGotoXY(unsigned x, unsigned y);
 //============================================================================
 //****************************************************************************
 //**
-//**    END [FILE NAME]
+//**    END regs.h
 //**
 //****************************************************************************
 #endif

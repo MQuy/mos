@@ -1,11 +1,16 @@
-#ifndef _DEBUGDISPLAY_H
-#define _DEBUGDISPLAY_H
+#ifndef _HAL_H
+#define _HAL_H
 //****************************************************************************
 //**
-//**    DebugDisplay.h
-//**    - Provides display capabilities for debugging. Because it is
-//**	  specifically for debugging and not final release, we don't
-//** 	  care for portability here
+//**    Hal.h
+//**		Hardware Abstraction Layer Interface
+//**
+//**	The Hardware Abstraction Layer (HAL) provides an abstract interface
+//**	to control the basic motherboard hardware devices. This is accomplished
+//**	by abstracting hardware dependencies behind this interface.
+//**
+//**	All routines and types are declared extern and must be defined within
+//**	external libraries to define specific hal implimentations.
 //**
 //****************************************************************************
 
@@ -13,13 +18,22 @@
 //    INTERFACE REQUIRED HEADERS
 //============================================================================
 
-#include <stdarg.h>
 #include <stdint.h>
-#include "./Include/string.h"
+#include "regs.h"
 
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
 //============================================================================
+
+#ifdef _MSC_VER
+#define interrupt __declspec(naked)
+#else
+#define interrupt
+#endif
+
+#define far
+#define near
+
 //============================================================================
 //    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
 //============================================================================
@@ -33,12 +47,46 @@
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
 
-void DebugPutc(unsigned char c);
-void DebugClrScr(const uint8_t c);
-void DebugPuts(char *str);
-int DebugPrintf(const char *str, ...);
-unsigned DebugSetColor(const unsigned c);
-void DebugGotoXY(unsigned x, unsigned y);
+//! initialize hardware abstraction layer
+int hal_initialize();
+
+//! shutdown hardware abstraction layer
+int hal_shutdown();
+
+//! enables hardware device interrupts
+void enable();
+
+//! disables hardware device interrupts
+void disable();
+
+//! generates interrupt
+void geninterrupt(int n);
+
+//! reads from hardware device port
+unsigned char inportb(unsigned short id);
+
+//! writes byte to hardware port
+void outportb(unsigned short id, unsigned char value);
+
+//! sets new interrupt vector
+void setvect(int intno, I86_IRQ_HANDLER vect);
+
+//! returns current interrupt at interrupt vector
+void(far *getvect(int intno))();
+
+//! notifies hal the interrupt is done
+void interruptdone(unsigned int intno);
+
+//! generates sound
+void sound(unsigned frequency);
+
+//! returns cpu vender
+const char *get_cpu_vender();
+
+//! returns current tick count (Only for demo)
+int get_tick_count();
+
+void sleep(int ms);
 
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
@@ -48,7 +96,7 @@ void DebugGotoXY(unsigned x, unsigned y);
 //============================================================================
 //****************************************************************************
 //**
-//**    END [FILE NAME]
+//**    END [Hal.h]
 //**
 //****************************************************************************
 #endif

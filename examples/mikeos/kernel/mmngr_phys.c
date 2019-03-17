@@ -8,7 +8,7 @@
 //    IMPLEMENTATION HEADERS
 //============================================================================
 
-#include "string.h"
+#include "./Include/string.h"
 #include "mmngr_phys.h"
 #include "DebugDisplay.h"
 

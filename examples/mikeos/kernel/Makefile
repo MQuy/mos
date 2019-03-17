@@ -1,5 +1,5 @@
-C_SOURCES = $(wildcard kernel.c *.c drivers/*.c)
-HEADERS = $(wildcard *.h drivers/*.h)
+C_SOURCES = $(wildcard kernel.c *.c Include/*.c Hal/*.c)
+HEADERS = $(wildcard *.h Include/*.h Hal/*.h)
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.c=.o}
 
@@ -28,4 +28,4 @@ KRNL.SYS: ${OBJ}
 
 clean:
 	rm -rf *.bin *.o *.elf *.SYS
-	rm -rf *.o drivers/*.o
+	rm -rf *.o **/*.o

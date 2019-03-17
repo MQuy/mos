@@ -1,11 +1,16 @@
-#ifndef _DEBUGDISPLAY_H
-#define _DEBUGDISPLAY_H
+#ifndef _CPU_H_INCLUDED
+#define _CPU_H_INCLUDED
 //****************************************************************************
 //**
-//**    DebugDisplay.h
-//**    - Provides display capabilities for debugging. Because it is
-//**	  specifically for debugging and not final release, we don't
-//** 	  care for portability here
+//**    cpu.h
+//**
+//**	This is the processor interface. Everything outside of this module
+//**	must use this interface when working on processor data.
+//**
+//**	A processor is a module that manages the very basic data structures
+//**	and data within the system. The processor interface provides the interface
+//**	for managing processors, processor cores, accessing processor structures,
+//**	and more
 //**
 //****************************************************************************
 
@@ -13,9 +18,8 @@
 //    INTERFACE REQUIRED HEADERS
 //============================================================================
 
-#include <stdarg.h>
 #include <stdint.h>
-#include "./Include/string.h"
+#include "regs.h"
 
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
@@ -33,12 +37,23 @@
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
 
-void DebugPutc(unsigned char c);
-void DebugClrScr(const uint8_t c);
-void DebugPuts(char *str);
-int DebugPrintf(const char *str, ...);
-unsigned DebugSetColor(const unsigned c);
-void DebugGotoXY(unsigned x, unsigned y);
+//! initialize the processors
+int i86_cpu_initialize();
+
+//! shutdown the processors
+void i86_cpu_shutdown();
+
+//! get processor vender
+char *i86_cpu_get_vender();
+
+//! flush all internal and external processor caches
+void i86_cpu_flush_caches();
+
+//! same as above but writes the data back into memory first
+void i86_cpu_flush_caches_write();
+
+//! flushes translation lookaside buffer (TLB) entry
+void i86_cpu_flush_tlb_entry(uint32_t);
 
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS

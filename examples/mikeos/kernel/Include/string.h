@@ -28,12 +28,12 @@
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
 
-extern char *strcpy(char *s1, const char *s2);
-extern size_t strlen(const char *str);
+char *strcpy(char *s1, const char *s2);
+size_t strlen(const char *str);
 
-extern void *memcpy(void *dest, const void *src, size_t count);
-extern void *memset(void *dest, char val, size_t count);
-extern unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count);
+void *memcpy(void *dest, const void *src, size_t count);
+void *memset(void *dest, char val, size_t count);
+unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count);
 
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
