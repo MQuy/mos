@@ -67,14 +67,6 @@ int hal_initialize()
 	return 0;
 }
 
-void sleep(int ms)
-{
-
-	int ticks = ms + get_tick_count();
-	while (ticks > get_tick_count())
-		;
-}
-
 //! shutdown hardware devices
 int hal_shutdown()
 {
@@ -99,7 +91,7 @@ void geninterrupt(int n)
 }
 
 //! notifies hal interrupt is done
-inline void interruptdone(unsigned int intno)
+void interruptdone(unsigned int intno)
 {
 
 	//! insure its a valid hardware irq

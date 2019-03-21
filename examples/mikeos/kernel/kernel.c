@@ -1,20 +1,20 @@
 //**
-//**	main.cpp
 //**		entry point for kernel
 //**
 //****************************************************************************
 
 #include "bootinfo.h"
 #include "exception.h"
+#include "Include/string.h"
 #include "Hal/Hal.h"
+#include "Keyboard/kybrd.h"
 #include "mmngr_phys.h"
 #include "mmngr_virtual.h"
 #include "DebugDisplay.h"
 
 //! format of a memory region
-typedef struct
+typedef struct memory_region
 {
-
   uint32_t startLo;
   uint32_t startHi;
   uint32_t sizeLo;
@@ -34,17 +34,9 @@ char *strMemoryTypes[] = {
 
 int start(multiboot_info *bootinfo)
 {
-  __asm__ __volatile__(
-      "cli\n"
-      "movw $0x10, %ax \n"
-      "movw %ax, %ds \n"
-      "movw %ax, %es \n"
-      "movw %ax, %fs \n"
-      "movw %ax, %gs \n");
-
   //! get kernel size passed from boot loader
-  // HACK: I don't know why it has to be plus one to correct kernel's size
-  uint32_t kernelSize = bootinfo->m_kernel_size + 1;
+  // HACK: I don't know why it has to be plus more than 9 to correct kernel's size
+  uint32_t kernelSize = bootinfo->m_kernel_size + 9;
 
   //! clear and init display
   DebugClrScr(0x13);
@@ -54,10 +46,7 @@ int start(multiboot_info *bootinfo)
 
   hal_initialize();
 
-  //! enable all interrupts
-  enable();
-
-  // //! install our exception handlers
+  //! install our exception handlers
   setvect(0, (I86_IRQ_HANDLER)divide_by_zero_fault);
   setvect(1, (I86_IRQ_HANDLER)single_step_trap);
   setvect(2, (I86_IRQ_HANDLER)nmi_trap);
@@ -107,27 +96,178 @@ int start(multiboot_info *bootinfo)
   DebugPrintf("pmm regions initialized: %i allocation blocks; block size: %i bytes",
               pmmngr_get_block_count(), pmmngr_get_block_size());
 
-  //! initialize our vmm
+  // !initialize our vmm
   vmmngr_initialize();
 
-  if (pmmngr_is_paging())
-  {
-    DebugPrintf("\nPDT's address: 0x%x", pmmngr_get_PDBR());
-  }
-  else
-  {
-    DebugPrintf("\nPaging is failed");
-  }
+  kkybrd_install(33);
 
-  sleep(1000);
+  run();
 
-  DebugPrintf("\n\nShutdown complete. Halting system");
-
-  __asm__ __volatile__(
-      "cli \n"
-      "hlt \n");
   for (;;)
     ;
 
   return 0;
+}
+
+//! sleeps a little bit. This uses the HALs get_tick_count() which in turn uses the PIT
+void sleep(int ms)
+{
+  int currentTick = get_tick_count();
+  int endTick = ms + currentTick;
+  while (endTick > get_tick_count())
+    ;
+}
+
+//! wait for key stroke
+KEYCODE getch()
+{
+
+  KEYCODE key = KEY_UNKNOWN;
+
+  //! wait for a keypress
+  while (key == KEY_UNKNOWN)
+    key = kkybrd_get_last_key();
+
+  //! discard last keypress (we handled it) and return
+  kkybrd_discard_last_key();
+  return key;
+}
+
+//! command prompt
+void cmd()
+{
+
+  DebugPrintf("\nCommand> ");
+}
+
+//! gets next command
+void get_cmd(char *buf, int n)
+{
+
+  cmd();
+
+  KEYCODE key = KEY_UNKNOWN;
+  bool BufChar;
+
+  //! get command string
+  int i = 0;
+  while (i < n)
+  {
+
+    //! buffer the next char
+    BufChar = true;
+
+    //! grab next char
+    key = getch();
+
+    //! end of command if enter is pressed
+    if (key == KEY_RETURN)
+      break;
+
+    //! backspace
+    if (key == KEY_BACKSPACE)
+    {
+
+      //! dont buffer this char
+      BufChar = false;
+
+      if (i > 0)
+      {
+
+        //! go back one char
+        unsigned y, x;
+        DebugGetXY(&x, &y);
+        if (x > 0)
+          DebugGotoXY(--x, y);
+        else
+        {
+          //! x is already 0, so go back one line
+          y--;
+          x = DebugGetHorz();
+        }
+
+        //! erase the character from display
+        DebugPutc(' ');
+        DebugGotoXY(x, y);
+
+        //! go back one char in cmd buf
+        i--;
+      }
+    }
+
+    //! only add the char if it is to be buffered
+    if (BufChar)
+    {
+
+      //! convert key to an ascii char and put it in buffer
+      char c = kkybrd_key_to_ascii(key);
+      if (c != 0)
+      { //insure its an ascii char
+
+        DebugPutc(c);
+        buf[i++] = c;
+      }
+    }
+
+    //! wait for next key. You may need to adjust this to suite your needs
+    sleep(10);
+  }
+
+  //! null terminate the string
+  buf[i] = '\0';
+}
+
+//! our simple command parser
+bool run_cmd(char *cmd_buf)
+{
+
+  //! exit command
+  if (strcmp(cmd_buf, "exit") == 0)
+  {
+    return true;
+  }
+
+  //! clear screen
+  else if (strcmp(cmd_buf, "cls") == 0)
+  {
+    DebugClrScr(0x17);
+  }
+
+  //! help
+  else if (strcmp(cmd_buf, "help") == 0)
+  {
+
+    DebugPuts("\nOS Development Series Keyboard Programming Demo");
+    DebugPuts("\nwith a basic Command Line Interface (CLI)\n\n");
+    DebugPuts("Supported commands:\n");
+    DebugPuts(" - exit: quits and halts the system\n");
+    DebugPuts(" - cls: clears the display\n");
+    DebugPuts(" - help: displays this message\n");
+  }
+
+  //! invalid command
+  else
+  {
+    DebugPrintf("\nUnkown command");
+  }
+
+  return false;
+}
+
+void run()
+{
+
+  //! command buffer
+  char cmd_buf[100];
+
+  while (1)
+  {
+
+    //! get command
+    get_cmd(cmd_buf, 98);
+
+    //! run command
+    if (run_cmd(cmd_buf) == true)
+      break;
+  }
 }

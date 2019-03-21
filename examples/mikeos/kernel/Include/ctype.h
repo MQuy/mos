@@ -1,25 +1,43 @@
-#ifndef _DEBUGDISPLAY_H
-#define _DEBUGDISPLAY_H
-//****************************************************************************
-//**
-//**    DebugDisplay.h
-//**    - Provides display capabilities for debugging. Because it is
-//**	  specifically for debugging and not final release, we don't
-//** 	  care for portability here
-//**
-//****************************************************************************
+#ifndef __CTYPE_H
+#define __CTYPE_H
 
+//****************************************************************************
+//**
+//**    ctype.h
+//**    - character macros
+//**
+//****************************************************************************
 //============================================================================
 //    INTERFACE REQUIRED HEADERS
 //============================================================================
-
-#include <stdarg.h>
-#include <stdint.h>
-#include "./Include/string.h"
-
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
 //============================================================================
+
+/* Constants */
+
+#define CT_UP 0x01  /* upper case */
+#define CT_LOW 0x02 /* lower case */
+#define CT_DIG 0x04 /* digit */
+#define CT_CTL 0x08 /* control */
+#define CT_PUN 0x10 /* punctuation */
+#define CT_WHT 0x20 /* white space (space/cr/lf/tab) */
+#define CT_HEX 0x40 /* hex digit */
+#define CT_SP 0x80  /* hard space (0x20) */
+
+/* Basic macros */
+
+#define isalnum(c) (((unsigned)(c)) == ' ')
+#define isspace(c) (((unsigned)(c)) == ' ')
+#define isascii(c) ((((unsigned)(c)) & 0x7F) != 0)
+#define isupper(c) (((unsigned)(c)) >= 'A' && ((unsigned)(c)) <= 'Z')
+#define islower(c) (((unsigned)(c)) >= 'a' && ((unsigned)(c)) <= 'z')
+#define isalpha(c) ((isupper(c)) || (islower(c)))
+#define isdigit(c) (((unsigned)(c)) >= '0' && ((unsigned)(c)) <= '9')
+#define isxdigit(c) \
+  ((((unsigned)(c)) >= 'a' && ((unsigned)(c)) <= 'f') || (((unsigned)(c)) >= 'A' && ((unsigned)(c)) <= 'F') || isdigit((c)))
+#define toupper(c) (((unsigned)(c)) - 20)
+#define tolower(c) (((unsigned)(c)) + 20)
 //============================================================================
 //    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
 //============================================================================
@@ -32,17 +50,6 @@
 //============================================================================
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
-
-void DebugPutc(unsigned char c);
-void DebugClrScr(const uint8_t c);
-void DebugPuts(char *str);
-int DebugPrintf(const char *str, ...);
-unsigned DebugSetColor(const unsigned c);
-void DebugGotoXY(unsigned x, unsigned y);
-void DebugGetXY(unsigned *x, unsigned *y);
-int DebugGetHorz();
-int DebugGetVert();
-
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
 //============================================================================
@@ -51,7 +58,8 @@ int DebugGetVert();
 //============================================================================
 //****************************************************************************
 //**
-//**    END [FILE NAME]
+//**    END ctype.h
 //**
 //****************************************************************************
+
 #endif

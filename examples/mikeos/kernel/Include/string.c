@@ -1,4 +1,3 @@
-
 //****************************************************************************
 //**
 //**    [string.cpp]
@@ -41,6 +40,22 @@
 
 //! warning C4706: assignment within conditional expression
 #pragma warning(disable : 4706)
+
+//! compare two strings
+int strcmp(const char *str1, const char *str2)
+{
+
+    int res = 0;
+    while (!(res = *(unsigned char *)str1 - *(unsigned char *)str2) && *str2)
+        ++str1, ++str2;
+
+    if (res < 0)
+        res = -1;
+    if (res > 0)
+        res = 1;
+
+    return res;
+}
 
 //! copies string s2 to s1
 char *strcpy(char *s1, const char *s2)

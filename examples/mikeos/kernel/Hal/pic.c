@@ -109,7 +109,7 @@
 //============================================================================
 
 //! send command to PICs
-inline void i86_pic_send_command(uint8_t cmd, uint8_t picNum)
+void i86_pic_send_command(uint8_t cmd, uint8_t picNum)
 {
 
 	if (picNum > 1)
@@ -120,7 +120,7 @@ inline void i86_pic_send_command(uint8_t cmd, uint8_t picNum)
 }
 
 //! send data to PICs
-inline void i86_pic_send_data(uint8_t data, uint8_t picNum)
+void i86_pic_send_data(uint8_t data, uint8_t picNum)
 {
 
 	if (picNum > 1)
@@ -131,7 +131,7 @@ inline void i86_pic_send_data(uint8_t data, uint8_t picNum)
 }
 
 //! read data from PICs
-inline uint8_t i86_pic_read_data(uint8_t picNum)
+uint8_t i86_pic_read_data(uint8_t picNum)
 {
 
 	if (picNum > 1)

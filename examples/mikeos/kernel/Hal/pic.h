@@ -71,6 +71,8 @@
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
 
+void i86_pit_irq(interrupt_registers *registers);
+
 //! Read data byte from pic
 uint8_t i86_pic_read_data(uint8_t picNum);
 

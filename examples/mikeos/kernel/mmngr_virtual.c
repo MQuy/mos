@@ -88,11 +88,12 @@ bool vmmngr_switch_pdirectory(pdirectory *dir)
 
 void vmmngr_flush_tlb_entry(virtual_addr addr)
 {
-
-   asm volatile("cli");
-   asm volatile("invlpg (%0)" ::"b"(addr)
-                : "memory");
-   asm volatile("sti");
+   __asm__ __volatile__("cli        \n\t"
+                        "invlpg %0  \n\t"
+                        "sti        \n\t"
+                        :
+                        : "m"(addr)
+                        :);
 }
 
 pdirectory *vmmngr_get_directory()

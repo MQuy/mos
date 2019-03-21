@@ -25,12 +25,7 @@
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
 //============================================================================
 
-#ifdef _MSC_VER
-#define interrupt __declspec(naked)
-#else
 #define interrupt
-#endif
-
 #define far
 #define near
 
@@ -85,8 +80,6 @@ const char *get_cpu_vender();
 
 //! returns current tick count (Only for demo)
 int get_tick_count();
-
-void sleep(int ms);
 
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS

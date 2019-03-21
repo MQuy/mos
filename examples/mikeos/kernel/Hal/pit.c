@@ -54,28 +54,16 @@ static bool _pit_bIsInit = false;
 //    IMPLEMENTATION PRIVATE FUNCTION PROTOTYPES
 //============================================================================
 
-//! pit timer interrupt handler
-void i86_pit_irq();
-
 //============================================================================
 //    IMPLEMENTATION PRIVATE FUNCTIONS
 //============================================================================
 
 //!	pit timer interrupt handler
-void i86_pit_irq()
+void i86_pit_irq(interrupt_registers *registers)
 {
-
-	__asm__ __volatile__("add $12, %esp");
-	__asm__ __volatile__("pusha");
 
 	//! increment tick count
 	_pit_ticks++;
-
-	//! tell hal we are done
-	interruptdone(0);
-
-	__asm__ __volatile__("popa");
-	__asm__ __volatile__("iret");
 }
 
 //============================================================================
@@ -130,7 +118,7 @@ void i86_pit_start_counter(uint32_t freq, uint8_t counter, uint8_t mode)
 	if (freq == 0)
 		return;
 
-	uint16_t divisor = (uint16_t)(1193181 / (uint16_t)freq);
+	uint16_t divisor = (uint16_t)(1193180 / (uint16_t)freq);
 
 	//! send operational command
 	uint8_t ocw = 0;
@@ -152,7 +140,7 @@ void i86_pit_initialize()
 {
 
 	//! Install our interrupt handler (irq 0 uses interrupt 32)
-	setvect(32, i86_pit_irq);
+	register_interrupt_handler(32, i86_pit_irq);
 
 	//! we are initialized
 	_pit_bIsInit = true;
