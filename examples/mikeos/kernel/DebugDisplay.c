@@ -11,6 +11,7 @@
 //============================================================================
 
 #include "DebugDisplay.h"
+#include "./Hal/Hal.h"
 
 //============================================================================
 //    IMPLEMENTATION PRIVATE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
@@ -47,10 +48,6 @@ uint8_t _color = 0;
 //============================================================================
 //    IMPLEMENTATION PRIVATE FUNCTIONS
 //============================================================================
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4244)
-#endif
 
 //! Updates hardware cursor
 void DebugUpdateCur(int x, int y)

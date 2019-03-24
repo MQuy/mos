@@ -83,7 +83,7 @@ void register_interrupt_handler(uint8_t n, I86_IRQ_HANDLER handler);
 idt_descriptor *i86_get_ir(uint32_t i);
 
 //! installs interrupt handler. When INT is fired, it will call this callback
-int i86_install_ir(uint32_t i, uint16_t flags, uint16_t sel, uint32_t irq);
+int i86_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq);
 
 // initialize basic idt
 int i86_idt_initialize(uint16_t codeSel);

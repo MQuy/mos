@@ -1,24 +1,16 @@
-//****************************************************************************
-//**
-//**    cpu.cpp
-//**
-//**	This is the processor interface. Everything outside of this module
-//**	must use this interface when working on processor data.
-//**
-//**	A processor is a module that manages the very basic data structures
-//**	and data within the system. The processor interface provides the interface
-//**	for managing processors, processor cores, accessing processor structures,
-//**	and more
-//**
-//****************************************************************************
 
+//****************************************************************************
+//**
+//**    fsys.cpp
+//**		-Virtual File System
+//**
+//****************************************************************************
 //============================================================================
 //    IMPLEMENTATION HEADERS
 //============================================================================
 
-#include "cpu.h"
-#include "gdt.h"
-#include "idt.h"
+#include "fsys.h"
+#include "../Include/string.h"
 
 //============================================================================
 //    IMPLEMENTATION PRIVATE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
@@ -35,6 +27,12 @@
 //============================================================================
 //    IMPLEMENTATION PRIVATE DATA
 //============================================================================
+
+#define DEVICE_MAX 26
+
+//! File system list
+PFILESYSTEM _FileSystems[DEVICE_MAX];
+
 //============================================================================
 //    INTERFACE DATA
 //============================================================================
@@ -48,64 +46,105 @@
 //    INTERFACE FUNCTIONS
 //============================================================================
 
-//! Initializes cpu resources
-int i86_cpu_initialize()
+/**
+*	Opens a file
+*/
+FILE volOpenFile(const char *fname)
 {
 
-	//! initialize processor tables
-	i86_gdt_initialize();
-	i86_idt_initialize(0x8);
+	if (fname)
+	{
 
-	return 0;
+		//! default to device 'a'
+		unsigned char device = 'a';
+
+		//! filename
+		char *filename = (char *)fname;
+
+		//! in all cases, if fname[1]==':' then the first character must be device letter
+		//! FIXME: Using fname[2] do to BUG 2. Please see main.cpp for info
+		if (fname[2] == ':')
+		{
+
+			device = fname[0];
+			filename += 3; //strip it from pathname
+		}
+
+		//! call filesystem
+		if (_FileSystems[device - 'a'])
+		{
+
+			//! set volume specific information and return file
+			FILE file = _FileSystems[device - 'a']->Open(filename);
+			file.deviceID = device;
+			return file;
+		}
+	}
+
+	//! return invalid file
+	FILE file;
+	file.flags = FS_INVALID;
+	return file;
 }
 
-//! shuts down cpu resources...Nothing to do yet
-void i86_cpu_shutdown()
+/**
+*	Reads file
+*/
+void volReadFile(PFILE file, unsigned char *Buffer, unsigned int Length)
 {
+
+	if (file)
+		if (_FileSystems[file->deviceID - 'a'])
+			_FileSystems[file->deviceID - 'a']->Read(file, Buffer, Length);
 }
 
-//! returns vender name of cpu
-char *i86_cpu_get_vender()
+/**
+*	Close file
+*/
+void volCloseFile(PFILE file)
 {
 
-	static char vender[32] = {0};
-	__asm__ __volatile__("movl $0, %%eax;\n"
-											 "cpuid;\n"
-											 "leal (%0), %%eax;\n"
-											 "movl %%ebx, (%%eax);\n"
-											 "movl %%edx, 0x4(%%eax);\n"
-											 "movl %%ecx, 0x8(%%eax)"
-											 : "=m"(vender)
-											 :
-											 :);
-	return vender;
+	if (file)
+		if (_FileSystems[file->deviceID - 'a'])
+			_FileSystems[file->deviceID - 'a']->Close(file);
 }
 
-//! flush all internal and external processor caches
-void i86_cpu_flush_caches()
+/**
+*	Registers a filesystem
+*/
+void volRegisterFileSystem(PFILESYSTEM fsys, unsigned int deviceID)
 {
 
-	__asm__ __volatile__("cli			\n"
-											 "invd		\n"
-											 "sti			\n");
+	static int i = 0;
+
+	if (i < DEVICE_MAX)
+		if (fsys)
+		{
+
+			_FileSystems[deviceID] = fsys;
+			i++;
+		}
 }
 
-//! same as above but writes the data back into memory first
-void i86_cpu_flush_caches_write()
+/**
+*	Unregister file system
+*/
+void volUnregisterFileSystem(PFILESYSTEM fsys)
 {
 
-	__asm__ __volatile__("cli			\n"
-											 "wbinvd	\n"
-											 "sti			\n");
+	for (int i = 0; i < DEVICE_MAX; i++)
+		if (_FileSystems[i] == fsys)
+			_FileSystems[i] = 0;
 }
 
-//! flushes TLB entry
-void i86_cpu_flush_tlb_entry(uint32_t addr)
+/**
+*	Unregister file system
+*/
+void volUnregisterFileSystemByID(unsigned int deviceID)
 {
 
-	__asm__ __volatile__("cli			\n"
-											 "invlpg (%0)		\n"
-											 "sti		\n" ::"r"(addr));
+	if (deviceID < DEVICE_MAX)
+		_FileSystems[deviceID] = 0;
 }
 
 //============================================================================
@@ -113,6 +152,6 @@ void i86_cpu_flush_tlb_entry(uint32_t addr)
 //============================================================================
 //****************************************************************************
 //**
-//**    END[String.cpp]
+//**    END[fsys.cpp]
 //**
 //****************************************************************************

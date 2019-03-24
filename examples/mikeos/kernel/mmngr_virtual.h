@@ -25,10 +25,6 @@ typedef uint32_t virtual_addr;
 #define PAGES_PER_TABLE 1024
 #define PAGES_PER_DIR 1024
 
-#define PAGE_DIRECTORY_INDEX(x) (((x) >> 22) & 0x3ff)
-#define PAGE_TABLE_INDEX(x) (((x) >> 12) & 0x3ff)
-#define PAGE_GET_PHYSICAL_ADDRESS(x) (*x & ~0xfff)
-
 //============================================================================
 //    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
 //============================================================================
@@ -37,14 +33,14 @@ typedef uint32_t virtual_addr;
 //============================================================================
 
 //! page table
-typedef struct
+typedef struct ptable
 {
 
 	pt_entry m_entries[PAGES_PER_TABLE];
 } ptable;
 
 //! page directory
-typedef struct
+typedef struct pdirectory
 {
 
 	pd_entry m_entries[PAGES_PER_DIR];
@@ -56,9 +52,6 @@ typedef struct
 //============================================================================
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
-
-//! maps phys to virtual address
-void MmMapPage(void *phys, void *virt);
 
 //! initialize the memory manager
 void vmmngr_initialize();
@@ -95,6 +88,17 @@ void vmmngr_pdirectory_clear(pdirectory *dir);
 
 //! get directory entry from directory table
 pd_entry *vmmngr_pdirectory_lookup_entry(pdirectory *p, virtual_addr addr);
+
+/*
+	New additions for chapter 24
+*/
+
+int vmmngr_createPageTable(pdirectory *dir, uint32_t virt, uint32_t flags);
+void vmmngr_mapPhysicalAddress(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
+void vmmngr_unmapPageTable(pdirectory *dir, uint32_t virt);
+void vmmngr_unmapPhysicalAddress(pdirectory *dir, uint32_t virt);
+pdirectory *vmmngr_createAddressSpace();
+void *vmmngr_getPhysicalAddress(pdirectory *dir, uint32_t virt);
 
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS

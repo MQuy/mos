@@ -10,7 +10,7 @@ cd kernel && make clean && make && cd ../
 dd if=/dev/zero bs=512 count=2880 > floppy.img
 dd conv=notrunc if=Stage1/Boot1.bin of=floppy.img
 dev=`hdid -nobrowse -nomount floppy.img` #-nomount similar to -mount suppressed
-mkdir tmp-loop && mount -t msdos ${dev} tmp-loop && cp ./Stage2/KRNLDR.SYS tmp-loop && cp ./kernel/KRNL.SYS tmp-loop
+mkdir tmp-loop && mount -t msdos ${dev} tmp-loop && cp ./Stage2/KRNLDR.SYS tmp-loop && cp ./kernel/KRNL.SYS tmp-loop && cp demo.txt tmp-loop
 #mount is used to mount file systems -t is used to indicate the file system type
 #so here our type is msdos (FAT12) right?
 diskutil unmount tmp-loop

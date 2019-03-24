@@ -92,7 +92,7 @@ idt_descriptor *i86_get_ir(uint32_t i)
 }
 
 //! installs a new interrupt handler
-int i86_install_ir(uint32_t i, uint16_t flags, uint16_t sel, uint32_t irq)
+int i86_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq)
 {
 
 	if (i > I86_MAX_INTERRUPTS)
@@ -101,9 +101,11 @@ int i86_install_ir(uint32_t i, uint16_t flags, uint16_t sel, uint32_t irq)
 	if (!irq)
 		return 0;
 
+	uint64_t uiBase = (uint64_t) & (*irq);
+
 	//! store base address into idt
-	_idt[i].baseLo = (uint16_t)(irq & 0xffff);
-	_idt[i].baseHi = (uint16_t)((irq >> 16) & 0xffff);
+	_idt[i].baseLo = (uint16_t)(uiBase & 0xffff);
+	_idt[i].baseHi = (uint16_t)((uiBase >> 16) & 0xffff);
 	_idt[i].reserved = 0;
 	_idt[i].flags = (uint8_t)(flags);
 	_idt[i].sel = sel;
@@ -127,56 +129,56 @@ int i86_idt_initialize(uint16_t codeSel)
 		i86_install_ir(i, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32,
 									 codeSel, (I86_IRQ_HANDLER)i86_default_handler);
 
-	setvect(0, (uint32_t)isr0);
-	setvect(1, (uint32_t)isr1);
-	setvect(2, (uint32_t)isr2);
-	setvect(3, (uint32_t)isr3);
-	setvect(4, (uint32_t)isr4);
-	setvect(5, (uint32_t)isr5);
-	setvect(6, (uint32_t)isr6);
-	setvect(7, (uint32_t)isr7);
-	setvect(8, (uint32_t)isr8);
-	setvect(9, (uint32_t)isr9);
-	setvect(10, (uint32_t)isr10);
-	setvect(11, (uint32_t)isr11);
-	setvect(12, (uint32_t)isr12);
-	setvect(13, (uint32_t)isr13);
-	setvect(14, (uint32_t)isr14);
-	setvect(15, (uint32_t)isr15);
-	setvect(16, (uint32_t)isr16);
-	setvect(17, (uint32_t)isr17);
-	setvect(18, (uint32_t)isr18);
-	setvect(19, (uint32_t)isr19);
-	setvect(20, (uint32_t)isr20);
-	setvect(21, (uint32_t)isr21);
-	setvect(22, (uint32_t)isr22);
-	setvect(23, (uint32_t)isr23);
-	setvect(24, (uint32_t)isr24);
-	setvect(25, (uint32_t)isr25);
-	setvect(26, (uint32_t)isr26);
-	setvect(27, (uint32_t)isr27);
-	setvect(28, (uint32_t)isr28);
-	setvect(29, (uint32_t)isr29);
-	setvect(30, (uint32_t)isr30);
-	setvect(31, (uint32_t)isr31);
+	setvect(0, (I86_IRQ_HANDLER)isr0);
+	setvect(1, (I86_IRQ_HANDLER)isr1);
+	setvect(2, (I86_IRQ_HANDLER)isr2);
+	setvect(3, (I86_IRQ_HANDLER)isr3);
+	setvect(4, (I86_IRQ_HANDLER)isr4);
+	setvect(5, (I86_IRQ_HANDLER)isr5);
+	setvect(6, (I86_IRQ_HANDLER)isr6);
+	setvect(7, (I86_IRQ_HANDLER)isr7);
+	setvect(8, (I86_IRQ_HANDLER)isr8);
+	setvect(9, (I86_IRQ_HANDLER)isr9);
+	setvect(10, (I86_IRQ_HANDLER)isr10);
+	setvect(11, (I86_IRQ_HANDLER)isr11);
+	setvect(12, (I86_IRQ_HANDLER)isr12);
+	setvect(13, (I86_IRQ_HANDLER)isr13);
+	setvect(14, (I86_IRQ_HANDLER)isr14);
+	setvect(15, (I86_IRQ_HANDLER)isr15);
+	setvect(16, (I86_IRQ_HANDLER)isr16);
+	setvect(17, (I86_IRQ_HANDLER)isr17);
+	setvect(18, (I86_IRQ_HANDLER)isr18);
+	setvect(19, (I86_IRQ_HANDLER)isr19);
+	setvect(20, (I86_IRQ_HANDLER)isr20);
+	setvect(21, (I86_IRQ_HANDLER)isr21);
+	setvect(22, (I86_IRQ_HANDLER)isr22);
+	setvect(23, (I86_IRQ_HANDLER)isr23);
+	setvect(24, (I86_IRQ_HANDLER)isr24);
+	setvect(25, (I86_IRQ_HANDLER)isr25);
+	setvect(26, (I86_IRQ_HANDLER)isr26);
+	setvect(27, (I86_IRQ_HANDLER)isr27);
+	setvect(28, (I86_IRQ_HANDLER)isr28);
+	setvect(29, (I86_IRQ_HANDLER)isr29);
+	setvect(30, (I86_IRQ_HANDLER)isr30);
+	setvect(31, (I86_IRQ_HANDLER)isr31);
 
 	// Install the IRQs
-	setvect(32, (uint32_t)irq0);
-	setvect(33, (uint32_t)irq1);
-	setvect(34, (uint32_t)irq2);
-	setvect(35, (uint32_t)irq3);
-	setvect(36, (uint32_t)irq4);
-	setvect(37, (uint32_t)irq5);
-	setvect(38, (uint32_t)irq6);
-	setvect(39, (uint32_t)irq7);
-	setvect(40, (uint32_t)irq8);
-	setvect(41, (uint32_t)irq9);
-	setvect(42, (uint32_t)irq10);
-	setvect(43, (uint32_t)irq11);
-	setvect(44, (uint32_t)irq12);
-	setvect(45, (uint32_t)irq13);
-	setvect(46, (uint32_t)irq14);
-	setvect(47, (uint32_t)irq15);
+	setvect(32, (I86_IRQ_HANDLER)irq0);
+	setvect(33, (I86_IRQ_HANDLER)irq1);
+	setvect(34, (I86_IRQ_HANDLER)irq2);
+	setvect(35, (I86_IRQ_HANDLER)irq3);
+	setvect(36, (I86_IRQ_HANDLER)irq4);
+	setvect(37, (I86_IRQ_HANDLER)irq5);
+	setvect(38, (I86_IRQ_HANDLER)irq6);
+	setvect(39, (I86_IRQ_HANDLER)irq7);
+	setvect(40, (I86_IRQ_HANDLER)irq8);
+	setvect(41, (I86_IRQ_HANDLER)irq9);
+	setvect(42, (I86_IRQ_HANDLER)irq10);
+	setvect(43, (I86_IRQ_HANDLER)irq11);
+	setvect(44, (I86_IRQ_HANDLER)irq12);
+	setvect(45, (I86_IRQ_HANDLER)irq13);
+	setvect(46, (I86_IRQ_HANDLER)irq14);
+	setvect(47, (I86_IRQ_HANDLER)irq15);
 
 	//! install our idt
 	idt_install();

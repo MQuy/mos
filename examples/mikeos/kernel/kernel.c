@@ -4,13 +4,17 @@
 //****************************************************************************
 
 #include "bootinfo.h"
-#include "exception.h"
-#include "Include/string.h"
 #include "Hal/Hal.h"
 #include "Keyboard/kybrd.h"
+#include "Include/string.h"
+#include "Include/stdio.h"
+#include "FileSystem/flpydsk.h"
+#include "FileSystem/fat12.h"
+
+#include "DebugDisplay.h"
+#include "exception.h"
 #include "mmngr_phys.h"
 #include "mmngr_virtual.h"
-#include "DebugDisplay.h"
 
 //! format of a memory region
 typedef struct memory_region
@@ -23,14 +27,7 @@ typedef struct memory_region
   uint32_t acpi_3_0;
 } memory_region;
 
-//! different memory regions (in memory_region.type)
-char *strMemoryTypes[] = {
-
-    "Available",      //memory_region.type==0
-    "Reserved",       //memory_region.type==1
-    "ACPI Reclaim",   //memory_region.type==2
-    "ACPI NVS Memory" //memory_region.type==3
-};
+void run();
 
 int start(multiboot_info *bootinfo)
 {
@@ -68,10 +65,6 @@ int start(multiboot_info *bootinfo)
 
   pmmngr_init(bootinfo->m_memorySize, 0xC0000000 + kernelSize * 512);
 
-  DebugGotoXY(0, 3);
-  DebugSetColor(0x19);
-  DebugPrintf("pmm initialized with %i KB\n", bootinfo->m_memorySize);
-
   memory_region *region = (memory_region *)bootinfo->m_mmap_addr;
 
   for (int i = 0; i < bootinfo->m_mmap_length; ++i)
@@ -83,39 +76,39 @@ int start(multiboot_info *bootinfo)
     if (i > 0 && region[i].startLo == 0)
       break;
 
-    DebugPrintf("region %i: start: 0x%x%x length (bytes): 0x%x%x type: %i (%s)\n", i,
-                region[i].startHi, region[i].startLo,
-                region[i].sizeHi, region[i].sizeLo,
-                region[i].type, strMemoryTypes[region[i].type - 1]);
-
     pmmngr_init_region(region[i].startLo, region[i].sizeLo);
   }
   pmmngr_deinit_region(0x100000, kernelSize * 512);
   // NOTE: Why we need to deinit region 0x0->0x10000? if not it doesn't work
   pmmngr_deinit_region(0x0, 0x10000);
-  DebugPrintf("pmm regions initialized: %i allocation blocks; block size: %i bytes",
-              pmmngr_get_block_count(), pmmngr_get_block_size());
 
   // !initialize our vmm
   vmmngr_initialize();
 
   kkybrd_install(33);
 
+  //! set drive 0 as current drive
+  flpydsk_set_working_drive(0);
+
+  //! install floppy disk to IR 38, uses IRQ 6
+  flpydsk_install(38);
+
+  //! initialize FAT12 filesystem
+  fsysFatInitialize();
+
+  DebugGotoXY(0, 0);
+  DebugPuts("OSDev Series VFS Programming Demo");
+  DebugPuts("\nType \"exit\" to quit, \"help\" for a list of commands\n");
+  DebugPuts("+-------------------------------------------------------+\n");
+
   run();
+
+  DebugPrintf("\nExit command recieved; demo halted");
 
   for (;;)
     ;
 
   return 0;
-}
-
-//! sleeps a little bit. This uses the HALs get_tick_count() which in turn uses the PIT
-void sleep(int ms)
-{
-  int currentTick = get_tick_count();
-  int endTick = ms + currentTick;
-  while (endTick > get_tick_count())
-    ;
 }
 
 //! wait for key stroke
@@ -143,8 +136,6 @@ void cmd()
 //! gets next command
 void get_cmd(char *buf, int n)
 {
-
-  cmd();
 
   KEYCODE key = KEY_UNKNOWN;
   bool BufChar;
@@ -217,6 +208,62 @@ void get_cmd(char *buf, int n)
   buf[i] = '\0';
 }
 
+//! read command
+void cmd_read()
+{
+
+  //! get pathname
+  char path[32];
+  DebugPrintf("\n\rex: \"file.txt\", \"a:\\file.txt\", \"a:\\folder\\file.txt\"\n\rFilename> ");
+  get_cmd(path, 32);
+
+  //! open file
+  FILE file = volOpenFile(path);
+
+  //! test for invalid file
+  if (file.flags == FS_INVALID)
+  {
+
+    DebugPrintf("\n\rUnable to open file");
+    return;
+  }
+
+  //! cant display directories
+  if ((file.flags & FS_DIRECTORY) == FS_DIRECTORY)
+  {
+
+    DebugPrintf("\n\rUnable to display contents of directory.");
+    return;
+  }
+
+  //! top line
+  DebugPrintf("\n\n\r-------[%s]-------\n\r", file.name);
+
+  //! display file contents
+  while (file.eof != 1)
+  {
+
+    //! read cluster
+    unsigned char buf[512];
+    volReadFile(&file, buf, 512);
+
+    //! display file
+    for (int i = 0; i < 512; i++)
+      DebugPutc(buf[i]);
+
+    //! wait for input to continue if not EOF
+    if (file.eof != 1)
+    {
+      DebugPrintf("\n\r------[Press a key to continue]------");
+      getch();
+      DebugPrintf("\r"); //clear last line
+    }
+  }
+
+  //! done :)
+  DebugPrintf("\n\n\r--------[EOF]--------");
+}
+
 //! our simple command parser
 bool run_cmd(char *cmd_buf)
 {
@@ -237,12 +284,25 @@ bool run_cmd(char *cmd_buf)
   else if (strcmp(cmd_buf, "help") == 0)
   {
 
-    DebugPuts("\nOS Development Series Keyboard Programming Demo");
-    DebugPuts("\nwith a basic Command Line Interface (CLI)\n\n");
+    DebugPuts("\nOS Development Series VFS Programming Demo");
     DebugPuts("Supported commands:\n");
     DebugPuts(" - exit: quits and halts the system\n");
     DebugPuts(" - cls: clears the display\n");
     DebugPuts(" - help: displays this message\n");
+    DebugPuts(" - read: reads a file\n");
+    DebugPuts(" - reset: Resets and recalibrates floppy for reading\n");
+  }
+
+  //! read sector
+  else if (strcmp(cmd_buf, "read") == 0)
+  {
+    cmd_read();
+  }
+
+  //! read sector
+  else if (strcmp(cmd_buf, "readsect") == 0)
+  {
+    cmd_read_sect();
   }
 
   //! invalid command
@@ -254,6 +314,45 @@ bool run_cmd(char *cmd_buf)
   return false;
 }
 
+//! read sector command
+void cmd_read_sect()
+{
+
+  uint32_t sectornum = 0;
+  char sectornumbuf[4];
+  uint8_t *sector = 0;
+
+  DebugPrintf("\n\rPlease type in the sector number [0 is default] >");
+  get_cmd(sectornumbuf, 3);
+  sectornum = atoi(sectornumbuf);
+
+  DebugPrintf("\n\rSector %i contents:\n\n\r", sectornum);
+
+  //! read sector from disk
+  sector = flpydsk_read_sector(sectornum);
+
+  //! display sector
+  if (sector != 0)
+  {
+
+    int i = 0;
+    for (int c = 0; c < 4; c++)
+    {
+
+      for (int j = 0; j < 128; j++)
+        DebugPrintf("0x%x ", sector[i + j]);
+      i += 128;
+
+      DebugPrintf("\n\rPress any key to continue\n\r");
+      getch();
+    }
+  }
+  else
+    DebugPrintf("\n\r*** Error reading sector from disk");
+
+  DebugPrintf("\n\rDone.");
+}
+
 void run()
 {
 
@@ -262,6 +361,9 @@ void run()
 
   while (1)
   {
+
+    //! display prompt
+    cmd();
 
     //! get command
     get_cmd(cmd_buf, 98);
