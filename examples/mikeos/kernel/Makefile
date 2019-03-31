@@ -1,7 +1,7 @@
 C_SOURCES = $(wildcard kernel.c *.c Include/*.c Hal/*.c Keyboard/*.c FileSystem/*.c)
 HEADERS = $(wildcard *.h Include/*.h Hal/*.h Keyboard/*.h FileSystem/*.h)
 # Nice syntax for file extension replacement
-OBJ = ${C_SOURCES:.c=.o Hal/interrupt.o}
+OBJ = ${C_SOURCES:.c=.o Hal/interrupt.o Hal/user.o}
 
 # Change this if your cross-compiler is somewhere else
 
@@ -10,7 +10,7 @@ LD = /usr/local/bin/i386-elf-ld
 GDB = /usr/local/bin/i386-elf-gdb
 
 # -g: Use debugging symbols in gcc
-CFLAGS = -g
+CFLAGS = -g -ffreestanding -m32
 
 # '--oformat binary' deletes all symbols as a collateral, so we don't need
 # to 'strip' them manually on this case

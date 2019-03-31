@@ -15,7 +15,6 @@
 
 #include <stdarg.h>
 #include <stdint.h>
-#include "./Include/string.h"
 
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS

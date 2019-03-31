@@ -5,6 +5,7 @@
 
 #include "bootinfo.h"
 #include "Hal/Hal.h"
+#include "Hal/tss.h"
 #include "Keyboard/kybrd.h"
 #include "Include/string.h"
 #include "Include/stdio.h"
@@ -12,6 +13,7 @@
 #include "FileSystem/fat12.h"
 
 #include "DebugDisplay.h"
+#include "sysapi.h"
 #include "exception.h"
 #include "mmngr_phys.h"
 #include "mmngr_virtual.h"
@@ -27,10 +29,25 @@ typedef struct memory_region
   uint32_t acpi_3_0;
 } memory_region;
 
+extern void enter_usermode();
+
 void run();
+KEYCODE getch();
+void cmd();
+void get_cmd(char *buf, int n);
+void cmd_read();
+bool run_cmd(char *cmd_buf);
+void cmd_read_sect();
+void go_user();
 
 int start(multiboot_info *bootinfo)
 {
+  __asm__ __volatile__("cli  \n"
+                       "mov $0x10, %ax \n"
+                       "mov %ax, %ds \n"
+                       "mov %ax, %es \n"
+                       "mov %ax, %fs \n"
+                       "mov %ax, %gs \n");
   //! get kernel size passed from boot loader
   // HACK: I don't know why it has to be plus more than 9 to correct kernel's size
   uint32_t kernelSize = bootinfo->m_kernel_size + 9;
@@ -63,7 +80,7 @@ int start(multiboot_info *bootinfo)
   setvect(18, (I86_IRQ_HANDLER)machine_check_abort);
   setvect(19, (I86_IRQ_HANDLER)simd_fpu_fault);
 
-  pmmngr_init(bootinfo->m_memorySize, 0xC0000000 + kernelSize * 512);
+  pmmngr_init((size_t)bootinfo->m_memorySize, 0xC0000000 + kernelSize * 512);
 
   memory_region *region = (memory_region *)bootinfo->m_mmap_addr;
 
@@ -95,6 +112,12 @@ int start(multiboot_info *bootinfo)
 
   //! initialize FAT12 filesystem
   fsysFatInitialize();
+
+  //! initialize system calls
+  syscall_init();
+
+  //! initialize TSS
+  install_tss(5, 0x10, 0);
 
   DebugGotoXY(0, 0);
   DebugPuts("OSDev Series VFS Programming Demo");
@@ -267,6 +290,10 @@ void cmd_read()
 //! our simple command parser
 bool run_cmd(char *cmd_buf)
 {
+  if (strcmp(cmd_buf, "user") == 0)
+  {
+    go_user();
+  }
 
   //! exit command
   if (strcmp(cmd_buf, "exit") == 0)
@@ -351,6 +378,20 @@ void cmd_read_sect()
     DebugPrintf("\n\r*** Error reading sector from disk");
 
   DebugPrintf("\n\rDone.");
+}
+
+// BUG: MQ 2019-03-31 Something is wrong with stackframe causes page fault
+// To make it work, disable `pmmngr_init_region/pmmngr_deinit_region`, seem that memory mapping (Memory.inc) is not correct
+void go_user()
+{
+
+  int esp;
+  __asm__ __volatile__("mov %%esp, %0"
+                       : "=r"(esp));
+  tss_set_stack(0x10, esp);
+
+  enter_usermode();
+  syscall_printf("\nIn user mode");
 }
 
 void run()

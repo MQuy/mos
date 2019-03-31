@@ -32,6 +32,7 @@
 #define I86_IDT_DESC_RING3 0x60		//01100000
 #define I86_IDT_DESC_PRESENT 0x80 //10000000
 
+#define DISPATCHER_ISR 0x80
 //============================================================================
 //    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
 //============================================================================
@@ -121,6 +122,7 @@ extern void isr28();
 extern void isr29();
 extern void isr30();
 extern void isr31();
+extern void isr128();
 /* IRQ definitions */
 extern void irq0();
 extern void irq1();

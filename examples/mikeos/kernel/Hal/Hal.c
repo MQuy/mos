@@ -148,9 +148,15 @@ void disable()
 //! sets new interrupt vector
 void setvect(int intno, I86_IRQ_HANDLER vect)
 {
-
 	//! install interrupt handler! This overwrites prev interrupt descriptor
 	i86_install_ir(intno, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32,
+								 0x8, vect);
+}
+
+void setvect_flags(int intno, I86_IRQ_HANDLER vect, int flags)
+{
+	//! install interrupt handler! This overwrites prev interrupt descriptor
+	i86_install_ir(intno, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32 | flags,
 								 0x8, vect);
 }
 

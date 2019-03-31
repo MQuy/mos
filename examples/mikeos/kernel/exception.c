@@ -144,11 +144,16 @@ void general_protection_fault(unsigned int cs, unsigned int err, unsigned int ei
 }
 
 //! page fault
-void page_fault(unsigned int cs, unsigned int err, unsigned int eip, unsigned int eflags)
+void page_fault(uint32_t err, uint32_t eflags, uint32_t cs, uint32_t eip)
 {
+	int faultAddr = 0;
 
-	//	intstart ();
-	kernel_panic("Page Fault");
+	__asm__ __volatile__("mov %%cr2, %%eax	\n"
+											 "mov %%eax, %0			\n"
+											 : "=r"(faultAddr));
+
+	DebugPrintf("\nError code: %d\nPage Fault at 0x%x:0x%x refrenced memory at 0x%x",
+							err, cs, eip, faultAddr);
 	for (;;)
 		;
 }
@@ -193,6 +198,17 @@ void simd_fpu_fault(unsigned int cs, unsigned int eip, unsigned int eflags)
 		;
 }
 
+static char *sickpc = " \
+                               _______      \n\
+                               |.-----.|    \n\
+                               ||x . x||    \n\
+                               ||_.-._||    \n\
+                               `--)-(--`    \n\
+                              __[=== o]___  \n\
+                             |:::::::::::|\\ \n\
+                             `-=========-`()\n\
+                                M. O. S.\n\n";
+
 //! something is wrong--bail out
 void kernel_panic(const char *fmt, ...)
 {
@@ -200,11 +216,9 @@ void kernel_panic(const char *fmt, ...)
 	disable();
 
 	va_list args;
+	static char buf[1024];
+
 	va_start(args, fmt);
-
-	// We will need a vsprintf() here. I will see if I can write
-	// one before the tutorial release
-
 	va_end(args);
 
 	char *disclamer = "We apologize, MOS has encountered a problem and has been shut down\n\
@@ -216,6 +230,7 @@ The system has been halted.\n\n";
 	DebugClrScr(0x1f);
 	DebugGotoXY(0, 0);
 	DebugSetColor(0x1f);
+	DebugPuts(sickpc);
 	DebugPuts(disclamer);
 
 	DebugPrintf("*** STOP: %s", fmt);

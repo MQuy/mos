@@ -188,5 +188,5 @@ EXECUTE:
 	call		ebp               	      ; Execute Kernel
 	add		esp, 4
 
-    	cli
+	cli
 	hlt

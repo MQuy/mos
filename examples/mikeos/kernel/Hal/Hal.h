@@ -65,6 +65,7 @@ void outportb(unsigned short id, unsigned char value);
 
 //! sets new interrupt vector
 void setvect(int intno, I86_IRQ_HANDLER vect);
+void setvect_flags(int intno, I86_IRQ_HANDLER vect, int flags);
 
 //! returns current interrupt at interrupt vector
 void(far *getvect(int intno))();

@@ -1,56 +1,70 @@
-#ifndef __CTYPE_H
-#define __CTYPE_H
+#ifndef _TSS_H_INCLUDED
+#define _TSS_H_INCLUDED
+//****************************************************************************
+//**
+//**    tss.h
+//**
+//**	Task State Segment
+//**
+//****************************************************************************
 
-//****************************************************************************
-//**
-//**    ctype.h
-//**    - character macros
-//**
-//****************************************************************************
 //============================================================================
 //    INTERFACE REQUIRED HEADERS
 //============================================================================
+
+#include <stdint.h>
+
 //============================================================================
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
 //============================================================================
-
-/* Constants */
-
-#define CT_UP 0x01  /* upper case */
-#define CT_LOW 0x02 /* lower case */
-#define CT_DIG 0x04 /* digit */
-#define CT_CTL 0x08 /* control */
-#define CT_PUN 0x10 /* punctuation */
-#define CT_WHT 0x20 /* white space (space/cr/lf/tab) */
-#define CT_HEX 0x40 /* hex digit */
-#define CT_SP 0x80  /* hard space (0x20) */
-
-/* Basic macros */
-
-#define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
-#define isupper(c) ((c) >= 'A' && (c) <= 'Z')
-#define islower(c) ((c) >= 'a' && (c) <= 'z')
-#define isalpha(c) (isupper(c) || islower(c))
-#define isdigit(c) ((c) >= '0' && (c) <= '9')
-#define isxdigit(c) (isdigit(c) || ((c) >= 'A' && (c) <= 'F') || ((c) >= 'a' && (c) <= 'f'))
-#define isprint(c) ((c) >= ' ' && (c) <= '~')
-#define toupper(c) ((c)-0x20 * (((c) >= 'a') && ((c) <= 'z')))
-#define tolower(c) ((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')))
-#define isascii(c) ((unsigned)(c) <= 0x7F)
-#define toascii(c) ((unsigned)(c)&0x7F)
-
 //============================================================================
 //    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
 //============================================================================
 //============================================================================
 //    INTERFACE STRUCTURES / UTILITY CLASSES
 //============================================================================
+
+typedef struct tss_entry
+{
+	uint32_t prevTss;
+	uint32_t esp0;
+	uint32_t ss0;
+	uint32_t esp1;
+	uint32_t ss1;
+	uint32_t esp2;
+	uint32_t ss2;
+	uint32_t cr3;
+	uint32_t eip;
+	uint32_t eflags;
+	uint32_t eax;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t ebx;
+	uint32_t esp;
+	uint32_t ebp;
+	uint32_t esi;
+	uint32_t edi;
+	uint32_t es;
+	uint32_t cs;
+	uint32_t ss;
+	uint32_t ds;
+	uint32_t fs;
+	uint32_t gs;
+	uint32_t ldt;
+	uint16_t trap;
+	uint16_t iomap;
+} __attribute__((packed)) tss_entry;
+
 //============================================================================
 //    INTERFACE DATA DECLARATIONS
 //============================================================================
 //============================================================================
 //    INTERFACE FUNCTION PROTOTYPES
 //============================================================================
+
+void tss_set_stack(uint16_t kernelSS, uint16_t kernelESP);
+void install_tss(uint32_t sel, uint16_t kernelSS, uint16_t kernelESP);
+
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
 //============================================================================
@@ -59,8 +73,7 @@
 //============================================================================
 //****************************************************************************
 //**
-//**    END ctype.h
+//**    END tss.h
 //**
 //****************************************************************************
-
 #endif

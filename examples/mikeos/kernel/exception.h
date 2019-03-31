@@ -10,6 +10,7 @@
 //****************************************************************************
 
 #include <stdarg.h>
+#include <stdint.h>
 
 //============================================================================
 //    INTERFACE REQUIRED HEADERS
@@ -85,8 +86,7 @@ void general_protection_fault(unsigned int cs, unsigned int err,
                               unsigned int eip, unsigned int eflags);
 
 //! page fault
-void page_fault(unsigned int cs, unsigned int err,
-                unsigned int eip, unsigned int eflags);
+void page_fault(uint32_t err, uint32_t eflags, uint32_t cs, uint32_t eip);
 
 //! Floating Point Unit (FPU) error
 void fpu_fault(unsigned int cs,

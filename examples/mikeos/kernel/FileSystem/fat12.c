@@ -84,7 +84,7 @@ FILE fsysFatDirectory(const char *DirectoryName)
 	PDIRECTORY directory;
 
 	//! get 8.3 directory name
-	// TODO: Fix text segment in linker.ld to make `char DosFileName[11] = ""`
+	// FIXME: Fix text segment in linker.ld to make `char DosFileName[11]` works
 	char *DosFileName = "           ";
 	ToDosFileName(DirectoryName, DosFileName, 11);
 	DosFileName[11] = 0;

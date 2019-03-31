@@ -27,7 +27,8 @@ bits	32
 %define		PAGE_TABLE_ENTRIES	1024
 
 ; attributes (page is present;page is writable; supervisor mode)
-%define		PRIV				3
+;%define		PRIV				3
+%define			PRIV				7
 
 ;****************************************
 ;	Enable Paging

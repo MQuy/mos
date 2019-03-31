@@ -24,7 +24,7 @@
 //============================================================================
 
 //! maximum amount of descriptors allowed
-#define MAX_DESCRIPTORS 3
+#define MAX_DESCRIPTORS 6
 
 /***	 gdt descriptor access bit flags.	***/
 

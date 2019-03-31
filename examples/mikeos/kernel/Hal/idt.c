@@ -62,6 +62,7 @@ static void idt_install()
 }
 
 //! default handler to catch unhandled system interrupts.
+// TODO: MQ 2019-03-30 Cannot use interrupt_registers because it is not triggered via interrupt.asm
 void i86_default_handler(interrupt_registers *registers)
 {
 
@@ -161,6 +162,7 @@ int i86_idt_initialize(uint16_t codeSel)
 	setvect(29, (I86_IRQ_HANDLER)isr29);
 	setvect(30, (I86_IRQ_HANDLER)isr30);
 	setvect(31, (I86_IRQ_HANDLER)isr31);
+	setvect_flags(DISPATCHER_ISR, (I86_IRQ_HANDLER)isr128, I86_IDT_DESC_RING3);
 
 	// Install the IRQs
 	setvect(32, (I86_IRQ_HANDLER)irq0);
@@ -193,7 +195,7 @@ void register_interrupt_handler(uint8_t n, I86_IRQ_HANDLER handler)
 
 void isr_wrapper_handler(interrupt_registers *r)
 {
-	uint8_t int_no = r->int_no & 0xFF;
+	uint32_t int_no = r->int_no & 0xFF;
 	I86_IRQ_HANDLER handler = interrupt_handlers[int_no];
 	if (handler != 0)
 	{

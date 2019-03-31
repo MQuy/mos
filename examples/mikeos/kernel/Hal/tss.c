@@ -1,14 +1,9 @@
+
 //****************************************************************************
 //**
-//**    cpu.cpp
+//**    tss.h
 //**
-//**	This is the processor interface. Everything outside of this module
-//**	must use this interface when working on processor data.
-//**
-//**	A processor is a module that manages the very basic data structures
-//**	and data within the system. The processor interface provides the interface
-//**	for managing processors, processor cores, accessing processor structures,
-//**	and more
+//**	Task State Segment
 //**
 //****************************************************************************
 
@@ -16,9 +11,9 @@
 //    IMPLEMENTATION HEADERS
 //============================================================================
 
-#include "cpu.h"
+#include "../Include/string.h"
 #include "gdt.h"
-#include "idt.h"
+#include "tss.h"
 
 //============================================================================
 //    IMPLEMENTATION PRIVATE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
@@ -35,77 +30,68 @@
 //============================================================================
 //    IMPLEMENTATION PRIVATE DATA
 //============================================================================
+
+static tss_entry TSS;
+
 //============================================================================
 //    INTERFACE DATA
 //============================================================================
 //============================================================================
 //    IMPLEMENTATION PRIVATE FUNCTION PROTOTYPES
 //============================================================================
+
+void install_tsr(uint16_t sel);
+
 //============================================================================
 //    IMPLEMENTATION PRIVATE FUNCTIONS
 //============================================================================
+
+void flush_tss(uint16_t sel)
+{
+
+	__asm__ __volatile__("cli								\n"
+											 "mov $0x2b, %ax		\n"
+											 "ltr %ax						\n"
+											 "sti								\n");
+}
+
 //============================================================================
 //    INTERFACE FUNCTIONS
 //============================================================================
 
-//! Initializes cpu resources
-int i86_cpu_initialize()
+void tss_set_stack(uint16_t kernelSS, uint16_t kernelESP)
 {
 
-	//! initialize processor tables
-	i86_gdt_initialize();
-	i86_idt_initialize(0x8);
-
-	return 0;
+	TSS.ss0 = kernelSS;
+	TSS.esp0 = kernelESP;
 }
 
-//! shuts down cpu resources...Nothing to do yet
-void i86_cpu_shutdown()
-{
-}
-
-//! returns vender name of cpu
-char *i86_cpu_get_vender()
+void install_tss(uint32_t idx, uint16_t kernelSS, uint16_t kernelESP)
 {
 
-	static char vender[32] = {0};
-	__asm__ __volatile__("mov $0, %%eax;				\n"
-											 "cpuid;								\n"
-											 "lea (%0), %%eax;			\n"
-											 "mov %%ebx, (%%eax);		\n"
-											 "mov %%edx, 0x4(%%eax);\n"
-											 "mov %%ecx, 0x8(%%eax)	\n"
-											 : "=m"(vender)
-											 :
-											 :);
-	return vender;
-}
+	//! install TSS descriptor
+	uint32_t base = (uint32_t)&TSS;
 
-//! flush all internal and external processor caches
-void i86_cpu_flush_caches()
-{
+	//! install descriptor
+	gdt_set_descriptor(idx, base, base + sizeof(tss_entry),
+										 I86_GDT_DESC_ACCESS | I86_GDT_DESC_EXEC_CODE | I86_GDT_DESC_DPL | I86_GDT_DESC_MEMORY,
+										 0);
 
-	__asm__ __volatile__("cli			\n"
-											 "invd		\n"
-											 "sti			\n");
-}
+	//! initialize TSS
+	memset((void *)&TSS, 0, sizeof(tss_entry));
 
-//! same as above but writes the data back into memory first
-void i86_cpu_flush_caches_write()
-{
+	//! set stack and segments
+	TSS.ss0 = kernelSS;
+	TSS.esp0 = kernelESP;
+	TSS.cs = 0x0b;
+	TSS.ss = 0x13;
+	TSS.es = 0x13;
+	TSS.ds = 0x13;
+	TSS.fs = 0x13;
+	TSS.gs = 0x13;
 
-	__asm__ __volatile__("cli			\n"
-											 "wbinvd	\n"
-											 "sti			\n");
-}
-
-//! flushes TLB entry
-void i86_cpu_flush_tlb_entry(uint32_t addr)
-{
-
-	__asm__ __volatile__("cli			\n"
-											 "invlpg (%0)		\n"
-											 "sti		\n" ::"r"(addr));
+	//! flush tss
+	flush_tss(idx * sizeof(gdt_descriptor));
 }
 
 //============================================================================
@@ -113,6 +99,6 @@ void i86_cpu_flush_tlb_entry(uint32_t addr)
 //============================================================================
 //****************************************************************************
 //**
-//**    END[String.cpp]
+//**    END[tss.cpp]
 //**
 //****************************************************************************
