@@ -233,7 +233,8 @@ The system has been halted.\n\n";
 	DebugPuts(sickpc);
 	DebugPuts(disclamer);
 
-	DebugPrintf("*** STOP: %s", fmt);
+	DebugPrintf("*** STOP: ");
+	DebugPrintf(fmt, args);
 
 	for (;;)
 		;
