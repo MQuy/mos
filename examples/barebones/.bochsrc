@@ -1,0 +1,4 @@
+ata0-slave: type=cdrom, path="myos.iso", status=inserted
+boot: cdrom
+log: log/bochs.log
+mouse: enabled=0

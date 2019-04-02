@@ -1,3 +1,9 @@
+### Toolchain
+
+```
+brew install i386-elf-gcc i386-elf-grub bochs
+```
+
 ### Tutorials
 
 #### Memory management

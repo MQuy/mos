@@ -25,7 +25,7 @@ KRNL.elf: ${OBJ}
 # Generic rules for wildcards
 # To make an object, always compile from its .c
 %.o: %.c ${HEADERS}
-	${CC} ${CFLAGS} -ffreestanding -c $< -o $@
+	${CC} ${CFLAGS} -c $< -o $@
 
 %.o: %.asm
 	nasm $< -f elf -o $@
