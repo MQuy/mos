@@ -3,7 +3,7 @@
 /*            Original file taken from Bran's Kernel Development */
 /*            tutorials: http://www.osdever.net/bkerndev/index.php. */
 
-ENTRY(start)
+ENTRY(kernel_main)
 SECTIONS
 {
 

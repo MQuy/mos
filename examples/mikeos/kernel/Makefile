@@ -1,7 +1,7 @@
 C_SOURCES = $(wildcard kernel.c *.c Include/*.c Hal/*.c Keyboard/*.c FileSystem/*.c)
 HEADERS = $(wildcard *.h Include/*.h Hal/*.h Keyboard/*.h FileSystem/*.h)
 # Nice syntax for file extension replacement
-OBJ = ${C_SOURCES:.c=.o Hal/interrupt.o Hal/user.o}
+OBJ = ${C_SOURCES:.c=.o Hal/interrupt.o user.o thread.o}
 
 # Change this if your cross-compiler is somewhere else
 
@@ -28,7 +28,7 @@ KRNL.elf: ${OBJ}
 	${CC} ${CFLAGS} -c $< -o $@
 
 %.o: %.asm
-	nasm $< -f elf -o $@
+	nasm $< -f elf -o $@ 
 
 %.bin: %.asm
 	nasm $< -f bin -o $@

@@ -14,6 +14,7 @@
 
 #include "DebugDisplay.h"
 #include "sysapi.h"
+#include "task.h"
 #include "exception.h"
 #include "mmngr_phys.h"
 #include "mmngr_virtual.h"
@@ -31,16 +32,15 @@ typedef struct memory_region
 
 extern void enter_usermode();
 
-void run();
-KEYCODE getch();
-void cmd();
 void get_cmd(char *buf, int n);
 void cmd_read();
-bool run_cmd(char *cmd_buf);
 void cmd_read_sect();
-void go_user();
+void cmd_thread();
+void cmd_user();
+void run();
+bool run_cmd(char *cmd_buf);
 
-int start(multiboot_info *bootinfo)
+int kernel_main(multiboot_info *bootinfo)
 {
   __asm__ __volatile__("cli  \n"
                        "mov $0x10, %ax \n"
@@ -147,13 +147,6 @@ KEYCODE getch()
   //! discard last keypress (we handled it) and return
   kkybrd_discard_last_key();
   return key;
-}
-
-//! command prompt
-void cmd()
-{
-
-  DebugPrintf("\nCommand> ");
 }
 
 //! gets next command
@@ -287,60 +280,6 @@ void cmd_read()
   DebugPrintf("\n\n\r--------[EOF]--------");
 }
 
-//! our simple command parser
-bool run_cmd(char *cmd_buf)
-{
-  if (strcmp(cmd_buf, "user") == 0)
-  {
-    go_user();
-  }
-
-  //! exit command
-  if (strcmp(cmd_buf, "exit") == 0)
-  {
-    return true;
-  }
-
-  //! clear screen
-  else if (strcmp(cmd_buf, "cls") == 0)
-  {
-    DebugClrScr(0x17);
-  }
-
-  //! help
-  else if (strcmp(cmd_buf, "help") == 0)
-  {
-
-    DebugPuts("\nOS Development Series VFS Programming Demo");
-    DebugPuts("Supported commands:\n");
-    DebugPuts(" - exit: quits and halts the system\n");
-    DebugPuts(" - cls: clears the display\n");
-    DebugPuts(" - help: displays this message\n");
-    DebugPuts(" - read: reads a file\n");
-    DebugPuts(" - reset: Resets and recalibrates floppy for reading\n");
-  }
-
-  //! read sector
-  else if (strcmp(cmd_buf, "read") == 0)
-  {
-    cmd_read();
-  }
-
-  //! read sector
-  else if (strcmp(cmd_buf, "readsect") == 0)
-  {
-    cmd_read_sect();
-  }
-
-  //! invalid command
-  else
-  {
-    DebugPrintf("\nUnkown command");
-  }
-
-  return false;
-}
-
 //! read sector command
 void cmd_read_sect()
 {
@@ -382,7 +321,7 @@ void cmd_read_sect()
 
 // BUG: MQ 2019-03-31 Something is wrong with stackframe causes page fault
 // To make it work, disable `pmmngr_init_region/pmmngr_deinit_region`, seem that memory mapping (Memory.inc) is not correct
-void go_user()
+void cmd_user()
 {
 
   int esp;
@@ -392,6 +331,69 @@ void go_user()
 
   enter_usermode();
   syscall_printf("\nIn user mode");
+}
+
+//! our simple command parser
+bool run_cmd(char *cmd_buf)
+{
+  //! thread
+  if (strcmp(cmd_buf, "thread") == 0)
+  {
+    cmd_thread();
+  }
+
+  //! user mode
+  else if (strcmp(cmd_buf, "user") == 0)
+  {
+    cmd_user();
+  }
+
+  //! exit command
+  else if (strcmp(cmd_buf, "exit") == 0)
+  {
+    return true;
+  }
+
+  //! clear screen
+  else if (strcmp(cmd_buf, "cls") == 0)
+  {
+    DebugClrScr(0x17);
+  }
+
+  //! help
+  else if (strcmp(cmd_buf, "help") == 0)
+  {
+
+    DebugPuts("\nOS Development Series VFS Programming Demo");
+    DebugPuts("Supported commands:\n");
+    DebugPuts(" - exit: quits and halts the system\n");
+    DebugPuts(" - cls: clears the display\n");
+    DebugPuts(" - help: displays this message\n");
+    DebugPuts(" - read: reads a file\n");
+    DebugPuts(" - user: goes to user mode\n");
+    DebugPuts(" - thread: runs multithreading\n");
+    DebugPuts(" - reset: Resets and recalibrates floppy for reading\n");
+  }
+
+  //! read sector
+  else if (strcmp(cmd_buf, "read") == 0)
+  {
+    cmd_read();
+  }
+
+  //! read sector
+  else if (strcmp(cmd_buf, "readsect") == 0)
+  {
+    cmd_read_sect();
+  }
+
+  //! invalid command
+  else
+  {
+    DebugPrintf("\nUnkown command");
+  }
+
+  return false;
 }
 
 void run()
@@ -404,7 +406,7 @@ void run()
   {
 
     //! display prompt
-    cmd();
+    DebugPrintf("\nCommand> ");
 
     //! get command
     get_cmd(cmd_buf, 98);
@@ -413,4 +415,160 @@ void run()
     if (run_cmd(cmd_buf) == true)
       break;
   }
+}
+
+/* sleep for some time. */
+void sleep(int ms)
+{
+
+  if (ms > 1)
+    thread_sleep(ms);
+}
+
+/*** BGA Support ****************************************/
+
+/* We'll be needing this. */
+void outportw(unsigned short portid, unsigned short value)
+{
+  __asm__("out %%ax, %%dx"
+          :
+          : "a"(value), "d"(portid));
+}
+
+/* Definitions for BGA. Reference Graphics 1. */
+#define VBE_DISPI_IOPORT_INDEX 0x01CE
+#define VBE_DISPI_IOPORT_DATA 0x01CF
+#define VBE_DISPI_INDEX_XRES 0x1
+#define VBE_DISPI_INDEX_YRES 0x2
+#define VBE_DISPI_INDEX_BPP 0x3
+#define VBE_DISPI_INDEX_ENABLE 0x4
+#define VBE_DISPI_DISABLED 0x00
+#define VBE_DISPI_ENABLED 0x01
+#define VBE_DISPI_LFB_ENABLED 0x40
+
+/* writes to BGA port. */
+void VbeBochsWrite(uint16_t index, uint16_t value)
+{
+  outportw(VBE_DISPI_IOPORT_INDEX, index);
+  outportw(VBE_DISPI_IOPORT_DATA, value);
+}
+
+/* sets video mode. */
+void VbeBochsSetMode(uint16_t xres, uint16_t yres, uint16_t bpp)
+{
+  VbeBochsWrite(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_DISABLED);
+  VbeBochsWrite(VBE_DISPI_INDEX_XRES, xres);
+  VbeBochsWrite(VBE_DISPI_INDEX_YRES, yres);
+  VbeBochsWrite(VBE_DISPI_INDEX_BPP, bpp);
+  VbeBochsWrite(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_ENABLED | VBE_DISPI_LFB_ENABLED);
+}
+
+/* video mode info. */
+#define WIDTH 800
+#define HEIGHT 600
+#define BPP 32
+#define BYTES_PER_PIXEL 4
+
+/* BGA LFB is at LFB_PHYSICAL. */
+#define LFB_PHYSICAL 0xE0000000
+#define LFB_VIRTUAL 0x300000
+#define PAGE_SIZE 0x1000
+
+/* map LFB into current process address space. */
+void *VbeBochsMapLFB()
+{
+  int pfcount = WIDTH * HEIGHT * BYTES_PER_PIXEL / PAGE_SIZE;
+  for (int c = 0; c <= pfcount; c++)
+    vmmngr_mapPhysicalAddress(vmmngr_get_directory(), LFB_VIRTUAL + c * PAGE_SIZE, LFB_PHYSICAL + c * PAGE_SIZE, 7);
+  return (void *)LFB_VIRTUAL;
+}
+
+/* clear screen to white. */
+void fillScreen32()
+{
+  uint32_t *lfb = (uint32_t *)LFB_VIRTUAL;
+  for (uint32_t c = 0; c < WIDTH * HEIGHT; c++)
+    lfb[c] = 0xffffffff;
+}
+
+/* render rectangle in 32 bpp modes. */
+void rect32(int x, int y, int w, int h, int col)
+{
+  uint32_t *lfb = (uint32_t *)LFB_VIRTUAL;
+  for (uint32_t k = 0; k < h; k++)
+    for (uint32_t j = 0; j < w; j++)
+      lfb[(j + x) + (k + y) * WIDTH] = col;
+}
+
+/* thread cycles through colors of red. */
+void kthread_1()
+{
+  int col = 0;
+  bool dir = true;
+  while (1)
+  {
+    rect32(200, 250, 100, 100, col << 16);
+    if (dir)
+    {
+      if (col++ == 0xfe)
+        dir = false;
+    }
+    else if (col-- == 1)
+      dir = true;
+  }
+}
+
+/* thread cycles through colors of green. */
+void kthread_2()
+{
+  int col = 0;
+  bool dir = true;
+  while (1)
+  {
+    rect32(350, 250, 100, 100, col << 8);
+    if (dir)
+    {
+      if (col++ == 0xfe)
+        dir = false;
+    }
+    else if (col-- == 1)
+      dir = true;
+  }
+}
+
+/* thread cycles through colors of blue. */
+void kthread_3()
+{
+  int col = 0;
+  bool dir = true;
+  while (1)
+  {
+    rect32(500, 250, 100, 100, col);
+    if (dir)
+    {
+      if (col++ == 0xfe)
+        dir = false;
+    }
+    else if (col-- == 1)
+      dir = true;
+  }
+}
+
+void cmd_thread()
+{
+  /* set video mode and map framebuffer. */
+  VbeBochsSetMode(WIDTH, HEIGHT, BPP);
+  VbeBochsMapLFB();
+  fillScreen32();
+
+  /* init scheduler. */
+  scheduler_initialize();
+
+  // /* create kernel threads. */
+  queue_insert(thread_create(kthread_1, (uint32_t)create_kernel_stack(), true));
+  queue_insert(thread_create(kthread_2, (uint32_t)create_kernel_stack(), true));
+  queue_insert(thread_create(kthread_3, (uint32_t)create_kernel_stack(), true));
+
+  // /* execute idle thread. */
+  execute_idle();
 }

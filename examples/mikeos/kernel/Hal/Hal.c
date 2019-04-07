@@ -192,13 +192,13 @@ int get_tick_count()
 }
 
 //! sleeps a little bit. This uses the HALs get_tick_count() which in turn uses the PIT
-void sleep(int ms)
-{
-	int currentTick = get_tick_count();
-	int endTick = ms + currentTick;
-	while (endTick > get_tick_count())
-		;
-}
+// void sleep(int ms)
+// {
+// 	int currentTick = get_tick_count();
+// 	int endTick = ms + currentTick;
+// 	while (endTick > get_tick_count())
+// 		;
+// }
 
 //============================================================================
 //    INTERFACE CLASS BODIES

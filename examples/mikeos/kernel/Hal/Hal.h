@@ -82,7 +82,7 @@ const char *get_cpu_vender();
 //! returns current tick count (Only for demo)
 int get_tick_count();
 
-void sleep(int ms);
+// void sleep(int ms);
 //============================================================================
 //    INTERFACE OBJECT CLASS DEFINITIONS
 //============================================================================

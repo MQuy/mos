@@ -1,0 +1,6 @@
+megs: 32
+floppya: 1_44=floppy.img, status=inserted    
+boot: a
+log: log/bochs.log
+clock: sync=realtime
+mouse: enabled=0

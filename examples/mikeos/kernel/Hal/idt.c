@@ -162,10 +162,9 @@ int i86_idt_initialize(uint16_t codeSel)
 	setvect(29, (I86_IRQ_HANDLER)isr29);
 	setvect(30, (I86_IRQ_HANDLER)isr30);
 	setvect(31, (I86_IRQ_HANDLER)isr31);
-	setvect_flags(DISPATCHER_ISR, (I86_IRQ_HANDLER)isr128, I86_IDT_DESC_RING3);
 
 	// Install the IRQs
-	setvect(32, (I86_IRQ_HANDLER)irq0);
+	setvect_flags(32, (I86_IRQ_HANDLER)irq0, 0x80);
 	setvect(33, (I86_IRQ_HANDLER)irq1);
 	setvect(34, (I86_IRQ_HANDLER)irq2);
 	setvect(35, (I86_IRQ_HANDLER)irq3);
@@ -181,6 +180,8 @@ int i86_idt_initialize(uint16_t codeSel)
 	setvect(45, (I86_IRQ_HANDLER)irq13);
 	setvect(46, (I86_IRQ_HANDLER)irq14);
 	setvect(47, (I86_IRQ_HANDLER)irq15);
+
+	setvect_flags(DISPATCHER_ISR, (I86_IRQ_HANDLER)isr128, I86_IDT_DESC_RING3);
 
 	//! install our idt
 	idt_install();

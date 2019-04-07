@@ -59,14 +59,14 @@ physical_addr _cur_pdbr = 0;
 //    INTERFACE FUNCTIONS
 //============================================================================
 
-uint32_t vmmngr_ptable_virt_to_index(virtual_addr addr)
+inline uint32_t vmmngr_ptable_virt_to_index(virtual_addr addr)
 {
 
         //! return index only if address doesnt exceed page table address space size
         return (addr >= PTABLE_ADDR_SPACE_SIZE) ? 0 : addr / PAGE_SIZE;
 }
 
-pt_entry *vmmngr_ptable_lookup_entry(ptable *p, virtual_addr addr)
+inline pt_entry *vmmngr_ptable_lookup_entry(ptable *p, virtual_addr addr)
 {
 
         if (p)
@@ -74,28 +74,28 @@ pt_entry *vmmngr_ptable_lookup_entry(ptable *p, virtual_addr addr)
         return 0;
 }
 
-void vmmngr_ptable_clear(ptable *p)
+inline void vmmngr_ptable_clear(ptable *p)
 {
 
         if (p)
                 memset(p, 0, sizeof(ptable));
 }
 
-void vmmngr_pdirectory_clear(pdirectory *dir)
+inline void vmmngr_pdirectory_clear(pdirectory *dir)
 {
 
         if (dir)
                 memset(dir, 0, sizeof(pdirectory));
 }
 
-uint32_t vmmngr_pdirectory_virt_to_index(virtual_addr addr)
+inline uint32_t vmmngr_pdirectory_virt_to_index(virtual_addr addr)
 {
 
         //! return index only if address doesnt exceed 4gb (page directory address space size)
         return (addr >= DTABLE_ADDR_SPACE_SIZE) ? 0 : addr / PAGE_SIZE;
 }
 
-pd_entry *vmmngr_pdirectory_lookup_entry(pdirectory *p, virtual_addr addr)
+inline pd_entry *vmmngr_pdirectory_lookup_entry(pdirectory *p, virtual_addr addr)
 {
 
         if (p)
@@ -103,7 +103,7 @@ pd_entry *vmmngr_pdirectory_lookup_entry(pdirectory *p, virtual_addr addr)
         return 0;
 }
 
-bool vmmngr_switch_pdirectory(pdirectory *dir)
+inline bool vmmngr_switch_pdirectory(pdirectory *dir)
 {
 
         if (!dir)

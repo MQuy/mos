@@ -1,3 +1,5 @@
+#!/bin/bash
+
 rm -rf ./Stage1/Boot1.bin #remove without confirmation
 rm -rf ./Stage2/KRNLDR.SYS
 rm -rf ./Kernel/KRNL.SYS
@@ -18,4 +20,10 @@ echo 'unmounted folder'
 hdiutil detach ${dev}
 rm -rf ./tmp-loop
 echo 'done'
-qemu-system-i386 -s -boot a -drive format=raw,file=./floppy.img,index=0,if=floppy -d guest_errors,int
+
+if [ "$1" == "qemu" ]
+then
+  qemu-system-i386 -s -boot a -drive format=raw,file=./floppy.img,index=0,if=floppy -d guest_errors,int
+else
+  bochs -f .bochsrc -q -rc .debugrc
+fi

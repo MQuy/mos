@@ -51,25 +51,47 @@ static uint32_t _mmngr_max_blocks = 0;
 static uint32_t *_mmngr_memory_map = 0;
 
 //============================================================================
+//    INTERFACE DATA
+//============================================================================
+//============================================================================
+//    IMPLEMENTATION PRIVATE FUNCTION PROTOTYPES
+//============================================================================
+
+//! set any bit (frame) within the memory map bit array
+inline void mmap_set(int bit);
+
+//! unset any bit (frame) within the memory map bit array
+inline void mmap_unset(int bit);
+
+//! test any bit (frame) within the memory map bit array
+inline bool mmap_test(int bit);
+
+//! finds first free frame in the bit array and returns its index
+int mmap_first_free();
+
+//! finds first free "size" number of frames and returns its index
+int mmap_first_free_s(size_t size);
+
+//============================================================================
 //    IMPLEMENTATION PRIVATE FUNCTIONS
 //============================================================================
 
 //! set any bit (frame) within the memory map bit array
-void mmap_set(int bit)
+static inline void mmap_set(int bit)
 {
 
 	_mmngr_memory_map[bit / 32] |= (1 << (bit % 32));
 }
 
 //! unset any bit (frame) within the memory map bit array
-void mmap_unset(int bit)
+static inline void mmap_unset(int bit)
 {
 
 	_mmngr_memory_map[bit / 32] &= ~(1 << (bit % 32));
 }
 
 //! test if any bit (frame) is set within the memory map bit array
-bool mmap_test(int bit)
+static inline bool mmap_test(int bit)
 {
 
 	return _mmngr_memory_map[bit / 32] & (1 << (bit % 32));
