@@ -1,0 +1,5 @@
+megs: 128
+ata0-slave: type=cdrom, path="mos.iso", status=inserted
+boot: cdrom
+log: log/bochs.log
+mouse: enabled=0
