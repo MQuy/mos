@@ -23,18 +23,50 @@ inline bool memory_bitmap_test(uint32_t frame)
 inline int memory_bitmap_first_free()
 {
   for (uint32_t i = 0; i < max_frames / 32; ++i)
-  {
     if (memory_bitmap[i] != 0xffffffff)
-    {
       for (uint32_t j = 0; j < 32; ++j)
       {
-        if (memory_bitmap[i] & (1 < j))
-        {
+        int bit = 1 << j;
+        if (!(memory_bitmap[i] & bit))
           return i * 32 + j;
+      }
+
+  return -1;
+}
+
+inline int memory_bitmap_first_frees(size_t size)
+{
+  if (size == 0)
+    return -1;
+
+  if (size == 1)
+    return memory_bitmap_first_free();
+
+  for (uint32_t i = 0; i < max_frames / 32; i++)
+    if (memory_bitmap[i] != 0xffffffff)
+      for (int j = 0; j < 32; j++)
+      { //! test each bit in the dword
+
+        int bit = 1 << j;
+        if (!(memory_bitmap[i] & bit))
+        {
+
+          int startingBit = i * 32;
+          startingBit += bit; //get the free bit in the dword at index i
+
+          uint32_t free = 0; //loop through each bit to see if its enough space
+          for (uint32_t count = 0; count <= size; count++)
+          {
+
+            if (!memory_bitmap_test(startingBit + count))
+              free++; // this bit is clear (free frame)
+
+            if (free == size)
+              return i * 32 + j; //free count==size needed; return index
+          }
         }
       }
-    }
-  }
+
   return -1;
 }
 
@@ -76,19 +108,35 @@ void pmm_deinit_region(physical_addr add, uint32_t length)
 void *pmm_alloc_block()
 {
   if (max_frames <= used_frames)
-  {
     return 0;
-  }
 
   int frame = memory_bitmap_first_free();
 
   if (frame == -1)
-  {
     return 0;
-  }
 
   memory_bitmap_set(frame);
   used_frames++;
+
+  physical_addr addr = frame * PMM_FRAME_SIZE;
+  return (void *)addr;
+}
+
+void *pmm_alloc_blocks(size_t size)
+{
+  if (max_frames - used_frames < size)
+    return 0;
+
+  int frame = memory_bitmap_first_frees(size);
+
+  if (frame == -1)
+    return 0;
+
+  for (int i = 0; i < size; ++i)
+  {
+    memory_bitmap_set(frame + i);
+    used_frames++;
+  }
 
   physical_addr addr = frame * PMM_FRAME_SIZE;
   return (void *)addr;

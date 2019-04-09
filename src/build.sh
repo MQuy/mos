@@ -15,3 +15,4 @@ cp grub.cfg isodir/boot/grub/grub.cfg
 i386-elf-grub-mkrescue -o mos.iso isodir
 
 bochs -f .bochsrc -q -rc .debugrc
+# qemu-system-i386 -cdrom mos.iso -m 64M
