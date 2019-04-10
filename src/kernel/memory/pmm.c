@@ -5,6 +5,10 @@ uint32_t max_frames = 0;
 uint32_t used_frames = 0;
 uint32_t memory_size = 0;
 
+void pmm_regions(multiboot_info_t *);
+void pmm_init_region(uint32_t addr, uint32_t length);
+void pmm_deinit_region(uint32_t add, uint32_t length);
+
 inline void memory_bitmap_set(uint32_t frame)
 {
   memory_bitmap[frame / 32] |= (1 << (frame % 32));
@@ -77,6 +81,25 @@ void pmm_init(multiboot_info_t *boot_info)
   used_frames = max_frames = div_ceil(memory_size * 1024, PMM_FRAME_SIZE);
 
   memset(memory_bitmap, 0xff, div_ceil(max_frames, PMM_FRAMES_PER_BYTE));
+
+  pmm_regions(boot_info);
+}
+
+void pmm_regions(multiboot_info_t *boot_info)
+{
+  multiboot_memory_map_t *region = (multiboot_memory_map_t *)boot_info->mmap_addr;
+
+  for (int i = 0; region < boot_info->mmap_addr + boot_info->mmap_length; i++)
+  {
+    if (region->type > 4 && region->addr == 0)
+      break;
+
+    if (region->type == 1)
+      pmm_init_region(region->addr, region->len);
+
+    region = (multiboot_memory_map_t *)((unsigned long)region + region->size + sizeof(region->size));
+  }
+  pmm_deinit_region(0x100000, KERNEL_END - KERNEL_START);
 }
 
 void pmm_init_region(physical_addr addr, uint32_t length)

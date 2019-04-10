@@ -1,5 +1,5 @@
-C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c)
-HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h)
+C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c cpu/*.c)
+HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h cpu/*.h)
 
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.c=.o}
