@@ -8,20 +8,12 @@
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 
-char *strMemoryTypes[] = {
-
-    "Available",
-    "Reserved",
-    "ACPI Reclaim",
-    "ACPI NVS Memory",
-    "Bad Memory"};
-
 int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 {
 
   if (boot_magic != MULTIBOOT_BOOTLOADER_MAGIC)
   {
-    DebugPrintf("Bootloader MAGIC is invalid... Halting\n");
+    DebugPrintf("\nBootloader MAGIC is invalid... Halting");
     return -1;
   }
 
@@ -35,6 +27,8 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   pmm_init(boot_info);
   vmm_init();
 
-  DebugPrintf("\nExit mos");
+  __asm__ __volatile__("int $5");
+
+  DebugPrintf("\nHalting ...");
   return 0;
 }

@@ -2,7 +2,7 @@ C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c cpu/*.c)
 HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h cpu/*.h)
 
 # Nice syntax for file extension replacement
-OBJ = ${C_SOURCES:.c=.o}
+OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o cpu/descriptor.o}
 
 CC = /usr/local/bin/i386-elf-gcc
 LD = /usr/local/bin/i386-elf-ld
