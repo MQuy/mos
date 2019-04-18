@@ -6,6 +6,7 @@
 void enable_interrupts();
 void disable_interrupts();
 void halt();
+void io_wait();
 
 unsigned char inportb(unsigned short id);
 void outportb(unsigned short id, unsigned char value);

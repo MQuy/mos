@@ -3,43 +3,29 @@
 
 #include <stdint.h>
 
-//! The following devices use PIC 1 to generate interrupts
-#define I86_PIC_IRQ_TIMER 0
-#define I86_PIC_IRQ_KEYBOARD 1
-#define I86_PIC_IRQ_SERIAL2 3
-#define I86_PIC_IRQ_SERIAL1 4
-#define I86_PIC_IRQ_PARALLEL2 5
-#define I86_PIC_IRQ_DISKETTE 6
-#define I86_PIC_IRQ_PARALLEL1 7
+/* reinitialize the PIC controllers, giving them specified vector offsets
+   rather than 8h and 70h, as configured by default */
 
-//! The following devices use PIC 2 to generate interrupts
-#define I86_PIC_IRQ_CMOSTIMER 0
-#define I86_PIC_IRQ_CGARETRACE 1
-#define I86_PIC_IRQ_AUXILIARY 4
-#define I86_PIC_IRQ_FPU 5
-#define I86_PIC_IRQ_HDC 6
+#define ICW1_ICW4 0x01      /* ICW4 (not) needed */
+#define ICW1_SINGLE 0x02    /* Single (cascade) mode */
+#define ICW1_INTERVAL4 0x04 /* Call address interval 4 (8) */
+#define ICW1_LEVEL 0x08     /* Level triggered (edge) mode */
+#define ICW1_INIT 0x10      /* Initialization - required! */
 
-//-----------------------------------------------
-//	Command words are used to control the devices
-//-----------------------------------------------
+#define ICW4_8086 0x01       /* 8086/88 (MCS-80/85) mode */
+#define ICW4_AUTO 0x02       /* Auto (normal) EOI */
+#define ICW4_BUF_SLAVE 0x08  /* Buffered mode/slave */
+#define ICW4_BUF_MASTER 0x0C /* Buffered mode/master */
+#define ICW4_SFNM 0x10       /* Special fully nested (not) */
 
-//! Command Word 2 bit masks. Use when sending commands
-#define I86_PIC_OCW2_MASK_L1 1        //00000001
-#define I86_PIC_OCW2_MASK_L2 2        //00000010
-#define I86_PIC_OCW2_MASK_L3 4        //00000100
-#define I86_PIC_OCW2_MASK_EOI 0x20    //00100000
-#define I86_PIC_OCW2_MASK_SL 0x40     //01000000
-#define I86_PIC_OCW2_MASK_ROTATE 0x80 //10000000
+#define PIC1 0x20 /* IO base address for master PIC */
+#define PIC2 0xA0 /* IO base address for slave PIC */
+#define PIC1_COMMAND PIC1
+#define PIC1_DATA (PIC1 + 1)
+#define PIC2_COMMAND PIC2
+#define PIC2_DATA (PIC2 + 1)
+#define PIC_EOI 0x20 /* End-of-interrupt command code */
 
-//! Command Word 3 bit masks. Use when sending commands
-#define I86_PIC_OCW3_MASK_RIS 1     //00000001
-#define I86_PIC_OCW3_MASK_RIR 2     //00000010
-#define I86_PIC_OCW3_MASK_MODE 4    //00000100
-#define I86_PIC_OCW3_MASK_SMM 0x20  //00100000
-#define I86_PIC_OCW3_MASK_ESMM 0x40 //01000000
-#define I86_PIC_OCW3_MASK_D7 0x80   //10000000
-
-//! Send operational command to pic
-void i86_pic_send_command(uint8_t cmd, uint8_t picNum);
+void pic_remap();
 
 #endif

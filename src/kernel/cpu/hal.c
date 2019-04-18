@@ -18,6 +18,15 @@ void outportb(unsigned short portid, unsigned char value)
           : "a"(value), "d"(portid));
 }
 
+void io_wait()
+{
+  /* Port 0x80 is used for 'checkpoints' during POST. */
+  /* The Linux kernel seems to think it is free for use :-/ */
+  __asm__ __volatile__("outb %%al, $0x80"
+                       :
+                       : "a"(0));
+}
+
 //! enable all hardware interrupts
 void enable_interrupts()
 {

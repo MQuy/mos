@@ -48,6 +48,7 @@ typedef void (*I86_IRQ_HANDLER)(interrupt_registers *registers);
 
 void idt_init();
 void setvect(uint8_t i, I86_IRQ_HANDLER irq);
+void register_interrupt_handler(uint8_t n, I86_IRQ_HANDLER handler);
 
 /* ISRs reserved for CPU exceptions */
 extern void isr0();

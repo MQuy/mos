@@ -108,6 +108,13 @@ void idt_init()
   setvect(DISPATCHER_ISR, (I86_IRQ_HANDLER)isr127);
 
   idt_flush((uint32_t)&_idtr);
+
+  pic_remap();
+}
+
+void register_interrupt_handler(uint8_t n, I86_IRQ_HANDLER handler)
+{
+  interrupt_handlers[n] = handler;
 }
 
 void handle_interrupt(interrupt_registers *reg)
@@ -133,8 +140,8 @@ void isr_handler(interrupt_registers *reg)
 void irq_handler(interrupt_registers *reg)
 {
   if (reg->int_no >= 40)
-    i86_pic_send_command(I86_PIC_OCW2_MASK_EOI, 1);
-  i86_pic_send_command(I86_PIC_OCW2_MASK_EOI, 0);
+    outportb(PIC2_COMMAND, PIC_EOI);
+  outportb(PIC1_COMMAND, PIC_EOI);
 
   handle_interrupt(reg);
 }

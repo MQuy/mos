@@ -3,10 +3,12 @@
 #include <stdint.h>
 #include "include/multiboot.h"
 #include "graphics/DebugDisplay.h"
-#include "memory/pmm.h"
-#include "memory/vmm.h"
+#include "cpu/hal.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
+#include "cpu/pit.h"
+#include "memory/pmm.h"
+#include "memory/vmm.h"
 
 int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 {
@@ -23,12 +25,17 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 
   gdt_init();
   idt_init();
+  pit_init();
+
+  enable_interrupts();
 
   pmm_init(boot_info);
   vmm_init();
 
-  __asm__ __volatile__("int $5");
-
   DebugPrintf("\nHalting ...");
+
+  for (;;)
+    ;
+
   return 0;
 }
