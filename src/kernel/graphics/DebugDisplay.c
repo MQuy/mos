@@ -11,6 +11,7 @@
 //============================================================================
 
 #include "DebugDisplay.h"
+#include "../cpu/hal.h"
 #include "../include/string.h"
 
 //============================================================================
@@ -57,10 +58,10 @@ void DebugUpdateCur(int x, int y)
 	uint16_t cursorLocation = y * 80 + x;
 
 	// send location to vga controller to set cursor
-	// outportb(0x3D4, 14);
-	// outportb(0x3D5, cursorLocation >> 8); // Send the high byte.
-	// outportb(0x3D4, 15);
-	// outportb(0x3D5, cursorLocation); // Send the low byte.
+	outportb(0x3D4, 14);
+	outportb(0x3D5, cursorLocation >> 8); // Send the high byte.
+	outportb(0x3D4, 15);
+	outportb(0x3D5, cursorLocation); // Send the low byte.
 }
 
 void scroll()

@@ -1,3 +1,4 @@
+#include "idt.h"
 #include "pic.h"
 #include "pit.h"
 #include "../graphics/DebugDisplay.h"
@@ -20,5 +21,5 @@ void pit_init()
   outportb(PIT_REG_COUNTER, divisor & 0xff);
   outportb(PIT_REG_COUNTER, (divisor >> 8) & 0xff);
 
-  register_interrupt_handler(32, pit_handler);
+  register_interrupt_handler(IRQ0, pit_handler);
 }
