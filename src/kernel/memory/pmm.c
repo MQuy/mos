@@ -100,6 +100,7 @@ void pmm_regions(multiboot_info_t *boot_info)
     region = (multiboot_memory_map_t *)((unsigned long)region + region->size + sizeof(region->size));
   }
   pmm_deinit_region(0x100000, KERNEL_END - KERNEL_START);
+  pmm_deinit_region(0x0, 0x10000);
 }
 
 void pmm_init_region(physical_addr addr, uint32_t length)

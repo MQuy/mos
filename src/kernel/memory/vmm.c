@@ -4,6 +4,13 @@
 #define PAGE_TABLE_INDEX(x) (((x) >> 12) & 0x3ff)
 #define PAGE_GET_PHYSICAL_ADDRESS(x) (*x & ~0xfff)
 
+void vmm_init_and_map(pdirectory *, virtual_addr, physical_addr);
+void pt_entry_add_attrib(pt_entry *, uint32_t);
+void pt_entry_set_frame(pt_entry *, uint32_t);
+void pd_entry_add_attrib(pd_entry *, uint32_t);
+void pd_entry_set_frame(pd_entry *, uint32_t);
+void vmm_paging(pdirectory *);
+
 void vmm_init()
 {
   // initialize page table directory
@@ -29,12 +36,12 @@ void vmm_init_and_map(pdirectory *directory, virtual_addr virtual, physical_addr
   for (int i = 0; i < 1024; ++i, ivirtual += 4096, iframe += 4096)
   {
     pt_entry *entry = &table->m_entries[PAGE_TABLE_INDEX(ivirtual)];
-    pt_entry_add_attrib(entry, I86_PDE_PRESENT);
+    pt_entry_add_attrib(entry, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     pt_entry_set_frame(entry, iframe);
   }
 
   pd_entry *entry = &directory->m_entries[PAGE_DIRECTORY_INDEX(virtual)];
-  pd_entry_add_attrib(entry, I86_PDE_PRESENT | I86_PDE_WRITABLE);
+  pd_entry_add_attrib(entry, I86_PDE_PRESENT | I86_PDE_WRITABLE | I86_PDE_USER);
   pd_entry_set_frame(entry, table);
 }
 

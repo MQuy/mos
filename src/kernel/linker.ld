@@ -24,6 +24,7 @@ SECTIONS
 	.data BLOCK(4K) : ALIGN(4K)
 	{
 		*(.data)
+		*(.symbols)
 	}
  
 	/* Read-write data (uninitialized) and stack */
@@ -31,6 +32,7 @@ SECTIONS
 	{
 		*(COMMON)
 		*(.bss)
+		*(.stack)
 	}
  
 	kernel_end = .;

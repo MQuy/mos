@@ -1,7 +1,7 @@
 ### Toolchain
 
 ```
-brew install i386-elf-gcc i386-elf-grub bochs
+brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs
 ```
 
 ### Tutorials

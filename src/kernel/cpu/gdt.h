@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 //! maximum amount of descriptors allowed
-#define MAX_DESCRIPTORS 3
+#define MAX_DESCRIPTORS 6
 
 /***	 gdt descriptor access bit flags.	***/
 
@@ -69,5 +69,6 @@ typedef struct gdtr
 } __attribute__((packed)) gdtr;
 
 void gdt_init();
+void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t access, uint8_t grand);
 
 #endif

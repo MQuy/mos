@@ -17,9 +17,9 @@ enter_usermode:
 	push eax
 
 	push 0x1b		; CS, user mode code selector is 0x18. With RPL 3 this is 0x1b
-	lea eax, [a]	; EIP first
+	lea eax, [user_start]	; EIP first
 	push eax
 	iretd
 
-a:
+user_start:
 	add esp, 4 

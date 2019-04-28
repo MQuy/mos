@@ -3,6 +3,8 @@
 #include "../graphics/DebugDisplay.h"
 #include "../include/string.h"
 
+extern void idt_flush(uint32_t);
+
 static struct idt_descriptor _idt[I86_MAX_INTERRUPTS];
 static struct idtr _idtr;
 
@@ -10,13 +12,12 @@ I86_IRQ_HANDLER interrupt_handlers[256];
 
 void handle_interrupt(interrupt_registers *);
 void i86_default_handler(interrupt_registers *regs);
-void idt_install_ir(uint8_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq);
-extern void idt_flush(uint32_t);
+void idt_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq);
 
-void idt_install_ir(uint8_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq)
+void idt_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq)
 {
   if (i > I86_MAX_INTERRUPTS)
-    return 0;
+    return;
 
   uint64_t base = (uint64_t) & (*irq);
 
@@ -30,6 +31,11 @@ void idt_install_ir(uint8_t i, uint16_t flags, uint16_t sel, I86_IRQ_HANDLER irq
 void setvect(uint8_t i, I86_IRQ_HANDLER irq)
 {
   idt_install_ir(i, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32, 0x8, irq);
+}
+
+void setvect_flags(uint8_t i, I86_IRQ_HANDLER irq, uint32_t flags)
+{
+  idt_install_ir(i, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32 | flags, 0x8, irq);
 }
 
 void i86_default_handler(interrupt_registers *regs)
@@ -105,7 +111,7 @@ void idt_init()
   setvect(46, (I86_IRQ_HANDLER)irq14);
   setvect(47, (I86_IRQ_HANDLER)irq15);
 
-  setvect(DISPATCHER_ISR, (I86_IRQ_HANDLER)isr127);
+  setvect_flags(DISPATCHER_ISR, (I86_IRQ_HANDLER)isr127, I86_IDT_DESC_RING3);
 
   idt_flush((uint32_t)&_idtr);
 
