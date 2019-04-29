@@ -11,6 +11,8 @@ void pd_entry_add_attrib(pd_entry *, uint32_t);
 void pd_entry_set_frame(pd_entry *, uint32_t);
 void vmm_paging(pdirectory *);
 
+pdirectory *_current_dir;
+
 void vmm_init()
 {
   // initialize page table directory
@@ -47,6 +49,7 @@ void vmm_init_and_map(pdirectory *directory, virtual_addr virtual, physical_addr
 
 void vmm_paging(pdirectory *directory)
 {
+  _current_dir = directory;
   __asm__ __volatile__("mov %0, %%cr3         \n"
                        "mov %%cr0, %%ecx      \n"
                        "or $0x80000000, %%ecx \n"
@@ -71,4 +74,35 @@ void pd_entry_add_attrib(pd_entry *e, uint32_t attr)
 void pd_entry_set_frame(pd_entry *e, uint32_t addr)
 {
   *e = (*e & ~I86_PDE_FRAME) | addr;
+}
+
+pdirectory *vmm_get_directory()
+{
+  return _current_dir;
+}
+
+void vmm_map_phyiscal_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags)
+{
+  if (!dir->m_entries[PAGE_DIRECTORY_INDEX(virt)])
+    vmm_create_page_table(dir, virt, flags);
+
+  ptable *pt = dir->m_entries[PAGE_DIRECTORY_INDEX(virt)] & ~0xfff;
+  pt_entry *entry = &pt->m_entries[PAGE_TABLE_INDEX(virt)];
+  pt_entry_set_frame(entry, phys);
+  pt_entry_add_attrib(entry, flags);
+}
+
+void vmm_create_page_table(pdirectory *dir, uint32_t virt, uint32_t flags)
+{
+  if (dir->m_entries[PAGE_DIRECTORY_INDEX(virt)])
+    return;
+
+  int ptable_frame_count = div_ceil(sizeof(ptable), PMM_FRAME_SIZE);
+
+  ptable *table = (ptable *)pmm_alloc_blocks(ptable_frame_count);
+  memset(table, 0, sizeof(table));
+
+  pd_entry *pd = &dir->m_entries[PAGE_DIRECTORY_INDEX(virt)];
+  pd_entry_set_frame(pd, table);
+  pd_entry_add_attrib(pd, flags);
 }

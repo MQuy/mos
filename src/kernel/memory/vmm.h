@@ -60,5 +60,7 @@ typedef struct pdirectory
 } pdirectory;
 
 void vmm_init();
+pdirectory *vmm_get_directory();
+void vmm_map_phyiscal_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
 
 #endif
