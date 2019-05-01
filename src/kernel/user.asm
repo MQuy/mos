@@ -1,5 +1,5 @@
-extern in_usermode
-global enter_usermode
+[extern in_usermode]
+[global enter_usermode]
 
 enter_usermode:
 	cli
@@ -23,7 +23,7 @@ enter_usermode:
 	push in_usermode ;may need to remove the _ for this to work right 
 	iret
 
-global tss_flush   ; Allows our C code to call tss_flush().
+[global tss_flush]   ; Allows our C code to call tss_flush().
 
 tss_flush:
    mov ax, 0x2B      ; Load the index of our TSS structure - The index is
