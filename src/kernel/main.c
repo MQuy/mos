@@ -11,11 +11,10 @@
 #include "system/sysapi.h"
 #include "system/exception.h"
 #include "system/task.h"
+#include "system/user.h"
 #include "devices/kybrd.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
-
-extern void enter_usermode();
 
 int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 {
@@ -51,30 +50,15 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   // register system apis
   syscall_init();
 
-  run_thread();
+  // run_thread();
 
   // setup stack and enter user mode
-  // setup_and_enter_usermode();
+  setup_and_enter_usermode();
 
   for (;;)
     ;
 
   return 0;
-}
-
-void setup_and_enter_usermode()
-{
-  int esp;
-  __asm__ __volatile__("mov %%esp, %0"
-                       : "=r"(esp));
-  tss_set_stack(0x10, esp);
-
-  enter_usermode();
-}
-
-void in_usermode()
-{
-  syscall_printf("\nIn usermode");
 }
 
 void kthread_1()

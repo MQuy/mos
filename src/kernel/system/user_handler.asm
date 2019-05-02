@@ -10,7 +10,7 @@ enter_usermode:
 	mov fs,ax 
 	mov gs,ax ;we don't need to worry about SS. it's handled by iret
 
-	mov eax,esp
+	mov eax,[esp+4]
 	push 0x23 ;user data segment with bottom 2 bits set for ring 3
 	push eax ;push our current stack just for the heck of it
 	pushf			; EFLAGS
@@ -20,7 +20,7 @@ enter_usermode:
 	push eax
 
 	push 0x1B; ;user code segment with bottom 2 bits set for ring 3
-	push in_usermode ;may need to remove the _ for this to work right 
+	push in_usermode  ;may need to remove the _ for this to work right 
 	iret
 
 [global tss_flush]   ; Allows our C code to call tss_flush().

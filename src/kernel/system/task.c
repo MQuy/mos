@@ -14,7 +14,7 @@ thread _ready_queue[MAX_THREAD];
 int _queue_first = 0, _queue_last = 0, _queue_current;
 int _kernel_stack_index = 0;
 
-void *create_kernel_stack()
+uint32_t create_kernel_stack()
 {
   physical_addr pAddr;
   virtual_addr vAddr;
@@ -25,12 +25,11 @@ void *create_kernel_stack()
     return 0;
 
   vAddr = KERNEL_STACK_ALLOC_BASE + _kernel_stack_index * PMM_FRAME_SIZE;
-  vmm_map_phyiscal_address(vmm_get_directory(), vAddr, pAddr, 3);
+  vmm_map_phyiscal_address(vmm_get_directory(), vAddr, pAddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 
-  void *ret = vAddr + PMM_FRAME_SIZE;
   _kernel_stack_index++;
 
-  return ret;
+  return vAddr + PMM_FRAME_SIZE;
 }
 
 thread create_thread(void *func, uint32_t esp)

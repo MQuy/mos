@@ -9,6 +9,7 @@ void pt_entry_add_attrib(pt_entry *, uint32_t);
 void pt_entry_set_frame(pt_entry *, uint32_t);
 void pd_entry_add_attrib(pd_entry *, uint32_t);
 void pd_entry_set_frame(pd_entry *, uint32_t);
+void vmm_create_page_table(pdirectory *dir, uint32_t virt, uint32_t flags);
 void vmm_paging(pdirectory *);
 
 pdirectory *_current_dir;

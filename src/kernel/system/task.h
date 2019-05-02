@@ -20,7 +20,7 @@ void task_start();
 uint32_t task_schedule(uint32_t esp);
 
 thread create_thread(void *func, uint32_t esp);
-void *create_kernel_stack();
+uint32_t create_kernel_stack();
 
 bool queue_push(thread t);
 
