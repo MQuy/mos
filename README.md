@@ -1,10 +1,26 @@
-### Toolchain
+## mOS
+
+mOS is the hobby operating system which is developed from scratch
+
+### Work-in-process features
+
+- [ ] Filesystem
+- [ ] Program loading
+- [ ] POSIX
+- [ ] Shell
+- [ ] UI
+- [ ] Networking
+- [ ] Sound
+- [ ] Symmetric multiprocessing
+- [ ] Keyboard (improvement)
+
+### Get started
 
 ```
 brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs
 ```
 
-### Tutorials
+### References
 
 #### Memory management
 
@@ -17,3 +33,9 @@ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs
 #### Device
 
 - [FAT12 Overview](http://www.disc.ua.es/~gil/FAT12Description.pdf)
+
+#### Tutorials
+
+- http://www.brokenthorn.com/Resources
+- http://www.jamesmolloy.co.uk/tutorial_html/
+- https://wiki.osdev.org
