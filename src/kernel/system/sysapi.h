@@ -3,11 +3,11 @@
 
 #include "../cpu/idt.h"
 
-#define MAX_SYSCALL 1
-
 void syscall_dispatcher(interrupt_registers *registers);
 void syscall_init();
 
-int syscall_printf(char *);
+int sys_printf(char *);
+int sys_printg(uint32_t x, uint32_t y);
+int sys_printc(char c);
 
 #endif

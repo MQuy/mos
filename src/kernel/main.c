@@ -10,7 +10,6 @@
 #include "system/tss.h"
 #include "system/sysapi.h"
 #include "system/exception.h"
-#include "system/task.h"
 #include "system/user.h"
 #include "devices/kybrd.h"
 #include "memory/pmm.h"
@@ -50,8 +49,6 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   // register system apis
   syscall_init();
 
-  // run_thread();
-
   // setup stack and enter user mode
   setup_and_enter_usermode();
 
@@ -59,45 +56,4 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
     ;
 
   return 0;
-}
-
-void kthread_1()
-{
-  while (1)
-    for (int i = 0; i < 26; ++i)
-    {
-      DebugGotoXY(0, 0);
-      DebugPutc('a' + i);
-    }
-}
-
-void kthread_2()
-{
-  while (1)
-    for (int i = 0; i < 26; ++i)
-    {
-      DebugGotoXY(10, 0);
-      DebugPutc('A' + i);
-    }
-}
-
-void kthread_3()
-{
-  while (1)
-    for (int i = 0; i < 10; ++i)
-    {
-      DebugGotoXY(20, 0);
-      DebugPutc('0' + i);
-    }
-}
-
-void run_thread()
-{
-  task_init();
-
-  queue_push(create_thread(kthread_1, (uint32_t)create_kernel_stack()));
-  queue_push(create_thread(kthread_2, (uint32_t)create_kernel_stack()));
-  queue_push(create_thread(kthread_3, (uint32_t)create_kernel_stack()));
-
-  task_start();
 }

@@ -3,6 +3,7 @@
 
 ; Common ISR code
 isr_common_stub:
+    cli
     ; 1. Save CPU state
     pusha ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
 
@@ -29,11 +30,13 @@ isr_common_stub:
     
     popa
     add esp, 8 ; Cleans up the pushed error code and pushed ISR number
+    sti
     iret ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
 
 ; Common IRQ code. Identical to ISR code except for the 'call' 
 ; and the 'pop ebx'
 irq_common_stub:
+    cli
     pusha 
 
     push ds
@@ -58,6 +61,7 @@ irq_common_stub:
 
     popa
     add esp, 8
+    sti
     iret 
     
 ; We don't get information about which interrupt was caller

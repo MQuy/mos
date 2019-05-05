@@ -1,14 +1,19 @@
 #include "../memory/pmm.h"
 #include "../memory/vmm.h"
+#include "../graphics/DebugDisplay.h"
 #include "./sysapi.h"
 #include "./tss.h"
-#include "user.h"
+#include "./task.h"
+#include "./user.h"
 
 #define USER_STACK_ALLOC_TOP 0xC0000000
-#define USER_STACK_BLOCKS 1024
+#define USER_STACK_BLOCKS 48
 
 extern void enter_usermode(uint32_t);
 uint32_t create_user_stack();
+void kthread_1();
+void kthread_2();
+void kthread_3();
 
 void setup_and_enter_usermode()
 {
@@ -17,31 +22,82 @@ void setup_and_enter_usermode()
                        : "=r"(esp));
   tss_set_stack(0x10, esp);
 
-  enter_usermode(create_user_stack());
+  task_init();
+
+  enter_usermode(create_user_stack(USER_STACK_BLOCKS));
 }
 
-uint32_t create_user_stack()
+/*
+  NOTE: MQ 2019-05-05
+  We created the identity memory map on the first 4MB (paging).
+  When creating user stack, we allocate n blocks on physical memory
+  if that memory allocation's location exceeds 4MB, page failed happens
+*/
+uint32_t user_stack_index = 0;
+uint32_t create_user_stack(uint32_t blocks)
 {
   physical_addr pAddr;
   virtual_addr vAddr;
 
-  pAddr = pmm_alloc_blocks(USER_STACK_BLOCKS);
+  pAddr = pmm_alloc_blocks(blocks);
 
   if (!pAddr)
     return 0;
 
-  vAddr = USER_STACK_ALLOC_TOP - USER_STACK_BLOCKS * PMM_FRAME_SIZE;
+  user_stack_index += blocks;
+  vAddr = USER_STACK_ALLOC_TOP - user_stack_index * PMM_FRAME_SIZE;
 
-  for (int i = 0; i < USER_STACK_BLOCKS; ++i)
-    vmm_map_phyiscal_address(vmm_get_directory(), vAddr + i * PMM_FRAME_SIZE, pAddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+  for (int i = 0; i < blocks; ++i)
+    vmm_map_phyiscal_address(vmm_get_directory(),
+                             vAddr + i * PMM_FRAME_SIZE,
+                             pAddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 
-  return USER_STACK_ALLOC_TOP - 4;
+  return vAddr + blocks * PMM_FRAME_SIZE - 4;
 }
 
 void in_usermode()
 {
-  syscall_printf("\nIn usermode");
+  run_thread();
 
   for (;;)
     ;
+}
+
+void kthread_1()
+{
+  while (1)
+    for (int i = 0; i < 26; ++i)
+    {
+      sys_printg(0, 0);
+      sys_printc('a' + i);
+    }
+}
+
+void kthread_2()
+{
+  while (1)
+    for (int i = 0; i < 26; ++i)
+    {
+      sys_printg(10, 0);
+      sys_printc('A' + i);
+    }
+}
+
+void kthread_3()
+{
+  while (1)
+    for (int i = 0; i < 10; ++i)
+    {
+      sys_printg(20, 0);
+      sys_printc('0' + i);
+    }
+}
+
+void run_thread()
+{
+  queue_push(create_thread(kthread_1, (uint32_t)create_user_stack(1)));
+  queue_push(create_thread(kthread_2, (uint32_t)create_user_stack(1)));
+  queue_push(create_thread(kthread_3, (uint32_t)create_user_stack(1)));
+
+  task_start();
 }

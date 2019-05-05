@@ -4,8 +4,12 @@
 
 typedef uint32_t (*SYSTEM_FUNC)(unsigned int, ...);
 
+#define MAX_SYSCALL 3
+
 void *syscalls[] = {
-    DebugPrintf};
+    DebugPrintf,
+    DebugGotoXY,
+    DebugPutc};
 
 void syscall_dispatcher(interrupt_registers *regs)
 {
@@ -22,7 +26,12 @@ void syscall_dispatcher(interrupt_registers *regs)
   func(regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
 }
 
-int syscall_printf(char *str)
+void syscall_init()
+{
+  register_interrupt_handler(DISPATCHER_ISR, syscall_dispatcher);
+}
+
+int sys_printf(char *str)
 {
   int a;
   __asm__ __volatile__("int $0x7F"
@@ -32,7 +41,20 @@ int syscall_printf(char *str)
   return a;
 }
 
-void syscall_init()
+int sys_printg(uint32_t x, uint32_t y)
 {
-  register_interrupt_handler(DISPATCHER_ISR, syscall_dispatcher);
+  int a;
+  __asm__ __volatile__("int $0x7F"
+                       : "=a"(a)
+                       : "0"(1), "b"(x), "c"(y));
+  return a;
+}
+
+int sys_printc(char c)
+{
+  int a;
+  __asm__ __volatile__("int $0x7F"
+                       : "=a"(a)
+                       : "0"(2), "b"(c));
+  return a;
 }

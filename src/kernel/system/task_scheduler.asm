@@ -5,6 +5,7 @@
 irq_task_handler:
   cli
   pusha
+
   push ds
   push es
   push fs
@@ -18,19 +19,13 @@ irq_task_handler:
   push esp
   cld
   call task_schedule
-  pop esp
+  add esp, 4
 
-  cmp eax, 0
-  je irq_task_handler_end
-  mov esp, eax
-  jmp irq_task_handler_end
-
-irq_task_handler_end:
   pop gs
   pop fs
   pop es
   pop ds
 
-  sti
   popa
+  sti
   jmp irq0
