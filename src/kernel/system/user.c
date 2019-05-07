@@ -7,7 +7,7 @@
 #include "./user.h"
 
 #define USER_STACK_ALLOC_TOP 0xC0000000
-#define USER_STACK_BLOCKS 48
+#define USER_STACK_BLOCKS 1024
 
 extern void enter_usermode(uint32_t);
 uint32_t create_user_stack();

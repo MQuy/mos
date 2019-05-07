@@ -1,8 +1,12 @@
 #include "vmm.h"
 
-#define PAGE_DIRECTORY_INDEX(x) (((x) >> 22) & 0x3ff)
-#define PAGE_TABLE_INDEX(x) (((x) >> 12) & 0x3ff)
-#define PAGE_GET_PHYSICAL_ADDRESS(x) (*x & ~0xfff)
+#define PAGE_DIRECTORY_BASE 0xFFFFF000
+#define PAGE_TABLE_BASE 0xFFC00000
+
+#define get_page_directory_index(x) (((x) >> 22) & 0x3ff)
+#define get_page_table_entry_index(x) (((x) >> 12) & 0x3ff)
+#define get_physical_address(x) (*x & ~0xfff)
+#define is_page_enabled(x) (x & 0x1)
 
 void vmm_init_and_map(pdirectory *, virtual_addr, physical_addr);
 void pt_entry_add_attrib(pt_entry *, uint32_t);
@@ -14,8 +18,38 @@ void vmm_paging(pdirectory *);
 
 pdirectory *_current_dir;
 
+/*
+  Memory layout of our address space
+  +-------------------------+ 0xFFFFFFFF
+  | Page table mapping      |
+  |_________________________| 0xFFC00000
+  |                         | K_HEAP_END
+  |                         |
+  | Kernel heap             |
+  |                         |
+  |_________________________| K_HEAP_START
+  |                         | 
+  | Kernel itself           |
+  |_________________________| 0xC0000000
+  |                         |
+  | User stack              |
+  |_________________________| 0xBFC00000
+  |                         |
+  | User thread stack       |
+  |_________________________|
+  |                         |
+  |                         |
+  |                         |
+  |                         |
+  |                         |
+  |_________________________| 0x00400000
+  |                         |
+  | Identiy mapping         |
+  +_________________________+ 0x00000000
+*/
 void vmm_init()
 {
+  uint32_t x = 0xC0000000 - 0x400000;
   // initialize page table directory
   size_t directory_frames = div_ceil(sizeof(pdirectory), PMM_FRAME_SIZE);
   pdirectory *directory = (pdirectory *)pmm_alloc_blocks(directory_frames);
@@ -23,6 +57,9 @@ void vmm_init()
 
   vmm_init_and_map(directory, 0x00000000, 0x00000000);
   vmm_init_and_map(directory, 0xC0000000, 0x00100000);
+
+  // NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging
+  directory->m_entries[1023] = ((uint32_t)directory & 0xFFFFF000) | 7;
 
   vmm_paging(directory);
 }
@@ -38,12 +75,12 @@ void vmm_init_and_map(pdirectory *directory, virtual_addr virtual, physical_addr
   physical_addr iframe = frame;
   for (int i = 0; i < 1024; ++i, ivirtual += 4096, iframe += 4096)
   {
-    pt_entry *entry = &table->m_entries[PAGE_TABLE_INDEX(ivirtual)];
+    pt_entry *entry = &table->m_entries[get_page_table_entry_index(ivirtual)];
     pt_entry_add_attrib(entry, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     pt_entry_set_frame(entry, iframe);
   }
 
-  pd_entry *entry = &directory->m_entries[PAGE_DIRECTORY_INDEX(virtual)];
+  pd_entry *entry = &directory->m_entries[get_page_directory_index(virtual)];
   pd_entry_add_attrib(entry, I86_PDE_PRESENT | I86_PDE_WRITABLE | I86_PDE_USER);
   pd_entry_set_frame(entry, table);
 }
@@ -82,28 +119,41 @@ pdirectory *vmm_get_directory()
   return _current_dir;
 }
 
+/*
+  NOTE: MQ 2019-05-08
+  cr3 -> 0xsomewhere (physical address): | 0 | 1 | ... | 1023 | (1023th pd's value is 0xsomewhere)
+  When translating a virtual address vAddr:
+    + de is ath page directory index (vAddr >> 22)
+    + te is bth page table index (vAddr >> 12 & 0x1111111111)
+  If pd[de] is not present, getting 4KB free from pmm_alloc_block() and assigning it at page directory entry
+
+  mmus' formula: pd = cr3(); pt = *(pd+4*PDX); page = *(pt+4*PTX)
+  The issue is we cannot directly access *(pd+4*PDX) and access/modify a page table entry because everything(kernel) is now a virtual address
+  To overcome the egg-chicken's issue, we set 1023pde=cr3 
+
+  For example:
+  0xFFC00000 + de * 0x1000 is mapped to pd[de] (physical address). As you know virtual <-> physical address is 4KB aligned
+  0xFFC00000 + de * 0x1000 + te * 0x4 is mapped to pd[de] + te * 0x4 (this is what mmu will us to translate vAddr)
+  0xFFC00000 + de * 0x1000 + te * 0x4 = xxx <-> *(pt+4*ptx) = xxx
+*/
 void vmm_map_phyiscal_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags)
 {
-  if (!dir->m_entries[PAGE_DIRECTORY_INDEX(virt)])
+  if (!is_page_enabled(dir->m_entries[get_page_directory_index(virt)]))
     vmm_create_page_table(dir, virt, flags);
 
-  ptable *pt = dir->m_entries[PAGE_DIRECTORY_INDEX(virt)] & ~0xfff;
-  pt_entry *entry = &pt->m_entries[PAGE_TABLE_INDEX(virt)];
-  pt_entry_set_frame(entry, phys);
-  pt_entry_add_attrib(entry, flags);
+  uint32_t *table = PAGE_TABLE_BASE + get_page_directory_index(virt) * 0x1000;
+  uint32_t tindex = get_page_table_entry_index(virt);
+
+  table[tindex] = phys | flags;
 }
 
 void vmm_create_page_table(pdirectory *dir, uint32_t virt, uint32_t flags)
 {
-  if (dir->m_entries[PAGE_DIRECTORY_INDEX(virt)])
+  if (is_page_enabled(dir->m_entries[get_page_directory_index(virt)]))
     return;
 
   int ptable_frame_count = div_ceil(sizeof(ptable), PMM_FRAME_SIZE);
-
   ptable *table = (ptable *)pmm_alloc_blocks(ptable_frame_count);
-  memset(table, 0, sizeof(table));
 
-  pd_entry *pd = &dir->m_entries[PAGE_DIRECTORY_INDEX(virt)];
-  pd_entry_set_frame(pd, table);
-  pd_entry_add_attrib(pd, flags);
+  dir->m_entries[get_page_directory_index(virt)] = (uint32_t)table | flags;
 }
