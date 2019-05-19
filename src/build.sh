@@ -33,10 +33,11 @@ else
   dd if=mos.img of=mbr.img bs=512 count=2047
   dd if=mos.img of=fs.img bs=512 skip=2047
   VOLUME_NAME=mos
-  DISK_NAME="$(hdiutil attach -nomount fs.img | cut -c6-10)"
-  newfs_msdos -F 32 $DISK_NAME
+  DISK_NAME="$(hdiutil attach -nomount fs.img)"
+  mkfs.ext2 $DISK_NAME
   hdiutil detach $DISK_NAME
   cat mbr.img fs.img > mos.img
+  rm mbr.img fs.img
   hdiutil attach mos.img -mountpoint /Volumes/$VOLUME_NAME
   /usr/local/sbin/i386-elf-grub-install --modules="part_msdos biosdisk fat multiboot configfile" --root-directory="/Volumes/${VOLUME_NAME}" mos.img
   cp grub.cfg "/Volumes/${VOLUME_NAME}/boot/grub/grub.cfg"
