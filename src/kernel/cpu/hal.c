@@ -4,18 +4,34 @@ unsigned char inportb(unsigned short portid)
 {
 
   uint8_t data;
-  __asm__("in %%dx, %%al"
-          : "=a"(data)
-          : "d"(portid));
+  __asm__ __volatile__("in %%dx, %%al"
+                       : "=a"(data)
+                       : "d"(portid));
   return data;
 }
 
 //! write byte to device through port mapped io
 void outportb(unsigned short portid, unsigned char value)
 {
-  __asm__("out %%al, %%dx"
-          :
-          : "a"(value), "d"(portid));
+  __asm__ __volatile__("out %%al, %%dx"
+                       :
+                       : "a"(value), "d"(portid));
+}
+
+uint32_t inportl(uint16_t _port)
+{
+  uint32_t rv;
+  __asm__ __volatile__("inl %%dx, %%eax"
+                       : "=a"(rv)
+                       : "dN"(_port));
+  return rv;
+}
+
+void outportl(uint16_t _port, uint32_t _data)
+{
+  __asm__ __volatile__("outl %%eax, %%dx"
+                       :
+                       : "dN"(_port), "a"(_data));
 }
 
 void io_wait()

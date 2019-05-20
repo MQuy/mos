@@ -12,6 +12,7 @@
 #include "system/exception.h"
 #include "system/user.h"
 #include "devices/kybrd.h"
+#include "devices/pci.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 
@@ -50,7 +51,9 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   syscall_init();
 
   // setup stack and enter user mode
-  setup_and_enter_usermode();
+  // setup_and_enter_usermode();
+
+  pci_scan_buses();
 
   for (;;)
     ;
