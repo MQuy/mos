@@ -15,6 +15,7 @@
 #include "devices/pci.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
+#include "devices/ata.h"
 
 int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 {

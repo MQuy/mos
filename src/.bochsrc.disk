@@ -1,5 +1,5 @@
 memory: guest=128, host=128
-ata0-slave: type=disk, path="mos.img", status=inserted
+ata0-master: type=disk, path="mos.img", mode=flat
 boot: disk
 log: log/bochs.log
 mouse: enabled=0

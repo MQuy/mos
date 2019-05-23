@@ -1,11 +1,7 @@
 #include "../cpu/hal.h"
 #include "../graphics/DebugDisplay.h"
 #include "pci.h"
-
-#define PCI_INVALID_VENDOR_ID 0xFFFF
-#define PCI_MULTIFUNCTION_DEVICE 0x80
-#define PCI_CLASS_CODE_BRIDGE_DEVICE 0x06
-#define PCI_CLASS_CODE_PCI_TO_PCI_BRIDGE 0x04
+#include "ata.h"
 
 uint16_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
 {
@@ -78,8 +74,11 @@ void print_device(uint8_t bus, uint8_t device, uint8_t function)
     int subclassCode = get_subclass_code(bus, device, function);
     int progif = get_prog_if(bus, device, function);
 
-    DebugPrintf("device: vendor-0x%X device-0x%X class-0x%X subclass-0x%X progif-0x%x\n",
-                vendorID, deviceID, classCode, subclassCode, progif);
+    if (classCode == PCI_CLASS_CODE_MASS_STORAGE)
+    {
+      if (subclassCode == PCI_SUBCLASS_IDE)
+        ata_init();
+    }
   }
 }
 
@@ -91,7 +90,7 @@ void pci_check_function(uint8_t bus, uint8_t device, uint8_t function)
 
   uint16_t baseClass = get_class_code(bus, device, function);
   uint16_t subClass = get_subclass_code(bus, device, function);
-  if ((baseClass == PCI_CLASS_CODE_BRIDGE_DEVICE) && (subClass == PCI_CLASS_CODE_PCI_TO_PCI_BRIDGE))
+  if ((baseClass == PCI_CLASS_CODE_BRIDGE_DEVICE) && (subClass == PCI_SUBCLASS_PCI_TO_PCI_BRIDGE))
   {
     secondary_bus = get_secondary_bus(bus, device, function);
     pci_scan_bus(secondary_bus);

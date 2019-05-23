@@ -56,8 +56,8 @@ then
 else
   if [ "$2" == "iso" ]
   then
-    qemu-system-i386 -cdrom mos.iso -m 64M -d guest_errors,int
+    qemu-system-i386 -boot c -cdrom mos.iso -hda hdd.img
   else
-    qemu-system-i386 -s -boot a -drive format=raw,file=./mos.img -d guest_errors,int
+    qemu-system-i386 -s -drive format=raw,file=mos.img,index=0,media=disk -d guest_errors,int
   fi
 fi
