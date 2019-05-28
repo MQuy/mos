@@ -2,6 +2,7 @@
 #define CPU_HAL_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 void enable_interrupts();
 void disable_interrupts();
@@ -14,6 +15,8 @@ uint16_t inportw(uint16_t portid);
 void outportw(uint16_t portid, uint16_t value);
 uint32_t inportl(uint16_t portid);
 void outportl(uint16_t portid, uint32_t value);
+void inportsw(uint16_t portid, void *addr, size_t count);
+void outportsw(uint16_t portd, const void *addr, size_t count);
 
 const char *get_cpu_vender();
 

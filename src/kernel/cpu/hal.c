@@ -49,6 +49,21 @@ void outportl(uint16_t portid, uint32_t value)
                        : "dN"(portid), "a"(value));
 }
 
+void inportsw(uint16_t portid, void *addr, size_t count)
+{
+  __asm__ __volatile__("rep insw"
+                       : "+D"(addr), "+c"(count)
+                       : "d"(portid)
+                       : "memory");
+}
+
+void outportsw(uint16_t portid, const void *addr, size_t count)
+{
+  __asm__ __volatile__("rep outsw"
+                       : "+S"(addr), "+c"(count)
+                       : "d"(portid));
+}
+
 void io_wait()
 {
   /* Port 0x80 is used for 'checkpoints' during POST. */

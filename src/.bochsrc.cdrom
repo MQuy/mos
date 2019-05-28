@@ -1,6 +1,6 @@
 memory: guest=128, host=128
-ata0-master: type=disk, path="hdd.img", mode=flat
-ata0-slave: type=cdrom, path="mos.iso", status=inserted
+ata0-slave: type=disk, path="hdd.img", mode=flat
+ata0-master: type=cdrom, path="mos.iso", status=inserted
 boot: cdrom
 log: log/bochs.log
 mouse: enabled=0

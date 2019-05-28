@@ -35,10 +35,11 @@ typedef struct ata_device
   uint16_t associated_io_base;
   uint8_t irq;
   bool is_master;
+  bool is_harddisk;
 } ata_device;
 
 uint8_t ata_init();
 uint8_t ata_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
 uint8_t ata_write(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
-
+void atapi_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
 #endif
