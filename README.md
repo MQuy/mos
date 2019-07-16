@@ -38,3 +38,7 @@ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs
 - http://www.brokenthorn.com/Resources
 - http://www.jamesmolloy.co.uk/tutorial_html/
 - https://wiki.osdev.org
+
+#### Ebooks
+
+- [Understanding the Linux Kernel, 3rd Edition by Daniel P. Bovet; Marco Cesati](https://learning.oreilly.com/library/view/understanding-the-linux/0596005652/)
