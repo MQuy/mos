@@ -1,16 +1,20 @@
-#include "../cpu/hal.h"
-#include "../cpu/idt.h"
-#include "./ata.h"
+#include <kernel/include/string.h>
+#include <kernel/cpu/hal.h>
+#include <kernel/cpu/idt.h>
+#include <kernel/graphics/DebugDisplay.h>
+#include "ata.h"
 
-ata_device devices[4];
+#define MAX_ATA_DEVICE 4
+
+static ata_device devices[MAX_ATA_DEVICE];
 uint8_t number_of_actived_devices = 0;
 
-uint8_t ata_identify(ata_device device);
-uint8_t atapi_identify(ata_device device);
-ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master);
-uint8_t ata_polling(ata_device device);
-uint8_t ata_polling_identify(ata_device device);
-void ata_400ns_delays(ata_device device);
+uint8_t ata_identify(ata_device *device);
+uint8_t atapi_identify(ata_device *device);
+ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name);
+uint8_t ata_polling(ata_device *device);
+uint8_t ata_polling_identify(ata_device *device);
+void ata_400ns_delays(ata_device *device);
 
 volatile bool ata_irq_called;
 
@@ -31,17 +35,21 @@ uint8_t ata_init()
   register_interrupt_handler(IRQ14, ata_irq);
   register_interrupt_handler(IRQ15, ata_irq);
 
-  ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, true);
-  ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, false);
-  ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true);
-  ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false);
+  ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, true, "/dev/hda");
+  ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, false, "/dev/hdb");
+  ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
+  ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
 
   // FIXME: MQ 2019-05-26 Replace pmm_alloc_block by malloc(512)
-  uint16_t *buffer = pmm_alloc_block();
-  atapi_read(devices[1], 0, 1, buffer);
+  // uint16_t *buffer = pmm_alloc_block();
+  // ata_read(&devices[0], 2, 1, buffer);
+  // for (uint16_t i = 0; i < 256; ++i)
+  // {
+  //   DebugPrintf("%x", *(buffer + i * 2));
+  // }
 }
 
-ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master)
+ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)
 {
   // FIXME: MQ 2019-05-26 Replace pmm_alloc_block by malloc(sizeof(ata_device))
   ata_device *device = pmm_alloc_block();
@@ -50,65 +58,67 @@ ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool i
   device->irq = irq;
   device->is_master = is_master;
 
-  if (ata_identify(*device) == ATA_IDENTIFY_SUCCESS)
+  if (ata_identify(device) == ATA_IDENTIFY_SUCCESS)
   {
     device->is_harddisk = true;
+    device->dev_name = dev_name;
     devices[number_of_actived_devices++] = *device;
     return device;
   }
-  else if (atapi_identify(*device) == ATA_IDENTIFY_SUCCESS)
+  else if (atapi_identify(device) == ATA_IDENTIFY_SUCCESS)
   {
     device->is_harddisk = false;
+    device->dev_name = "/dev/cdrom";
     devices[number_of_actived_devices++] = *device;
     return device;
   }
   return 0;
 }
 
-uint8_t ata_identify(ata_device device)
+uint8_t ata_identify(ata_device *device)
 {
-  outportb(device.io_base + 6, device.is_master ? 0xA0 : 0xB0);
+  outportb(device->io_base + 6, device->is_master ? 0xA0 : 0xB0);
   ata_400ns_delays(device);
 
-  outportb(device.io_base + 2, 0);
-  outportb(device.io_base + 3, 0);
-  outportb(device.io_base + 4, 0);
-  outportb(device.io_base + 5, 0);
-  outportb(device.io_base + 7, 0xEC);
+  outportb(device->io_base + 2, 0);
+  outportb(device->io_base + 3, 0);
+  outportb(device->io_base + 4, 0);
+  outportb(device->io_base + 5, 0);
+  outportb(device->io_base + 7, 0xEC);
 
   uint8_t identify_status = ata_polling_identify(device);
   if (identify_status != ATA_IDENTIFY_SUCCESS)
     return identify_status;
 
-  if (!(inportb(device.io_base + 7) & ATA_SREG_ERR))
+  if (!(inportb(device->io_base + 7) & ATA_SREG_ERR))
   {
     uint16_t buffer[256];
 
-    inportsw(device.io_base, buffer, 256);
+    inportsw(device->io_base, buffer, 256);
 
     return ATA_IDENTIFY_SUCCESS;
   }
   return ATA_IDENTIFY_ERR;
 }
 
-uint8_t ata_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+uint8_t ata_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
-  outportb(device.io_base + 6, (device.is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
+  outportb(device->io_base + 6, (device->is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
   ata_400ns_delays(device);
 
-  outportb(device.io_base + 1, 0x00);
-  outportb(device.io_base + 2, n_sectors);
-  outportb(device.io_base + 3, (uint8_t)lba);
-  outportb(device.io_base + 4, (uint8_t)(lba >> 8));
-  outportb(device.io_base + 5, (uint8_t)(lba >> 16));
-  outportb(device.io_base + 7, 0x20);
+  outportb(device->io_base + 1, 0x00);
+  outportb(device->io_base + 2, n_sectors);
+  outportb(device->io_base + 3, (uint8_t)lba);
+  outportb(device->io_base + 4, (uint8_t)(lba >> 8));
+  outportb(device->io_base + 5, (uint8_t)(lba >> 16));
+  outportb(device->io_base + 7, 0x20);
 
   if (ata_polling(device) == ATA_POLLING_ERR)
     return;
 
   for (int i = 0; i < n_sectors; ++i)
   {
-    inportsw(device.io_base, buffer + i * 256, 256);
+    inportsw(device->io_base, buffer + i * 256, 256);
     ata_400ns_delays(device);
 
     if (ata_polling(device) == ATA_POLLING_ERR)
@@ -116,25 +126,25 @@ uint8_t ata_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *b
   }
 }
 
-uint8_t ata_write(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+uint8_t ata_write(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
-  outportb(device.io_base + 6, (device.is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
+  outportb(device->io_base + 6, (device->is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
   ata_400ns_delays(device);
 
-  outportb(device.io_base + 1, 0x00);
-  outportb(device.io_base + 2, n_sectors);
-  outportb(device.io_base + 3, (uint8_t)lba);
-  outportb(device.io_base + 4, (uint8_t)(lba >> 8));
-  outportb(device.io_base + 5, (uint8_t)(lba >> 16));
-  outportb(device.io_base + 7, 0x30);
+  outportb(device->io_base + 1, 0x00);
+  outportb(device->io_base + 2, n_sectors);
+  outportb(device->io_base + 3, (uint8_t)lba);
+  outportb(device->io_base + 4, (uint8_t)(lba >> 8));
+  outportb(device->io_base + 5, (uint8_t)(lba >> 16));
+  outportb(device->io_base + 7, 0x30);
 
   if (ata_polling(device) == ATA_POLLING_ERR)
     return;
 
   for (int i = 0; i < n_sectors; ++i)
   {
-    outportsw(device.io_base, buffer + i * 256, 256);
-    outportw(device.io_base + 7, 0xE7);
+    outportsw(device->io_base, buffer + i * 256, 256);
+    outportw(device->io_base + 7, 0xE7);
     ata_400ns_delays(device);
 
     if (ata_polling(device) == ATA_POLLING_ERR)
@@ -142,39 +152,39 @@ uint8_t ata_write(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *
   }
 }
 
-uint8_t atapi_identify(ata_device device)
+uint8_t atapi_identify(ata_device *device)
 {
-  outportb(device.io_base + 6, device.is_master ? 0xA0 : 0xB0);
+  outportb(device->io_base + 6, device->is_master ? 0xA0 : 0xB0);
   ata_400ns_delays(device);
 
-  outportb(device.io_base + 7, 0xA1);
+  outportb(device->io_base + 7, 0xA1);
 
   uint8_t identify_status = ata_polling_identify(device);
   if (identify_status != ATA_IDENTIFY_SUCCESS)
     return identify_status;
 
-  if (!(inportb(device.io_base + 7) & ATA_SREG_ERR))
+  if (!(inportb(device->io_base + 7) & ATA_SREG_ERR))
   {
     uint16_t buffer[256];
 
-    inportsw(device.io_base, buffer, 256);
+    inportsw(device->io_base, buffer, 256);
 
     return ATA_IDENTIFY_SUCCESS;
   }
   return ATA_IDENTIFY_ERR;
 }
 
-void atapi_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+void atapi_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   uint8_t packet[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-  outportb(device.io_base + 6, device.is_master ? 0xE0 : 0xF0);
+  outportb(device->io_base + 6, device->is_master ? 0xE0 : 0xF0);
   ata_400ns_delays(device);
 
-  outportb(device.io_base + 1, 0);
-  outportb(device.io_base + 4, (2048 & 0xff));
-  outportb(device.io_base + 5, 2048 > 8);
-  outportb(device.io_base + 7, 0xA0);
+  outportb(device->io_base + 1, 0);
+  outportb(device->io_base + 4, (2048 & 0xff));
+  outportb(device->io_base + 5, 2048 > 8);
+  outportb(device->io_base + 7, 0xA0);
 
   ata_polling(device);
 
@@ -184,35 +194,35 @@ void atapi_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *bu
   packet[4] = (lba >> 0x08) & 0xFF;
   packet[5] = (lba >> 0x00) & 0xFF;
 
-  outportsw(device.io_base, (uint16_t *)packet, 6);
+  outportsw(device->io_base, (uint16_t *)packet, 6);
 
   ata_wait_irq();
   ata_polling(device);
 
   for (int i = 0; i < n_sectors; ++i)
   {
-    inportsw(device.io_base, buffer + 256 * i, 256);
+    inportsw(device->io_base, buffer + 256 * i, 256);
 
     if (ata_polling(device) == ATA_POLLING_ERR)
       return;
   }
 }
 
-void ata_400ns_delays(ata_device device)
+void ata_400ns_delays(ata_device *device)
 {
-  inportb(device.io_base + 7);
-  inportb(device.io_base + 7);
-  inportb(device.io_base + 7);
-  inportb(device.io_base + 7);
+  inportb(device->io_base + 7);
+  inportb(device->io_base + 7);
+  inportb(device->io_base + 7);
+  inportb(device->io_base + 7);
 }
 
-uint8_t ata_polling(ata_device device)
+uint8_t ata_polling(ata_device *device)
 {
   uint8_t status;
 
   while (true)
   {
-    status = inportb(device.io_base + 7);
+    status = inportb(device->io_base + 7);
     if (!(status & ATA_SREG_BSY) || (status & ATA_SREG_DRQ))
       return ATA_POLLING_SUCCESS;
     if ((status & ATA_SREG_ERR) || (status & ATA_SREG_DF))
@@ -220,13 +230,13 @@ uint8_t ata_polling(ata_device device)
   }
 }
 
-uint8_t ata_polling_identify(ata_device device)
+uint8_t ata_polling_identify(ata_device *device)
 {
   uint8_t status;
 
   while (true)
   {
-    status = inportb(device.io_base + 7);
+    status = inportb(device->io_base + 7);
 
     if (status == 0)
       return ATA_IDENTIFY_NOT_FOUND;
@@ -240,7 +250,7 @@ uint8_t ata_polling_identify(ata_device device)
 
   while (true)
   {
-    status = inportb(device.io_base + 7);
+    status = inportb(device->io_base + 7);
 
     if (status & ATA_SREG_DRQ)
       break;
@@ -249,4 +259,14 @@ uint8_t ata_polling_identify(ata_device device)
   }
 
   return ATA_IDENTIFY_SUCCESS;
+}
+
+ata_device *get_ata_device(char *dev_name)
+{
+  for (uint8_t i = 0; i < MAX_ATA_DEVICE; ++i)
+  {
+    if (strcmp(devices[i].dev_name, dev_name) == 0)
+      return &devices[i];
+  }
+  return NULL;
 }

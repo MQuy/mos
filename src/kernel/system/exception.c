@@ -1,6 +1,6 @@
-#include "../graphics/DebugDisplay.h"
-#include "../cpu/hal.h"
-#include "../cpu/idt.h"
+#include <kernel/graphics/DebugDisplay.h>
+#include <kernel/cpu/hal.h>
+#include <kernel/cpu/idt.h>
 #include "exception.h"
 
 void divide_by_zero_fault(interrupt_registers *regs)

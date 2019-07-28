@@ -1,5 +1,5 @@
-#include "../include/string.h"
-#include "../cpu/gdt.h"
+#include <kernel/include/string.h>
+#include <kernel/cpu/gdt.h>
 #include "tss.h"
 
 extern void tss_flush();

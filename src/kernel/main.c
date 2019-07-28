@@ -11,11 +11,16 @@
 #include "system/sysapi.h"
 #include "system/exception.h"
 #include "system/user.h"
+#include "system/time.h"
 #include "devices/kybrd.h"
 #include "devices/pci.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "devices/ata.h"
+#include "fs/vfs.h"
+#include "fs/ext2/ext2.h"
+
+extern vfs_file_system_type ext2_fs_type;
 
 int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 {
@@ -55,6 +60,13 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   // setup_and_enter_usermode();
 
   pci_scan_buses();
+
+  vfs_init(&ext2_fs_type, "/dev/hda");
+  long fd = sys_open("/test/aha.txt");
+  // char *buf = pmm_alloc_block();
+  sys_write(fd, "fuck this file", 14);
+  // sys_read(fd, buf, 14);
+  // DebugPrintf("content: %s", buf);
 
   for (;;)
     ;

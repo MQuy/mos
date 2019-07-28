@@ -1,7 +1,7 @@
+#include <kernel/graphics/DebugDisplay.h>
+#include <kernel/include/string.h>
 #include "idt.h"
 #include "pic.h"
-#include "../graphics/DebugDisplay.h"
-#include "../include/string.h"
 
 extern void idt_flush(uint32_t);
 

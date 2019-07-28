@@ -1,5 +1,5 @@
-#ifndef COMMON_KERNEL_INFO_H
-#define COMMON_KERNEL_INFO_H
+#ifndef INCLUDE_KERNEL_INFO_H
+#define INCLUDE_KERNEL_INFO_H
 
 #include <stdint.h>
 

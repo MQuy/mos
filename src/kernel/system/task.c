@@ -1,8 +1,8 @@
-#include "../cpu/idt.h"
-#include "../cpu/pic.h"
-#include "../cpu/pit.h"
-#include "../memory/pmm.h"
-#include "../memory/vmm.h"
+#include <kernel/cpu/idt.h>
+#include <kernel/cpu/pic.h>
+#include <kernel/cpu/pit.h>
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/vmm.h>
 #include "task.h"
 
 #define MAX_THREAD 6

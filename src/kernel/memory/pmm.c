@@ -9,22 +9,22 @@ void pmm_regions(multiboot_info_t *);
 void pmm_init_region(uint32_t addr, uint32_t length);
 void pmm_deinit_region(uint32_t add, uint32_t length);
 
-inline void memory_bitmap_set(uint32_t frame)
+void memory_bitmap_set(uint32_t frame)
 {
   memory_bitmap[frame / 32] |= (1 << (frame % 32));
 }
 
-inline void memory_bitmap_unset(uint32_t frame)
+void memory_bitmap_unset(uint32_t frame)
 {
   memory_bitmap[frame / 32] &= ~(1 << (frame % 32));
 }
 
-inline bool memory_bitmap_test(uint32_t frame)
+bool memory_bitmap_test(uint32_t frame)
 {
   return memory_bitmap[frame / 32] & (1 << (frame % 32));
 }
 
-inline int memory_bitmap_first_free()
+int memory_bitmap_first_free()
 {
   for (uint32_t i = 0; i < max_frames / 32; ++i)
     if (memory_bitmap[i] != 0xffffffff)
@@ -38,7 +38,7 @@ inline int memory_bitmap_first_free()
   return -1;
 }
 
-inline int memory_bitmap_first_frees(size_t size)
+int memory_bitmap_first_frees(size_t size)
 {
   if (size == 0)
     return -1;

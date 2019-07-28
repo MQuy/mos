@@ -1,5 +1,5 @@
-#ifndef _DEBUGDISPLAY_H
-#define _DEBUGDISPLAY_H
+#ifndef GRAPHIC_DEBUG_DISPLAY_H
+#define GRAPHIC_DEBUG_DISPLAY_H
 //****************************************************************************
 //**
 //**    DebugDisplay.h

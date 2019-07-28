@@ -1,18 +1,8 @@
-//****************************************************************************
-//**
-//**    kybrd.cpp
-//**		-Keyboard driver
-//**
-//****************************************************************************
-//============================================================================
-//    IMPLEMENTATION HEADERS
-//============================================================================
-
-#include "../include/ctype.h"
-#include "../include/string.h"
-#include "../cpu/hal.h"
-#include "../cpu/idt.h"
-#include "../graphics/DebugDisplay.h"
+#include <kernel/include/ctype.h>
+#include <kernel/include/string.h>
+#include <kernel/cpu/hal.h>
+#include <kernel/cpu/idt.h>
+#include <kernel/graphics/DebugDisplay.h>
 #include "kybrd.h"
 
 //============================================================================

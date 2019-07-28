@@ -1,5 +1,5 @@
 TOPDIR  := $(shell if [ "$$PWD" != "" ] ; then echo $$PWD ; else pwd ; fi)
-INCLUDE = $(TOPDIR)/src
+INCLUDE = $(TOPDIR)/../
 
 C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c cpu/*.c devices/*.c system/*.c fs/*.c fs/**/*.c)
 HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h cpu/*.h devices/*.h system/*.h fs/*.h fs/**/*.h)

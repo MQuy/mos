@@ -34,12 +34,14 @@ typedef struct ata_device
   uint16_t io_base;
   uint16_t associated_io_base;
   uint8_t irq;
+  char *dev_name;
   bool is_master;
   bool is_harddisk;
 } ata_device;
 
 uint8_t ata_init();
-uint8_t ata_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
-uint8_t ata_write(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
-void atapi_read(ata_device device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+uint8_t ata_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+uint8_t ata_write(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+void atapi_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+ata_device *get_ata_device(char *dev_name);
 #endif

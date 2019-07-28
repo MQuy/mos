@@ -4,7 +4,7 @@ mOS is the hobby operating system which is developed from scratch
 
 ### Work-in-process features
 
-- [ ] Filesystem
+- [x] Filesystem
 - [ ] Program loading
 - [ ] POSIX
 - [ ] Shell
@@ -17,8 +17,11 @@ mOS is the hobby operating system which is developed from scratch
 ### Get started
 
 ```
-brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs
+$ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
+$ cd src && ./build.sh
 ```
+
+✍🏻If you get this error `hdiutil: attach failed - no mountable file systems`, installing might help [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/)
 
 ### References
 

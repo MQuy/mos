@@ -1,5 +1,14 @@
-rm *.bin
-rm *.iso
+#!/bin/bash
+set -e
+
+if [ -e mos.bin ]
+then
+  rm mos.bin
+fi
+if [ -e mos.iso ]
+then
+  rm mos.iso
+fi
 
 cd kernel && make clean && make && cp kernel.bin ../mos.bin && cd ../
 
@@ -20,7 +29,7 @@ else
   dd if=/dev/zero of=mos.img count=163840 bs=512
   (
   echo y
-  echo mos
+  echo disk
   echo n
   echo edit 1
   echo 0B
@@ -34,14 +43,15 @@ else
   dd if=mos.img of=fs.img bs=512 skip=2047
   VOLUME_NAME=mos
   DISK_NAME="$(hdiutil attach -nomount fs.img)"
-  mkfs.ext2 $DISK_NAME
+  $(brew --prefix e2fsprogs)/sbin/mkfs.ext2 $DISK_NAME
   hdiutil detach $DISK_NAME
   cat mbr.img fs.img > mos.img
   rm mbr.img fs.img
   hdiutil attach mos.img -mountpoint /Volumes/$VOLUME_NAME
-  /usr/local/sbin/i386-elf-grub-install --modules="part_msdos biosdisk fat multiboot configfile" --root-directory="/Volumes/${VOLUME_NAME}" mos.img
+  /usr/local/sbin/i386-elf-grub-install --modules="part_msdos biosdisk ext2 multiboot configfile" --root-directory="/Volumes/${VOLUME_NAME}" mos.img
   cp grub.cfg "/Volumes/${VOLUME_NAME}/boot/grub/grub.cfg"
   cp mos.bin "/Volumes/${VOLUME_NAME}/boot/mos.bin"
+  cp sample.txt "/Volumes/${VOLUME_NAME}/sample.txt"
   hdiutil detach $DISK_NAME
 fi
 
@@ -56,7 +66,7 @@ then
 else
   if [ "$2" == "iso" ]
   then
-    qemu-system-i386 -boot c -cdrom mos.iso -hda hdd.img
+    qemu-system-i386 -s -boot c -cdrom mos.iso -hda hdd.img -d guest_errors,int
   else
     qemu-system-i386 -s -drive format=raw,file=mos.img,index=0,media=disk -d guest_errors,int
   fi

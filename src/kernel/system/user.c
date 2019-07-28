@@ -1,31 +1,15 @@
-#include "../memory/pmm.h"
-#include "../memory/vmm.h"
-#include "../graphics/DebugDisplay.h"
-#include "./sysapi.h"
-#include "./tss.h"
-#include "./task.h"
-#include "./user.h"
+#include <kernel/memory/pmm.h>
+#include <kernel/memory/vmm.h>
+#include <kernel/graphics/DebugDisplay.h>
+#include "sysapi.h"
+#include "tss.h"
+#include "task.h"
+#include "user.h"
 
 #define USER_STACK_ALLOC_TOP 0xC0000000
 #define USER_STACK_BLOCKS 1024
 
 extern void enter_usermode(uint32_t);
-uint32_t create_user_stack();
-void kthread_1();
-void kthread_2();
-void kthread_3();
-
-void setup_and_enter_usermode()
-{
-  int esp;
-  __asm__ __volatile__("mov %%esp, %0"
-                       : "=r"(esp));
-  tss_set_stack(0x10, esp);
-
-  task_init();
-
-  enter_usermode(create_user_stack(USER_STACK_BLOCKS));
-}
 
 /*
   NOTE: MQ 2019-05-05
@@ -53,6 +37,18 @@ uint32_t create_user_stack(uint32_t blocks)
                              pAddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 
   return vAddr + blocks * PMM_FRAME_SIZE - 4;
+}
+
+void setup_and_enter_usermode()
+{
+  int esp;
+  __asm__ __volatile__("mov %%esp, %0"
+                       : "=r"(esp));
+  tss_set_stack(0x10, esp);
+
+  task_init();
+
+  enter_usermode(create_user_stack(USER_STACK_BLOCKS));
 }
 
 void in_usermode()

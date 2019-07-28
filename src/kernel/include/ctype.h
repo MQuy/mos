@@ -1,31 +1,14 @@
-#ifndef __CTYPE_H
-#define __CTYPE_H
+#ifndef INCLUDE_CTYPE_H
+#define INCLUDE_CTYPE_H
 
-//****************************************************************************
-//**
-//**    ctype.h
-//**    - character macros
-//**
-//****************************************************************************
-//============================================================================
-//    INTERFACE REQUIRED HEADERS
-//============================================================================
-//============================================================================
-//    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
-//============================================================================
-
-/* Constants */
-
-#define CT_UP 0x01  /* upper case */
-#define CT_LOW 0x02 /* lower case */
-#define CT_DIG 0x04 /* digit */
-#define CT_CTL 0x08 /* control */
-#define CT_PUN 0x10 /* punctuation */
-#define CT_WHT 0x20 /* white space (space/cr/lf/tab) */
-#define CT_HEX 0x40 /* hex digit */
-#define CT_SP 0x80  /* hard space (0x20) */
-
-/* Basic macros */
+typedef unsigned short umode_t;
+typedef long long loff_t;
+typedef unsigned long long ino_t;
+typedef unsigned short mode_t;
+typedef long ssize_t;
+typedef unsigned long sector_t;
+typedef unsigned short uid_t;
+typedef unsigned short gid_t;
 
 #define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')
@@ -39,28 +22,15 @@
 #define isascii(c) ((unsigned)(c) <= 0x7F)
 #define toascii(c) ((unsigned)(c)&0x7F)
 
-//============================================================================
-//    INTERFACE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
-//============================================================================
-//============================================================================
-//    INTERFACE STRUCTURES / UTILITY CLASSES
-//============================================================================
-//============================================================================
-//    INTERFACE DATA DECLARATIONS
-//============================================================================
-//============================================================================
-//    INTERFACE FUNCTION PROTOTYPES
-//============================================================================
-//============================================================================
-//    INTERFACE OBJECT CLASS DEFINITIONS
-//============================================================================
-//============================================================================
-//    INTERFACE TRAILING HEADERS
-//============================================================================
-//****************************************************************************
-//**
-//**    END ctype.h
-//**
-//****************************************************************************
+struct list_head
+{
+  struct list_head *next, *prev;
+};
+
+struct timespec
+{
+  long tv_sec;
+  long tv_nsec;
+};
 
 #endif
