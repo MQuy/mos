@@ -20,23 +20,23 @@ extern void enter_usermode(uint32_t);
 uint32_t user_stack_index = 0;
 uint32_t create_user_stack(uint32_t blocks)
 {
-  physical_addr pAddr;
-  virtual_addr vAddr;
+  physical_addr paddr;
+  virtual_addr vaddr;
 
-  pAddr = pmm_alloc_blocks(blocks);
+  paddr = pmm_alloc_blocks(blocks);
 
-  if (!pAddr)
+  if (!paddr)
     return 0;
 
   user_stack_index += blocks;
-  vAddr = USER_STACK_ALLOC_TOP - user_stack_index * PMM_FRAME_SIZE;
+  vaddr = USER_STACK_ALLOC_TOP - user_stack_index * PMM_FRAME_SIZE;
 
   for (int i = 0; i < blocks; ++i)
     vmm_map_phyiscal_address(vmm_get_directory(),
-                             vAddr + i * PMM_FRAME_SIZE,
-                             pAddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+                             vaddr + i * PMM_FRAME_SIZE,
+                             paddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 
-  return vAddr + blocks * PMM_FRAME_SIZE - 4;
+  return vaddr + blocks * PMM_FRAME_SIZE - 4;
 }
 
 void setup_and_enter_usermode()

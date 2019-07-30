@@ -2,7 +2,7 @@
 #include <kernel/include/common.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
-#include <kernel/memory/pmm.h>
+#include <kernel/memory/malloc.h>
 #include <kernel/system/time.h>
 #include "ext2.h"
 
@@ -46,7 +46,7 @@ uint32_t ext2_create_block(vfs_superblock *sb)
     ext2_bwrite_block(sb, gdp->bg_block_bitmap, bitmap_buf);
 
     // clear block data
-    char *data_buf = pmm_alloc_block();
+    char *data_buf = malloc(sb->s_blocksize);
     ext2_bwrite_block(sb, block, data_buf);
 
     return block;
@@ -94,9 +94,9 @@ vfs_inode *ext2_create_inode(vfs_inode *dir, char *filename, mode_t mode)
     ext2_bwrite_block(dir->i_sb, gdp->bg_inode_bitmap, inode_bitmap_buf);
 
     // inode table
-    ext2_inode *ei_new = pmm_alloc_block();
+    ext2_inode *ei_new = malloc(sizeof(ext2_inode));
     ei_new->i_links_count = 1;
-    vfs_inode *inode = pmm_alloc_block();
+    vfs_inode *inode = malloc(sizeof(vfs_inode));
     inode->i_ino = ino;
     inode->i_mode = mode;
     inode->i_size = 0;
@@ -213,7 +213,7 @@ vfs_inode *ext2_lookup_inode(vfs_inode *dir, char *filename)
         ext2_dir_entry *entry = (ext2_dir_entry *)block_buf;
         while (size < dir->i_sb->s_blocksize && entry->ino != 0)
         {
-            char *name = pmm_alloc_block();
+            char *name = malloc(sizeof(entry->name_len));
             memcpy(name, entry->name, entry->name_len);
 
             if (strcmp(name, filename) == 0)

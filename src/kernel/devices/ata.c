@@ -1,7 +1,7 @@
 #include <kernel/include/string.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
-#include <kernel/graphics/DebugDisplay.h>
+#include <kernel/memory/malloc.h>
 #include "ata.h"
 
 #define MAX_ATA_DEVICE 4
@@ -40,8 +40,7 @@ uint8_t ata_init()
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
 
-  // FIXME: MQ 2019-05-26 Replace pmm_alloc_block by malloc(512)
-  // uint16_t *buffer = pmm_alloc_block();
+  // uint16_t *buffer = malloc(512);
   // ata_read(&devices[0], 2, 1, buffer);
   // for (uint16_t i = 0; i < 256; ++i)
   // {
@@ -51,8 +50,7 @@ uint8_t ata_init()
 
 ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)
 {
-  // FIXME: MQ 2019-05-26 Replace pmm_alloc_block by malloc(sizeof(ata_device))
-  ata_device *device = pmm_alloc_block();
+  ata_device *device = malloc(sizeof(ata_device));
   device->io_base = io_addr1;
   device->associated_io_base = io_addr2;
   device->irq = irq;

@@ -1,6 +1,6 @@
 #include <kernel/include/errno.h>
 #include <kernel/include/string.h>
-#include <kernel/memory/pmm.h>
+#include <kernel/memory/malloc.h>
 #include "vfs.h"
 #include "ext2/ext2.h"
 
@@ -64,18 +64,18 @@ vfs_mount *lookup_mnt(vfs_dentry *d)
 
 void init_current(vfs_dentry *d_root, vfs_mount *mnt_root)
 {
-  fs_struct *fs = pmm_alloc_block();
+  fs_struct *fs = malloc(sizeof(fs_struct));
   fs->d_root = d_root;
   fs->mnt_root = mnt_root;
 
-  current = pmm_alloc_block();
-  current->files = pmm_alloc_block();
+  current = malloc(sizeof(task_struct));
+  current->files = malloc(sizeof(files_struct));
   current->fs = fs;
 }
 
 void init_rootfs(vfs_file_system_type *fs_type, char *dev_name)
 {
-  vfs_mount *mnt = pmm_alloc_block();
+  vfs_mount *mnt = malloc(sizeof(vfs_mount));
   vfs_superblock *sb = fs_type->mount(fs_type, dev_name, "/");
   mnt->mnt_sb = sb;
   mnt->mnt_mountpoint = mnt->mnt_root = sb->s_root;

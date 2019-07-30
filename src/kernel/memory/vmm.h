@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "pmm.h"
 
+#define KERNEL_HEAP_START 0xD0000000
+#define KERNEL_HEAP_END 0xF0000000
+
 //! i86 architecture defines this format so be careful if you modify it
 enum PAGE_PTE_FLAGS
 {
@@ -62,5 +65,6 @@ typedef struct pdirectory
 void vmm_init();
 pdirectory *vmm_get_directory();
 void vmm_map_phyiscal_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
+void *sbrk(size_t n);
 
 #endif

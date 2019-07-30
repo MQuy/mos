@@ -1,6 +1,7 @@
 #include <kernel/include/string.h>
 #include <kernel/include/common.h>
 #include <kernel/include/errno.h>
+#include <kernel/memory/malloc.h>
 #include <kernel/devices/ata.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
@@ -8,7 +9,7 @@
 
 ext2_group_desc *ext2_get_group_desc(vfs_superblock *sb, uint32_t group)
 {
-  ext2_group_desc *gdp = pmm_alloc_block();
+  ext2_group_desc *gdp = malloc(sizeof(ext2_group_desc));
   ext2_superblock *ext2_sb = EXT2_SB(sb);
   uint32_t block = ext2_sb->s_first_data_block + 1 + group / EXT2_GROUPS_PER_BLOCK(ext2_sb);
   char *group_block_buf = ext2_bread_block(sb, block);
@@ -42,7 +43,7 @@ ext2_inode *ext2_get_inode(vfs_superblock *sb, ino_t ino)
 
 vfs_inode *ext2_alloc_inode(vfs_superblock *sb)
 {
-  vfs_inode *i = pmm_alloc_block();
+  vfs_inode *i = malloc(sizeof(vfs_inode));
   i->i_blocks = 0;
   i->i_sb = sb;
   return i;
@@ -120,7 +121,7 @@ vfs_super_operations ext2_super_opereations = {
 
 int ext2_fill_super(vfs_superblock *sb)
 {
-  ext2_superblock *ext2_sb = (ext2_superblock *)pmm_alloc_block();
+  ext2_superblock *ext2_sb = (ext2_superblock *)malloc(sizeof(ext2_superblock));
   char *buf = ext2_bread_block(sb, 1);
   void *tmp = (void *)buf;
   memcpy(ext2_sb, (ext2_superblock *)buf, sb->s_blocksize);
@@ -138,7 +139,7 @@ int ext2_fill_super(vfs_superblock *sb)
 vfs_superblock *ext2_mount(struct vfs_file_system_type *fs_type,
                            char *dev_name, char *dir_name)
 {
-  vfs_superblock *sb = (vfs_superblock *)pmm_alloc_block();
+  vfs_superblock *sb = (vfs_superblock *)malloc(sizeof(vfs_superblock));
   sb->s_blocksize = EXT2_MIN_BLOCK_SIZE;
   sb->mnt_devname = dev_name;
   sb->s_type = fs_type;
@@ -148,7 +149,7 @@ vfs_superblock *ext2_mount(struct vfs_file_system_type *fs_type,
   i_root->i_ino = EXT2_ROOT_INO;
   ext2_read_inode(i_root);
 
-  vfs_dentry *d_root = (vfs_dentry *)pmm_alloc_block();
+  vfs_dentry *d_root = (vfs_dentry *)malloc(sizeof(vfs_dentry));
   d_root->d_inode = i_root;
   d_root->d_parent = d_root;
   d_root->d_name = dir_name;

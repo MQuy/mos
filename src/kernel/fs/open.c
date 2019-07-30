@@ -1,12 +1,12 @@
 #include <kernel/include/string.h>
-#include <kernel/memory/pmm.h>
+#include <kernel/memory/malloc.h>
 #include "vfs.h"
 
 extern task_struct *current;
 
 vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 {
-  vfs_dentry *d = pmm_alloc_block();
+  vfs_dentry *d = malloc(sizeof(vfs_dentry));
   d->d_name = name;
   d->d_parent = parent;
   d->d_sb = parent->d_sb;
@@ -21,13 +21,13 @@ vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 
 nameidata *path_walk(char *filename)
 {
-  nameidata *nd = pmm_alloc_block();
+  nameidata *nd = malloc(sizeof(nameidata));
   nd->dentry = current->fs->d_root;
   nd->mnt = current->fs->mnt_root;
 
   for (int i = 1, length = strlen(filename); i < length; ++i)
   {
-    char *path = pmm_alloc_block();
+    char *path = malloc(length);
 
     for (int j = 0; filename[i] != '/' && i < length; ++i, ++j)
       path[j] = filename[i];
@@ -68,7 +68,7 @@ long sys_open(char *filename)
   int fd = find_unused_fd_slot();
   nameidata *nd = path_walk(filename);
 
-  vfs_file *file = pmm_alloc_block();
+  vfs_file *file = malloc(sizeof(vfs_file));
   file->f_dentry = nd->dentry;
   file->f_vfsmnt = nd->mnt;
   file->f_pos = 0;
