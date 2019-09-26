@@ -107,10 +107,6 @@ typedef struct nameidata
   struct vfs_mount *mnt;
 } nameidata;
 
-// FIXME: MQ 2019-07-15
-// these structs should be releated to thread, to make vfs simple we fake
-// and assume only one running thread
-
 typedef struct files_struct
 {
   struct vfs_file *fd_array[256];
@@ -121,12 +117,6 @@ typedef struct fs_struct
   struct vfs_dentry *d_root;
   struct vfs_mount *mnt_root;
 } fs_struct;
-
-typedef struct task_struct
-{
-  struct fs_struct *fs;
-  struct files_struct *files;
-} task_struct;
 
 int register_filesystem(vfs_file_system_type *fs);
 int unregister_filesystem(vfs_file_system_type *fs);

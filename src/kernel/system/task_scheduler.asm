@@ -1,31 +1,12 @@
-[extern task_schedule]
-[extern irq0]
-
-[global irq_task_handler]
-irq_task_handler:
-  cli
+[global do_switch]
+do_switch:
   pusha
 
-  push ds
-  push es
-  push fs
-  push gs
-  mov ax, 0x10
-  mov ds, ax
-  mov es, ax
-  mov fs, ax
-  mov gs, ax
+  mov [ebp + 8], esp      ; save esp for current task's kernel stack
+  mov esp, [ebp + 12]     ; load next task's kernel stack to esp
 
-  push esp
-  cld
-  call task_schedule
-  add esp, 4
-
-  pop gs
-  pop fs
-  pop es
-  pop ds
+  mov eax, [ebp + 16]     ; load next task's page directory
+  mov cr3, eax     
 
   popa
-  sti
-  jmp irq0
+  ret

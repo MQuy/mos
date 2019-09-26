@@ -1,6 +1,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/graphics/DebugDisplay.h>
+#include <kernel/fs/vfs.h>
 #include "sysapi.h"
 #include "tss.h"
 #include "task.h"
@@ -11,12 +12,6 @@
 
 extern void enter_usermode(uint32_t);
 
-/*
-  NOTE: MQ 2019-05-05
-  We created the identity memory map on the first 4MB (paging).
-  When creating user stack, we allocate n blocks on physical memory
-  if that memory allocation's location exceeds 4MB, page failed happens
-*/
 uint32_t user_stack_index = 0;
 uint32_t create_user_stack(uint32_t blocks)
 {
@@ -53,47 +48,13 @@ void setup_and_enter_usermode()
 
 void in_usermode()
 {
-  run_thread();
+
+  long fd = sys_open("/test/aha.txt");
+  // char *buf = pmm_alloc_block();
+  sys_write(fd, "fuck this file", 14);
+  // sys_read(fd, buf, 14);
+  // DebugPrintf("content: %s", buf);
 
   for (;;)
     ;
-}
-
-void kthread_1()
-{
-  while (1)
-    for (int i = 0; i < 26; ++i)
-    {
-      sys_printg(0, 0);
-      sys_printc('a' + i);
-    }
-}
-
-void kthread_2()
-{
-  while (1)
-    for (int i = 0; i < 26; ++i)
-    {
-      sys_printg(10, 0);
-      sys_printc('A' + i);
-    }
-}
-
-void kthread_3()
-{
-  while (1)
-    for (int i = 0; i < 10; ++i)
-    {
-      sys_printg(20, 0);
-      sys_printc('0' + i);
-    }
-}
-
-void run_thread()
-{
-  queue_push(create_thread(kthread_1, (uint32_t)create_user_stack(1)));
-  queue_push(create_thread(kthread_2, (uint32_t)create_user_stack(1)));
-  queue_push(create_thread(kthread_3, (uint32_t)create_user_stack(1)));
-
-  task_start();
 }

@@ -2,6 +2,26 @@
 #define SYSTEM_TASK_H
 
 #include <stdint.h>
+#include <kernel/include/ctype.h>
+#include <kernel/include/list.h>
+#include <kernel/memory/vmm.h>
+
+struct fs_struct;
+struct files_struct;
+
+enum thread_state
+{
+  RUNNING,
+  READY_TO_RUN,
+  WAITING,
+  TERMINATED,
+};
+enum thread_policy
+{
+  KERNEL_POLICY,
+  SYSTEM_POLICY,
+  APP_POLICY
+};
 
 typedef struct trap_frame
 {
@@ -12,14 +32,38 @@ typedef struct trap_frame
 
 typedef struct thread
 {
+  enum thread_state state;
+  struct process *parent;
+  uint32_t priority;
+  uint32_t policy;
   uint32_t esp;
+  uint32_t kernel_esp;
+  uint32_t expiry_when;
+  uint32_t time_used;
+  struct list_head sibling;
 } thread;
+
+typedef struct process
+{
+  struct pdirectory *pdir;
+  struct fs_struct *fs;
+  struct files_struct *files;
+  struct process *parent;
+  struct list_head sibling;
+  struct list_head children;
+  struct list_head threads;
+  uid_t uid;
+  gid_t gid;
+} process;
 
 void task_init();
 void task_start();
 void task_schedule(uint32_t esp);
 
-thread create_thread(void *func, uint32_t esp);
+thread *create_thread(void *func, uint32_t esp, bool in_kernel);
+void block_thread(thread *thread, uint8_t state);
+void schedule();
+process *create_process(void *func, uint32_t esp, bool is_kernel);
 
 bool queue_push(thread t);
 

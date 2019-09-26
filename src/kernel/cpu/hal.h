@@ -17,6 +17,7 @@ uint32_t inportl(uint16_t portid);
 void outportl(uint16_t portid, uint32_t value);
 void inportsw(uint16_t portid, void *addr, size_t count);
 void outportsw(uint16_t portd, const void *addr, size_t count);
+void cpuid(int code, uint32_t *a, uint32_t *d);
 
 const char *get_cpu_vender();
 

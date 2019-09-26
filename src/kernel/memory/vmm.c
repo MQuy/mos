@@ -54,16 +54,15 @@ pdirectory *_current_dir;
 */
 void vmm_init()
 {
-  uint32_t x = 0xC0000000 - 0x400000;
   // initialize page table directory
-  size_t directory_frames = div_ceil(sizeof(pdirectory), PMM_FRAME_SIZE);
-  pdirectory *directory = (pdirectory *)pmm_alloc_blocks(directory_frames);
+  pdirectory *directory = (pdirectory *)pmm_alloc_block();
   memset(directory, 0, sizeof(pdirectory));
 
   vmm_init_and_map(directory, 0x00000000, 0x00000000);
-  vmm_init_and_map(directory, 0xC0000000, 0x00100000);
+  for (int i = 0; i < 256; ++i)
+    vmm_init_and_map(directory, 0xC0000000 + PMM_FRAME_SIZE * 1024 + i, 0x00100000 + PMM_FRAME_SIZE * 1024 * i);
 
-  // NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging
+  // NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging (map last entry to directory)
   directory->m_entries[1023] = ((uint32_t)directory & 0xFFFFF000) | 7;
 
   vmm_paging(directory);
@@ -78,7 +77,7 @@ void vmm_init_and_map(pdirectory *directory, virtual_addr virtual, physical_addr
 
   virtual_addr ivirtual = virtual;
   physical_addr iframe = frame;
-  for (int i = 0; i < 1024; ++i, ivirtual += 4096, iframe += 4096)
+  for (int i = 0; i < 1024; ++i, ivirtual += PMM_FRAME_SIZE, iframe += PMM_FRAME_SIZE)
   {
     pt_entry *entry = &table->m_entries[get_page_table_entry_index(ivirtual)];
     pt_entry_add_attrib(entry, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
@@ -117,6 +116,18 @@ void pd_entry_add_attrib(pd_entry *e, uint32_t attr)
 void pd_entry_set_frame(pd_entry *e, uint32_t addr)
 {
   *e = (*e & ~I86_PDE_FRAME) | addr;
+}
+
+pdirectory *create_address_space()
+{
+  pdirectory *dir = pmm_alloc_block();
+  pdirectory *current = vmm_get_directory();
+
+  if (!dir)
+    return NULL;
+  memset(dir, 0, sizeof(pdirectory));
+  memcpy(dir->m_entries[768], current->m_entries[768], 256 * sizeof(pd_entry));
+  return dir;
 }
 
 pdirectory *vmm_get_directory()
@@ -163,28 +174,26 @@ void vmm_create_page_table(pdirectory *dir, uint32_t virt, uint32_t flags)
   dir->m_entries[get_page_directory_index(virt)] = (uint32_t)table | flags;
 }
 
-uint32_t heap_current = KERNEL_HEAP_START;
-uint32_t remaining_from_last_used = 0;
-
-void *sbrk(size_t n)
+uint32_t kernel_stack_index = 0;
+void *create_kernel_stack(int32_t blocks)
 {
-  char *heap_base = heap_current;
+#define KERNEL_STACK_ALLOC_TOP 0xC0000000
 
-  if (n <= remaining_from_last_used)
-    remaining_from_last_used -= n;
-  else
-  {
-    uint32_t phyiscal_addr = pmm_alloc_blocks(div_ceil(n - remaining_from_last_used, PMM_FRAME_SIZE));
-    uint32_t page_addr = div_ceil(heap_current, PMM_FRAME_SIZE) * PMM_FRAME_SIZE;
-    for (; page_addr < heap_current + n; page_addr += PMM_FRAME_SIZE)
-      vmm_map_phyiscal_address(vmm_get_directory(),
-                               page_addr,
-                               phyiscal_addr,
-                               I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-    remaining_from_last_used = page_addr - (heap_current + n);
-  }
+  physical_addr paddr;
+  virtual_addr vaddr;
 
-  heap_current += n;
-  memset(heap_base, 0, n);
-  return heap_base;
+  paddr = pmm_alloc_blocks(blocks);
+
+  if (!paddr)
+    return 0;
+
+  kernel_stack_index += blocks;
+  vaddr = KERNEL_STACK_ALLOC_TOP + kernel_stack_index * PMM_FRAME_SIZE;
+
+  for (int i = 0; i < blocks; ++i)
+    vmm_map_phyiscal_address(vmm_get_directory(),
+                             vaddr + i * PMM_FRAME_SIZE,
+                             paddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+
+  return vaddr + blocks * PMM_FRAME_SIZE - 4;
 }

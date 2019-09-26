@@ -1,13 +1,14 @@
 #include <kernel/include/errno.h>
 #include <kernel/include/string.h>
 #include <kernel/memory/malloc.h>
+#include <kernel/system/task.h>
 #include "vfs.h"
 #include "ext2/ext2.h"
 
 static vfs_file_system_type *file_systems;
 static vfs_mount *vfsmntlist;
 
-task_struct *current;
+extern process *current_process;
 
 vfs_file_system_type **find_filesystem(const char *name)
 {
@@ -47,7 +48,7 @@ int unregister_filesystem(vfs_file_system_type *fs)
 int find_unused_fd_slot()
 {
   for (int i = 0; i < 256; ++i)
-    if (!current->files->fd_array[i])
+    if (!current_process->files->fd_array[i])
       return i;
 
   return -EINVAL;
@@ -62,17 +63,6 @@ vfs_mount *lookup_mnt(vfs_dentry *d)
   return NULL;
 }
 
-void init_current(vfs_dentry *d_root, vfs_mount *mnt_root)
-{
-  fs_struct *fs = malloc(sizeof(fs_struct));
-  fs->d_root = d_root;
-  fs->mnt_root = mnt_root;
-
-  current = malloc(sizeof(task_struct));
-  current->files = malloc(sizeof(files_struct));
-  current->fs = fs;
-}
-
 void init_rootfs(vfs_file_system_type *fs_type, char *dev_name)
 {
   vfs_mount *mnt = malloc(sizeof(vfs_mount));
@@ -83,8 +73,8 @@ void init_rootfs(vfs_file_system_type *fs_type, char *dev_name)
 
   vfsmntlist = mnt;
 
-  // FIXME: MQ 2019-07-15 move it into thread
-  init_current(mnt->mnt_root, mnt);
+  current_process->fs->d_root = mnt->mnt_root;
+  current_process->fs->mnt_root = mnt;
 }
 
 // NOTE: MQ 2019-07-24

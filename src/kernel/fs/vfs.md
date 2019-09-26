@@ -266,12 +266,12 @@ typedef struct fs_struct {
   struct vfs_mount *mnt_root;
 } fs_struct;
 
-typedef struct task_struct {
+typedef struct process {
   struct fs_struct *fs;
   struct files_struct *files;
-  struct task_struct *parent;
+  struct process *parent;
   struct list_head children;
-} task_struct;
+} process;
 ```
 
 Sections below is demonstrated with ext2
@@ -290,9 +290,9 @@ Sections below is demonstrated with ext2
 
 - based on current task (`current`)
   - invokes `getname` to read absolute file namepath
-  - find a unused slot in `current->files->fd_array`
+  - find a unused slot in `current_process->files->fd_array`
 - break path into components, for each component
-  - initialize `nameidata` at root's mountpoint `current->fs->d_root/mnt_root` if component is `'/'`
+  - initialize `nameidata` at root's mountpoint `current_process->fs->d_root/mnt_root` if component is `'/'`
   - search in `nameidata->dentry->subdirs` to find a dentry with `name` = component name -> next
   - if not exist
     - allocate a new dentry based on `nameidata->dentry` and `name`
@@ -313,7 +313,7 @@ Sections below is demonstrated with ext2
 
 > read(fd, buf, count)
 
-- `file = current->files->fd_array[fd]`
+- `file = current_process->files->fd_array[fd]`
 - invokes `file_ppos` to get file's current position
 - `file->fops->read(file, buf, pos, count)`
   - data is divided into pages (each page is ext2 block size)
@@ -347,7 +347,7 @@ Sections below is demonstrated with ext2
 
 > write(fd, buf, count)
 
-- `file = current->files->fd_array[fd]`
+- `file = current_process->files->fd_array[fd]`
 - invokes `file_ppos()` to get file's current position
 - `file->fops->write(file, buf, pos, count)`
   - data is divided into pages (each page is ext2 block size)

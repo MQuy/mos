@@ -22,11 +22,6 @@ typedef unsigned short gid_t;
 #define isascii(c) ((unsigned)(c) <= 0x7F)
 #define toascii(c) ((unsigned)(c)&0x7F)
 
-struct list_head
-{
-  struct list_head *next, *prev;
-};
-
 struct timespec
 {
   long tv_sec;

@@ -1,8 +1,9 @@
 #include <kernel/include/string.h>
 #include <kernel/memory/malloc.h>
+#include <kernel/system/task.h>
 #include "vfs.h"
 
-extern task_struct *current;
+extern process *current_process;
 
 vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 {
@@ -22,8 +23,8 @@ vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 nameidata *path_walk(char *filename)
 {
   nameidata *nd = malloc(sizeof(nameidata));
-  nd->dentry = current->fs->d_root;
-  nd->mnt = current->fs->mnt_root;
+  nd->dentry = current_process->fs->d_root;
+  nd->mnt = current_process->fs->mnt_root;
 
   for (int i = 1, length = strlen(filename); i < length; ++i)
   {
@@ -74,6 +75,6 @@ long sys_open(char *filename)
   file->f_pos = 0;
   file->f_op = nd->dentry->d_inode->i_fop;
 
-  current->files->fd_array[fd] = file;
+  current_process->files->fd_array[fd] = file;
   return fd;
 }
