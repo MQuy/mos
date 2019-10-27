@@ -2,6 +2,7 @@
 #include <kernel/include/common.h>
 #include <kernel/include/errno.h>
 #include <kernel/memory/malloc.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/devices/ata.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
@@ -57,12 +58,14 @@ void ext2_read_inode(vfs_inode *i)
   i->i_gid = raw_node->i_gid;
   i->i_uid = raw_node->i_uid;
 
+  i->i_nlink = raw_node->i_links_count;
   i->i_size = raw_node->i_size;
   i->i_atime.tv_sec = raw_node->i_atime;
   i->i_ctime.tv_sec = raw_node->i_ctime;
   i->i_mtime.tv_sec = raw_node->i_mtime;
   i->i_atime.tv_nsec = i->i_ctime.tv_nsec = i->i_mtime.tv_nsec = 0;
 
+  i->i_blksize = PMM_FRAME_SIZE; /* This is the optimal IO size (for stat), not the fs block size */
   i->i_blocks = raw_node->i_blocks;
   i->i_flags = raw_node->i_flags;
   i->i_fs_info = raw_node;
@@ -132,6 +135,7 @@ int ext2_fill_super(vfs_superblock *sb)
   sb->s_fs_info = ext2_sb;
   sb->s_op = &ext2_super_opereations;
   sb->s_blocksize = EXT2_BLOCK_SIZE(ext2_sb);
+  sb->s_blocksize_bits = ext2_sb->s_log_block_size;
   sb->s_magic = EXT2_SUPER_MAGIC;
   return 0;
 }

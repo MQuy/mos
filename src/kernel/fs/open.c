@@ -64,10 +64,10 @@ nameidata *path_walk(char *filename)
   return nd;
 }
 
-long sys_open(char *filename)
+long sys_open(char *name)
 {
   int fd = find_unused_fd_slot();
-  nameidata *nd = path_walk(filename);
+  nameidata *nd = path_walk(name);
 
   vfs_file *file = malloc(sizeof(vfs_file));
   file->f_dentry = nd->dentry;
@@ -77,4 +77,51 @@ long sys_open(char *filename)
 
   current_process->files->fd_array[fd] = file;
   return fd;
+}
+
+void generic_fillattr(vfs_inode *inode, struct kstat *stat)
+{
+  stat->dev = inode->i_sb->s_dev;
+  stat->ino = inode->i_ino;
+  stat->mode = inode->i_mode;
+  stat->nlink = inode->i_nlink;
+  stat->uid = inode->i_uid;
+  stat->gid = inode->i_gid;
+  stat->rdev = inode->i_rdev;
+  stat->atime = inode->i_atime;
+  stat->mtime = inode->i_mtime;
+  stat->ctime = inode->i_ctime;
+  stat->size = inode->i_size;
+  stat->blocks = inode->i_blocks;
+  stat->blksize = inode->i_blksize;
+}
+
+void vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
+{
+  vfs_inode *inode = dentry->d_inode;
+  if (inode->i_op->getattr)
+    return inode->i_op->getattr(mnt, dentry, stat);
+
+  generic_fillattr(inode, stat);
+  if (!stat->blksize)
+  {
+    vfs_superblock *s = inode->i_sb;
+    unsigned blocks;
+    blocks = (stat->size + s->s_blocksize - 1) >> s->s_blocksize_bits;
+    stat->blocks = (s->s_blocksize / 512) * blocks;
+    stat->blksize = s->s_blocksize;
+  }
+}
+
+void sys_stat(char *name, kstat *stat)
+{
+  int fd = find_unused_fd_slot();
+  nameidata *nd = path_walk(name);
+  vfs_getattr(nd->mnt, nd->dentry, stat);
+}
+
+void sys_fstat(uint32_t fd, kstat *stat)
+{
+  vfs_file *f = current_process->files->fd_array[fd];
+  vfs_getattr(f->f_vfsmnt, f->f_dentry, stat);
 }

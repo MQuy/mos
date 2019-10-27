@@ -1,6 +1,11 @@
 #ifndef INCLUDE_CTYPE_H
 #define INCLUDE_CTYPE_H
 
+#define USHRT_MAX 65535
+
+typedef unsigned int __kernel_dev_t;
+typedef __kernel_dev_t dev_t;
+
 typedef unsigned short umode_t;
 typedef long long loff_t;
 typedef unsigned long long ino_t;

@@ -16,6 +16,36 @@
 
 #define MAX_SUB_DENTRIES 8
 
+typedef struct kstat
+{
+  unsigned long ino;
+  dev_t dev;
+  umode_t mode;
+  unsigned int nlink;
+  uid_t uid;
+  gid_t gid;
+  dev_t rdev;
+  loff_t size;
+  struct timespec atime;
+  struct timespec mtime;
+  struct timespec ctime;
+  unsigned long blksize;
+  unsigned long blocks;
+} kstat;
+
+typedef struct iattr
+{
+  unsigned int ia_valid;
+  umode_t ia_mode;
+  uid_t ia_uid;
+  gid_t ia_gid;
+  loff_t ia_size;
+  struct timespec ia_atime;
+  struct timespec ia_mtime;
+  struct timespec ia_ctime;
+  unsigned int ia_attr_flags;
+} iattr;
+
 typedef struct vfs_file_system_type
 {
   const char *name;
@@ -36,6 +66,8 @@ typedef struct vfs_mount
 typedef struct vfs_superblock
 {
   unsigned long s_blocksize;
+  dev_t s_dev;
+  unsigned char s_blocksize_bits;
   struct vfs_file_system_type *s_type;
   struct vfs_super_operations *s_op;
   unsigned long s_magic;
@@ -56,12 +88,15 @@ typedef struct vfs_inode
 {
   unsigned long i_ino;
   umode_t i_mode;
+  unsigned int i_nlink;
   uid_t i_uid;
   gid_t i_gid;
+  dev_t i_rdev;
   struct timespec i_atime;
   struct timespec i_mtime;
   struct timespec i_ctime;
   uint32_t i_blocks;
+  unsigned long i_blksize;
   uint32_t i_flags;
   uint32_t i_size;
   struct vfs_inode_operations *i_op;
@@ -75,6 +110,8 @@ typedef struct vfs_inode_operations
   struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
   struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
   void (*truncate)(struct vfs_inode *);
+  int (*setattr)(struct dentry *, struct iattr *);
+  int (*getattr)(struct vfsmount *mnt, struct dentry *, struct kstat *);
 } vfs_inode_operations;
 
 typedef struct vfs_dentry
@@ -126,6 +163,8 @@ void vfs_init(vfs_file_system_type *fs, char *dev_name);
 
 // open.c
 long sys_open(char *filename);
+void sys_stat(char *name, kstat *stat);
+void sys_fstat(uint32_t fd, kstat *stat);
 
 // read_write.c
 ssize_t sys_read(uint32_t fd, char *buf, size_t count);

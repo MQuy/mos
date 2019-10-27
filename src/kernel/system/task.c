@@ -215,20 +215,20 @@ void irq_schedule_handler(interrupt_registers *regs)
   unlock_scheduler();
 }
 
-process *create_process(void *func, pdirectory *pdir, uint32_t esp, bool is_kernel)
+process *create_process(void *func, uint32_t esp, bool is_kernel)
 {
   process *p = malloc(sizeof(process));
   p->files = malloc(sizeof(sizeof(files_struct)));
   p->fs = malloc(sizeof(fs_struct));
-  p->pdir = pdir;
+  p->pdir = create_address_space();
   p->parent = current_process;
 
-  INIT_LIST_HEAD(&p->children);
-  list_add_tail(&p->sibling, &current_process->children);
+  // INIT_LIST_HEAD(&p->children);
+  // list_add_tail(&p->sibling, &current_process->children);
 
-  thread *t = create_thread(func, esp, is_kernel);
-  INIT_LIST_HEAD(&p->threads);
-  list_add_tail(&t->sibling, &p->threads);
+  // thread *t = create_thread(func, esp, is_kernel);
+  // INIT_LIST_HEAD(&p->threads);
+  // list_add_tail(&t->sibling, &p->threads);
 
   return p;
 }
@@ -236,7 +236,15 @@ process *create_process(void *func, pdirectory *pdir, uint32_t esp, bool is_kern
 void task_init(void *func)
 {
   register_pit_handler(irq_schedule_handler);
-  current_process = create_process(func, vmm_get_directory(), create_kernel_stack(1), true);
-  current_thread = list_entry(&current_process->children, struct thread, sibling);
-  current_thread->state = RUNNING;
+
+  current_process = create_process(func, create_kernel_stack(1), true);
+
+  // thread *next_thread = list_entry(&current_process->children, struct thread, sibling);
+  // next_thread->state = RUNNING;
+
+  // current_thread = malloc(sizeof(thread));
+  // __asm__ __volatile__("mov %%esp, %0"
+  //  : "=r"(current_thread->esp));
+
+  // switch_thread(current_thread);
 }

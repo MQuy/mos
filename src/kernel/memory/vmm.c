@@ -59,8 +59,10 @@ void vmm_init()
   memset(directory, 0, sizeof(pdirectory));
 
   vmm_init_and_map(directory, 0x00000000, 0x00000000);
-  for (int i = 0; i < 256; ++i)
-    vmm_init_and_map(directory, 0xC0000000 + PMM_FRAME_SIZE * 1024 + i, 0x00100000 + PMM_FRAME_SIZE * 1024 * i);
+  vmm_init_and_map(directory, 0xC0000000, 0x00100000);
+
+  // for (int i = 0; i < 256; ++i)
+  //   vmm_init_and_map(directory, 0xC0000000 + PMM_FRAME_SIZE * 1024 + i, 0x00100000 + PMM_FRAME_SIZE * 1024 * i);
 
   // NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging (map last entry to directory)
   directory->m_entries[1023] = ((uint32_t)directory & 0xFFFFF000) | 7;

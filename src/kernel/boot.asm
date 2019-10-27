@@ -1,10 +1,11 @@
 ;//www.gnu.org/software/grub/manual/multiboot/multiboot.html#Example-OS-code
 
-MBALIGN  equ  1<<0              ; align loaded modules on page boundaries
-MEMINFO  equ  1<<1              ; provide memory map
-FLAGS    equ  MBALIGN | MEMINFO ; this is the Multiboot 'flag' field
-MAGIC    equ  0x1BADB002        ; 'magic number' lets bootloader find the header
-CHECKSUM equ -(MAGIC + FLAGS)   ; checksum of above, to prove we are multiboot
+MBALIGN  equ  1<<0              ; // align loaded modules on page boundaries
+MEMINFO  equ  1<<1              ; // provide memory map
+VIDMOD   equ  1<<2              ; // information about the video mode table must be available to the kernel.
+FLAGS    	equ  MBALIGN | MEMINFO | VIDMOD 	; this is the Multiboot 'flag' field
+MAGIC    	equ  0x1BADB002        							; 'magic number' lets bootloader find the header
+CHECKSUM 	equ -(MAGIC + FLAGS)   							; checksum of above, to prove we are multiboot
 
 ; Declare a multiboot header that marks the program as a kernel. These are magic
 ; values that are documented in the multiboot standard. The bootloader will
@@ -16,6 +17,15 @@ align 4
 dd MAGIC
 dd FLAGS
 dd CHECKSUM
+dd 0                  ; 12    u32    header_addr    if flags[16] is set
+dd 0                  ; 16    u32    load_addr    if flags[16] is set
+dd 0                  ; 20    u32    load_end_addr    if flags[16] is set
+dd 0                  ; 24    u32    bss_end_addr    if flags[16] is set
+dd 0                  ; 28    u32    entry_addr    if flags[16] is set
+dd 0                  ; 32    u32    mode_type    if flags[2] is set
+dd 800                ; 36    u32    width    if flags[2] is set
+dd 600                ; 40    u32    height    if flags[2] is set
+dd 32                 ; 44    u32    depth    if flags[2] is set
 
 ; The multiboot standard does not define the value of the stack pointer register
 ; (esp) and it is up to the kernel to provide a stack. This allocates room for a
