@@ -14,6 +14,7 @@
 #include "system/time.h"
 #include "system/task.h"
 #include "devices/kybrd.h"
+#include "devices/mouse.h"
 #include "devices/pci.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
@@ -50,6 +51,7 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   // timer and keyboard
   pit_init();
   kkybrd_install();
+  mouse_init();
 
   // enable interrupts to start irqs (timer, keyboard)
   enable_interrupts();
@@ -65,9 +67,10 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 
   task_init();
   kernel_init();
-  draw();
+  // draw();
 
-  halt();
+  for (;;)
+    ;
 
   return 0;
 }
