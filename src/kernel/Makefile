@@ -1,8 +1,8 @@
 TOPDIR  := $(shell if [ "$$PWD" != "" ] ; then echo $$PWD ; else pwd ; fi)
 INCLUDE = $(TOPDIR)/../
 
-C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c cpu/*.c devices/*.c system/*.c fs/*.c fs/**/*.c)
-HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h cpu/*.h devices/*.h system/*.h fs/*.h fs/**/*.h)
+C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c cpu/*.c devices/*.c system/*.c fs/*.c fs/**/*.c fonts/*.c)
+HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h cpu/*.h devices/*.h system/*.h fs/*.h fs/**/*.h fonts/*.h)
 
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o cpu/descriptor.o system/task_scheduler.o system/user_handler.o}

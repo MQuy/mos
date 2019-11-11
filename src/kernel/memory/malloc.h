@@ -13,6 +13,7 @@ typedef struct block_meta
 } block_meta;
 
 void *malloc(size_t n);
+void *calloc(size_t n, size_t size);
 void free(void *ptr);
 
 #endif

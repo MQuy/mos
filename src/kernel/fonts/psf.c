@@ -5,9 +5,12 @@
 #include "psf.h"
 
 uint16_t *unicode;
+char *psf_start;
 
-void psf_init(char *psf_start, size_t size)
+void psf_init(char *buff, size_t size)
 {
+  psf_start = buff;
+
   uint16_t glyph = 0;
   char *psf_end = psf_start + size;
   /* cast the address to PSF header struct */
@@ -17,7 +20,7 @@ void psf_init(char *psf_start, size_t size)
                      font->headersize +
                      font->numglyph * font->bytesperglyph);
   /* is there a unicode table? */
-  if (font->flags & PSF_HAS_UNICODE_TABLE & s < psf_end)
+  if (font->flags & PSF_HAS_UNICODE_TABLE && s < psf_end)
   {
     /* allocate memory for translation table */
     unicode = malloc(USHRT_MAX * sizeof(uint16_t));
@@ -66,13 +69,13 @@ void psf_init(char *psf_start, size_t size)
   }
 }
 
-void putchar(
+void psf_putchar(
     /* note that this is int, not char as it's a unicode character */
     uint32_t c,
     /* cursor position on screen, in characters not in pixels */
     uint32_t cx, uint32_t cy,
     /* foreground and background colors, say 0xFFFFFF and 0x000000 */
-    uint32_t fg, uint32_t bg, char *psf_start, char *fb, uint32_t scanline)
+    uint32_t fg, uint32_t bg, char *fb, uint32_t scanline)
 {
   /* cast the address to PSF header struct */
   psf_t *font = (psf_t *)psf_start;
@@ -95,7 +98,7 @@ void putchar(
       (cy * font->height * scanline) +
       (cx * (font->width + 1) * 4);
   /* finally display pixels according to the bitmap */
-  int x, y, line, mask;
+  uint32_t x, y, line, mask;
   for (y = 0; y < font->height; y++)
   {
     /* save the starting position of the line */
@@ -112,5 +115,16 @@ void putchar(
     /* adjust to the next line */
     glyph += bytesperline;
     offs += scanline;
+  }
+}
+
+void psf_puts(
+    const char *s,
+    uint32_t cx, uint32_t cy,
+    uint32_t fg, uint32_t bg, char *fb, uint32_t scanline)
+{
+  for (uint32_t i = 0, length = strlen(s); i < length; i++)
+  {
+    psf_putchar(s[i], cx + i, cy, fg, bg, fb, scanline);
   }
 }

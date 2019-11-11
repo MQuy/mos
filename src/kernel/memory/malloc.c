@@ -1,3 +1,4 @@
+#include <kernel/include/string.h>
 #include "vmm.h"
 #include "malloc.h"
 
@@ -52,6 +53,13 @@ void *malloc(size_t size)
     return block + 1;
   else
     return NULL;
+}
+
+void *calloc(size_t n, size_t size)
+{
+  void *block = malloc(n * size);
+  memset(block, 0, n * size);
+  return block;
 }
 
 void free(void *ptr)

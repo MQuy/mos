@@ -82,12 +82,12 @@ void vmm_init_and_map(pdirectory *directory, virtual_addr virtual, physical_addr
   for (int i = 0; i < 1024; ++i, ivirtual += PMM_FRAME_SIZE, iframe += PMM_FRAME_SIZE)
   {
     pt_entry *entry = &table->m_entries[get_page_table_entry_index(ivirtual)];
-    pt_entry_add_attrib(entry, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+    pt_entry_add_attrib(entry, I86_PTE_PRESENT | I86_PTE_WRITABLE);
     pt_entry_set_frame(entry, iframe);
   }
 
   pd_entry *entry = &directory->m_entries[get_page_directory_index(virtual)];
-  pd_entry_add_attrib(entry, I86_PDE_PRESENT | I86_PDE_WRITABLE | I86_PDE_USER);
+  pd_entry_add_attrib(entry, I86_PDE_PRESENT | I86_PDE_WRITABLE);
   pd_entry_set_frame(entry, table);
 }
 
@@ -195,7 +195,7 @@ void *create_kernel_stack(int32_t blocks)
   for (int i = 0; i < blocks; ++i)
     vmm_map_phyiscal_address(vmm_get_directory(),
                              vaddr + i * PMM_FRAME_SIZE,
-                             paddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+                             paddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE);
 
   return vaddr + blocks * PMM_FRAME_SIZE - 4;
 }

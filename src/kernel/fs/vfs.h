@@ -110,8 +110,8 @@ typedef struct vfs_inode_operations
   struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
   struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
   void (*truncate)(struct vfs_inode *);
-  int (*setattr)(struct dentry *, struct iattr *);
-  int (*getattr)(struct vfsmount *mnt, struct dentry *, struct kstat *);
+  int (*setattr)(struct vfs_dentry *, struct iattr *);
+  int (*getattr)(struct vfs_mount *mnt, struct vfs_dentry *, struct kstat *);
 } vfs_inode_operations;
 
 typedef struct vfs_dentry

@@ -96,7 +96,7 @@ void generic_fillattr(vfs_inode *inode, struct kstat *stat)
   stat->blksize = inode->i_blksize;
 }
 
-void vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
+int vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
 {
   vfs_inode *inode = dentry->d_inode;
   if (inode->i_op->getattr)
@@ -115,7 +115,6 @@ void vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
 
 void sys_stat(char *name, kstat *stat)
 {
-  int fd = find_unused_fd_slot();
   nameidata *nd = path_walk(name);
   vfs_getattr(nd->mnt, nd->dentry, stat);
 }

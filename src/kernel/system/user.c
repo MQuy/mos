@@ -26,7 +26,7 @@ uint32_t create_user_stack(uint32_t blocks)
   user_stack_index += blocks;
   vaddr = USER_STACK_ALLOC_TOP - user_stack_index * PMM_FRAME_SIZE;
 
-  for (int i = 0; i < blocks; ++i)
+  for (uint32_t i = 0; i < blocks; ++i)
     vmm_map_phyiscal_address(vmm_get_directory(),
                              vaddr + i * PMM_FRAME_SIZE,
                              paddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);

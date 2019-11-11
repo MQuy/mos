@@ -12,6 +12,7 @@
 #define PCI_SUBCLASS_IDE 0x01
 #define PCI_SUBCLASS_PCI_TO_PCI_BRIDGE 0x04
 
+void pci_scan_bus(uint8_t bus);
 void pci_scan_buses();
 
 #endif

@@ -10,4 +10,6 @@ typedef struct mouse_device
   uint32_t state;
 } mouse_device;
 
+void mouse_init();
+
 #endif

@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "include/multiboot.h"
+#include "include/multiboot2.h"
 #include "graphics/DebugDisplay.h"
 #include "cpu/hal.h"
 #include "cpu/gdt.h"
@@ -22,23 +22,53 @@
 #include "devices/ata.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
-#include "graphics/psf.h"
+#include "system/console.h"
 
 extern vfs_file_system_type ext2_fs_type;
-extern process *current_process;
-void kernel_init();
 
-int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
+void kernel_init()
 {
-  if (boot_magic != MULTIBOOT_BOOTLOADER_MAGIC)
+  pci_scan_buses();
+
+  vfs_init(&ext2_fs_type, "/dev/hda");
+  // setup stack and enter user mode
+  // setup_and_enter_usermode();
+}
+
+int kernel_main(unsigned long magic, unsigned long addr)
+{
+  if (magic != MULTIBOOT2_BOOTLOADER_MAGIC)
   {
-    DebugPrintf("\nBootloader MAGIC is invalid... Halting");
     return -1;
   }
 
-  DebugClrScr(0x13);
-  DebugGotoXY(0, 0);
-  DebugSetColor(0x17);
+  struct multiboot_tag_basic_meminfo *multiboot_meminfo;
+  struct multiboot_tag_mmap *multiboot_mmap;
+  struct multiboot_tag_framebuffer *multiboot_framebuffer;
+
+  struct multiboot_tag *tag;
+  unsigned size = *(unsigned *)addr;
+  for (tag = (struct multiboot_tag *)(addr + 8);
+       tag->type != MULTIBOOT_TAG_TYPE_END;
+       tag = (struct multiboot_tag *)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
+  {
+    switch (tag->type)
+    {
+    case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
+      multiboot_meminfo = (struct multiboot_tag_basic_meminfo *)tag;
+      break;
+    case MULTIBOOT_TAG_TYPE_MMAP:
+    {
+      multiboot_mmap = (struct multiboot_tag_mmap *)tag;
+      break;
+    }
+    case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
+    {
+      multiboot_framebuffer = (struct multiboot_tag_framebuffer *)tag;
+      break;
+    }
+    }
+  }
 
   // gdt including kernel, user and tss
   gdt_init();
@@ -56,10 +86,8 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
   // enable interrupts to start irqs (timer, keyboard)
   enable_interrupts();
 
-  init(boot_info);
-
   // physical memory and paging
-  pmm_init(boot_info);
+  pmm_init(multiboot_meminfo, multiboot_mmap);
   vmm_init();
 
   // register system apis
@@ -67,56 +95,12 @@ int kernel_main(uint32_t boot_magic, multiboot_info_t *boot_info)
 
   task_init();
   kernel_init();
-  // draw();
+
+  console_init(multiboot_framebuffer);
+  printf("hello world");
 
   for (;;)
     ;
 
   return 0;
-}
-
-void kernel_init()
-{
-
-  pci_scan_buses();
-
-  vfs_init(&ext2_fs_type, "/dev/hda");
-
-  // setup stack and enter user mode
-  // setup_and_enter_usermode();
-}
-
-char *pram;
-uint32_t bpp, pitch;
-
-void init(multiboot_info_t *boot_info)
-{
-  pram = boot_info->framebuffer_addr;
-  bpp = boot_info->framebuffer_bpp;
-  pitch = boot_info->framebuffer_pitch;
-}
-
-void draw()
-{
-  char *vram = 0xFC000000;
-  uint32_t screen_size = 600 * pitch;
-  uint32_t blocks = div_ceil(screen_size, PMM_FRAME_SIZE);
-  for (uint32_t i = 0; i < blocks; ++i)
-    vmm_map_phyiscal_address(
-        vmm_get_directory(),
-        vram + i * PMM_FRAME_SIZE,
-        pram + i * PMM_FRAME_SIZE,
-        I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-
-  kstat *stat = malloc(sizeof(kstat));
-  sys_stat("/fonts/ter-powerline-v16n.psf", stat);
-  unsigned char *buf = pmm_alloc_blocks(3);
-  long fd = sys_open("/fonts/ter-powerline-v16n.psf");
-  sys_read(fd, buf, stat->size);
-  uint32_t length = current_process->files->fd_array[fd]->f_dentry->d_inode->i_size;
-
-  psf_init(buf, length);
-
-  putchar('m', 0, 0, 0xFF0000, 0x0, buf, vram, pitch);
-  putchar('i', 1, 0, 0xFF0000, 0x0, buf, vram, pitch);
 }

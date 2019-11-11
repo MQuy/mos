@@ -1,5 +1,6 @@
 #include <kernel/include/errno.h>
 #include <kernel/include/common.h>
+#include <kernel/include/string.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
 #include <kernel/memory/malloc.h>
@@ -16,7 +17,7 @@ uint32_t find_unused_block_number(vfs_superblock *sb)
         ext2_group_desc *gdp = ext2_get_group_desc(sb, group);
         unsigned char *block_bitmap = (unsigned char *)ext2_bread_block(sb, gdp->bg_block_bitmap);
 
-        for (int i = 0; i < sb->s_blocksize; ++i)
+        for (uint32_t i = 0; i < sb->s_blocksize; ++i)
             if (block_bitmap[i] != 0xff)
                 for (int j = 0; j < 8; ++j)
                     if (!(block_bitmap[i] & (1 << j)))
@@ -62,9 +63,9 @@ uint32_t find_unused_inode_number(vfs_superblock *sb)
         ext2_group_desc *gdp = ext2_get_group_desc(sb, group);
         unsigned char *inode_bitmap = (unsigned char *)ext2_bread_block(sb, gdp->bg_inode_bitmap);
 
-        for (int i = 0; i < sb->s_blocksize; ++i)
+        for (uint32_t i = 0; i < sb->s_blocksize; ++i)
             if (inode_bitmap[i] != 0xff)
-                for (int j = 0; j < 8; ++j)
+                for (uint8_t j = 0; j < 8; ++j)
                     if (!(inode_bitmap[i] & (1 << j)))
                         return group * ext2_sb->s_inodes_per_group + i * 8 + j + EXT2_STARTING_INO;
     }
@@ -209,11 +210,11 @@ vfs_inode *ext2_lookup_inode(vfs_inode *dir, char *filename)
             continue;
         char *block_buf = ext2_bread_block(dir->i_sb, block);
 
-        int size = 0;
+        uint32_t size = 0;
         ext2_dir_entry *entry = (ext2_dir_entry *)block_buf;
         while (size < dir->i_sb->s_blocksize && entry->ino != 0)
         {
-            char *name = malloc(sizeof(entry->name_len));
+            char *name = calloc(sizeof(char), entry->name_len + 1);
             memcpy(name, entry->name, entry->name_len);
 
             if (strcmp(name, filename) == 0)

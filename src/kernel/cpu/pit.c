@@ -4,6 +4,7 @@
 
 #define PIT_REG_COUNTER 0x40
 #define PIT_REG_COMMAND 0x43
+#define TICKS_PER_SECOND 1000
 
 volatile uint32_t pit_ticks = 0;
 
@@ -25,7 +26,7 @@ void pit_interrupt_handler(interrupt_registers *regs)
 
 uint32_t get_milliseconds_from_boot()
 {
-  return pit_ticks * 1000;
+  return pit_ticks * TICKS_PER_SECOND;
 }
 
 void register_pit_handler(I86_IRQ_HANDLER handler)
@@ -42,7 +43,7 @@ void register_pit_handler(I86_IRQ_HANDLER handler)
 
 void pit_init()
 {
-  int divisor = 1193181 / 1000;
+  int divisor = 1193181 / TICKS_PER_SECOND;
 
   outportb(PIT_REG_COMMAND, 0x34);
   outportb(PIT_REG_COUNTER, divisor & 0xff);

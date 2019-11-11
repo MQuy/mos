@@ -126,7 +126,6 @@ int ext2_fill_super(vfs_superblock *sb)
 {
   ext2_superblock *ext2_sb = (ext2_superblock *)malloc(sizeof(ext2_superblock));
   char *buf = ext2_bread_block(sb, 1);
-  void *tmp = (void *)buf;
   memcpy(ext2_sb, (ext2_superblock *)buf, sb->s_blocksize);
 
   if (ext2_sb->s_magic != EXT2_SUPER_MAGIC)
