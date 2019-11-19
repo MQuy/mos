@@ -32,6 +32,7 @@ typedef struct trap_frame
 
 typedef struct thread
 {
+  tid_t tid;
   enum thread_state state;
   struct process *parent;
   uint32_t priority;
@@ -45,6 +46,8 @@ typedef struct thread
 
 typedef struct process
 {
+  pid_t pid;
+  char *name;
   struct pdirectory *pdir;
   struct fs_struct *fs;
   struct files_struct *files;
@@ -60,10 +63,10 @@ void task_init();
 void task_start();
 void task_schedule(uint32_t esp);
 
-thread *create_thread(void *func, uint32_t esp, bool in_kernel);
+thread *create_thread(uint32_t eip, uint32_t esp, bool in_kernel);
 void block_thread(thread *thread, uint8_t state);
 void schedule();
-process *create_process(void *func, uint32_t esp, bool is_kernel);
+process *create_process(process *parent, uint32_t eip, uint32_t esp, bool is_kernel);
 
 bool queue_push(thread t);
 

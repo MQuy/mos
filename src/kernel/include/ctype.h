@@ -12,6 +12,8 @@ typedef unsigned long long ino_t;
 typedef unsigned short mode_t;
 typedef long ssize_t;
 typedef unsigned long sector_t;
+typedef unsigned short pid_t;
+typedef unsigned short tid_t;
 typedef unsigned short uid_t;
 typedef unsigned short gid_t;
 

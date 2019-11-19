@@ -14,6 +14,8 @@ mOS is the hobby operating system which is developed from scratch
 - [ ] Symmetric multiprocessing
 - [ ] Keyboard (improvement)
 
+- [ ] - Setup 2-level paging in boot.asm
+
 ### Get started
 
 ```

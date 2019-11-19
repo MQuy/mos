@@ -12,11 +12,11 @@ LD = /usr/local/bin/i386-elf-ld
 GDB = /usr/local/bin/i386-elf-gdb
 
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(INCLUDE)
+CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE)
 
 kernel.bin: ${OBJ}
 	nasm -f elf32 boot.asm -o boot.o
-	${CC} -o $@ -T linker.ld boot.o $^ -ffreestanding -O2 -nostdlib -lgcc 
+	${CC} -o $@ -T linker.ld boot.o $^ -ffreestanding -nostdlib -lgcc 
 
 %.o: %.c ${HEADERS}
 	${CC} ${CFLAGS} -c $< -o $@

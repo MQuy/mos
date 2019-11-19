@@ -16,8 +16,9 @@ extern void do_switch(uint32_t current_kernel_esp, uint32_t next_kernel_esp, uin
 
 volatile thread *current_thread;
 volatile process *current_process;
+uint32_t next_pid = 0;
 
-thread *create_thread(void *func, uint32_t esp, bool in_kernel)
+thread *create_thread(uint32_t eip, uint32_t esp, bool in_kernel)
 {
 #define USER_DATA 0x23
 #define USER_CODE 0x1B
@@ -34,7 +35,7 @@ thread *create_thread(void *func, uint32_t esp, bool in_kernel)
 
   frame->eflags = 0x202;
   frame->cs = code_segment;
-  frame->eip = (uint32_t)func;
+  frame->eip = eip;
   frame->useresp = esp + sizeof(trap_frame);
   frame->ss = data_segment;
 
@@ -215,13 +216,15 @@ void irq_schedule_handler(interrupt_registers *regs)
   unlock_scheduler();
 }
 
-process *create_process(void *func, uint32_t esp, bool is_kernel)
+process *create_process(process *parent, uint32_t eip, uint32_t esp, bool is_kernel)
 {
   process *p = malloc(sizeof(process));
+  p->pid = ++next_pid;
+  // p->name = strdup(parent->name);
   p->files = malloc(sizeof(sizeof(files_struct)));
   p->fs = malloc(sizeof(fs_struct));
-  p->pdir = create_address_space();
-  p->parent = current_process;
+  // p->pdir = create_address_space(parent->pdir);
+  p->parent = parent;
 
   // INIT_LIST_HEAD(&p->children);
   // list_add_tail(&p->sibling, &current_process->children);
@@ -237,7 +240,7 @@ void task_init(void *func)
 {
   register_pit_handler(irq_schedule_handler);
 
-  current_process = create_process(func, create_kernel_stack(1), true);
+  current_process = create_process(NULL, func, 0, true);
 
   // thread *next_thread = list_entry(&current_process->children, struct thread, sibling);
   // next_thread->state = RUNNING;

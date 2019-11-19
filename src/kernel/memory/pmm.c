@@ -4,6 +4,7 @@ uint32_t *memory_bitmap = 0;
 uint32_t max_frames = 0;
 uint32_t used_frames = 0;
 uint32_t memory_size = 0;
+uint32_t memory_bitmap_size = 0;
 
 void pmm_regions(struct multiboot_tag_mmap *multiboot_mmap);
 void pmm_init_region(uint32_t addr, uint32_t length);
@@ -80,13 +81,13 @@ void pmm_init(struct multiboot_tag_basic_meminfo *multiboot_meminfo, struct mult
   memory_bitmap = (uint32_t *)KERNEL_END;
   used_frames = max_frames = div_ceil(memory_size, PMM_FRAME_SIZE);
 
-  uint32_t memory_bitmap_size = div_ceil(max_frames, PMM_FRAMES_PER_BYTE);
+  memory_bitmap_size = div_ceil(max_frames, PMM_FRAMES_PER_BYTE);
   memset(memory_bitmap, 0xff, memory_bitmap_size);
 
   pmm_regions(multiboot_mmap);
 
-  pmm_deinit_region(0x0, 0x100000);
-  pmm_deinit_region(0x100000, KERNEL_END - KERNEL_START + memory_bitmap_size);
+  pmm_deinit_region(0x0, KERNEL_BOOT);
+  pmm_deinit_region(KERNEL_BOOT, KERNEL_END - KERNEL_START + memory_bitmap_size);
 }
 
 void pmm_regions(struct multiboot_tag_mmap *multiboot_mmap)
@@ -174,4 +175,14 @@ void pmm_free_block(void *p)
   memory_bitmap_unset(frame);
 
   used_frames--;
+}
+
+void pmm_mark_used_addr(physical_addr paddr)
+{
+  uint32_t frame = paddr / PMM_FRAME_SIZE;
+  if (!memory_bitmap_test(frame))
+  {
+    memory_bitmap_set(frame);
+    used_frames++;
+  }
 }

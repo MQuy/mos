@@ -133,7 +133,7 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
   video_width = multiboot_framebuffer->common.framebuffer_width;
   video_height = multiboot_framebuffer->common.framebuffer_height;
 
-  uint32_t screen_size = video_width * video_pitch;
+  uint32_t screen_size = video_height * video_pitch;
   uint32_t blocks = div_ceil(screen_size, PMM_FRAME_SIZE);
   for (uint32_t i = 0; i < blocks; ++i)
     vmm_map_phyiscal_address(
@@ -144,7 +144,7 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 
   kstat *stat = malloc(sizeof(kstat));
   sys_stat("/fonts/ter-powerline-v16n.psf", stat);
-  char *buf = pmm_alloc_blocks(3);
+  char *buf = malloc(stat->size);
   long fd = sys_open("/fonts/ter-powerline-v16n.psf");
   sys_read(fd, buf, stat->size);
   psf_init(buf, stat->size);

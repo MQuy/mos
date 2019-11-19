@@ -18,5 +18,6 @@ void pmm_init(struct multiboot_tag_basic_meminfo *, struct multiboot_tag_mmap *)
 void *pmm_alloc_block();
 void *pmm_alloc_blocks(size_t);
 void pmm_free_block(void *);
+void pmm_mark_used_addr(physical_addr paddr);
 
 #endif

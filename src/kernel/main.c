@@ -28,14 +28,16 @@ extern vfs_file_system_type ext2_fs_type;
 
 void kernel_init()
 {
-  pci_scan_buses();
+  // FIXME: MQ 2019-11-19 ata_init is not called in pci_scan_buses without enabling -O2
+  // pci_scan_buses();
+  ata_init();
 
   vfs_init(&ext2_fs_type, "/dev/hda");
   // setup stack and enter user mode
   // setup_and_enter_usermode();
 }
 
-int kernel_main(unsigned long magic, unsigned long addr)
+int kernel_main(unsigned long addr, unsigned long magic)
 {
   if (magic != MULTIBOOT2_BOOTLOADER_MAGIC)
   {

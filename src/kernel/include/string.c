@@ -1,3 +1,4 @@
+#include <kernel/memory/malloc.h>
 #include "string.h"
 
 char tbuf[32];
@@ -75,6 +76,15 @@ size_t strlen(const char *str)
 	for (s = str; *s; ++s)
 		;
 	return (s - str);
+}
+
+char *strdup(const char *src)
+{
+	char *dst = malloc(strlen(src) + 1); // Space for length plus nul
+	if (dst == NULL)
+		return NULL;		// No memory
+	strcpy(dst, src); // Copy the characters
+	return dst;				// Return the new string
 }
 
 //! copies count bytes from src to dest
