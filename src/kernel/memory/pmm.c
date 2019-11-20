@@ -1,10 +1,10 @@
 #include "pmm.h"
 
-uint32_t *memory_bitmap = 0;
-uint32_t max_frames = 0;
-uint32_t used_frames = 0;
-uint32_t memory_size = 0;
-uint32_t memory_bitmap_size = 0;
+static uint32_t *memory_bitmap = 0;
+static uint32_t max_frames = 0;
+static uint32_t used_frames = 0;
+static uint32_t memory_size = 0;
+static uint32_t memory_bitmap_size = 0;
 
 void pmm_regions(struct multiboot_tag_mmap *multiboot_mmap);
 void pmm_init_region(uint32_t addr, uint32_t length);

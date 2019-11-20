@@ -9,7 +9,7 @@ typedef uint32_t (*SYSTEM_FUNC)(unsigned int, ...);
 
 #define MAX_SYSCALL 3
 
-void *syscalls[] = {
+static void *syscalls[] = {
     DebugPrintf,
     DebugGotoXY,
     DebugPutc};
@@ -74,6 +74,6 @@ int sys_execve(const char *filename, char *const argv[], char *const envp[])
   char *buf = malloc(stat->size);
   sys_read(fd, buf, stat->size);
 
-  process *np = create_process(NULL, 0, 0, false);
+  process *np = create_process(NULL, "", 0, 0, false);
   elf_load(buf, np->pdir);
 }

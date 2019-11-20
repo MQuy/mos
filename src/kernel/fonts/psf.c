@@ -4,8 +4,8 @@
 #include <kernel/include/common.h>
 #include "psf.h"
 
-uint16_t *unicode;
-char *psf_start;
+static uint16_t *unicode;
+static char *psf_start;
 
 void psf_init(char *buff, size_t size)
 {

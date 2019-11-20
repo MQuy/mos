@@ -16,12 +16,12 @@ void pit_interrupt_handler(interrupt_registers *regs)
 {
   pit_ticks++;
 
-  // for (uint8_t i = 0; i < PIT_MAX_HANDLER; ++i)
-  //   if (pit_handlers[i])
-  //   {
-  //     I86_IRQ_HANDLER handler = pit_handlers[i];
-  //     handler(regs);
-  //   }
+  for (uint8_t i = 0; i < PIT_MAX_HANDLER; ++i)
+    if (pit_handlers[i])
+    {
+      I86_IRQ_HANDLER handler = pit_handlers[i];
+      handler(regs);
+    }
 }
 
 uint32_t get_milliseconds_from_boot()

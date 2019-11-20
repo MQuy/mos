@@ -7,7 +7,7 @@
 #define MAX_ATA_DEVICE 4
 
 static ata_device devices[MAX_ATA_DEVICE];
-uint8_t number_of_actived_devices = 0;
+static uint8_t number_of_actived_devices = 0;
 
 uint8_t ata_identify(ata_device *device);
 uint8_t atapi_identify(ata_device *device);

@@ -11,8 +11,9 @@ struct files_struct;
 
 enum thread_state
 {
-  RUNNING,
+  NEW,
   READY_TO_RUN,
+  RUNNING,
   WAITING,
   TERMINATED,
 };
@@ -25,9 +26,10 @@ enum thread_policy
 
 typedef struct trap_frame
 {
-  uint32_t gs, fs, es, ds;                         // Data segment selector
   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-  uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
+  uint32_t eip;                                    // eip is saved on stack by the caller's "CALL" instruction
+  uint32_t return_address;
+  uint32_t parameter1, parameter2;
 } trap_frame;
 
 typedef struct thread
@@ -38,7 +40,8 @@ typedef struct thread
   uint32_t priority;
   uint32_t policy;
   uint32_t esp;
-  uint32_t kernel_esp;
+  uint32_t kernel_stack;
+  uint32_t user_stack;
   uint32_t expiry_when;
   uint32_t time_used;
   struct list_head sibling;
@@ -60,14 +63,9 @@ typedef struct process
 } process;
 
 void task_init();
-void task_start();
-void task_schedule(uint32_t esp);
 
-thread *create_thread(uint32_t eip, uint32_t esp, bool in_kernel);
+thread *create_kernel_thread(process *parent, uint32_t eip);
 void block_thread(thread *thread, uint8_t state);
-void schedule();
-process *create_process(process *parent, uint32_t eip, uint32_t esp, bool is_kernel);
-
-bool queue_push(thread t);
+process *create_process(process *parent, const char *name, pdirectory *pdir, uint32_t eip, bool is_kernel);
 
 #endif

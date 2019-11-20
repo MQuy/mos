@@ -1,3 +1,4 @@
+#include "malloc.h"
 #include "vmm.h"
 
 #define PAGE_DIRECTORY_BASE 0xFFFFF000
@@ -5,10 +6,11 @@
 
 #define get_page_directory_index(x) (((x) >> 22) & 0x3ff)
 #define get_page_table_entry_index(x) (((x) >> 12) & 0x3ff)
-#define get_physical_address(x) (*x & ~0xfff)
+#define get_aligned_address(x) (x & ~0xfff)
 #define is_page_enabled(x) (x & 0x1)
 
 void vmm_init_and_map(pdirectory *, virtual_addr, physical_addr);
+void vmm_alloc_ptable(pdirectory *va_dir, uint32_t index);
 void pt_entry_add_attrib(pt_entry *, uint32_t);
 void pt_entry_set_frame(pt_entry *, uint32_t);
 void pd_entry_add_attrib(pd_entry *, uint32_t);
@@ -16,9 +18,7 @@ void pd_entry_set_frame(pd_entry *, uint32_t);
 void vmm_create_page_table(pdirectory *dir, uint32_t virt, uint32_t flags);
 void vmm_paging(pdirectory *, virtual_addr);
 
-extern uint32_t memory_bitmap_size;
-
-pdirectory *_current_dir;
+static pdirectory *_current_dir;
 
 void vmm_flush_tlb_entry(virtual_addr addr)
 {
@@ -72,8 +72,9 @@ void vmm_init()
 
   vmm_init_and_map(va_dir, 0xC0000000, 0x00000000);
 
-  // for (int i = 0; i < 256; ++i)
-  //   vmm_init_and_map(directory, 0xC0000000 + PMM_FRAME_SIZE * 1024 + i, 0x00100000 + PMM_FRAME_SIZE * 1024 * i);
+  // NOTE: MQ 2019-11-21 Preallocate ptable for higher half kernel
+  for (uint32_t i = 769; i < 1024; ++i)
+    vmm_alloc_ptable(va_dir, i);
 
   // NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging (map last entry to directory)
   va_dir->m_entries[1023] = (pa_dir & 0xFFFFF000) | I86_PTE_PRESENT | I86_PTE_WRITABLE;
@@ -81,14 +82,23 @@ void vmm_init()
   vmm_paging(va_dir, pa_dir);
 }
 
-void vmm_init_and_map(pdirectory *va_dir, virtual_addr virtual, physical_addr frame)
+void vmm_alloc_ptable(pdirectory *va_dir, uint32_t index)
+{
+  if (is_page_enabled(va_dir->m_entries[index]))
+    return;
+
+  physical_addr pa_table = pmm_alloc_block();
+  va_dir->m_entries[index] = pa_table | I86_PDE_PRESENT | I86_PDE_WRITABLE;
+}
+
+void vmm_init_and_map(pdirectory *va_dir, virtual_addr vaddr, physical_addr paddr)
 {
   physical_addr pa_table = pmm_alloc_block();
   ptable *va_table = (ptable *)(pa_table + KERNEL_HIGHER_HALF);
   memset(va_table, 0, sizeof(ptable));
 
-  virtual_addr ivirtual = virtual;
-  physical_addr iframe = frame;
+  virtual_addr ivirtual = vaddr;
+  physical_addr iframe = paddr;
 
   for (int i = 0; i < 1024; ++i, ivirtual += PMM_FRAME_SIZE, iframe += PMM_FRAME_SIZE)
   {
@@ -97,7 +107,7 @@ void vmm_init_and_map(pdirectory *va_dir, virtual_addr virtual, physical_addr fr
     pmm_mark_used_addr(iframe);
   }
 
-  pd_entry *entry = &va_dir->m_entries[get_page_directory_index(virtual)];
+  pd_entry *entry = &va_dir->m_entries[get_page_directory_index(vaddr)];
   *entry = pa_table | I86_PDE_PRESENT | I86_PDE_WRITABLE;
 }
 
@@ -134,15 +144,28 @@ void pd_entry_set_frame(pd_entry *e, uint32_t addr)
   *e = (*e & ~I86_PDE_FRAME) | addr;
 }
 
+physical_addr vmm_get_physical_address(virtual_addr vaddr)
+{
+  uint32_t *table = PAGE_TABLE_BASE + get_page_directory_index(vaddr) * PMM_FRAME_SIZE;
+  uint32_t tindex = get_page_table_entry_index(vaddr);
+
+  return table[tindex];
+}
+
 pdirectory *create_address_space(pdirectory *current)
 {
-  pdirectory *dir = pmm_alloc_block();
+  char *aligned_object = align_heap(PMM_FRAME_SIZE);
+  // NOTE: MQ 2019-11-24 page directory, page table have to be aligned by 4096
+  pdirectory *va_dir = calloc(sizeof(pdirectory), sizeof(char));
+  free(aligned_object);
 
-  if (!dir)
+  if (!va_dir)
     return NULL;
-  memset(dir, 0, sizeof(pdirectory));
-  memcpy(dir->m_entries[768], current->m_entries[768], 256 * sizeof(pd_entry));
-  return dir;
+
+  for (uint32_t i = 768; i < 1024; ++i)
+    va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE);
+
+  return vmm_get_physical_address(va_dir);
 }
 
 pdirectory *vmm_get_directory()
@@ -189,28 +212,4 @@ void vmm_create_page_table(pdirectory *va_dir, uint32_t virt, uint32_t flags)
   vmm_flush_tlb_entry(virt);
 
   memset(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(ptable));
-}
-
-uint32_t kernel_stack_index = 0;
-void *create_kernel_stack(int32_t blocks)
-{
-#define KERNEL_STACK_ALLOC_TOP 0xC0000000
-
-  physical_addr paddr;
-  virtual_addr vaddr;
-
-  paddr = pmm_alloc_blocks(blocks);
-
-  if (!paddr)
-    return 0;
-
-  kernel_stack_index += blocks;
-  vaddr = KERNEL_STACK_ALLOC_TOP + kernel_stack_index * PMM_FRAME_SIZE;
-
-  for (int i = 0; i < blocks; ++i)
-    vmm_map_phyiscal_address(vmm_get_directory(),
-                             vaddr + i * PMM_FRAME_SIZE,
-                             paddr + i * PMM_FRAME_SIZE, I86_PTE_PRESENT | I86_PTE_WRITABLE);
-
-  return vaddr + blocks * PMM_FRAME_SIZE - 4;
 }

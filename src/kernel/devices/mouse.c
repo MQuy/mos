@@ -10,9 +10,9 @@
 #define MOUSE_PORT 0x60
 #define MOUSE_STATUS 0x64
 
-uint8_t mouse_cycle = 0;
-uint8_t mouse_byte[4];
-mouse_device mouse_device_info;
+static uint8_t mouse_cycle = 0;
+static uint8_t mouse_byte[4];
+static mouse_device mouse_device_info;
 
 void mouse_calculate_position()
 {

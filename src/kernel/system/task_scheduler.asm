@@ -1,12 +1,15 @@
 [global do_switch]
 do_switch:
+  cli
   pusha
 
-  mov [ebp + 8], esp      ; save esp for current task's kernel stack
-  mov esp, [ebp + 12]     ; load next task's kernel stack to esp
+  mov [esp + (8 + 1) * 4], esp      ; save esp for current task's kernel stack
 
-  mov eax, [ebp + 16]     ; load next task's page directory
-  mov cr3, eax     
+  mov eax, [esp + (8 + 2) * 4]     ; load next task's kernel stack to esp
+  mov ebx, [esp + (8 + 3) * 4]     ; load next task's page directory
+  mov esp, eax
+  mov cr3, ebx     
 
   popa
+  sti
   ret

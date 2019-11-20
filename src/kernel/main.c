@@ -33,8 +33,12 @@ void kernel_init()
   ata_init();
 
   vfs_init(&ext2_fs_type, "/dev/hda");
-  // setup stack and enter user mode
-  // setup_and_enter_usermode();
+
+  console_setup();
+  printf("hello world");
+
+  for (;;)
+    ;
 }
 
 int kernel_main(unsigned long addr, unsigned long magic)
@@ -95,11 +99,9 @@ int kernel_main(unsigned long addr, unsigned long magic)
   // register system apis
   syscall_init();
 
-  task_init();
-  kernel_init();
-
   console_init(multiboot_framebuffer);
-  printf("hello world");
+
+  task_init(kernel_init);
 
   for (;;)
     ;

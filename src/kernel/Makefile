@@ -5,7 +5,7 @@ C_SOURCES = $(wildcard main.c *.c include/*.c graphics/*.c memory/*.c cpu/*.c de
 HEADERS = $(wildcard *.h include/*.h graphics/*.h memory/*.h cpu/*.h devices/*.h system/*.h fs/*.h fs/**/*.h fonts/*.h)
 
 # Nice syntax for file extension replacement
-OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o cpu/descriptor.o system/task_scheduler.o system/user_handler.o}
+OBJ = ${C_SOURCES:.c=.o boot.o cpu/interrupt.o cpu/descriptor.o system/task_scheduler.o system/user_handler.o}
 
 CC = /usr/local/bin/i386-elf-gcc
 LD = /usr/local/bin/i386-elf-ld
@@ -15,14 +15,13 @@ GDB = /usr/local/bin/i386-elf-gdb
 CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE)
 
 kernel.bin: ${OBJ}
-	nasm -f elf32 boot.asm -o boot.o
-	${CC} -o $@ -T linker.ld boot.o $^ -ffreestanding -nostdlib -lgcc 
+	${CC} -o $@ -T linker.ld $^ -ffreestanding -nostdlib -lgcc -g
 
 %.o: %.c ${HEADERS}
 	${CC} ${CFLAGS} -c $< -o $@
 
 %.o: %.asm
-	nasm $< -f elf32 -o $@ 
+	nasm -f elf32 -F dwarf -g -O0 $< -o $@ 
 
 clean:
 	rm -rf *.bin *.o *.elf

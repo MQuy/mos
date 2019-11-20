@@ -1,8 +1,9 @@
+#include <kernel/include/errno.h>
 #include <kernel/include/string.h>
 #include "vmm.h"
 #include "malloc.h"
 
-void *blocklist;
+block_meta *blocklist, *last_block;
 
 block_meta *find_free_block(block_meta **last, size_t size)
 {
@@ -30,8 +31,10 @@ block_meta *request_space(block_meta *last, size_t size)
 
 void *malloc(size_t size)
 {
-  if (size <= 0)
-    return NULL;
+  if (size < 0)
+    return -EINVAL;
+  if (size == 0)
+    return (char *)last_block + sizeof(block_meta) + last_block->size;
 
   block_meta *block, *last;
 
@@ -41,12 +44,15 @@ void *malloc(size_t size)
     if (block)
       block->free = false;
     else
+    {
       block = request_space(last, size);
+      last_block = block;
+    }
   }
   else
   {
     block = request_space(NULL, size);
-    blocklist = block;
+    blocklist = last_block = block;
   }
 
   if (block)
@@ -58,7 +64,8 @@ void *malloc(size_t size)
 void *calloc(size_t n, size_t size)
 {
   void *block = malloc(n * size);
-  memset(block, 0, n * size);
+  if (!block)
+    memset(block, 0, n * size);
   return block;
 }
 
@@ -69,4 +76,28 @@ void free(void *ptr)
 
   block_meta *block = (block_meta *)ptr;
   block->free = true;
+}
+
+// NOTE: MQ 2019-11-24
+// next object in heap space can be any number
+// align heap so the next object's addr will be started at size * n
+// ------------------- 0xE0000000
+// |                 |
+// |                 |
+// |                 | new object address m = (size * n)
+// ------------------- m - sizeof(block_meta)
+// |                 | empty object (>= 1)
+// ------------------- padding - sizeof(block_meta)
+void *align_heap(size_t size)
+{
+  uint32_t heap_addr = malloc(0);
+  uint32_t padding_size = div_ceil(heap_addr, size) * size - heap_addr;
+  uint32_t required_size = sizeof(block_meta) * 2;
+
+  while (padding_size <= KERNEL_HEAP_END)
+  {
+    if (padding_size > required_size)
+      return malloc(padding_size - required_size);
+    padding_size += size;
+  }
 }

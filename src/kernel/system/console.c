@@ -13,12 +13,12 @@
 
 extern process *current_process;
 
-uint32_t current_column = 0;
-uint32_t current_row = 0;
+static uint32_t current_column = 0;
+static uint32_t current_row = 0;
 
-char *video_paddr;
-uint32_t video_bpp, video_pitch;
-uint32_t video_width, video_height;
+static char *video_paddr;
+static uint32_t video_bpp, video_pitch;
+static uint32_t video_width, video_height;
 
 void print_char(const char c)
 {
@@ -141,7 +141,10 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
         VIDEO_VADDR + i * PMM_FRAME_SIZE,
         video_paddr + i * PMM_FRAME_SIZE,
         I86_PTE_PRESENT | I86_PTE_WRITABLE);
+}
 
+void console_setup()
+{
   kstat *stat = malloc(sizeof(kstat));
   sys_stat("/fonts/ter-powerline-v16n.psf", stat);
   char *buf = malloc(stat->size);

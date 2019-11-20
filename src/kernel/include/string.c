@@ -1,8 +1,8 @@
 #include <kernel/memory/malloc.h>
 #include "string.h"
 
-char tbuf[32];
-char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+static char tbuf[32];
+static char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 void itoa(unsigned i, unsigned base, char *buf)
 {
