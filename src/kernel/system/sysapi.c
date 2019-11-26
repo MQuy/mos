@@ -69,11 +69,11 @@ pid_t sys_fork()
 int sys_execve(const char *filename, char *const argv[], char *const envp[])
 {
   kstat *stat = malloc(sizeof(kstat));
-  sys_stat(filename, stat);
-  long fd = sys_open(filename);
+  vfs_stat(filename, stat);
+  long fd = vfs_open(filename);
   char *buf = malloc(stat->size);
-  sys_read(fd, buf, stat->size);
+  vfs_fread(fd, buf, stat->size);
 
-  process *np = create_process(NULL, "", 0, 0, false);
+  process *np = create_process(NULL, "", 0);
   elf_load(buf, np->pdir);
 }

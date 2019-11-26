@@ -6,16 +6,14 @@ extern void tss_flush();
 
 static tss_entry TSS;
 
-void install_tsr(uint16_t sel);
-
-void tss_set_stack(uint16_t kernelSS, uint16_t kernelESP)
+void tss_set_stack(uint32_t kernelSS, uint32_t kernelESP)
 {
 
 	TSS.ss0 = kernelSS;
 	TSS.esp0 = kernelESP;
 }
 
-void install_tss(uint32_t idx, uint16_t kernelSS, uint16_t kernelESP)
+void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 {
 
 	//! install TSS descriptor
@@ -38,6 +36,7 @@ void install_tss(uint32_t idx, uint16_t kernelSS, uint16_t kernelESP)
 	TSS.ds = 0x13;
 	TSS.fs = 0x13;
 	TSS.gs = 0x13;
+	TSS.iomap = sizeof(tss_entry);
 
 	tss_flush();
 }

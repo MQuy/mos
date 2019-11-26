@@ -10,7 +10,6 @@
 #include "system/tss.h"
 #include "system/sysapi.h"
 #include "system/exception.h"
-#include "system/user.h"
 #include "system/time.h"
 #include "system/task.h"
 #include "devices/kybrd.h"
@@ -36,6 +35,11 @@ void kernel_init()
 
   console_setup();
   printf("hello world");
+
+  process_load("gui", "/bin/ui");
+
+  // terminate_thread();
+  // schedule();
 
   for (;;)
     ;

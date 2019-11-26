@@ -1,6 +1,6 @@
 #include "vmm.h"
 
-static uint32_t heap_current = KERNEL_HEAP_START;
+static uint32_t heap_current = KERNEL_HEAP_BOTTOM;
 static uint32_t remaining_from_last_used = 0;
 
 void *sbrk(size_t n)

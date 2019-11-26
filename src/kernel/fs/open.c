@@ -64,7 +64,7 @@ nameidata *path_walk(char *filename)
   return nd;
 }
 
-long sys_open(char *name)
+long vfs_open(char *name)
 {
   int fd = find_unused_fd_slot();
   nameidata *nd = path_walk(name);
@@ -113,13 +113,13 @@ int vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
   }
 }
 
-void sys_stat(char *name, kstat *stat)
+void vfs_stat(char *name, kstat *stat)
 {
   nameidata *nd = path_walk(name);
   vfs_getattr(nd->mnt, nd->dentry, stat);
 }
 
-void sys_fstat(uint32_t fd, kstat *stat)
+void vfs_fstat(uint32_t fd, kstat *stat)
 {
   vfs_file *f = current_process->files->fd_array[fd];
   vfs_getattr(f->f_vfsmnt, f->f_dentry, stat);

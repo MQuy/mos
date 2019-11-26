@@ -34,7 +34,7 @@ typedef struct tss_entry
 	uint16_t iomap;
 } __attribute__((packed)) tss_entry;
 
-void tss_set_stack(uint16_t kernelSS, uint16_t kernelESP);
-void install_tss(uint32_t sel, uint16_t kernelSS, uint16_t kernelESP);
+void tss_set_stack(uint32_t kernelSS, uint32_t kernelESP);
+void install_tss(uint32_t sel, uint32_t kernelSS, uint32_t kernelESP);
 
 #endif

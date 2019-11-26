@@ -94,7 +94,7 @@ void *align_heap(size_t size)
   uint32_t padding_size = div_ceil(heap_addr, size) * size - heap_addr;
   uint32_t required_size = sizeof(block_meta) * 2;
 
-  while (padding_size <= KERNEL_HEAP_END)
+  while (padding_size <= KERNEL_HEAP_TOP)
   {
     if (padding_size > required_size)
       return malloc(padding_size - required_size);

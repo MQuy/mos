@@ -162,10 +162,13 @@ pdirectory *create_address_space(pdirectory *current)
   if (!va_dir)
     return NULL;
 
-  for (uint32_t i = 768; i < 1024; ++i)
+  for (uint32_t i = 768; i < 1023; ++i)
     va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE);
 
-  return vmm_get_physical_address(va_dir);
+  // NOTE: MQ 2019-11-26 Recursive paging for new page directory
+  va_dir->m_entries[1023] = vmm_get_physical_address(va_dir);
+
+  return va_dir;
 }
 
 pdirectory *vmm_get_directory()

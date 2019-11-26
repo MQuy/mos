@@ -3,7 +3,7 @@
 #include "DebugDisplay.h"
 
 //! video memory
-uint16_t *video_memory = (uint16_t *)0xB8000;
+uint16_t *video_memory = (uint16_t *)0xC00B8000;
 
 //! current position
 uint8_t cursor_x = 0;

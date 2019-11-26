@@ -160,6 +160,12 @@ typedef struct
   Elf32_Word p_align;
 } Elf32_Phdr;
 
-int elf_load(char *, pdirectory *);
+typedef struct
+{
+  uint32_t stack;
+  uint32_t entry;
+} Elf32_Layout;
+
+Elf32_Layout *elf_load(char *, pdirectory *);
 
 #endif

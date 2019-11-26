@@ -5,8 +5,10 @@
 #include <kernel/include/kernel_info.h>
 #include "pmm.h"
 
-#define KERNEL_HEAP_START 0xD0000000
-#define KERNEL_HEAP_END 0xF0000000
+#define KERNEL_HEAP_BOTTOM 0xD0000000
+#define KERNEL_HEAP_TOP 0xF0000000
+#define USER_STACK_BOTTOM 0xAFF00000
+#define USER_STACK_TOP 0xB0000000
 
 //! i86 architecture defines this format so be careful if you modify it
 enum PAGE_PTE_FLAGS
@@ -68,6 +70,7 @@ pdirectory *vmm_get_directory();
 void vmm_map_phyiscal_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
 void *create_kernel_stack(int32_t blocks);
 pdirectory *create_address_space(pdirectory *dir);
+physical_addr vmm_get_physical_address(virtual_addr vaddr);
 
 extern void *sbrk(size_t n);
 

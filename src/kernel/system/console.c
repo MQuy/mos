@@ -146,9 +146,9 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 void console_setup()
 {
   kstat *stat = malloc(sizeof(kstat));
-  sys_stat("/fonts/ter-powerline-v16n.psf", stat);
+  vfs_stat("/fonts/ter-powerline-v16n.psf", stat);
   char *buf = malloc(stat->size);
-  long fd = sys_open("/fonts/ter-powerline-v16n.psf");
-  sys_read(fd, buf, stat->size);
+  long fd = vfs_open("/fonts/ter-powerline-v16n.psf");
+  vfs_fread(fd, buf, stat->size);
   psf_init(buf, stat->size);
 }

@@ -47,7 +47,7 @@ Superblock is an in-memory mapping from a superblock in device, has important fi
 
 #### Open a file
 
-`sys_open(const char *filename, int flags, int mode)`
+`vfs_open(const char *filename, int flags, int mode)`
 
 - `getname()` to read the file pathname from the process
 - `get_unused_fd()` to find an empty slot in `process->files->fd`
@@ -85,7 +85,7 @@ Superblock is an in-memory mapping from a superblock in device, has important fi
 
 #### Read a file
 
-`sys_read(unsigned int fd, char *buf, size_t count)`
+`vfs_fread(unsigned int fd, char *buf, size_t count)`
 
 - `fget()` to get file
 - invokes `file_pos_read()` to get pos
@@ -101,7 +101,7 @@ Superblock is an in-memory mapping from a superblock in device, has important fi
 
 #### Write a file
 
-`sys_write(unsigned fd, char *buf, size_t count)`
+`vfs_fwrite(unsigned fd, char *buf, size_t count)`
 
 - `fget()` to get file
 - invokes `file_pos_read()` to get pos

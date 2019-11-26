@@ -162,13 +162,15 @@ vfs_mount *lookup_mnt(vfs_dentry *d);
 void vfs_init(vfs_file_system_type *fs, char *dev_name);
 
 // open.c
-long sys_open(char *filename);
-void sys_stat(char *name, kstat *stat);
-void sys_fstat(uint32_t fd, kstat *stat);
+long vfs_open(char *filename);
+void vfs_stat(char *name, kstat *stat);
+void vfs_fstat(uint32_t fd, kstat *stat);
 
 // read_write.c
-ssize_t sys_read(uint32_t fd, char *buf, size_t count);
-ssize_t sys_write(uint32_t fd, char *buf, size_t count);
-loff_t sys_lseek(uint32_t fd, loff_t offset);
+char *vfs_read(const char *path);
+ssize_t vfs_fread(uint32_t fd, char *buf, size_t count);
+int vfs_write(const char *path, const char *buf, size_t count);
+ssize_t vfs_fwrite(uint32_t fd, char *buf, size_t count);
+loff_t vfs_flseek(uint32_t fd, loff_t offset);
 
 #endif
