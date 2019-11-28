@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
-#include <kernel/include/multiboot2.h>
+#include <kernel/multiboot2.h>
 
 void console_init(struct multiboot_tag_framebuffer *);
 void console_setup();

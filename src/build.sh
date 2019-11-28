@@ -66,7 +66,7 @@ then
 else
   if [ "$2" == "iso" ]
   then
-    qemu-system-i386 -s -boot c -cdrom mos.iso -hda hdd.img
+    qemu-system-i386 -s -S -boot c -cdrom mos.iso -hda hdd.img
   else
     qemu-system-i386 -s -drive format=raw,file=mos.img,index=0,media=disk -d guest_errors,int
   fi

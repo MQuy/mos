@@ -1,4 +1,4 @@
-#include <kernel/include/errno.h>
+#include <include/errno.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/malloc.h>
 #include "elf.h"

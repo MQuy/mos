@@ -1,4 +1,4 @@
-#include <kernel/graphics/DebugDisplay.h>
+#include <libc/printf.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
 #include "exception.h"

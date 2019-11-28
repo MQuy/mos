@@ -1,9 +1,9 @@
-#ifndef SYSTEM_TASK_H
-#define SYSTEM_TASK_H
+#ifndef PROC_TASK_H
+#define PROC_TASK_H
 
 #include <stdint.h>
-#include <kernel/include/ctype.h>
-#include <kernel/include/list.h>
+#include <include/ctype.h>
+#include <include/list.h>
 #include <kernel/memory/vmm.h>
 
 struct fs_struct;

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_STRING_H
-#define INCLUDE_STRING_H
+#ifndef LIBC_STRING_H
+#define LIBC_STRING_H
 
 #include <stddef.h>
 

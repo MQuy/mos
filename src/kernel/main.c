@@ -1,17 +1,15 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "include/multiboot2.h"
-#include "graphics/DebugDisplay.h"
 #include "cpu/hal.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
 #include "cpu/pit.h"
-#include "system/tss.h"
+#include "cpu/tss.h"
+#include "cpu/exception.h"
 #include "system/sysapi.h"
-#include "system/exception.h"
 #include "system/time.h"
-#include "system/task.h"
+#include "proc/task.h"
 #include "devices/kybrd.h"
 #include "devices/mouse.h"
 #include "devices/pci.h"
@@ -22,6 +20,7 @@
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "system/console.h"
+#include "multiboot2.h"
 
 extern vfs_file_system_type ext2_fs_type;
 

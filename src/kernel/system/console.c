@@ -1,10 +1,10 @@
-#include <kernel/include/string.h>
+#include <libc/string.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/malloc.h>
 #include <kernel/fs/vfs.h>
-#include <kernel/system/task.h>
-#include <kernel/fonts/psf.h>
+#include <kernel/proc/task.h>
+#include "psf.h"
 #include "console.h"
 
 #define VIDEO_VADDR 0xFC000000

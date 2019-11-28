@@ -2,14 +2,14 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/pic.h>
 #include <kernel/cpu/pit.h>
+#include <kernel/cpu/tss.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/malloc.h>
-#include <kernel/system/elf.h>
-#include "time.h"
-#include "task.h"
-#include "tss.h"
+#include <kernel/proc/elf.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/system/time.h>
+#include "task.h"
 
 #define KERNEL_THREAD_SIZE 0x2000
 

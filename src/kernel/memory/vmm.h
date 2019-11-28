@@ -2,8 +2,8 @@
 #define MEMORY_VMM_H
 
 #include <stdint.h>
-#include <kernel/include/kernel_info.h>
 #include "pmm.h"
+#include "kernel_info.h"
 
 #define KERNEL_HEAP_BOTTOM 0xD0000000
 #define KERNEL_HEAP_TOP 0xF0000000

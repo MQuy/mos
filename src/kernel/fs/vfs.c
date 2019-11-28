@@ -1,7 +1,7 @@
-#include <kernel/include/errno.h>
-#include <kernel/include/string.h>
+#include <include/errno.h>
+#include <libc/string.h>
 #include <kernel/memory/malloc.h>
-#include <kernel/system/task.h>
+#include <kernel/proc/task.h>
 #include "vfs.h"
 #include "ext2/ext2.h"
 

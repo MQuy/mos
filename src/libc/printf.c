@@ -1,6 +1,6 @@
 #include <kernel/cpu/hal.h>
-#include <kernel/include/string.h>
-#include "DebugDisplay.h"
+#include <libc/string.h>
+#include "printf.h"
 
 //! video memory
 uint16_t *video_memory = (uint16_t *)0xC00B8000;

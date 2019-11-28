@@ -1,5 +1,5 @@
 #include "buffer.h"
-#include <kernel/include/common.h>
+#include <libc/math.h>
 #include <kernel/memory/malloc.h>
 #include <kernel/devices/ata.h>
 

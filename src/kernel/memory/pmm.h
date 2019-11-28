@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/include/common.h>
-#include <kernel/include/kernel_info.h>
-#include <kernel/include/multiboot2.h>
-#include <kernel/include/string.h>
+#include <libc/math.h>
+#include <kernel/multiboot2.h>
+#include <libc/string.h>
+#include "kernel_info.h"
 
 #define PMM_FRAMES_PER_BYTE 8
 #define PMM_FRAME_SIZE 4096

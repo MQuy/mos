@@ -1,8 +1,8 @@
 #include <kernel/cpu/hal.h>
 #include <kernel/fs/vfs.h>
-#include <kernel/graphics/DebugDisplay.h>
-#include "task.h"
-#include "elf.h"
+#include <libc/printf.h>
+#include <kernel/proc/task.h>
+#include <kernel/proc/elf.h>
 #include "sysapi.h"
 
 typedef uint32_t (*SYSTEM_FUNC)(unsigned int, ...);

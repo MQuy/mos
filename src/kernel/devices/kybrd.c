@@ -1,8 +1,8 @@
-#include <kernel/include/ctype.h>
-#include <kernel/include/string.h>
+#include <include/ctype.h>
+#include <libc/string.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
-#include <kernel/graphics/DebugDisplay.h>
+#include <libc/printf.h>
 #include "kybrd.h"
 
 //============================================================================

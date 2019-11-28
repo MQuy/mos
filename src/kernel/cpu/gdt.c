@@ -1,4 +1,4 @@
-#include <kernel/include/string.h>
+#include <libc/string.h>
 #include "gdt.h"
 
 extern void gdt_flush(uint32_t);

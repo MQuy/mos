@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/include/ctype.h>
+#include <include/ctype.h>
 
 #define S_IFMT 00170000
 #define S_IFLNK 0120000

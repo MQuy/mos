@@ -1,6 +1,6 @@
-#include <kernel/include/errno.h>
-#include <kernel/include/common.h>
-#include <kernel/include/string.h>
+#include <include/errno.h>
+#include <libc/math.h>
+#include <libc/string.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
 #include <kernel/memory/malloc.h>

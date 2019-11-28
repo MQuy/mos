@@ -6,7 +6,7 @@ hdiutil detach $DISK_NAME
 hdiutil attach hdd.img -mountpoint /Volumes/$VOLUME_NAME
 mkdir "/Volumes/${VOLUME_NAME}/demo"
 cp sample.txt "/Volumes/${VOLUME_NAME}/demo/sample.txt"
-cp -R fonts "/Volumes/${VOLUME_NAME}"
+cp -R assets/fonts "/Volumes/${VOLUME_NAME}"
 mkdir "/Volumes/${VOLUME_NAME}/bin"
 cp apps/ui/ui "/Volumes/${VOLUME_NAME}/bin"
 hdiutil detach $DISK_NAME

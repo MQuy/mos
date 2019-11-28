@@ -1,5 +1,5 @@
-#ifndef GRAPHIC_DEBUG_DISPLAY_H
-#define GRAPHIC_DEBUG_DISPLAY_H
+#ifndef LIBC_PRINTF_H
+#define LIBC_PRINTF_H
 //****************************************************************************
 //**
 //**    DebugDisplay.h

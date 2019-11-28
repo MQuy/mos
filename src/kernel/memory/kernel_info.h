@@ -8,7 +8,6 @@ extern void *kernel_higher_half;
 extern void *kernel_start;
 extern void *kernel_end;
 
-
 #define KERNEL_BOOT (uint32_t)(&kernel_boot)
 #define KERNEL_HIGHER_HALF (uint32_t)(&kernel_higher_half)
 #define KERNEL_START (uint32_t)(&kernel_start)

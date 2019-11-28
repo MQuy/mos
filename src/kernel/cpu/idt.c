@@ -1,5 +1,5 @@
-#include <kernel/graphics/DebugDisplay.h>
-#include <kernel/include/string.h>
+#include <libc/printf.h>
+#include <libc/string.h>
 #include "idt.h"
 #include "pic.h"
 

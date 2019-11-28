@@ -1,5 +1,5 @@
-#ifndef SYSTEM_ELF_H
-#define SYSTEM_ELF_H
+#ifndef PROC_ELF_H
+#define PROC_ELF_H
 
 #include <stdint.h>
 #include <kernel/fs/vfs.h>

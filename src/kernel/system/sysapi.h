@@ -1,7 +1,7 @@
 #ifndef SYSTEM_SYSAPI_H
 #define SYSTEM_SYSAPI_H
 
-#include <kernel/include/ctype.h>
+#include <include/ctype.h>
 #include <kernel/cpu/idt.h>
 
 void syscall_dispatcher(interrupt_registers *registers);

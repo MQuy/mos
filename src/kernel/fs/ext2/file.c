@@ -1,6 +1,6 @@
-#include <kernel/include/string.h>
-#include <kernel/include/errno.h>
-#include <kernel/include/common.h>
+#include <libc/string.h>
+#include <include/errno.h>
+#include <libc/math.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/system/time.h>
 #include "ext2.h"
