@@ -1,6 +1,6 @@
 #include <include/errno.h>
-#include <libc/math.h>
-#include <libc/string.h>
+#include <kernel/utils/math.h>
+#include <kernel/utils/string.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
 #include <kernel/memory/malloc.h>
@@ -24,6 +24,16 @@ uint32_t find_unused_block_number(vfs_superblock *sb)
                         return group * ext2_sb->s_blocks_per_group + i * 8 + j + ext2_sb->s_first_data_block;
     }
     return -ENOSPC;
+}
+
+void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev)
+{
+    inode->i_mode = mode;
+    if (S_ISCHR(mode))
+    {
+        inode->i_fop = &def_chr_fops;
+        inode->i_rdev = dev;
+    }
 }
 
 uint32_t ext2_create_block(vfs_superblock *sb)
@@ -108,6 +118,7 @@ vfs_inode *ext2_create_inode(vfs_inode *dir, char *filename, mode_t mode)
     inode->i_mtime.tv_sec = get_seconds(NULL);
     inode->i_flags = 0;
     inode->i_blocks = 0;
+
     if (S_ISREG(mode))
     {
         inode->i_op = &ext2_file_inode_operations;
@@ -236,6 +247,14 @@ void ext2_truncate_inode(struct vfs_inode *inode)
 {
 }
 
+int ext2_mknod(vfs_inode *dir, char *name, int mode, dev_t dev)
+{
+    vfs_inode *inode = ext2_create_inode(dir, name, mode);
+    init_special_inode(inode, mode, dev);
+    ext2_write_inode(inode);
+    return 0;
+}
+
 vfs_inode_operations ext2_file_inode_operations = {
     .truncate = ext2_truncate_inode,
 };
@@ -243,4 +262,9 @@ vfs_inode_operations ext2_file_inode_operations = {
 vfs_inode_operations ext2_dir_inode_operations = {
     .create = ext2_create_inode,
     .lookup = ext2_lookup_inode,
+    .mknod = ext2_mknod,
+};
+
+vfs_inode_operations ext2_special_inode_operations = {
+
 };

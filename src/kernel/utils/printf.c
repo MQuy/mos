@@ -1,5 +1,5 @@
 #include <kernel/cpu/hal.h>
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include "printf.h"
 
 //! video memory

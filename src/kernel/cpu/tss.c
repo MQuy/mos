@@ -1,4 +1,4 @@
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include <kernel/cpu/gdt.h>
 #include "tss.h"
 

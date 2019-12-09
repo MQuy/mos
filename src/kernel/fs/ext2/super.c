@@ -1,5 +1,5 @@
-#include <libc/string.h>
-#include <libc/math.h>
+#include <kernel/utils/string.h>
+#include <kernel/utils/math.h>
 #include <include/errno.h>
 #include <kernel/memory/malloc.h>
 #include <kernel/memory/pmm.h>
@@ -80,6 +80,11 @@ void ext2_read_inode(vfs_inode *i)
     i->i_op = &ext2_dir_inode_operations;
     i->i_fop = &ext2_dir_operations;
   }
+  else
+  {
+    i->i_op = &ext2_special_inode_operations;
+    init_special_inode(i, i->i_mode, raw_node->i_block[0]);
+  }
 }
 
 void ext2_write_inode(vfs_inode *i)
@@ -98,6 +103,11 @@ void ext2_write_inode(vfs_inode *i)
 
   ei->i_blocks = i->i_blocks;
   ei->i_flags = i->i_flags;
+
+  if (S_ISCHR(i->i_mode))
+  {
+    ei->i_block[0] = i->i_rdev;
+  }
 
   uint32_t group = get_group_from_inode(ext2_sb, i->i_ino);
   ext2_group_desc *gdp = ext2_get_group_desc(i->i_sb, group);

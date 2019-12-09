@@ -1,8 +1,9 @@
 #include <include/errno.h>
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include <kernel/memory/malloc.h>
 #include <kernel/proc/task.h>
 #include "vfs.h"
+#include "dev.h"
 #include "ext2/ext2.h"
 
 static vfs_file_system_type *file_systems;
@@ -83,4 +84,6 @@ void vfs_init(vfs_file_system_type *fs, char *dev_name)
 {
   init_ext2_fs();
   init_rootfs(fs, dev_name);
+
+  chrdev_init();
 }

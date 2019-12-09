@@ -33,26 +33,6 @@ void unlock_scheduler()
     enable_interrupts();
 }
 
-void block_thread(thread *thread, uint8_t state)
-{
-  thread->state = state;
-}
-
-void unblock_thread(thread *thread)
-{
-  thread->state = READY_TO_RUN;
-}
-
-void terminate_thread()
-{
-  lock_scheduler();
-
-  block_thread(current_thread, TERMINATED);
-  queue_thread(current_thread);
-
-  unlock_scheduler();
-}
-
 thread *pick_next_thread_from_queue(thread_queue *queue)
 {
   thread *nt;
@@ -112,6 +92,21 @@ void queue_thread(thread *t)
     add_thread_to_queue(terminated_list, t);
 }
 
+void remove_thread_from_queue(thread *thread)
+{
+}
+
+void update_thread(thread *thread, uint8_t state)
+{
+  lock_scheduler();
+
+  remove_thread_from_queue(thread);
+  thread->state = state;
+  queue_thread(thread);
+
+  unlock_scheduler();
+}
+
 void switch_thread(thread *nt)
 {
   disable_interrupts();
@@ -144,9 +139,8 @@ void schedule()
       next_thread = pick_next_thread_to_run();
     } while (!next_thread);
 
-  switch_thread(next_thread);
-
   unlock_scheduler();
+  switch_thread(next_thread);
 }
 
 void sleep(uint32_t delay)
@@ -158,8 +152,7 @@ void sleep(uint32_t delay)
   if (when > time)
   {
     current_thread->expiry_when = when;
-    block_thread(current_thread, WAITING);
-    queue_thread(current_thread);
+    update_thread(current_thread, WAITING);
   }
   schedule();
 
@@ -179,13 +172,13 @@ void irq_schedule_handler(interrupt_registers *regs)
   for (thread_queue *q = waiting_list; q; q = q->next)
     if (q->thread->expiry_when >= time)
     {
-      unblock_thread(q);
+      update_thread(q, READY_TO_RUN);
       is_schedulable = true;
     }
 
   if (current_thread->time_used >= SLICE_THRESHOLD * TICK_TIME && current_thread->policy == APP_POLICY)
   {
-    block_thread(current_thread, READY_TO_RUN);
+    update_thread(current_thread, READY_TO_RUN);
     is_schedulable = true;
   }
 

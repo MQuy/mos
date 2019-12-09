@@ -1,5 +1,5 @@
 #include <kernel/cpu/hal.h>
-#include <libc/printf.h>
+#include <kernel/utils/printf.h>
 #include "pci.h"
 #include "ata.h"
 

@@ -1,6 +1,6 @@
 #include <kernel/cpu/hal.h>
 #include <kernel/fs/vfs.h>
-#include <libc/printf.h>
+#include <kernel/utils/printf.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/elf.h>
 #include "sysapi.h"

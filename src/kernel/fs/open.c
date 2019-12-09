@@ -1,4 +1,4 @@
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include <kernel/memory/malloc.h>
 #include <kernel/proc/task.h>
 #include "vfs.h"
@@ -20,22 +20,22 @@ vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
   return d;
 }
 
-nameidata *path_walk(char *filename)
+nameidata *path_walk(char *path)
 {
   nameidata *nd = malloc(sizeof(nameidata));
   nd->dentry = current_process->fs->d_root;
   nd->mnt = current_process->fs->mnt_root;
 
-  for (int i = 1, length = strlen(filename); i < length; ++i)
+  for (int i = 1, length = strlen(path); i < length; ++i)
   {
-    char *path = malloc(length);
+    char *part_name = malloc(length);
 
-    for (int j = 0; filename[i] != '/' && i < length; ++i, ++j)
-      path[j] = filename[i];
+    for (int j = 0; path[i] != '/' && i < length; ++i, ++j)
+      part_name[j] = path[i];
 
     vfs_dentry *dentry = NULL;
     for (int i = 0; i < MAX_SUB_DENTRIES && dentry == NULL; ++i)
-      if (nd->dentry->d_subdirs[i] && strcmp(path, nd->dentry->d_subdirs[i]->d_name) == 0)
+      if (nd->dentry->d_subdirs[i] && strcmp(part_name, nd->dentry->d_subdirs[i]->d_name) == 0)
         dentry = nd->dentry->d_subdirs[i];
 
     if (dentry)
@@ -44,7 +44,7 @@ nameidata *path_walk(char *filename)
     }
     else
     {
-      dentry = alloc_dentry(nd->dentry, path);
+      dentry = alloc_dentry(nd->dentry, part_name);
       vfs_inode *inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, dentry->d_name);
       if (inode == NULL)
       {
@@ -64,16 +64,21 @@ nameidata *path_walk(char *filename)
   return nd;
 }
 
-long vfs_open(char *name)
+long vfs_open(char *path)
 {
   int fd = find_unused_fd_slot();
-  nameidata *nd = path_walk(name);
+  nameidata *nd = path_walk(path);
 
   vfs_file *file = malloc(sizeof(vfs_file));
   file->f_dentry = nd->dentry;
   file->f_vfsmnt = nd->mnt;
   file->f_pos = 0;
   file->f_op = nd->dentry->d_inode->i_fop;
+
+  if (file->f_op && file->f_op->open)
+  {
+    file->f_op->open(nd->dentry->d_inode, file);
+  }
 
   current_process->files->fd_array[fd] = file;
   return fd;
@@ -113,9 +118,9 @@ int vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
   }
 }
 
-void vfs_stat(char *name, kstat *stat)
+void vfs_stat(char *path, kstat *stat)
 {
-  nameidata *nd = path_walk(name);
+  nameidata *nd = path_walk(path);
   vfs_getattr(nd->mnt, nd->dentry, stat);
 }
 
@@ -123,4 +128,20 @@ void vfs_fstat(uint32_t fd, kstat *stat)
 {
   vfs_file *f = current_process->files->fd_array[fd];
   vfs_getattr(f->f_vfsmnt, f->f_dentry, stat);
+}
+
+int vfs_mknod(char *path, int mode, dev_t dev)
+{
+  uint32_t length = strlen(path);
+  uint32_t last_index = length - 1;
+  for (; last_index >= 0 && path[last_index] != '/'; last_index--)
+    ;
+  char *dir_path = calloc(last_index + 1, sizeof(char));
+  char *dev_name = calloc(length - last_index, sizeof(char));
+
+  memcpy(dir_path, path, last_index);
+  memcpy(dev_name, path + last_index + 1, length - 1 - last_index);
+
+  nameidata *nd = path_walk(dir_path);
+  return nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, dev_name, mode, dev);
 }

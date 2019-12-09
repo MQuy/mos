@@ -4,15 +4,21 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <include/ctype.h>
+#include <include/list.h>
 
+// file
 #define S_IFMT 00170000
 #define S_IFLNK 0120000
 #define S_IFREG 0100000
+#define S_IFBLK 0060000
 #define S_IFDIR 0040000
+#define S_IFCHR 0020000
 
 #define S_ISLNK(m) (((m)&S_IFMT) == S_IFLNK)
 #define S_ISREG(m) (((m)&S_IFMT) == S_IFREG)
 #define S_ISDIR(m) (((m)&S_IFMT) == S_IFDIR)
+#define S_ISCHR(m) (((m)&S_IFMT) == S_IFCHR)
+#define S_ISBLK(m) (((m)&S_IFMT) == S_IFBLK)
 
 #define MAX_SUB_DENTRIES 8
 
@@ -109,6 +115,7 @@ typedef struct vfs_inode_operations
 {
   struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
   struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
+  int (*mknod)(struct vfs_inode *, char *, int, dev_t);
   void (*truncate)(struct vfs_inode *);
   int (*setattr)(struct vfs_dentry *, struct iattr *);
   int (*getattr)(struct vfs_mount *mnt, struct vfs_dentry *, struct kstat *);
@@ -136,6 +143,8 @@ typedef struct vfs_file_operations
   loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
   ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
   ssize_t (*write)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
+  int (*open)(struct vfs_inode *, struct vfs_file *);
+  int (*release)(struct vfs_inode *, struct vfs_file *);
 } vfs_file_operations;
 
 typedef struct nameidata
@@ -162,9 +171,10 @@ vfs_mount *lookup_mnt(vfs_dentry *d);
 void vfs_init(vfs_file_system_type *fs, char *dev_name);
 
 // open.c
-long vfs_open(char *filename);
-void vfs_stat(char *name, kstat *stat);
+long vfs_open(char *path);
+void vfs_stat(char *path, kstat *stat);
 void vfs_fstat(uint32_t fd, kstat *stat);
+int vfs_mknod(char *path, int mode, dev_t dev);
 
 // read_write.c
 char *vfs_read(const char *path);

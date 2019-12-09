@@ -71,12 +71,10 @@ typedef struct process_image
 void task_init();
 
 thread *create_kernel_thread(process *parent, uint32_t eip, enum thread_state state);
-void block_thread(thread *thread, uint8_t state);
+void update_thread(thread *thread, uint8_t state);
 process *create_process(process *parent, const char *name, pdirectory *pdir);
 void process_load(const char *pname, const char *path);
-void terminate_thread();
 void queue_thread(thread *t);
-
 void schedule();
 
 #endif

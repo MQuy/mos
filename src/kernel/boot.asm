@@ -44,8 +44,8 @@ boot_page_directory:
 
 section .text
 
-global loader
-loader:
+global _start
+_start:
 
 kernel_enable_paging:
 	; NOTE: Until paging is set up, the code must be position-independent and use physical

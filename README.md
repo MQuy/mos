@@ -5,16 +5,19 @@ mOS is the hobby operating system which is developed from scratch
 ### Work-in-process features
 
 - [x] Filesystem
-- [ ] Program loading
-- [ ] POSIX
+- [x] Program loading
 - [ ] Shell
 - [ ] UI
 - [ ] Networking
 - [ ] Sound
+- [ ] POSIX
 - [ ] Symmetric multiprocessing
-- [ ] Keyboard (improvement)
 
-- [ ] - Setup 2-level paging in boot.asm
+🍀 Optional features
+
+- [ ] Setup 2-level paging in boot.asm
+- [ ] Keyboard
+- [ ] Dynamic linker
 
 ### Get started
 
@@ -31,7 +34,6 @@ $ cd src && ./build.sh
 
 - [Virtual memory](https://www.youtube.com/watch?v=qcBIvnQt0Bw)
 - [How malloc works](https://forum.osdev.org/viewtopic.php?p=66669&sid=6491dc94867786304d824e07844575c4#p66669)
-- [Segment](https://electronics.stackexchange.com/a/237759)
 - [Recursive page directory](http://www.rohitab.com/discuss/topic/31139-tutorial-paging-memory-mapping-with-a-recursive-page-directory/)
 
 #### Device

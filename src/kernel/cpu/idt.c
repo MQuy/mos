@@ -1,5 +1,5 @@
-#include <libc/printf.h>
-#include <libc/string.h>
+#include <kernel/utils/printf.h>
+#include <kernel/utils/string.h>
 #include "idt.h"
 #include "pic.h"
 

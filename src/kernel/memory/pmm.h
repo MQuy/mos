@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <libc/math.h>
+#include <kernel/utils/math.h>
 #include <kernel/multiboot2.h>
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include "kernel_info.h"
 
 #define PMM_FRAMES_PER_BYTE 8

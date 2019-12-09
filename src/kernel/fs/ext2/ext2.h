@@ -206,13 +206,17 @@ void ext2_write_group_desc(vfs_superblock *sb, ext2_group_desc *gdp);
 extern vfs_super_operations ext2_super_opereations;
 
 // vfs_inode.c
+void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev);
 uint32_t ext2_create_block(vfs_superblock *sb);
 
 extern vfs_inode_operations ext2_dir_inode_operations;
 extern vfs_inode_operations ext2_file_inode_operations;
+extern vfs_inode_operations ext2_special_inode_operations;
 
 // file.c
 extern vfs_file_operations ext2_file_operations;
 extern vfs_file_operations ext2_dir_operations;
+
+extern vfs_file_operations def_chr_fops;
 
 #endif

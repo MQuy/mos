@@ -1,6 +1,6 @@
 #include <include/ctype.h>
-#include <libc/math.h>
-#include <libc/string.h>
+#include <kernel/utils/math.h>
+#include <kernel/utils/string.h>
 #include <kernel/memory/malloc.h>
 #include "psf.h"
 

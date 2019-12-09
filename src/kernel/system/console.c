@@ -1,4 +1,4 @@
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/malloc.h>

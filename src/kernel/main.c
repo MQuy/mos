@@ -19,6 +19,7 @@
 #include "devices/ata.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
+#include "devices/char/memory.h"
 #include "system/console.h"
 #include "multiboot2.h"
 
@@ -31,6 +32,9 @@ void kernel_init()
   ata_init();
 
   vfs_init(&ext2_fs_type, "/dev/hda");
+  chrdev_memory_init();
+
+  char *rand = vfs_read("/dev/random");
 
   console_setup();
   printf("hello world");

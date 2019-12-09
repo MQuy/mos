@@ -1,4 +1,4 @@
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include <kernel/memory/malloc.h>
 #include <kernel/proc/task.h>
 #include "vfs.h"

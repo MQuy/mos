@@ -1,5 +1,5 @@
 #include <include/errno.h>
-#include <libc/string.h>
+#include <kernel/utils/string.h>
 #include "vmm.h"
 #include "malloc.h"
 
