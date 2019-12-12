@@ -27,6 +27,9 @@ extern vfs_file_system_type ext2_fs_type;
 
 void kernel_init()
 {
+  // setup random's seed
+  srand(get_seconds(NULL));
+
   // FIXME: MQ 2019-11-19 ata_init is not called in pci_scan_buses without enabling -O2
   // pci_scan_buses();
   ata_init();
@@ -38,6 +41,9 @@ void kernel_init()
 
   console_setup();
   printf("hello world");
+
+  // register system apis
+  syscall_init();
 
   process_load("gui", "/bin/ui");
 
@@ -102,9 +108,6 @@ int kernel_main(unsigned long addr, unsigned long magic)
   // physical memory and paging
   pmm_init(multiboot_meminfo, multiboot_mmap);
   vmm_init();
-
-  // register system apis
-  syscall_init();
 
   console_init(multiboot_framebuffer);
 

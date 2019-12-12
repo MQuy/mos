@@ -225,7 +225,7 @@ vfs_inode *ext2_lookup_inode(vfs_inode *dir, char *filename)
         ext2_dir_entry *entry = (ext2_dir_entry *)block_buf;
         while (size < dir->i_sb->s_blocksize && entry->ino != 0)
         {
-            char *name = calloc(sizeof(char), entry->name_len + 1);
+            char *name = calloc(entry->name_len + 1, sizeof(char));
             memcpy(name, entry->name, entry->name_len);
 
             if (strcmp(name, filename) == 0)

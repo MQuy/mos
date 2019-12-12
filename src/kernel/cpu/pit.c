@@ -1,3 +1,5 @@
+#include <include/list.h>
+#include <kernel/memory/malloc.h>
 #include "idt.h"
 #include "pic.h"
 #include "pit.h"
@@ -8,20 +10,27 @@
 
 volatile uint32_t pit_ticks = 0;
 
-// FIXME: MQ 2019-09-26 Use single linked list instead of fixed array
-#define PIT_MAX_HANDLER 10
-I86_IRQ_HANDLER *pit_handlers[PIT_MAX_HANDLER];
+typedef struct pit_handler
+{
+  uint32_t handler;
+  struct list_head sibling;
+} pit_handler;
+
+struct list_head handler_list;
 
 void pit_interrupt_handler(interrupt_registers *regs)
 {
   pit_ticks++;
 
-  for (uint8_t i = 0; i < PIT_MAX_HANDLER; ++i)
-    if (pit_handlers[i])
+  pit_handler *pt = NULL;
+  list_for_each_entry(pt, &handler_list, sibling)
+  {
+    if (pt)
     {
-      I86_IRQ_HANDLER handler = pit_handlers[i];
+      I86_IRQ_HANDLER handler = pt->handler;
       handler(regs);
     }
+  }
 }
 
 uint32_t get_milliseconds_from_boot()
@@ -31,14 +40,9 @@ uint32_t get_milliseconds_from_boot()
 
 void register_pit_handler(I86_IRQ_HANDLER handler)
 {
-  for (uint8_t i = 0; i < PIT_MAX_HANDLER; ++i)
-  {
-    if (!pit_handlers[i])
-    {
-      pit_handlers[i] = handler;
-      return;
-    }
-  }
+  pit_handler *pt = calloc(1, sizeof(pit_handler));
+  pt->handler = handler;
+  list_add_tail(&pt->sibling, &handler_list);
 }
 
 void pit_init()
@@ -50,4 +54,6 @@ void pit_init()
   outportb(PIT_REG_COUNTER, (divisor >> 8) & 0xff);
 
   register_interrupt_handler(IRQ0, pit_interrupt_handler);
+
+  INIT_LIST_HEAD(&handler_list);
 }

@@ -39,13 +39,6 @@ uint8_t ata_init()
   ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, false, "/dev/hdb");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
-
-  // uint16_t *buffer = malloc(512);
-  // ata_read(&devices[0], 2, 1, buffer);
-  // for (uint16_t i = 0; i < 256; ++i)
-  // {
-  //   DebugPrintf("%x", *(buffer + i * 2));
-  // }
 }
 
 ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)

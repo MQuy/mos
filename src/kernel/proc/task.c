@@ -13,9 +13,6 @@
 
 #define KERNEL_THREAD_SIZE 0x2000
 
-#define get_next_thread(p) list_entry((p)->threads.next, struct thread, sibling)
-#define get_prev_thread(p) list_entry((p)->threads.prev, struct thread, sibling)
-
 extern void enter_usermode(uint32_t eip, uint32_t esp);
 extern void irq_schedule_handler(interrupt_registers *regs);
 
@@ -30,12 +27,12 @@ void thread_main_entry(thread *t, void *flow())
   schedule();
 }
 
-thread *create_kernel_thread(process *parent, uint32_t eip, enum thread_state state)
+thread *create_kernel_thread(process *parent, uint32_t eip, enum thread_state state, int priority)
 {
   thread *t = malloc(sizeof(thread));
   t->tid = next_tid++;
   t->policy = KERNEL_POLICY;
-  t->priority = 0;
+  t->sched_sibling.prio = priority;
   t->kernel_stack = malloc(KERNEL_THREAD_SIZE) + KERNEL_THREAD_SIZE;
   t->parent = parent;
   t->state = state;
@@ -94,30 +91,20 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
 void setup_swapper_process()
 {
   current_process = create_process(NULL, "swapper", NULL);
-  current_thread = create_kernel_thread(current_process, 0, RUNNING);
+  current_thread = create_kernel_thread(current_process, 0, RUNNING, 0);
 }
 
 void task_init(void *func)
 {
+  sched_init();
   setup_swapper_process();
-  // FIXME: Enable it
-  // register_pit_handler(irq_schedule_handler);
+  register_pit_handler(irq_schedule_handler);
 
   process *init = create_process(current_process, "init", current_process->pdir);
-  thread *nt = create_kernel_thread(init, func, READY_TO_RUN);
+  thread *nt = create_kernel_thread(init, func, READY_TO_RUN, 0);
 
   switch_thread(nt);
 }
-
-/*
-- fork current process
-  - create new page directory
-  - copy kernel page tables
-- schedule process/thread with setup function (setup_uspace)
-- setup_uspace is called
-  - load elf into userspace
-  - jump to elf entry (usermode)
-*/
 
 void user_thread_entry(thread *t, const char *path)
 {
@@ -128,14 +115,14 @@ void user_thread_entry(thread *t, const char *path)
   enter_usermode(elf_layout->stack, elf_layout->entry);
 }
 
-thread *create_user_thread(process *parent, const char *path)
+thread *create_user_thread(process *parent, const char *path, enum thread_state state, int priority)
 {
   thread *t = malloc(sizeof(thread));
   t->tid = next_tid++;
   t->parent = parent;
   t->policy = KERNEL_POLICY;
-  t->priority = 0;
-  t->state = READY_TO_RUN;
+  t->sched_sibling.prio = priority;
+  t->state = state;
   t->kernel_stack = malloc(KERNEL_THREAD_SIZE) + KERNEL_THREAD_SIZE;
   t->esp = t->kernel_stack - sizeof(trap_frame);
 
@@ -163,6 +150,5 @@ thread *create_user_thread(process *parent, const char *path)
 void process_load(const char *pname, const char *path)
 {
   process *p = create_process(current_process, pname, current_process->pdir);
-  thread *t = create_user_thread(p, path);
-  switch_thread(t);
+  thread *t = create_user_thread(p, path, READY_TO_RUN, 0);
 }

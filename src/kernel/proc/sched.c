@@ -11,13 +11,8 @@ extern void do_switch(uint32_t addr_current_kernel_esp, uint32_t next_kernel_esp
 extern thread *current_thread;
 extern process *current_process;
 
-typedef struct thread_queue
-{
-  thread *thread;
-  struct thread_queue *next;
-} thread_queue;
-thread_queue *terminated_list, *waiting_list;
-thread_queue *kernel_ready_list, *system_ready_list, *app_ready_list;
+struct plist_head terminated_list, waiting_list;
+struct plist_head kernel_ready_list, system_ready_list, app_ready_list;
 
 static uint32_t scheduler_lock_counter = 0;
 void lock_scheduler()
@@ -33,78 +28,74 @@ void unlock_scheduler()
     enable_interrupts();
 }
 
-thread *pick_next_thread_from_queue(thread_queue *queue)
+thread *pick_next_thread_from_list(struct plist_head *list)
 {
-  thread *nt;
-  for (thread_queue **q = &queue; *q; q = &(*q)->next)
-    if ((*q)->thread)
-    {
-      nt = (*q)->thread;
-      *q = (*q)->next;
-    }
-  return nt;
+  if (plist_head_empty(list))
+    return NULL;
+
+  thread *t = plist_first_entry(list, thread, sched_sibling);
+  plist_del(&t->sched_sibling.node_list, list);
+  return t;
 }
 
 thread *pick_next_thread_to_run()
 {
-  thread *nt = pick_next_thread_from_queue(kernel_ready_list);
+  thread *nt = pick_next_thread_from_list(&kernel_ready_list);
   if (!nt)
-    nt = pick_next_thread_from_queue(system_ready_list);
+    nt = pick_next_thread_from_list(&system_ready_list);
   if (!nt)
-    nt = pick_next_thread_from_queue(app_ready_list);
+    nt = pick_next_thread_from_list(&app_ready_list);
   return nt;
 }
 
-void add_thread_to_queue(thread_queue *queue, thread *t)
-{
-  if (!queue->thread)
-  {
-    queue->thread = t;
-  }
-  else
-  {
-    thread_queue *nq = malloc(sizeof(thread_queue));
-    nq->thread = t;
-    thread_queue **q;
-    for (q = &queue; *q; q = &(*q)->next)
-      if ((*q)->thread->priority >= t)
-        break;
-    if (*q)
-      nq->next = (*q)->next;
-    (*q) = &nq;
-  }
-}
-
-void queue_thread(thread *t)
+struct plist_head *get_list_from_thread(thread *t)
 {
   if (t->state == READY_TO_RUN)
   {
     if (t->policy == KERNEL_POLICY)
-      add_thread_to_queue(kernel_ready_list, t);
+      return &kernel_ready_list;
     else if (t->policy == SYSTEM_POLICY)
-      add_thread_to_queue(system_ready_list, t);
+      return &system_ready_list;
     else
-      add_thread_to_queue(app_ready_list, t);
+      return &app_ready_list;
   }
   else if (t->state == WAITING)
-    add_thread_to_queue(waiting_list, t);
+    return &waiting_list;
   else if (t->state == TERMINATED)
-    add_thread_to_queue(terminated_list, t);
+    return &terminated_list;
+  return NULL;
 }
 
-void remove_thread_from_queue(thread *thread)
+void queue_thread(thread *t)
 {
+  struct plist_head *h = get_list_from_thread(t);
+
+  if (h)
+    plist_add(&t->sched_sibling.node_list, h);
+}
+
+void remove_thread(thread *t)
+{
+  struct plist_head *h = get_list_from_thread(t);
+
+  if (h)
+    plist_del(&t->sched_sibling.node_list, h);
 }
 
 void update_thread(thread *thread, uint8_t state)
 {
   lock_scheduler();
 
-  remove_thread_from_queue(thread);
+  remove_thread(thread);
   thread->state = state;
   queue_thread(thread);
 
   unlock_scheduler();
+}
+
+void terminate_thread()
+{
+  update_thread(current_thread, TERMINATED);
 }
 
 void switch_thread(thread *nt)
@@ -128,19 +119,19 @@ void schedule()
   if (current_thread->state == RUNNING)
     return;
 
-  thread *next_thread = pick_next_thread_to_run();
+  thread *nt = pick_next_thread_to_run();
 
-  if (!next_thread)
+  if (!nt)
     do
     {
       enable_interrupts();
       halt();
       disable_interrupts();
-      next_thread = pick_next_thread_to_run();
-    } while (!next_thread);
+      nt = pick_next_thread_to_run();
+    } while (!nt);
 
   unlock_scheduler();
-  switch_thread(next_thread);
+  switch_thread(nt);
 }
 
 void sleep(uint32_t delay)
@@ -160,23 +151,26 @@ void sleep(uint32_t delay)
 }
 
 #define SLICE_THRESHOLD 10
-#define TICK_TIME 1000
+#define TICKS_PER_SECOND 1000
 void irq_schedule_handler(interrupt_registers *regs)
 {
   lock_scheduler();
 
-  bool is_schedulable;
+  bool is_schedulable = false;
   uint32_t time = get_milliseconds_from_boot();
-  current_thread->time_used += TICK_TIME;
+  current_thread->time_used += TICKS_PER_SECOND;
 
-  for (thread_queue *q = waiting_list; q; q = q->next)
-    if (q->thread->expiry_when >= time)
+  thread *t = NULL;
+  plist_for_each_entry(t, &waiting_list, sched_sibling)
+  {
+    if (t->expiry_when >= time)
     {
-      update_thread(q, READY_TO_RUN);
+      update_thread(t, READY_TO_RUN);
       is_schedulable = true;
     }
+  }
 
-  if (current_thread->time_used >= SLICE_THRESHOLD * TICK_TIME && current_thread->policy == APP_POLICY)
+  if (current_thread->time_used >= SLICE_THRESHOLD * TICKS_PER_SECOND && current_thread->policy == APP_POLICY)
   {
     update_thread(current_thread, READY_TO_RUN);
     is_schedulable = true;
@@ -187,4 +181,13 @@ void irq_schedule_handler(interrupt_registers *regs)
     schedule();
 
   unlock_scheduler();
+}
+
+void sched_init()
+{
+  plist_head_init(&kernel_ready_list);
+  plist_head_init(&system_ready_list);
+  plist_head_init(&app_ready_list);
+  plist_head_init(&waiting_list);
+  plist_head_init(&terminated_list);
 }

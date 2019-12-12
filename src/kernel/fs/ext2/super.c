@@ -162,10 +162,8 @@ vfs_superblock *ext2_mount(struct vfs_file_system_type *fs_type,
   i_root->i_ino = EXT2_ROOT_INO;
   ext2_read_inode(i_root);
 
-  vfs_dentry *d_root = (vfs_dentry *)malloc(sizeof(vfs_dentry));
+  vfs_dentry *d_root = alloc_dentry(NULL, dir_name);
   d_root->d_inode = i_root;
-  d_root->d_parent = d_root;
-  d_root->d_name = dir_name;
   d_root->d_sb = sb;
 
   sb->s_root = d_root;

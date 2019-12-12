@@ -29,7 +29,7 @@ int register_chrdev(char_device *new_dev)
 int unregister_chrdev(uint32_t major)
 {
   char_device *dev = get_chrdev(major);
-  if (dev != NULL)
+  if (dev)
   {
     list_del(&dev->sibling);
     return 0;

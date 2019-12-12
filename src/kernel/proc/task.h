@@ -4,10 +4,12 @@
 #include <stdint.h>
 #include <include/ctype.h>
 #include <include/list.h>
+#include <kernel/utils/plist.h>
 #include <kernel/memory/vmm.h>
 
-struct fs_struct;
-struct files_struct;
+struct vfs_file;
+struct vfs_dentry;
+struct vfs_mount;
 
 enum thread_state
 {
@@ -24,6 +26,17 @@ enum thread_policy
   APP_POLICY
 };
 
+typedef struct files_struct
+{
+  struct vfs_file *fd_array[256];
+} files_struct;
+
+typedef struct fs_struct
+{
+  struct vfs_dentry *d_root;
+  struct vfs_mount *mnt_root;
+} fs_struct;
+
 typedef struct trap_frame
 {
   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
@@ -37,7 +50,6 @@ typedef struct thread
   tid_t tid;
   enum thread_state state;
   struct process *parent;
-  uint32_t priority;
   uint32_t policy;
   uint32_t esp;
   uint32_t kernel_stack;
@@ -45,6 +57,7 @@ typedef struct thread
   uint32_t expiry_when;
   uint32_t time_used;
   struct list_head sibling;
+  struct plist_node sched_sibling;
 } thread;
 
 typedef struct process
@@ -69,12 +82,15 @@ typedef struct process_image
 } process_image;
 
 void task_init();
+void sched_init();
 
-thread *create_kernel_thread(process *parent, uint32_t eip, enum thread_state state);
+thread *create_kernel_thread(process *parent, uint32_t eip, enum thread_state state, int priority);
+thread *create_user_thread(process *parent, const char *path, enum thread_state state, int priority);
 void update_thread(thread *thread, uint8_t state);
 process *create_process(process *parent, const char *name, pdirectory *pdir);
 void process_load(const char *pname, const char *path);
 void queue_thread(thread *t);
+void terminate_thread();
 void schedule();
 
 #endif

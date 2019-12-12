@@ -10,12 +10,12 @@ vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
   vfs_dentry *d = malloc(sizeof(vfs_dentry));
   d->d_name = name;
   d->d_parent = parent;
-  d->d_sb = parent->d_sb;
-
-  int length = 0;
-  for (; length < MAX_SUB_DENTRIES && parent->d_subdirs[length]; ++length)
-    ;
-  parent->d_subdirs[length] = d;
+  INIT_LIST_HEAD(&d->d_subdirs);
+  if (parent)
+  {
+    d->d_sb = parent->d_sb;
+    list_add_tail(&d->d_sibling, &parent->d_subdirs);
+  }
 
   return d;
 }
@@ -33,28 +33,34 @@ nameidata *path_walk(char *path)
     for (int j = 0; path[i] != '/' && i < length; ++i, ++j)
       part_name[j] = path[i];
 
-    vfs_dentry *dentry = NULL;
-    for (int i = 0; i < MAX_SUB_DENTRIES && dentry == NULL; ++i)
-      if (nd->dentry->d_subdirs[i] && strcmp(part_name, nd->dentry->d_subdirs[i]->d_name) == 0)
-        dentry = nd->dentry->d_subdirs[i];
-
-    if (dentry)
+    vfs_dentry *iter = NULL;
+    vfs_dentry *d_child = NULL;
+    list_for_each_entry(iter, &nd->dentry->d_subdirs, d_sibling)
     {
-      nd->dentry = dentry;
+      if (strcmp(part_name, iter->d_name) == 0)
+      {
+        d_child = iter;
+        break;
+      }
+    }
+
+    if (d_child)
+    {
+      nd->dentry = d_child;
     }
     else
     {
-      dentry = alloc_dentry(nd->dentry, part_name);
-      vfs_inode *inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, dentry->d_name);
+      d_child = alloc_dentry(nd->dentry, part_name);
+      vfs_inode *inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, d_child->d_name);
       if (inode == NULL)
       {
         uint32_t mode = S_IFDIR;
         if (i == length)
           mode = S_IFREG;
-        inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, dentry->d_name, mode);
+        inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child->d_name, mode);
       }
-      dentry->d_inode = inode;
-      nd->dentry = dentry;
+      d_child->d_inode = inode;
+      nd->dentry = d_child;
     }
 
     vfs_mount *mnt = lookup_mnt(nd->dentry);

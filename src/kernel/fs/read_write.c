@@ -8,7 +8,7 @@ extern process *current_process;
 char *vfs_read(const char *path)
 {
   long fd = vfs_open(path);
-  kstat *stat = calloc(sizeof(kstat), sizeof(char));
+  kstat *stat = calloc(1, sizeof(kstat));
   vfs_fstat(fd, stat);
   char *buf = calloc(stat->size, sizeof(char));
   vfs_fread(fd, buf, stat->size);

@@ -127,7 +127,8 @@ typedef struct vfs_dentry
   struct vfs_dentry *d_parent;
   char *d_name;
   struct vfs_superblock *d_sb;
-  struct vfs_dentry *d_subdirs[MAX_SUB_DENTRIES];
+  struct list_head d_subdirs;
+  struct list_head d_sibling;
 } vfs_dentry;
 
 typedef struct vfs_file
@@ -153,17 +154,6 @@ typedef struct nameidata
   struct vfs_mount *mnt;
 } nameidata;
 
-typedef struct files_struct
-{
-  struct vfs_file *fd_array[256];
-} files_struct;
-
-typedef struct fs_struct
-{
-  struct vfs_dentry *d_root;
-  struct vfs_mount *mnt_root;
-} fs_struct;
-
 int register_filesystem(vfs_file_system_type *fs);
 int unregister_filesystem(vfs_file_system_type *fs);
 int find_unused_fd_slot();
@@ -171,6 +161,7 @@ vfs_mount *lookup_mnt(vfs_dentry *d);
 void vfs_init(vfs_file_system_type *fs, char *dev_name);
 
 // open.c
+vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name);
 long vfs_open(char *path);
 void vfs_stat(char *path, kstat *stat);
 void vfs_fstat(uint32_t fd, kstat *stat);

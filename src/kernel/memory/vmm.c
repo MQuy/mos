@@ -156,7 +156,7 @@ pdirectory *create_address_space(pdirectory *current)
 {
   char *aligned_object = align_heap(PMM_FRAME_SIZE);
   // NOTE: MQ 2019-11-24 page directory, page table have to be aligned by 4096
-  pdirectory *va_dir = calloc(sizeof(pdirectory), sizeof(char));
+  pdirectory *va_dir = calloc(1, sizeof(pdirectory));
   free(aligned_object);
 
   if (!va_dir)
