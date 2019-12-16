@@ -509,7 +509,7 @@ void clone_kernel_space(pdirectory *out)
 }
 
 /* create new address space. */
-pdirectory *create_address_space(void)
+pdirectory *vmm_create_address_space(void)
 {
 
 	pdirectory *space;
@@ -545,7 +545,7 @@ bool create_process(char *appname)
 	uint32_t size;
 
 	/* create new address space. */
-	addressSpace = create_address_space();
+	addressSpace = vmm_create_address_space();
 
 	/* try to load image into it. */
 	if (!load_image(appname, addressSpace, &base, &size, &entry))

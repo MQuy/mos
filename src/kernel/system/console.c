@@ -123,6 +123,7 @@ int printf(const char *fmt, ...)
   }
 
   va_end(args);
+  return 0;
 }
 
 void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
@@ -136,7 +137,7 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
   uint32_t screen_size = video_height * video_pitch;
   uint32_t blocks = div_ceil(screen_size, PMM_FRAME_SIZE);
   for (uint32_t i = 0; i < blocks; ++i)
-    vmm_map_phyiscal_address(
+    vmm_map_address(
         vmm_get_directory(),
         VIDEO_VADDR + i * PMM_FRAME_SIZE,
         video_paddr + i * PMM_FRAME_SIZE,

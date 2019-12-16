@@ -23,6 +23,7 @@
 #include "system/console.h"
 #include "multiboot2.h"
 
+extern thread *current_thread;
 extern vfs_file_system_type ext2_fs_type;
 
 void kernel_init()
@@ -37,7 +38,9 @@ void kernel_init()
   vfs_init(&ext2_fs_type, "/dev/hda");
   chrdev_memory_init();
 
-  char *rand = vfs_read("/dev/random");
+  uint32_t fdrandom = vfs_open("/dev/random");
+  char *rand = malloc(10);
+  vfs_fread(fdrandom, rand, 10);
 
   console_setup();
   printf("hello world");
@@ -45,10 +48,11 @@ void kernel_init()
   // register system apis
   syscall_init();
 
-  process_load("gui", "/bin/ui");
+  process_load("window server", "/bin/window_server");
 
-  // terminate_thread();
-  // schedule();
+  // idle
+  update_thread(current_thread, WAITING);
+  schedule();
 
   for (;;)
     ;
@@ -66,7 +70,6 @@ int kernel_main(unsigned long addr, unsigned long magic)
   struct multiboot_tag_framebuffer *multiboot_framebuffer;
 
   struct multiboot_tag *tag;
-  unsigned size = *(unsigned *)addr;
   for (tag = (struct multiboot_tag *)(addr + 8);
        tag->type != MULTIBOOT_TAG_TYPE_END;
        tag = (struct multiboot_tag *)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7)))
@@ -95,6 +98,11 @@ int kernel_main(unsigned long addr, unsigned long magic)
 
   // register irq and handlers
   idt_init();
+
+  // physical memory and paging
+  pmm_init(multiboot_meminfo, multiboot_mmap);
+  vmm_init();
+
   exception_init();
 
   // timer and keyboard
@@ -102,14 +110,10 @@ int kernel_main(unsigned long addr, unsigned long magic)
   kkybrd_install();
   mouse_init();
 
+  console_init(multiboot_framebuffer);
+
   // enable interrupts to start irqs (timer, keyboard)
   enable_interrupts();
-
-  // physical memory and paging
-  pmm_init(multiboot_meminfo, multiboot_mmap);
-  vmm_init();
-
-  console_init(multiboot_framebuffer);
 
   task_init(kernel_init);
 

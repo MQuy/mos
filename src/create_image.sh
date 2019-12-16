@@ -9,7 +9,7 @@ cp sample.txt "/Volumes/${VOLUME_NAME}/demo/sample.txt"
 cp -R assets/fonts "/Volumes/${VOLUME_NAME}"
 mkdir "/Volumes/${VOLUME_NAME}/bin"
 mkdir "/Volumes/${VOLUME_NAME}/dev"
-cp apps/ui/ui "/Volumes/${VOLUME_NAME}/bin"
+cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
 hdiutil detach $DISK_NAME
 
 DISK_NAME="$(hdiutil attach -nomount hdd.img)"

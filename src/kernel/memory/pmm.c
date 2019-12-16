@@ -157,7 +157,7 @@ void *pmm_alloc_blocks(size_t size)
   if (frame == -1)
     return 0;
 
-  for (int i = 0; i < size; ++i)
+  for (uint32_t i = 0; i < size; ++i)
   {
     memory_bitmap_set(frame + i);
     used_frames++;

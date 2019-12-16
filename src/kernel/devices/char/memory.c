@@ -1,3 +1,4 @@
+#include <include/errno.h>
 #include <kernel/utils/math.h>
 #include <kernel/fs/dev.h>
 
@@ -17,16 +18,16 @@ int null_release(vfs_inode *inode, vfs_file *filp)
   return 0;
 }
 
-loff_t *null_llseek(struct vfs_file *file, loff_t ppos)
+loff_t null_llseek(struct vfs_file *file, loff_t ppos)
 {
   return 0;
 }
 
-ssize_t *null_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t null_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
   return 0;
 }
-ssize_t *null_write(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t null_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
   return 0;
 }
@@ -49,18 +50,18 @@ int random_release(vfs_inode *inode, vfs_file *filp)
   return 0;
 }
 
-loff_t *random_llseek(struct vfs_file *file, loff_t ppos)
+loff_t random_llseek(struct vfs_file *file, loff_t ppos)
 {
   return ppos;
 }
 
-ssize_t *random_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t random_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 
   *(uint32_t *)buf = rand();
   return count;
 }
-ssize_t *random_write(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t random_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
   return count;
 }
@@ -79,11 +80,12 @@ int memory_open(vfs_inode *inode, vfs_file *filp)
   {
   case NULL_DEVICE:
     filp->f_op = &null_fops;
-    break;
+    return 0;
   case RANDOM_DEVICE:
     filp->f_op = &random_fops;
-    break;
+    return 0;
   }
+  return -EINVAL;
 }
 
 vfs_file_operations memory_fops = {

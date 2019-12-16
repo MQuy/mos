@@ -8,9 +8,9 @@ extern process *current_process;
 char *vfs_read(const char *path)
 {
   long fd = vfs_open(path);
-  kstat *stat = calloc(1, sizeof(kstat));
+  kstat *stat = malloc(sizeof(kstat));
   vfs_fstat(fd, stat);
-  char *buf = calloc(stat->size, sizeof(char));
+  char *buf = malloc(stat->size);
   vfs_fread(fd, buf, stat->size);
   return buf;
 }
@@ -27,7 +27,7 @@ int vfs_write(const char *path, const char *buf, size_t count)
   return vfs_fwrite(fd, buf, count);
 }
 
-ssize_t vfs_fwrite(uint32_t fd, char *buf, size_t count)
+ssize_t vfs_fwrite(uint32_t fd, const char *buf, size_t count)
 {
   vfs_file *file = current_process->files->fd_array[fd];
   return file->f_op->write(file, buf, count, file->f_pos);

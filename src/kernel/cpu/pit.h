@@ -6,6 +6,5 @@
 
 void pit_init();
 uint32_t get_milliseconds_from_boot();
-void register_pit_handler(I86_IRQ_HANDLER handler);
 
 #endif

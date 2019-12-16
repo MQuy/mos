@@ -20,7 +20,7 @@ vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
   return d;
 }
 
-nameidata *path_walk(char *path)
+nameidata *path_walk(const char *path)
 {
   nameidata *nd = malloc(sizeof(nameidata));
   nd->dentry = current_process->fs->d_root;
@@ -70,7 +70,7 @@ nameidata *path_walk(char *path)
   return nd;
 }
 
-long vfs_open(char *path)
+long vfs_open(const char *path)
 {
   int fd = find_unused_fd_slot();
   nameidata *nd = path_walk(path);
@@ -122,9 +122,10 @@ int vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
     stat->blocks = (s->s_blocksize / 512) * blocks;
     stat->blksize = s->s_blocksize;
   }
+  return 0;
 }
 
-void vfs_stat(char *path, kstat *stat)
+void vfs_stat(const char *path, kstat *stat)
 {
   nameidata *nd = path_walk(path);
   vfs_getattr(nd->mnt, nd->dentry, stat);
@@ -136,10 +137,10 @@ void vfs_fstat(uint32_t fd, kstat *stat)
   vfs_getattr(f->f_vfsmnt, f->f_dentry, stat);
 }
 
-int vfs_mknod(char *path, int mode, dev_t dev)
+int vfs_mknod(const char *path, int mode, dev_t dev)
 {
   uint32_t length = strlen(path);
-  uint32_t last_index = length - 1;
+  int32_t last_index = length - 1;
   for (; last_index >= 0 && path[last_index] != '/'; last_index--)
     ;
   char *dir_path = calloc(last_index + 1, sizeof(char));

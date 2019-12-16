@@ -38,7 +38,7 @@ void mouse_calculate_position()
   }
 }
 
-void mouse_handler(interrupt_registers *regs)
+int32_t mouse_handler(interrupt_registers *regs)
 {
   uint8_t status = inportb(MOUSE_STATUS);
   if ((status & 0x01) && (status & 0x20))
@@ -63,6 +63,8 @@ void mouse_handler(interrupt_registers *regs)
       break;
     }
   }
+
+  return IRQ_HANDLER_CONTINUE;
 }
 
 void mouse_wait(uint32_t type)

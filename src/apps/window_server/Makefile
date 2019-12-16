@@ -1,7 +1,8 @@
 TOPDIR  := $(shell if [ "$$PWD" != "" ] ; then echo $$PWD ; else pwd ; fi)
+INCLUDE = $(TOPDIR)/../../
 
-C_SOURCES = $(wildcard main.c)
-HEADERS = $(wildcard *.h)
+C_SOURCES = $(wildcard window_server.c ../../include/*.c ../../libc/*.c)
+HEADERS = $(wildcard *.h ../../include/*.h ../../libc/*.h)
 
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.c=.o}
@@ -11,9 +12,9 @@ LD = /usr/local/bin/i386-elf-ld
 GDB = /usr/local/bin/i386-elf-gdb
 
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra
+CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE)
 
-ui: ${OBJ}
+window_server: ${OBJ}
 	${CC} -o $@ -T linker.ld $^ -ffreestanding -nostdlib -lgcc -g
 
 %.o: %.c ${HEADERS}

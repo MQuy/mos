@@ -49,6 +49,7 @@ int chrdev_open(vfs_inode *inode, vfs_file *filp)
     dev->f_ops->open(inode, filp);
     return 0;
   }
+  return -EINVAL;
 }
 
 vfs_file_operations def_chr_fops = {

@@ -8,3 +8,6 @@
 *.bin
 *.iso
 bochs.log
+
+# ignored apps
+src/apps/window_server/window_server

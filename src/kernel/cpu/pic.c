@@ -33,6 +33,16 @@ void pic_remap()
   outportb(PIC2_DATA, a2);
 }
 
+// Send End-Of-Interrupt command
+void pic_eoi(uint8_t irq)
+{
+  if (irq >= 8)
+    outportb(PIC2_COMMAND, PIC_EOI);
+
+  outportb(PIC1_COMMAND, PIC_EOI);
+  io_wait();
+}
+
 void pic_disable()
 {
   outportb(PIC1_DATA, 0xff);
@@ -42,14 +52,4 @@ void pic_disable()
   io_wait();
 
   pic_eoi(8);
-}
-
-// Send End-Of-Interrupt command
-void pic_eoi(uint8_t irq)
-{
-  if (irq >= 8)
-    outportb(PIC2_COMMAND, PIC_EOI);
-
-  outportb(PIC1_COMMAND, PIC_EOI);
-  io_wait();
 }

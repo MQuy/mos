@@ -67,10 +67,11 @@ typedef struct pdirectory
 
 void vmm_init();
 pdirectory *vmm_get_directory();
-void vmm_map_phyiscal_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
+void vmm_map_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
 void *create_kernel_stack(int32_t blocks);
-pdirectory *create_address_space(pdirectory *dir);
+pdirectory *vmm_create_address_space(pdirectory *dir);
 physical_addr vmm_get_physical_address(virtual_addr vaddr);
+pdirectory *vmm_fork(pdirectory *va_dir);
 
 extern void *sbrk(size_t n);
 

@@ -1,5 +1,6 @@
 #include "hal.h"
 #include <kernel/memory/vmm.h>
+#include <kernel/memory/malloc.h>
 #include "apic.h"
 
 const uint32_t CPUID_FLAG_MSR = 1 << 5;
@@ -134,7 +135,7 @@ void enable_apic()
   uint32_t padd_apic_base = cpu_get_apic_base();
   uint32_t vadd_apic_base = malloc(0x1000);
 
-  vmm_map_phyiscal_address(vmm_get_directory(), vadd_apic_base, padd_apic_base, I86_PTE_PRESENT | I86_PTE_WRITABLE);
+  vmm_map_address(vmm_get_directory(), vadd_apic_base, padd_apic_base, I86_PTE_PRESENT | I86_PTE_WRITABLE);
 
   /* Hardware enable the Local APIC if it wasn't enabled */
   cpu_set_apic_base(padd_apic_base);

@@ -3,74 +3,74 @@
 #include <kernel/cpu/idt.h>
 #include "exception.h"
 
-void divide_by_zero_fault(interrupt_registers *regs)
+int32_t divide_by_zero_fault(interrupt_registers *regs)
 {
 	kernel_panic("Divide by 0");
 }
 
-void single_step_trap(interrupt_registers *regs)
+int32_t single_step_trap(interrupt_registers *regs)
 {
 	kernel_panic("Single step");
 }
 
-void nmi_trap(interrupt_registers *regs)
+int32_t nmi_trap(interrupt_registers *regs)
 {
 	kernel_panic("NMI trap");
 }
 
-void breakpoint_trap(interrupt_registers *regs)
+int32_t breakpoint_trap(interrupt_registers *regs)
 {
 	kernel_panic("Breakpoint trap");
 }
 
-void overflow_trap(interrupt_registers *regs)
+int32_t overflow_trap(interrupt_registers *regs)
 {
 	kernel_panic("Overflow trap");
 }
 
-void bounds_check_fault(interrupt_registers *regs)
+int32_t bounds_check_fault(interrupt_registers *regs)
 {
 	kernel_panic("Bounds check fault");
 }
 
-void invalid_opcode_fault(interrupt_registers *regs)
+int32_t invalid_opcode_fault(interrupt_registers *regs)
 {
 	kernel_panic("Invalid opcode");
 }
 
-void no_device_fault(interrupt_registers *regs)
+int32_t no_device_fault(interrupt_registers *regs)
 {
 	kernel_panic("Device not found");
 }
 
-void double_fault_abort(interrupt_registers *regs)
+int32_t double_fault_abort(interrupt_registers *regs)
 {
 	kernel_panic("Double fault");
 }
 
-void invalid_tss_fault(interrupt_registers *regs)
+int32_t invalid_tss_fault(interrupt_registers *regs)
 {
 	kernel_panic("Invalid TSS");
 }
 
-void no_segment_fault(interrupt_registers *regs)
+int32_t no_segment_fault(interrupt_registers *regs)
 {
 	kernel_panic("Invalid segment");
 }
 
-void stack_fault(interrupt_registers *regs)
+int32_t stack_fault(interrupt_registers *regs)
 {
 	kernel_panic("Stack fault");
 }
 
-void general_protection_fault(interrupt_registers *regs)
+int32_t general_protection_fault(interrupt_registers *regs)
 {
 	kernel_panic("General Protection Fault");
 }
 
-void page_fault(interrupt_registers *regs)
+int32_t page_fault(interrupt_registers *regs)
 {
-	int faultAddr = 0;
+	uint32_t faultAddr = 0;
 	int error_code = regs->err_code;
 
 	__asm__ __volatile__("mov %%cr2, %%eax	\n"
@@ -88,22 +88,22 @@ void page_fault(interrupt_registers *regs)
 		;
 }
 
-void fpu_fault(interrupt_registers *regs)
+int32_t fpu_fault(interrupt_registers *regs)
 {
 	kernel_panic("FPU Fault");
 }
 
-void alignment_check_fault(interrupt_registers *regs)
+int32_t alignment_check_fault(interrupt_registers *regs)
 {
 	kernel_panic("Alignment Check");
 }
 
-void machine_check_abort(interrupt_registers *regs)
+int32_t machine_check_abort(interrupt_registers *regs)
 {
 	kernel_panic("Machine Check");
 }
 
-void simd_fpu_fault(interrupt_registers *regs)
+int32_t simd_fpu_fault(interrupt_registers *regs)
 {
 	kernel_panic("FPU SIMD fault");
 }

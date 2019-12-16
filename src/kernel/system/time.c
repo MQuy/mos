@@ -88,7 +88,7 @@ time *get_time_from_seconds(uint32_t seconds)
 // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#days_from_civil
 uint32_t get_days(time *t)
 {
-  uint32_t year = t->year;
+  int32_t year = t->year;
   uint32_t month = t->month;
   uint32_t day = t->day;
 

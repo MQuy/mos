@@ -284,7 +284,7 @@ void kybrd_enc_send_cmd(uint8_t cmd)
 }
 
 //!	keyboard interrupt handler
-void i86_kybrd_irq(interrupt_registers *registers)
+int32_t i86_kybrd_irq(interrupt_registers *registers)
 {
 	static bool _extended = false;
 
@@ -399,6 +399,8 @@ void i86_kybrd_irq(interrupt_registers *registers)
 			break;
 		}
 	}
+
+	return IRQ_HANDLER_CONTINUE;
 }
 
 //============================================================================

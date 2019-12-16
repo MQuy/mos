@@ -8,7 +8,6 @@
 loff_t ext2_llseek_file(vfs_file *file, loff_t ppos)
 {
     vfs_inode *inode = file->f_dentry->d_inode;
-    ext2_inode *ext2_inode = EXT2_INODE(inode);
 
     if (ppos > inode->i_size || ppos < 0)
         return -EINVAL;
@@ -39,9 +38,10 @@ ssize_t ext2_read_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
         p += sb->s_blocksize;
         iter_buf += sb->s_blocksize - pstart - pend;
     }
+    return count;
 }
 
-ssize_t ext2_write_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t ext2_write_file(vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
     vfs_inode *inode = file->f_dentry->d_inode;
     ext2_inode *ei = EXT2_INODE(inode);
@@ -80,6 +80,7 @@ ssize_t ext2_write_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
         p += sb->s_blocksize;
         iter_buf += sb->s_blocksize - pstart - pend;
     }
+    return count;
 }
 
 vfs_file_operations ext2_file_operations = {

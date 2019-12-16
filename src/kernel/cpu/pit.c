@@ -10,39 +10,16 @@
 
 volatile uint32_t pit_ticks = 0;
 
-typedef struct pit_handler
-{
-  uint32_t handler;
-  struct list_head sibling;
-} pit_handler;
-
-struct list_head handler_list;
-
-void pit_interrupt_handler(interrupt_registers *regs)
+int32_t pit_interrupt_handler(interrupt_registers *regs)
 {
   pit_ticks++;
 
-  pit_handler *pt = NULL;
-  list_for_each_entry(pt, &handler_list, sibling)
-  {
-    if (pt)
-    {
-      I86_IRQ_HANDLER handler = pt->handler;
-      handler(regs);
-    }
-  }
+  return IRQ_HANDLER_CONTINUE;
 }
 
 uint32_t get_milliseconds_from_boot()
 {
   return pit_ticks * TICKS_PER_SECOND;
-}
-
-void register_pit_handler(I86_IRQ_HANDLER handler)
-{
-  pit_handler *pt = calloc(1, sizeof(pit_handler));
-  pt->handler = handler;
-  list_add_tail(&pt->sibling, &handler_list);
 }
 
 void pit_init()
@@ -54,6 +31,4 @@ void pit_init()
   outportb(PIT_REG_COUNTER, (divisor >> 8) & 0xff);
 
   register_interrupt_handler(IRQ0, pit_interrupt_handler);
-
-  INIT_LIST_HEAD(&handler_list);
 }

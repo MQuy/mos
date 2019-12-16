@@ -44,11 +44,15 @@ typedef struct interrupt_registers
   uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
 } __attribute__((packed)) interrupt_registers;
 
-typedef void (*I86_IRQ_HANDLER)(interrupt_registers *registers);
+#define IRQ_HANDLER_CONTINUE 0
+#define IRQ_HANDLER_STOP 1
+typedef void (*I86_IVT)(interrupt_registers *regs);
+typedef int32_t (*I86_IRQ_HANDLER)(interrupt_registers *registers);
 
 void idt_init();
-void setvect(uint8_t i, I86_IRQ_HANDLER irq);
-void register_interrupt_handler(uint8_t n, I86_IRQ_HANDLER handler);
+void setvect(uint32_t i, I86_IVT irq);
+void setvect_flags(uint32_t i, I86_IVT irq, uint32_t flags);
+void register_interrupt_handler(uint32_t n, I86_IRQ_HANDLER handler);
 
 /* ISRs reserved for CPU exceptions */
 extern void isr0();

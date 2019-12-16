@@ -3,7 +3,7 @@
 #include "vmm.h"
 #include "malloc.h"
 
-block_meta *blocklist, *last_block;
+block_meta *blocklist;
 
 block_meta *find_free_block(block_meta **last, size_t size)
 {
@@ -31,10 +31,8 @@ block_meta *request_space(block_meta *last, size_t size)
 
 void *malloc(size_t size)
 {
-  if (size < 0)
-    return -EINVAL;
-  if (size == 0)
-    return (char *)last_block + sizeof(block_meta) + last_block->size;
+  if (size <= 0)
+    return NULL;
 
   block_meta *block, *last;
 
@@ -46,13 +44,12 @@ void *malloc(size_t size)
     else
     {
       block = request_space(last, size);
-      last_block = block;
     }
   }
   else
   {
     block = request_space(NULL, size);
-    blocklist = last_block = block;
+    blocklist = block;
   }
 
   if (block)
@@ -90,7 +87,11 @@ void free(void *ptr)
 // ------------------- padding - sizeof(block_meta)
 void *align_heap(size_t size)
 {
-  uint32_t heap_addr = malloc(0);
+  uint32_t heap_addr = sbrk(0);
+
+  if (heap_addr % size == 0)
+    return NULL;
+
   uint32_t padding_size = div_ceil(heap_addr, size) * size - heap_addr;
   uint32_t required_size = sizeof(block_meta) * 2;
 
@@ -100,4 +101,5 @@ void *align_heap(size_t size)
       return malloc(padding_size - required_size);
     padding_size += size;
   }
+  return NULL;
 }

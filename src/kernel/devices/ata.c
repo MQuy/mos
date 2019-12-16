@@ -18,16 +18,20 @@ void ata_400ns_delays(ata_device *device);
 
 volatile bool ata_irq_called;
 
-void ata_irq()
+int32_t ata_irq()
 {
   ata_irq_called = true;
+
+  return IRQ_HANDLER_CONTINUE;
 }
 
-void ata_wait_irq()
+int32_t ata_wait_irq()
 {
   while (!ata_irq_called)
     ;
   ata_irq_called = false;
+
+  return IRQ_HANDLER_CONTINUE;
 }
 
 uint8_t ata_init()

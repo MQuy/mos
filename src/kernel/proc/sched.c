@@ -2,6 +2,7 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/pic.h>
 #include <kernel/cpu/pit.h>
+#include <kernel/cpu/tss.h>
 #include <kernel/memory/vmm.h>
 #include "task.h"
 
@@ -34,7 +35,7 @@ thread *pick_next_thread_from_list(struct plist_head *list)
     return NULL;
 
   thread *t = plist_first_entry(list, thread, sched_sibling);
-  plist_del(&t->sched_sibling.node_list, list);
+  plist_del(&t->sched_sibling, list);
   return t;
 }
 
@@ -52,9 +53,9 @@ struct plist_head *get_list_from_thread(thread *t)
 {
   if (t->state == READY_TO_RUN)
   {
-    if (t->policy == KERNEL_POLICY)
+    if (t->sched_sibling.prio == KERNEL_POLICY)
       return &kernel_ready_list;
-    else if (t->policy == SYSTEM_POLICY)
+    else if (t->sched_sibling.prio == SYSTEM_POLICY)
       return &system_ready_list;
     else
       return &app_ready_list;
@@ -71,7 +72,7 @@ void queue_thread(thread *t)
   struct plist_head *h = get_list_from_thread(t);
 
   if (h)
-    plist_add(&t->sched_sibling.node_list, h);
+    plist_add(&t->sched_sibling, h);
 }
 
 void remove_thread(thread *t)
@@ -79,7 +80,7 @@ void remove_thread(thread *t)
   struct plist_head *h = get_list_from_thread(t);
 
   if (h)
-    plist_del(&t->sched_sibling.node_list, h);
+    plist_del(&t->sched_sibling, h);
 }
 
 void update_thread(thread *thread, uint8_t state)
@@ -106,10 +107,13 @@ void switch_thread(thread *nt)
 
   current_thread = nt;
   current_thread->time_used = 0;
+  current_thread->state = RUNNING;
   current_process = current_thread->parent;
+  current_process->active_thread = current_thread;
 
+  uint32_t paddr_cr3 = vmm_get_physical_address(current_thread->parent->pdir);
   tss_set_stack(0x10, current_thread->kernel_stack);
-  do_switch(&pt->esp, current_thread->esp, vmm_get_physical_address(current_thread->parent->pdir));
+  do_switch(pt->esp, current_thread->esp, paddr_cr3);
 }
 
 void schedule()
@@ -152,7 +156,7 @@ void sleep(uint32_t delay)
 
 #define SLICE_THRESHOLD 10
 #define TICKS_PER_SECOND 1000
-void irq_schedule_handler(interrupt_registers *regs)
+int32_t irq_schedule_handler(interrupt_registers *regs)
 {
   lock_scheduler();
 
@@ -170,7 +174,7 @@ void irq_schedule_handler(interrupt_registers *regs)
     }
   }
 
-  if (current_thread->time_used >= SLICE_THRESHOLD * TICKS_PER_SECOND && current_thread->policy == APP_POLICY)
+  if (current_thread->time_used >= SLICE_THRESHOLD * TICKS_PER_SECOND && current_thread->sched_sibling.prio == APP_POLICY)
   {
     update_thread(current_thread, READY_TO_RUN);
     is_schedulable = true;
@@ -181,6 +185,26 @@ void irq_schedule_handler(interrupt_registers *regs)
     schedule();
 
   unlock_scheduler();
+
+  return IRQ_HANDLER_CONTINUE;
+}
+
+int32_t thread_page_fault(interrupt_registers *regs)
+{
+
+  uint32_t faultAddr = 0;
+  __asm__ __volatile__("mov %%cr2, %0"
+                       : "=r"(faultAddr));
+
+  if (faultAddr == PROCESS_TRAPPED_PAGE_FAULT && regs->cs == 0x1B)
+  {
+    update_thread(current_thread, TERMINATED);
+    schedule();
+
+    return IRQ_HANDLER_STOP;
+  }
+
+  return IRQ_HANDLER_CONTINUE;
 }
 
 void sched_init()

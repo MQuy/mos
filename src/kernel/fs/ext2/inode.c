@@ -249,7 +249,9 @@ void ext2_truncate_inode(struct vfs_inode *inode)
 
 int ext2_mknod(vfs_inode *dir, char *name, int mode, dev_t dev)
 {
-    vfs_inode *inode = ext2_create_inode(dir, name, mode);
+    vfs_inode *inode = ext2_lookup_inode(dir, name);
+    if (inode == NULL)
+        inode = ext2_create_inode(dir, name, mode);
     init_special_inode(inode, mode, dev);
     ext2_write_inode(inode);
     return 0;

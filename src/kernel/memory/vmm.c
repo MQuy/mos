@@ -46,19 +46,21 @@ void vmm_flush_tlb_entry(virtual_addr addr)
   | Kernel itself           |
   |_________________________| 0xC0000000
   |                         |
-  | User stack              |
-  |_________________________| 0xBFC00000
+  | Page for page faults    |
+  |_________________________| 0xBFFFF000
   |                         |
   | User thread stack       |
-  |_________________________|
+  |_________________________| 0xB0000000
   |                         |
   |                         |
+  | User heap               |
   |                         |
+  |_________________________| 0x
   |                         |
+  | Elf                     |
+  |_________________________| 0x100000
   |                         |
-  |_________________________| 0x00400000
-  |                         |
-  | Identiy mapping         |
+  | Reversed for devices    |
   +_________________________+ 0x00000000
 */
 
@@ -152,12 +154,13 @@ physical_addr vmm_get_physical_address(virtual_addr vaddr)
   return table[tindex];
 }
 
-pdirectory *create_address_space(pdirectory *current)
+pdirectory *vmm_create_address_space(pdirectory *current)
 {
   char *aligned_object = align_heap(PMM_FRAME_SIZE);
   // NOTE: MQ 2019-11-24 page directory, page table have to be aligned by 4096
   pdirectory *va_dir = calloc(1, sizeof(pdirectory));
-  free(aligned_object);
+  if (aligned_object)
+    free(aligned_object);
 
   if (!va_dir)
     return NULL;
@@ -193,7 +196,7 @@ pdirectory *vmm_get_directory()
   0xFFC00000 + de * 0x1000 + te * 0x4 is mapped to pd[de] + te * 0x4 (this is what mmu will us to translate vAddr)
   0xFFC00000 + de * 0x1000 + te * 0x4 = xxx <-> *(pt+4*ptx) = xxx
 */
-void vmm_map_phyiscal_address(pdirectory *va_dir, uint32_t virt, uint32_t phys, uint32_t flags)
+void vmm_map_address(pdirectory *va_dir, uint32_t virt, uint32_t phys, uint32_t flags)
 {
   if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
     vmm_create_page_table(va_dir, virt, flags);
@@ -215,4 +218,65 @@ void vmm_create_page_table(pdirectory *va_dir, uint32_t virt, uint32_t flags)
   vmm_flush_tlb_entry(virt);
 
   memset(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(ptable));
+}
+
+void vmm_unmap_address(pdirectory *va_dir, uint32_t virt)
+{
+  if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
+    return;
+
+  ptable *pt = (ptable *)(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE);
+  uint32_t pte = get_page_table_entry_index(virt);
+
+  if (!is_page_enabled(pt->m_entries[pte]))
+    return;
+
+  pt->m_entries[pte] = 0;
+  vmm_flush_tlb_entry(virt);
+}
+
+pdirectory *vmm_fork(pdirectory *va_dir)
+{
+  pdirectory *forked_dir = vmm_create_address_space(va_dir);
+  char *aligned_object = align_heap(PMM_FRAME_SIZE);
+  virtual_addr heap_current = sbrk(0);
+
+  // NOTE: MQ 2019-12-15 Any heap changes via malloc is forbidden
+  for (uint32_t ipd = 0; ipd < 768; ++ipd)
+    if (is_page_enabled(va_dir->m_entries[ipd]))
+    {
+      ptable *forked_pt = (ptable *)heap_current;
+      physical_addr forked_pt_paddr = pmm_alloc_block();
+      vmm_map_address(va_dir, forked_pt, forked_pt_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+      memset(forked_pt, 0, sizeof(ptable));
+
+      heap_current += sizeof(ptable);
+      ptable *pt = (ptable *)(PAGE_TABLE_BASE + ipd * PMM_FRAME_SIZE);
+      for (uint32_t ipt = 0; ipt < PAGES_PER_TABLE; ++ipt)
+      {
+        if (is_page_enabled(pt->m_entries[ipt]))
+        {
+          char *pte = heap_current;
+          char *forked_pte = pte + PMM_FRAME_SIZE;
+          heap_current = forked_pte + PMM_FRAME_SIZE;
+          physical_addr forked_pte_paddr = pmm_alloc_block();
+
+          vmm_map_address(va_dir, pte, pt->m_entries[ipt], I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+          vmm_map_address(va_dir, forked_pte, forked_pte_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+
+          memcpy(forked_pte, pte, PMM_FRAME_SIZE);
+
+          vmm_unmap_address(va_dir, pte);
+          vmm_unmap_address(va_dir, forked_pte);
+
+          forked_pt->m_entries[ipt] = forked_pte_paddr | I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER;
+        }
+      }
+      vmm_unmap_address(va_dir, forked_pt);
+      forked_dir->m_entries[ipd] = forked_pt_paddr | I86_PDE_PRESENT | I86_PDE_WRITABLE | I86_PDE_USER;
+    }
+
+  if (aligned_object)
+    free(aligned_object);
+  return forked_dir;
 }

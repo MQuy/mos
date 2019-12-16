@@ -44,7 +44,7 @@ void elf_paging(pdirectory *pdir, virtual_addr vaddr, uint32_t size, uint32_t fl
   physical_addr paddr = pmm_alloc_blocks(blocks);
 
   for (uint32_t i = 0; i < blocks; ++i)
-    vmm_map_phyiscal_address(pdir, vaddr + i * PMM_FRAME_SIZE, paddr + i * PMM_FRAME_SIZE, flags);
+    vmm_map_address(pdir, vaddr + i * PMM_FRAME_SIZE, paddr + i * PMM_FRAME_SIZE, flags);
 }
 
 /*
@@ -73,6 +73,7 @@ Elf32_Layout *elf_load(char *buf, pdirectory *pdir)
     return NULL;
 
   Elf32_Layout *layout = malloc(sizeof(Elf32_Layout));
+  layout->entry = elf_header->e_entry;
   for (Elf32_Phdr *ph = buf + elf_header->e_phoff;
        ph && ph < (buf + elf_header->e_phoff + elf_header->e_phentsize * elf_header->e_phnum);
        ++ph)
@@ -81,13 +82,12 @@ Elf32_Layout *elf_load(char *buf, pdirectory *pdir)
       continue;
 
     // text segment
-    if (ph->p_flags & PF_X != 0 && ph->p_flags & PF_R != 0)
+    if ((ph->p_flags & PF_X) != 0 && (ph->p_flags & PF_R) != 0)
     {
-      layout->entry = ph->p_vaddr;
       elf_paging(pdir, ph->p_vaddr, ph->p_memsz, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     }
     // data segment
-    else if (ph->p_flags & PF_W != 0 && ph->p_flags & PF_R != 0)
+    else if ((ph->p_flags & PF_W) != 0 && (ph->p_flags & PF_R) != 0)
     {
       elf_paging(pdir, ph->p_vaddr, ph->p_memsz, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     }
@@ -101,7 +101,7 @@ Elf32_Layout *elf_load(char *buf, pdirectory *pdir)
   for (virtual_addr vaddr = USER_STACK_BOTTOM; vaddr < USER_STACK_TOP; vaddr += PMM_FRAME_SIZE)
   {
     physical_addr paddr = pmm_alloc_block();
-    vmm_map_phyiscal_address(pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+    vmm_map_address(pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
   }
 
   return layout;
