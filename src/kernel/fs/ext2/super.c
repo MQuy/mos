@@ -44,9 +44,9 @@ ext2_inode *ext2_get_inode(vfs_superblock *sb, ino_t ino)
 
 vfs_inode *ext2_alloc_inode(vfs_superblock *sb)
 {
-  vfs_inode *i = malloc(sizeof(vfs_inode));
-  i->i_blocks = 0;
+  vfs_inode *i = init_inode();
   i->i_sb = sb;
+
   return i;
 }
 

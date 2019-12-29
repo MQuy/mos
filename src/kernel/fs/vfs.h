@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <include/ctype.h>
 #include <include/list.h>
-#include <kernel/locking/spinlock.h>
 #include <kernel/locking/semaphore.h>
 
 // file
@@ -111,7 +110,6 @@ typedef struct vfs_inode
   unsigned long i_blksize;
   uint32_t i_flags;
   uint32_t i_size;
-  spinlock_t i_lock; /* i_blocks, i_bytes, maybe i_size */
   struct semaphore i_sem;
   struct pipe *i_pipe;
   struct vfs_inode_operations *i_op;
@@ -145,7 +143,7 @@ typedef struct vfs_file
   struct vfs_dentry *f_dentry;
   struct vfs_mount *f_vfsmnt;
   struct vfs_file_operations *f_op;
-  spinlock_t f_lock;
+  long f_count;
   unsigned int f_flags;
   mode_t f_mode;
   loff_t f_pos;
@@ -171,10 +169,13 @@ int unregister_filesystem(vfs_file_system_type *fs);
 int find_unused_fd_slot();
 vfs_mount *lookup_mnt(vfs_dentry *d);
 void vfs_init(vfs_file_system_type *fs, char *dev_name);
+vfs_inode *init_inode();
+void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev);
 
 // open.c
 vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name);
 long vfs_open(const char *path);
+long vfs_close(uint32_t fd);
 void vfs_stat(const char *path, kstat *stat);
 void vfs_fstat(uint32_t fd, kstat *stat);
 int vfs_mknod(const char *path, int mode, dev_t dev);

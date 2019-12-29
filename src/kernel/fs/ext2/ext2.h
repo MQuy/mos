@@ -198,6 +198,7 @@ char *ext2_bread_block(vfs_superblock *sb, uint32_t iblock);
 char *ext2_bread(vfs_superblock *sb, uint32_t iblock, uint32_t size);
 void ext2_bwrite_block(vfs_superblock *sb, uint32_t iblock, char *buf);
 void ext2_bwrite(vfs_superblock *sb, uint32_t iblock, char *buf, uint32_t size);
+vfs_inode *ext2_alloc_inode(vfs_superblock *sb);
 void ext2_read_inode(vfs_inode *);
 void ext2_write_inode(vfs_inode *);
 ext2_group_desc *ext2_get_group_desc(vfs_superblock *sb, uint32_t block_group);
@@ -206,7 +207,6 @@ void ext2_write_group_desc(vfs_superblock *sb, ext2_group_desc *gdp);
 extern vfs_super_operations ext2_super_opereations;
 
 // vfs_inode.c
-void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev);
 uint32_t ext2_create_block(vfs_superblock *sb);
 
 extern vfs_inode_operations ext2_dir_inode_operations;

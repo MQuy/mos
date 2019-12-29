@@ -94,11 +94,6 @@ void update_thread(thread *thread, uint8_t state)
   unlock_scheduler();
 }
 
-void terminate_thread()
-{
-  update_thread(current_thread, TERMINATED);
-}
-
 void switch_thread(thread *nt)
 {
   disable_interrupts();

@@ -26,16 +26,6 @@ uint32_t find_unused_block_number(vfs_superblock *sb)
     return -ENOSPC;
 }
 
-void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev)
-{
-    inode->i_mode = mode;
-    if (S_ISCHR(mode))
-    {
-        inode->i_fop = &def_chr_fops;
-        inode->i_rdev = dev;
-    }
-}
-
 uint32_t ext2_create_block(vfs_superblock *sb)
 {
     ext2_superblock *ext2_sb = EXT2_SB(sb);
@@ -107,7 +97,7 @@ vfs_inode *ext2_create_inode(vfs_inode *dir, char *filename, mode_t mode)
     // inode table
     ext2_inode *ei_new = malloc(sizeof(ext2_inode));
     ei_new->i_links_count = 1;
-    vfs_inode *inode = malloc(sizeof(vfs_inode));
+    vfs_inode *inode = dir->i_sb->s_op->alloc_inode(dir->i_sb);
     inode->i_ino = ino;
     inode->i_mode = mode;
     inode->i_size = 0;

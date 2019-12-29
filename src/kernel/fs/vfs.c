@@ -49,10 +49,30 @@ int unregister_filesystem(vfs_file_system_type *fs)
 int find_unused_fd_slot()
 {
   for (int i = 0; i < 256; ++i)
-    if (!current_process->files->fd_array[i])
+    if (!current_process->files->fd[i])
       return i;
 
   return -EINVAL;
+}
+
+vfs_inode *init_inode()
+{
+  vfs_inode *i = malloc(sizeof(vfs_inode));
+  i->i_blocks = 0;
+  i->i_size = 0;
+  sema_init(&i->i_sem, 1);
+
+  return i;
+}
+
+void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev)
+{
+  inode->i_mode = mode;
+  if (S_ISCHR(mode))
+  {
+    inode->i_fop = &def_chr_fops;
+    inode->i_rdev = dev;
+  }
 }
 
 vfs_mount *lookup_mnt(vfs_dentry *d)

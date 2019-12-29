@@ -258,7 +258,7 @@ typedef struct nameidata {
 
 ```c
 typedef struct files_struct {
-  struct file *fd_array[256];
+  struct file *fd[256];
 } files_struct;
 
 typedef struct fs_struct {
@@ -290,7 +290,7 @@ Sections below is demonstrated with ext2
 
 - based on current task (`current`)
   - invokes `getname` to read absolute file namepath
-  - find a unused slot in `current_process->files->fd_array`
+  - find a unused slot in `current_process->files->fd`
 - break path into components, for each component
   - initialize `nameidata` at root's mountpoint `current_process->fs->d_root/mnt_root` if component is `'/'`
   - search in `nameidata->dentry->subdirs` to find a dentry with `name` = component name -> next
@@ -313,7 +313,7 @@ Sections below is demonstrated with ext2
 
 > read(fd, buf, count)
 
-- `file = current_process->files->fd_array[fd]`
+- `file = current_process->files->fd[fd]`
 - invokes `file_ppos` to get file's current position
 - `file->fops->read(file, buf, pos, count)`
   - data is divided into pages (each page is ext2 block size)
@@ -347,7 +347,7 @@ Sections below is demonstrated with ext2
 
 > write(fd, buf, count)
 
-- `file = current_process->files->fd_array[fd]`
+- `file = current_process->files->fd[fd]`
 - invokes `file_ppos()` to get file's current position
 - `file->fops->write(file, buf, pos, count)`
   - data is divided into pages (each page is ext2 block size)

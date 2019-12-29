@@ -86,8 +86,23 @@ long vfs_open(const char *path)
     file->f_op->open(nd->dentry->d_inode, file);
   }
 
-  current_process->files->fd_array[fd] = file;
+  current_process->files->fd[fd] = file;
   return fd;
+}
+
+long vfs_close(uint32_t fd)
+{
+  files_struct *files = current_process->files;
+
+  acquire_semaphore(&files->lock);
+
+  vfs_file *f = files->fd[fd];
+  f->f_count--;
+  if (!f->f_count && f->f_op->release)
+    f->f_op->release(f->f_dentry->d_inode, f);
+  files->fd[fd] = NULL;
+
+  release_semaphore(&files->lock);
 }
 
 void generic_fillattr(vfs_inode *inode, struct kstat *stat)
@@ -133,7 +148,7 @@ void vfs_stat(const char *path, kstat *stat)
 
 void vfs_fstat(uint32_t fd, kstat *stat)
 {
-  vfs_file *f = current_process->files->fd_array[fd];
+  vfs_file *f = current_process->files->fd[fd];
   vfs_getattr(f->f_vfsmnt, f->f_dentry, stat);
 }
 

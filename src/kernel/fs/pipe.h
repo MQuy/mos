@@ -13,8 +13,11 @@ typedef struct pipe
 {
   cbuf_handle_t buf;
   semaphore mutex;
+  uint32_t files;
   uint32_t readers;
   uint32_t writers;
 } pipe;
+
+int do_pipe(int *fd);
 
 #endif

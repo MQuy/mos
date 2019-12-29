@@ -6,8 +6,10 @@
 #include <include/list.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/utils/plist.h>
+#include <kernel/locking/semaphore.h>
 #include <kernel/memory/vmm.h>
 
+#define MAX_FD 256
 #define PROCESS_TRAPPED_PAGE_FAULT 0xFFFFFFFF
 
 struct vfs_file;
@@ -32,7 +34,8 @@ typedef enum thread_policy
 
 typedef struct files_struct
 {
-  struct vfs_file *fd_array[256];
+  semaphore lock;
+  struct vfs_file *fd[MAX_FD];
 } files_struct;
 
 typedef struct fs_struct
@@ -59,6 +62,7 @@ typedef struct thread
   uint32_t user_stack;
   uint32_t expiry_when;
   uint32_t time_used;
+  int32_t exit_code;
   struct interrupt_registers uregs;
   struct list_head sibling;
   struct plist_node sched_sibling;
@@ -97,7 +101,6 @@ void process_load(const char *pname, const char *path);
 process *process_fork(process *parent);
 void queue_thread(thread *t);
 void switch_thread(thread *nt);
-void terminate_thread();
 void schedule();
 
 #endif

@@ -23,6 +23,22 @@ volatile process *current_process;
 static uint32_t next_pid = 0;
 static uint32_t next_tid = 0;
 
+files_struct *clone_file_descriptor_table(process *parent)
+{
+  files_struct *files = malloc(sizeof(files_struct));
+
+  if (parent)
+  {
+    memcpy(files, parent->files, sizeof(files_struct));
+    // NOTE: MQ 2019-12-30 Increasing file description usage when forking because child refers to the same one
+    for (uint32_t i = 0; i < MAX_FD; ++i)
+      if (parent->files->fd[i])
+        parent->files->fd[i]->f_count++;
+  }
+  sema_init(&files->lock, 1);
+  return files;
+}
+
 void kernel_thread_entry(thread *t, void *flow())
 {
   flow();
@@ -77,17 +93,13 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
   else
     p->pdir = vmm_get_directory();
   p->parent = parent;
+  p->files = clone_file_descriptor_table(parent);
+  p->fs = malloc(sizeof(fs_struct));
 
   if (parent)
   {
-    p->files = parent->files;
-    p->fs = parent->fs;
+    memcpy(p->fs, parent->fs, sizeof(fs_struct));
     list_add_tail(&p->sibling, &parent->children);
-  }
-  else
-  {
-    p->files = malloc(sizeof(files_struct));
-    p->fs = malloc(sizeof(fs_struct));
   }
 
   INIT_LIST_HEAD(&p->children);
@@ -195,9 +207,7 @@ process *process_fork(process *parent)
   p->fs = malloc(sizeof(fs_struct));
   memcpy(p->fs, parent->fs, sizeof(fs_struct));
 
-  p->files = malloc(sizeof(files_struct));
-  memcpy(p->files, parent->files, sizeof(files_struct));
-
+  p->files = clone_file_descriptor_table(parent);
   p->pdir = vmm_fork(parent->pdir);
 
   // copy active parent's thread
