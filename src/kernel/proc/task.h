@@ -11,6 +11,7 @@
 
 #define MAX_FD 256
 #define PROCESS_TRAPPED_PAGE_FAULT 0xFFFFFFFF
+#define MAX_THREADS 0x10000
 
 struct vfs_file;
 struct vfs_dentry;
@@ -18,18 +19,18 @@ struct vfs_mount;
 
 typedef enum thread_state
 {
-  NEW,
-  READY_TO_RUN,
-  RUNNING,
-  WAITING,
-  TERMINATED,
+  THREAD_NEW,
+  THREAD_READY,
+  THREAD_RUNNING,
+  THREAD_WAITING,
+  THREAD_TERMINATED,
 } thread_state;
 
 typedef enum thread_policy
 {
-  KERNEL_POLICY,
-  SYSTEM_POLICY,
-  APP_POLICY
+  THREAD_KERNEL_POLICY,
+  THREAD_SYSTEM_POLICY,
+  THREAD_APP_POLICY
 } thread_policy;
 
 typedef struct files_struct
@@ -61,7 +62,7 @@ typedef struct thread
   uint32_t kernel_stack;
   uint32_t user_stack;
   uint32_t expiry_when;
-  uint32_t time_used;
+  uint32_t time_slice;
   int32_t exit_code;
   struct interrupt_registers uregs;
   struct list_head sibling;

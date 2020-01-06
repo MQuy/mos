@@ -1,3 +1,4 @@
+#include <include/ctype.h>
 #include <kernel/memory/malloc.h>
 #include "string.h"
 
@@ -127,11 +128,26 @@ char *strchr(char *str, int character)
 	return 0;
 }
 
-//============================================================================
-//    INTERFACE CLASS BODIES
-//============================================================================
-//****************************************************************************
-//**
-//**    END[String.cpp]
-//**
-//****************************************************************************
+int strcasecmp(const char *s1, const char *s2)
+{
+	int c1, c2;
+
+	do
+	{
+		c1 = tolower(*s1++);
+		c2 = tolower(*s2++);
+	} while (c1 == c2 && c1 != 0);
+	return c1 - c2;
+}
+
+int strncasecmp(const char *s1, const char *s2, int n)
+{
+	int c1, c2;
+
+	do
+	{
+		c1 = tolower(*s1++);
+		c2 = tolower(*s2++);
+	} while ((--n > 0) && c1 == c2 && c1 != 0);
+	return c1 - c2;
+}

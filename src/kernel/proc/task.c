@@ -113,7 +113,7 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
 void setup_swapper_process()
 {
   current_process = create_process(NULL, "swapper", NULL);
-  current_thread = create_kernel_thread(current_process, 0, RUNNING, 0);
+  current_thread = create_kernel_thread(current_process, 0, THREAD_RUNNING, 0);
 
   current_process->active_thread = current_thread;
 }
@@ -126,7 +126,7 @@ void task_init(void *func)
   register_interrupt_handler(14, thread_page_fault);
 
   process *init = create_process(current_process, "init", current_process->pdir);
-  thread *nt = create_kernel_thread(init, func, READY_TO_RUN, 0);
+  thread *nt = create_kernel_thread(init, func, THREAD_READY, 0);
 
   switch_thread(nt);
 }
@@ -185,7 +185,7 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
 void process_load(const char *pname, const char *path)
 {
   process *p = create_process(current_process, pname, current_process->pdir);
-  thread *t = create_user_thread(p, path, READY_TO_RUN, SYSTEM_POLICY, 0);
+  thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, 0);
   queue_thread(t);
 }
 
@@ -214,8 +214,8 @@ process *process_fork(process *parent)
   thread *parent_thread = parent->active_thread;
   thread *t = malloc(sizeof(thread));
   t->tid = next_tid++;
-  t->state = READY_TO_RUN;
-  t->time_used = 0;
+  t->state = THREAD_READY;
+  t->time_slice = 0;
   t->parent = p;
   t->kernel_stack = (uint32_t)(malloc(KERNEL_THREAD_SIZE) + KERNEL_THREAD_SIZE);
   t->user_stack = parent_thread->user_stack;

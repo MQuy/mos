@@ -26,7 +26,7 @@ void acquire_semaphore(semaphore *sem)
     waiter->task = current_thread;
 
     list_add_tail(&waiter->sibling, &sem->wait_list);
-    update_thread(current_thread, WAITING);
+    update_thread(current_thread, THREAD_WAITING);
     spin_unlock(&sem->lock);
     schedule();
   }
@@ -46,7 +46,7 @@ void release_semaphore(semaphore *sem)
     semaphore_waiter *waiter = list_first_entry(&sem->wait_list, struct semaphore_waiter, sibling);
 
     list_del(&waiter->sibling);
-    update_thread(waiter->task, READY_TO_RUN);
+    update_thread(waiter->task, THREAD_READY);
   }
 
   spin_unlock(&sem->lock);

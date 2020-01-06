@@ -103,3 +103,18 @@ void *align_heap(size_t size)
   }
   return NULL;
 }
+
+void *realloc(void *ptr, size_t size)
+{
+  if (!ptr && size == 0)
+  {
+    free(ptr);
+    return NULL;
+  }
+  else if (!ptr)
+    return malloc(size);
+
+  void *newptr = malloc(size);
+  memcpy(newptr, ptr, size);
+  return newptr;
+}

@@ -51,18 +51,18 @@ thread *pick_next_thread_to_run()
 
 struct plist_head *get_list_from_thread(thread *t)
 {
-  if (t->state == READY_TO_RUN)
+  if (t->state == THREAD_READY)
   {
-    if (t->sched_sibling.prio == KERNEL_POLICY)
+    if (t->sched_sibling.prio == THREAD_KERNEL_POLICY)
       return &kernel_ready_list;
-    else if (t->sched_sibling.prio == SYSTEM_POLICY)
+    else if (t->sched_sibling.prio == THREAD_SYSTEM_POLICY)
       return &system_ready_list;
     else
       return &app_ready_list;
   }
-  else if (t->state == WAITING)
+  else if (t->state == THREAD_WAITING)
     return &waiting_list;
-  else if (t->state == TERMINATED)
+  else if (t->state == THREAD_TERMINATED)
     return &terminated_list;
   return NULL;
 }
@@ -101,21 +101,21 @@ void switch_thread(thread *nt)
   thread *pt = current_thread;
 
   current_thread = nt;
-  current_thread->time_used = 0;
-  current_thread->state = RUNNING;
+  current_thread->time_slice = 0;
+  current_thread->state = THREAD_RUNNING;
   current_process = current_thread->parent;
   current_process->active_thread = current_thread;
 
   uint32_t paddr_cr3 = vmm_get_physical_address(current_thread->parent->pdir);
   tss_set_stack(0x10, current_thread->kernel_stack);
-  do_switch(pt->esp, current_thread->esp, paddr_cr3);
+  do_switch(&pt->esp, current_thread->esp, paddr_cr3);
 }
 
 void schedule()
 {
   lock_scheduler();
 
-  if (current_thread->state == RUNNING)
+  if (current_thread->state == THREAD_RUNNING)
     return;
 
   thread *nt = pick_next_thread_to_run();
@@ -142,36 +142,35 @@ void sleep(uint32_t delay)
   if (when > time)
   {
     current_thread->expiry_when = when;
-    update_thread(current_thread, WAITING);
+    update_thread(current_thread, THREAD_WAITING);
   }
   schedule();
 
   unlock_scheduler();
 }
 
-#define SLICE_THRESHOLD 10
-#define TICKS_PER_SECOND 1000
+#define SLICE_THRESHOLD 50
 int32_t irq_schedule_handler(interrupt_registers *regs)
 {
   lock_scheduler();
 
   bool is_schedulable = false;
   uint32_t time = get_milliseconds_from_boot();
-  current_thread->time_used += TICKS_PER_SECOND;
+  current_thread->time_slice++;
 
   thread *t = NULL;
   plist_for_each_entry(t, &waiting_list, sched_sibling)
   {
     if (t->expiry_when >= time)
     {
-      update_thread(t, READY_TO_RUN);
+      update_thread(t, THREAD_READY);
       is_schedulable = true;
     }
   }
 
-  if (current_thread->time_used >= SLICE_THRESHOLD * TICKS_PER_SECOND && current_thread->sched_sibling.prio == APP_POLICY)
+  if (current_thread->time_slice >= SLICE_THRESHOLD && current_thread->sched_sibling.prio == THREAD_APP_POLICY)
   {
-    update_thread(current_thread, READY_TO_RUN);
+    update_thread(current_thread, THREAD_READY);
     is_schedulable = true;
   }
 
@@ -193,7 +192,7 @@ int32_t thread_page_fault(interrupt_registers *regs)
 
   if (faultAddr == PROCESS_TRAPPED_PAGE_FAULT && regs->cs == 0x1B)
   {
-    update_thread(current_thread, TERMINATED);
+    update_thread(current_thread, THREAD_TERMINATED);
     schedule();
 
     return IRQ_HANDLER_STOP;

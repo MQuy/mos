@@ -20,6 +20,7 @@
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "devices/char/memory.h"
+#include "ipc/message_queue.h"
 #include "system/console.h"
 #include "multiboot2.h"
 
@@ -38,12 +39,10 @@ void kernel_init()
   vfs_init(&ext2_fs_type, "/dev/hda");
   chrdev_memory_init();
 
-  uint32_t fdrandom = vfs_open("/dev/random");
-  char *rand = malloc(10);
-  vfs_fread(fdrandom, rand, 10);
-
   console_setup();
-  printf("hello world");
+
+  // init ipc message queue
+  mq_init();
 
   // register system apis
   syscall_init();
@@ -51,7 +50,7 @@ void kernel_init()
   process_load("window server", "/bin/window_server");
 
   // idle
-  update_thread(current_thread, WAITING);
+  update_thread(current_thread, THREAD_WAITING);
   schedule();
 
   for (;;)

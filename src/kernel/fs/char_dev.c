@@ -5,7 +5,7 @@ struct list_head devlist;
 
 char_device *get_chrdev(uint32_t major)
 {
-  char_device *iter;
+  char_device *iter = NULL;
   list_for_each_entry(iter, &devlist, sibling)
   {
     if (iter->major == major)
