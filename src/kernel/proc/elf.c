@@ -1,6 +1,7 @@
 #include <include/errno.h>
 #include <kernel/memory/pmm.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
+#include <kernel/proc/task.h>
 #include "elf.h"
 
 #define NO_ERROR 0
@@ -9,6 +10,8 @@
 #define ERR_NOT_SUPPORTED_ENCODING 3
 #define ERR_WRONG_VERSION 4
 #define ERR_NOT_SUPPORTED_TYPE 5
+
+extern process *current_process;
 
 int elf_verify(Elf32_Ehdr *elf_header)
 {
@@ -36,17 +39,6 @@ int elf_verify(Elf32_Ehdr *elf_header)
   return NO_ERROR;
 }
 
-void elf_paging(pdirectory *pdir, virtual_addr vaddr, uint32_t size, uint32_t flags)
-{
-  virtual_addr aligned_vaddr = (vaddr / PMM_FRAME_SIZE) * PMM_FRAME_SIZE;
-  uint32_t padding = vaddr - aligned_vaddr;
-  uint32_t blocks = div_ceil(size + padding, PMM_FRAME_SIZE);
-  physical_addr paddr = pmm_alloc_blocks(blocks);
-
-  for (uint32_t i = 0; i < blocks; ++i)
-    vmm_map_address(pdir, vaddr + i * PMM_FRAME_SIZE, paddr + i * PMM_FRAME_SIZE, flags);
-}
-
 /*
 * 	+---------------+ 	/
 * 	| stack pointer | grows toward lower addresses
@@ -65,14 +57,15 @@ void elf_paging(pdirectory *pdir, virtual_addr vaddr, uint32_t size, uint32_t fl
 * 	| .text section |
 * 	+---------------+
 */
-Elf32_Layout *elf_load(char *buf, pdirectory *pdir)
+Elf32_Layout *elf_load(char *buf)
 {
   Elf32_Ehdr *elf_header = (Elf32_Ehdr *)buf;
 
   if (elf_verify(elf_header) != NO_ERROR || elf_header->e_phoff == NULL)
     return NULL;
 
-  Elf32_Layout *layout = malloc(sizeof(Elf32_Layout));
+  mm_struct *mm = current_process->mm;
+  Elf32_Layout *layout = kmalloc(sizeof(Elf32_Layout));
   layout->entry = elf_header->e_entry;
   for (Elf32_Phdr *ph = buf + elf_header->e_phoff;
        ph && ph < (buf + elf_header->e_phoff + elf_header->e_phentsize * elf_header->e_phnum);
@@ -84,25 +77,33 @@ Elf32_Layout *elf_load(char *buf, pdirectory *pdir)
     // text segment
     if ((ph->p_flags & PF_X) != 0 && (ph->p_flags & PF_R) != 0)
     {
-      elf_paging(pdir, ph->p_vaddr, ph->p_memsz, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+      do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
+      mm->start_code = ph->p_vaddr;
+      mm->end_code = ph->p_vaddr + ph->p_memsz;
     }
     // data segment
     else if ((ph->p_flags & PF_W) != 0 && (ph->p_flags & PF_R) != 0)
     {
-      elf_paging(pdir, ph->p_vaddr, ph->p_memsz, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+      do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
+      mm->start_data = ph->p_vaddr;
+      mm->end_data = ph->p_memsz;
     }
+    // eh frame
+    else
+      do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
 
     // NOTE: MQ 2019-11-26 According to elf's spec, p_memsz may be larger than p_filesz due to bss section
     memset(ph->p_vaddr, 0, ph->p_memsz);
     memcpy(ph->p_vaddr, buf + ph->p_offset, ph->p_filesz);
   }
 
-  layout->stack = USER_STACK_TOP;
-  for (virtual_addr vaddr = USER_STACK_BOTTOM; vaddr < USER_STACK_TOP; vaddr += PMM_FRAME_SIZE)
-  {
-    physical_addr paddr = pmm_alloc_block();
-    vmm_map_address(pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-  }
+  uint32_t heap_start = do_mmap(0, UHEAP_SIZE, 0, 0, -1);
+  mm->start_brk = heap_start;
+  mm->brk = heap_start;
+  mm->end_brk = USER_HEAP_TOP;
+
+  uint32_t stack_start = do_mmap(0, STACK_SIZE, 0, 0, -1);
+  layout->stack = stack_start + STACK_SIZE;
 
   return layout;
 }

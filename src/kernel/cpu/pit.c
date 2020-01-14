@@ -1,5 +1,5 @@
 #include <include/list.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include "idt.h"
 #include "pic.h"
 #include "pit.h"

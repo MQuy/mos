@@ -1,6 +1,5 @@
 #include "hal.h"
 #include <kernel/memory/vmm.h>
-#include <kernel/memory/malloc.h>
 #include "apic.h"
 
 const uint32_t CPUID_FLAG_MSR = 1 << 5;
@@ -133,7 +132,7 @@ uint32_t apic_read(uint32_t apic_base, uint32_t reg)
 void enable_apic()
 {
   uint32_t padd_apic_base = cpu_get_apic_base();
-  uint32_t vadd_apic_base = malloc(0x1000);
+  uint32_t vadd_apic_base = kmalloc(0x1000);
 
   vmm_map_address(vmm_get_directory(), vadd_apic_base, padd_apic_base, I86_PTE_PRESENT | I86_PTE_WRITABLE);
 

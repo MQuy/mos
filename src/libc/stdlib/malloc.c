@@ -1,6 +1,7 @@
 #include <include/errno.h>
-#include <kernel/utils/string.h>
-#include "vmm.h"
+#include <libc/string.h>
+#include <libc/unistd.h>
+#include <libc/stdlib.h>
 
 typedef struct block_meta
 {
@@ -35,7 +36,7 @@ block_meta *request_space(block_meta *last, size_t size)
   return block;
 }
 
-void *kmalloc(size_t size)
+void *malloc(size_t size)
 {
   if (size <= 0)
     return NULL;
@@ -64,15 +65,15 @@ void *kmalloc(size_t size)
     return NULL;
 }
 
-void *kcalloc(size_t n, size_t size)
+void *calloc(size_t n, size_t size)
 {
-  void *block = kmalloc(n * size);
+  void *block = malloc(n * size);
   if (!block)
     memset(block, 0, n * size);
   return block;
 }
 
-void kfree(void *ptr)
+void free(void *ptr)
 {
   if (!ptr)
     return;
@@ -81,46 +82,17 @@ void kfree(void *ptr)
   block->free = true;
 }
 
-// NOTE: MQ 2019-11-24
-// next object in heap space can be any number
-// align heap so the next object's addr will be started at size * n
-// ------------------- 0xE0000000
-// |                 |
-// |                 |
-// |                 | new object address m = (size * n)
-// ------------------- m - sizeof(block_meta)
-// |                 | empty object (>= 1)
-// ------------------- padding - sizeof(block_meta)
-void *kalign_heap(size_t size)
-{
-  uint32_t heap_addr = sbrk(0);
-
-  if (heap_addr % size == 0)
-    return NULL;
-
-  uint32_t padding_size = div_ceil(heap_addr, size) * size - heap_addr;
-  uint32_t required_size = sizeof(block_meta) * 2;
-
-  while (padding_size <= KERNEL_HEAP_TOP)
-  {
-    if (padding_size > required_size)
-      return kmalloc(padding_size - required_size);
-    padding_size += size;
-  }
-  return NULL;
-}
-
-void *krealloc(void *ptr, size_t size)
+void *realloc(void *ptr, size_t size)
 {
   if (!ptr && size == 0)
   {
-    kfree(ptr);
+    free(ptr);
     return NULL;
   }
   else if (!ptr)
-    return kmalloc(size);
+    return malloc(size);
 
-  void *newptr = kmalloc(size);
+  void *newptr = malloc(size);
   memcpy(newptr, ptr, size);
   return newptr;
 }

@@ -15,7 +15,6 @@
 #include "devices/pci.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
-#include "memory/malloc.h"
 #include "devices/ata.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"

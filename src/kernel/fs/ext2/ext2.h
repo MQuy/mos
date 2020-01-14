@@ -204,7 +204,7 @@ void ext2_write_inode(vfs_inode *);
 ext2_group_desc *ext2_get_group_desc(vfs_superblock *sb, uint32_t block_group);
 void ext2_write_group_desc(vfs_superblock *sb, ext2_group_desc *gdp);
 
-extern vfs_super_operations ext2_super_opereations;
+extern vfs_super_operations ext2_super_operations;
 
 // vfs_inode.c
 uint32_t ext2_create_block(vfs_superblock *sb);

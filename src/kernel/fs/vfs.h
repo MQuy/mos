@@ -7,6 +7,9 @@
 #include <include/list.h>
 #include <kernel/locking/semaphore.h>
 
+// mount
+#define MS_NOUSER (1 << 31)
+
 // file
 #define S_IFMT 00170000
 #define S_IFIFO 0010000
@@ -25,7 +28,14 @@
 #define S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
 #define S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
 
-#define MAX_SUB_DENTRIES 8
+struct vm_area_struct;
+
+typedef struct address_space
+{
+  struct vm_area_struct *i_mmap;
+  struct list_head pages;
+  uint32_t npages;
+} address_space;
 
 typedef struct kstat
 {
@@ -44,6 +54,20 @@ typedef struct kstat
   unsigned long blocks;
 } kstat;
 
+#define ATTR_MODE 1
+#define ATTR_UID 2
+#define ATTR_GID 4
+#define ATTR_SIZE 8
+#define ATTR_ATIME 16
+#define ATTR_MTIME 32
+#define ATTR_CTIME 64
+#define ATTR_ATIME_SET 128
+#define ATTR_MTIME_SET 256
+#define ATTR_FORCE 512 /* Not a change, but a change it */
+#define ATTR_ATTR_FLAG 1024
+#define ATTR_KILL_SUID 2048
+#define ATTR_KILL_SGID 4096
+
 typedef struct iattr
 {
   unsigned int ia_valid;
@@ -60,7 +84,7 @@ typedef struct iattr
 typedef struct vfs_file_system_type
 {
   const char *name;
-  struct vfs_superblock *(*mount)(struct vfs_file_system_type *, char *, char *);
+  struct vfs_mount *(*mount)(struct vfs_file_system_type *, char *, char *);
   void (*unmount)(struct vfs_superblock *);
   struct vfs_file_system_type *next;
 } vfs_file_system_type;
@@ -71,7 +95,7 @@ typedef struct vfs_mount
   struct vfs_dentry *mnt_root;
   struct vfs_superblock *mnt_sb;
   char *mnt_devname;
-  struct vfs_mount *next;
+  struct list_head sibling;
 } vfs_mount;
 
 typedef struct vfs_superblock
@@ -112,6 +136,7 @@ typedef struct vfs_inode
   uint32_t i_size;
   struct semaphore i_sem;
   struct pipe *i_pipe;
+  struct address_space i_data;
   struct vfs_inode_operations *i_op;
   struct vfs_file_operations *i_fop;
   struct vfs_superblock *i_sb;
@@ -122,6 +147,7 @@ typedef struct vfs_inode_operations
 {
   struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
   struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
+  int (*mkdir)(struct vfs_inode *, char *, int);
   int (*mknod)(struct vfs_inode *, char *, int, dev_t);
   void (*truncate)(struct vfs_inode *);
   int (*setattr)(struct vfs_dentry *, struct iattr *);
@@ -154,6 +180,7 @@ typedef struct vfs_file_operations
   loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
   ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
   ssize_t (*write)(struct vfs_file *file, const char *buf, size_t count, loff_t ppos);
+  int (*mmap)(struct vfs_file *, struct vm_area_struct *);
   int (*open)(struct vfs_inode *, struct vfs_file *);
   int (*release)(struct vfs_inode *, struct vfs_file *);
 } vfs_file_operations;
@@ -171,6 +198,7 @@ vfs_mount *lookup_mnt(vfs_dentry *d);
 void vfs_init(vfs_file_system_type *fs, char *dev_name);
 vfs_inode *init_inode();
 void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev);
+vfs_mount *do_mount(const char *fstype, int flags, const char *name);
 
 // open.c
 vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name);
@@ -179,6 +207,9 @@ long vfs_close(uint32_t fd);
 void vfs_stat(const char *path, kstat *stat);
 void vfs_fstat(uint32_t fd, kstat *stat);
 int vfs_mknod(const char *path, int mode, dev_t dev);
+nameidata *path_walk(const char *path);
+int vfs_truncate(const char *path, int32_t length);
+int vfs_ftruncate(uint32_t fd, int32_t length);
 
 // read_write.c
 char *vfs_read(const char *path);

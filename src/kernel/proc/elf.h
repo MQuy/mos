@@ -166,6 +166,6 @@ typedef struct
   uint32_t entry;
 } Elf32_Layout;
 
-Elf32_Layout *elf_load(char *, pdirectory *);
+Elf32_Layout *elf_load(char *);
 
 #endif

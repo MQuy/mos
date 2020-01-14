@@ -1,7 +1,7 @@
 #include <include/list.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include "idt.h"
 #include "pic.h"
 
@@ -127,7 +127,7 @@ void idt_init()
 
 void register_interrupt_handler(uint32_t n, I86_IRQ_HANDLER handler)
 {
-  interrupt_handler *ih = malloc(sizeof(interrupt_handler));
+  interrupt_handler *ih = kmalloc(sizeof(interrupt_handler));
   ih->handler = handler;
   list_add_tail(&ih->sibling, &interrupt_handlers[n]);
 }

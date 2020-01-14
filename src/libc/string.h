@@ -4,9 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void itoa(unsigned i, unsigned base, char *buf);
-void itoa_s(long long i, unsigned base, char *buf);
-
 char *strcpy(char *s1, const char *s2);
 size_t strlen(const char *str);
 int strcmp(const char *str1, const char *str2);

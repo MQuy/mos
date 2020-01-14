@@ -1,7 +1,9 @@
 #ifndef LIBC_UNISTD_H
 #define LIBC_UNISTD_H
 
+#include <stddef.h>
 #include <stdint.h>
+#include <include/ctype.h>
 
 #define __NR_exit 1
 #define __NR_fork 2
@@ -9,7 +11,13 @@
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_brk 17
+#define __NR_sbrk 18
 #define __NR_pipe 42
+#define __NR_mmap 90
+#define __NR_munmap 91
+#define __NR_truncate 92
+#define __NR_ftruncate 93
 #define __NR_msgopen 200
 #define __NR_msgclose 201
 #define __NR_msgrcv 202
@@ -110,6 +118,18 @@ static inline int32_t close(uint32_t fd)
   return syscall_close(fd);
 }
 
+_syscall1(brk, uint32_t);
+static inline int32_t brk(uint32_t increment)
+{
+  return syscall_brk(increment);
+}
+
+_syscall1(sbrk, int32_t);
+static inline int32_t sbrk(int32_t increment)
+{
+  return syscall_sbrk(increment);
+}
+
 _syscall1(pipe, int32_t *);
 static inline int32_t pipe(int32_t *fildes)
 {
@@ -139,5 +159,32 @@ static inline int32_t msgrcv(const char *name, char *buf, int32_t mtype, uint32_
 {
   return syscall_msgrcv(name, buf, mtype, msize);
 }
+
+_syscall2(truncate, const char *, off_t);
+static inline int32_t truncate(const char *name, off_t length)
+{
+  return syscall_truncate(name, length);
+}
+
+_syscall2(ftruncate, int32_t, off_t);
+static inline int32_t ftruncate(int32_t fd, off_t length)
+{
+  return syscall_ftruncate(fd, length);
+}
+
+_syscall5(mmap, void *, size_t, uint32_t, uint32_t, int32_t);
+static inline int32_t mmap(void *addr, size_t length, uint32_t prot, uint32_t flags,
+                           int32_t fd)
+{
+  return syscall_mmap(addr, length, prot, flags, fd);
+}
+
+_syscall2(munmap, void *, size_t);
+static inline int32_t munmap(void *addr, size_t length)
+{
+  return syscall_munmap(addr, length);
+}
+
+int32_t shm_open(const char *name, int32_t flags, int32_t mode);
 
 #endif

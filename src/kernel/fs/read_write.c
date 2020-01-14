@@ -1,5 +1,5 @@
 #include <kernel/utils/string.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include "vfs.h"
 
@@ -8,9 +8,9 @@ extern process *current_process;
 char *vfs_read(const char *path)
 {
   long fd = vfs_open(path);
-  kstat *stat = malloc(sizeof(kstat));
+  kstat *stat = kmalloc(sizeof(kstat));
   vfs_fstat(fd, stat);
-  char *buf = malloc(stat->size);
+  char *buf = kmalloc(stat->size);
   vfs_fread(fd, buf, stat->size);
   return buf;
 }

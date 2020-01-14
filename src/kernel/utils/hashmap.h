@@ -243,7 +243,7 @@ size_t hashmap_hash_string(const void *key);
 int hashmap_compare_string(const void *a, const void *b);
 
 /*
- * Default key allocation function for string keys.  Use free() for the
+ * Default key allocation function for string keys.  Use kfree() for the
  * key_free_func.
  */
 void *hashmap_alloc_key_string(const void *key);

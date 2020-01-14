@@ -1,4 +1,3 @@
-#include "malloc.h"
 #include "vmm.h"
 
 #define PAGE_DIRECTORY_BASE 0xFFFFF000
@@ -36,12 +35,15 @@ void vmm_flush_tlb_entry(virtual_addr addr)
   |-------------------------| 0xF0000000
   |                         |
   | Device drivers          |
+  |                         |
+  |-------------------------| 0xE8000000
+  | VMALLOC                 |
   |-------------------------| 0xE0000000
   |                         |
   |                         |
   | Kernel heap             |
   |                         |
-  |_________________________| 0xD0000000
+  |_________________________| 0xC8000000
   |                         | 
   | Kernel itself           |
   |_________________________| 0xC0000000
@@ -49,12 +51,12 @@ void vmm_flush_tlb_entry(virtual_addr addr)
   | Page for page faults    |
   |_________________________| 0xBFFFF000
   |                         |
-  | User thread stack       |
-  |_________________________| 0xB0000000
   |                         |
+  |                         |
+  |                         |
+  |_________________________| 0x40000000
   |                         |
   | User heap               |
-  |                         |
   |_________________________| 0x
   |                         |
   | Elf                     |
@@ -156,11 +158,11 @@ physical_addr vmm_get_physical_address(virtual_addr vaddr)
 
 pdirectory *vmm_create_address_space(pdirectory *current)
 {
-  char *aligned_object = align_heap(PMM_FRAME_SIZE);
+  char *aligned_object = kalign_heap(PMM_FRAME_SIZE);
   // NOTE: MQ 2019-11-24 page directory, page table have to be aligned by 4096
-  pdirectory *va_dir = calloc(1, sizeof(pdirectory));
+  pdirectory *va_dir = kcalloc(1, sizeof(pdirectory));
   if (aligned_object)
-    free(aligned_object);
+    kfree(aligned_object);
 
   if (!va_dir)
     return NULL;
@@ -238,7 +240,7 @@ void vmm_unmap_address(pdirectory *va_dir, uint32_t virt)
 pdirectory *vmm_fork(pdirectory *va_dir)
 {
   pdirectory *forked_dir = vmm_create_address_space(va_dir);
-  char *aligned_object = align_heap(PMM_FRAME_SIZE);
+  char *aligned_object = kalign_heap(PMM_FRAME_SIZE);
   virtual_addr heap_current = sbrk(0);
 
   // NOTE: MQ 2019-12-15 Any heap changes via malloc is forbidden
@@ -277,6 +279,6 @@ pdirectory *vmm_fork(pdirectory *va_dir)
     }
 
   if (aligned_object)
-    free(aligned_object);
+    kfree(aligned_object);
   return forked_dir;
 }

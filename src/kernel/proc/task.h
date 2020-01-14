@@ -12,6 +12,14 @@
 #define MAX_FD 256
 #define PROCESS_TRAPPED_PAGE_FAULT 0xFFFFFFFF
 #define MAX_THREADS 0x10000
+#define STACK_SIZE 0x2000
+#define UHEAP_SIZE 0x20000
+
+// vm_flags
+#define VM_READ 0x00000001 /* currently active flags */
+#define VM_WRITE 0x00000002
+#define VM_EXEC 0x00000004
+#define VM_SHARED 0x00000008
 
 struct vfs_file;
 struct vfs_dentry;
@@ -53,10 +61,33 @@ typedef struct trap_frame
   uint32_t parameter1, parameter2;
 } trap_frame;
 
+typedef struct vm_area_struct
+{
+  struct mm_struct *vm_mm;
+  uint32_t vm_start;
+  uint32_t vm_end;
+  uint32_t vm_flags;
+
+  struct list_head vm_sibling;
+  struct vfs_file *vm_file;
+} vm_area_struct;
+
+typedef struct mm_struct
+{
+  struct list_head mmap;
+  uint32_t free_area_cache;
+  uint32_t start_code, end_code, start_data, end_data;
+  // NOTE: MQ 2020-01-30
+  // end_brk is marked as the end of heap section which we can expand later
+  // better way is only mapping start_brk->brk and handling page fault brk->end_brk
+  uint32_t start_brk, brk, end_brk, start_stack;
+} mm_struct;
+
 typedef struct thread
 {
   tid_t tid;
   enum thread_state state;
+  enum thread_policy policy;
   struct process *parent;
   uint32_t esp;
   uint32_t kernel_stack;
@@ -78,18 +109,13 @@ typedef struct process
   struct pdirectory *pdir;
   struct fs_struct *fs;
   struct files_struct *files;
+  struct mm_struct *mm;
   struct process *parent;
   struct thread *active_thread;
   struct list_head sibling;
   struct list_head children;
   struct list_head threads;
 } process;
-
-typedef struct process_image
-{
-  uint32_t eip;
-  uint32_t stack;
-} process_image;
 
 void task_init();
 void sched_init();

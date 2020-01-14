@@ -3,11 +3,9 @@
 
 #include <kernel/utils/circular_buffer.h>
 #include <kernel/locking/semaphore.h>
-#include "vfs.h"
+#include "kernel/fs/vfs.h"
 
 #define PIPE_SIZE 0x10000
-#define O_RDONLY 0x0000
-#define O_WRONLY 0x0001
 
 typedef struct pipe
 {

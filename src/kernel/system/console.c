@@ -1,7 +1,6 @@
 #include <kernel/utils/string.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
-#include <kernel/memory/malloc.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/task.h>
 #include "psf.h"
@@ -146,9 +145,9 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 
 void console_setup()
 {
-  kstat *stat = malloc(sizeof(kstat));
+  kstat *stat = kmalloc(sizeof(kstat));
   vfs_stat("/fonts/ter-powerline-v16n.psf", stat);
-  char *buf = malloc(stat->size);
+  char *buf = kmalloc(stat->size);
   long fd = vfs_open("/fonts/ter-powerline-v16n.psf");
   vfs_fread(fd, buf, stat->size);
   psf_init(buf, stat->size);

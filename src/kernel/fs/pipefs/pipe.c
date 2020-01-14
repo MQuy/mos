@@ -1,6 +1,7 @@
 #include <include/errno.h>
+#include <include/fcntl.h>
 #include <kernel/system/time.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/locking/semaphore.h>
 #include <kernel/proc/task.h>
 #include "pipe.h"
@@ -75,7 +76,7 @@ int pipe_release(vfs_inode *inode, vfs_file *file)
   {
     inode->i_pipe = NULL;
     circular_buf_free(p->buf);
-    free(p);
+    kfree(p);
   }
   return 0;
 }
@@ -89,14 +90,14 @@ vfs_file_operations pipe_fops = {
 
 pipe *alloc_pipe()
 {
-  pipe *p = malloc(sizeof(pipe));
+  pipe *p = kmalloc(sizeof(pipe));
   p->files = 0;
   p->readers = 0;
   p->writers = 0;
 
   sema_init(&p->mutex, 1);
 
-  char *buf = malloc(PIPE_SIZE);
+  char *buf = kmalloc(PIPE_SIZE);
   p->buf = circular_buf_init(buf, PIPE_SIZE);
 
   return p;
@@ -124,16 +125,16 @@ vfs_inode *get_pipe_inode()
 int do_pipe(int *fd)
 {
   vfs_inode *inode = get_pipe_inode();
-  vfs_dentry *dentry = malloc(sizeof(vfs_dentry));
+  vfs_dentry *dentry = kmalloc(sizeof(vfs_dentry));
   dentry->d_inode = inode;
 
-  vfs_file *f1 = malloc(sizeof(vfs_file));
+  vfs_file *f1 = kmalloc(sizeof(vfs_file));
   f1->f_flags = O_RDONLY;
   f1->f_op = &pipe_fops;
   f1->f_dentry = dentry;
   f1->f_count = 1;
 
-  vfs_file *f2 = malloc(sizeof(vfs_file));
+  vfs_file *f2 = kmalloc(sizeof(vfs_file));
   f2->f_flags = O_WRONLY;
   f2->f_op = &pipe_fops;
   f2->f_dentry = dentry;

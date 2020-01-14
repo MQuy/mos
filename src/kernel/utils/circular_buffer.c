@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 
 #include "circular_buffer.h"
 
@@ -35,7 +35,7 @@ static void retreat_pointer(cbuf_handle_t cbuf)
 
 cbuf_handle_t circular_buf_init(uint8_t *buffer, size_t size)
 {
-  cbuf_handle_t cbuf = malloc(sizeof(circular_buf_t));
+  cbuf_handle_t cbuf = kmalloc(sizeof(circular_buf_t));
 
   cbuf->buffer = buffer;
   cbuf->max = size;
@@ -46,7 +46,7 @@ cbuf_handle_t circular_buf_init(uint8_t *buffer, size_t size)
 
 void circular_buf_free(cbuf_handle_t cbuf)
 {
-  free(cbuf);
+  kfree(cbuf);
 }
 
 void circular_buf_reset(cbuf_handle_t cbuf)

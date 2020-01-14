@@ -8,6 +8,8 @@ typedef __kernel_dev_t dev_t;
 
 typedef unsigned short umode_t;
 typedef long long loff_t;
+typedef long intptr_t;
+typedef long off_t;
 typedef unsigned long long ino_t;
 typedef unsigned short mode_t;
 typedef long ssize_t;
@@ -29,10 +31,38 @@ typedef unsigned short gid_t;
 #define isascii(c) ((unsigned)(c) <= 0x7F)
 #define toascii(c) ((unsigned)(c)&0x7F)
 
+/*
+ * min()/max() macros that also do
+ * strict type-checking.. See the
+ * "unnecessary" pointer comparison.
+ */
+#define min(x, y) ({ \
+	typeof(x) _x = (x);	\
+	typeof(y) _y = (y);	\
+	(void) (&_x == &_y);		\
+	_x < _y ? _x : _y; })
+
+#define max(x, y) ({ \
+	typeof(x) _x = (x);	\
+	typeof(y) _y = (y);	\
+	(void) (&_x == &_y);		\
+	_x > _y ? _x : _y; })
+
+/*
+ * ..and if you can't take the strict
+ * types, you can specify one yourself.
+ *
+ * Or not use min/max at all, of course.
+ */
+#define min_t(type, x, y) \
+	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
+#define max_t(type, x, y) \
+	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
+
 struct timespec
 {
-  long tv_sec;
-  long tv_nsec;
+	long tv_sec;
+	long tv_nsec;
 };
 
 #endif

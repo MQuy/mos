@@ -1,5 +1,5 @@
 #include <kernel/cpu/hal.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include "time.h"
 
 #define CMOS_ADDRESS 0x70
@@ -20,7 +20,7 @@ uint8_t get_rtc_register(uint32_t reg)
 time *get_current_time()
 {
   uint8_t second, minute, hour, day, month, year;
-  time *t = malloc(sizeof(time));
+  time *t = kmalloc(sizeof(time));
 
   while (get_update_flag())
     ;
@@ -61,7 +61,7 @@ time *get_current_time()
 
 time *get_time_from_seconds(uint32_t seconds)
 {
-  time *t = malloc(sizeof(time));
+  time *t = kmalloc(sizeof(time));
   uint32_t days = seconds / (24 * 3600);
 
   // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days

@@ -13,8 +13,10 @@ SECTIONS
 	   Next we'll put the .text section. */
 	.text ALIGN(4096) : AT(ADDR(.text) - kernel_higher_half)
 	{
+		kernel_text_start = .;
 		*(.multiboot)
 		*(.text .text.*)
+		kernel_text_end = .;
 	}
  
 	/* Read-only data. */
@@ -26,8 +28,10 @@ SECTIONS
 	/* Read-write data (initialized) */
 	.data ALIGN(4096) : AT(ADDR(.data) - kernel_higher_half)
 	{
+		kernel_data_start = .;
 		*(.data .data.*)
 		*(.symbols)
+		kernel_data_end = .;
 	}
  
 	/* Read-write data (uninitialized) and stack */

@@ -1,5 +1,5 @@
 #include <kernel/utils/string.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include "vfs.h"
 
@@ -7,28 +7,26 @@ extern process *current_process;
 
 vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 {
-  vfs_dentry *d = malloc(sizeof(vfs_dentry));
+  vfs_dentry *d = kmalloc(sizeof(vfs_dentry));
   d->d_name = name;
   d->d_parent = parent;
   INIT_LIST_HEAD(&d->d_subdirs);
+
   if (parent)
-  {
     d->d_sb = parent->d_sb;
-    list_add_tail(&d->d_sibling, &parent->d_subdirs);
-  }
 
   return d;
 }
 
 nameidata *path_walk(const char *path)
 {
-  nameidata *nd = malloc(sizeof(nameidata));
+  nameidata *nd = kmalloc(sizeof(nameidata));
   nd->dentry = current_process->fs->d_root;
   nd->mnt = current_process->fs->mnt_root;
 
   for (int i = 1, length = strlen(path); i < length; ++i)
   {
-    char *part_name = malloc(length);
+    char *part_name = kmalloc(length);
 
     for (int j = 0; path[i] != '/' && i < length; ++i, ++j)
       part_name[j] = path[i];
@@ -45,13 +43,13 @@ nameidata *path_walk(const char *path)
     }
 
     if (d_child)
-    {
       nd->dentry = d_child;
-    }
     else
     {
       d_child = alloc_dentry(nd->dentry, part_name);
-      vfs_inode *inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, d_child->d_name);
+      vfs_inode *inode = NULL;
+      if (nd->dentry->d_inode->i_op->lookup)
+        inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, d_child->d_name);
       if (inode == NULL)
       {
         uint32_t mode = S_IFDIR;
@@ -60,6 +58,7 @@ nameidata *path_walk(const char *path)
         inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child->d_name, mode);
       }
       d_child->d_inode = inode;
+      list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
       nd->dentry = d_child;
     }
 
@@ -75,7 +74,7 @@ long vfs_open(const char *path)
   int fd = find_unused_fd_slot();
   nameidata *nd = path_walk(path);
 
-  vfs_file *file = malloc(sizeof(vfs_file));
+  vfs_file *file = kmalloc(sizeof(vfs_file));
   file->f_dentry = nd->dentry;
   file->f_vfsmnt = nd->mnt;
   file->f_pos = 0;
@@ -103,6 +102,7 @@ long vfs_close(uint32_t fd)
   files->fd[fd] = NULL;
 
   release_semaphore(&files->lock);
+  return 0;
 }
 
 void generic_fillattr(vfs_inode *inode, struct kstat *stat)
@@ -122,7 +122,7 @@ void generic_fillattr(vfs_inode *inode, struct kstat *stat)
   stat->blksize = inode->i_blksize;
 }
 
-int vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
+int do_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
 {
   vfs_inode *inode = dentry->d_inode;
   if (inode->i_op->getattr)
@@ -143,27 +143,55 @@ int vfs_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
 void vfs_stat(const char *path, kstat *stat)
 {
   nameidata *nd = path_walk(path);
-  vfs_getattr(nd->mnt, nd->dentry, stat);
+  do_getattr(nd->mnt, nd->dentry, stat);
 }
 
 void vfs_fstat(uint32_t fd, kstat *stat)
 {
   vfs_file *f = current_process->files->fd[fd];
-  vfs_getattr(f->f_vfsmnt, f->f_dentry, stat);
+  do_getattr(f->f_vfsmnt, f->f_dentry, stat);
 }
 
 int vfs_mknod(const char *path, int mode, dev_t dev)
 {
-  uint32_t length = strlen(path);
-  int32_t last_index = length - 1;
-  for (; last_index >= 0 && path[last_index] != '/'; last_index--)
-    ;
-  char *dir_path = calloc(last_index + 1, sizeof(char));
-  char *dev_name = calloc(length - last_index, sizeof(char));
+  char *dir, *name;
+  strlsplat(path, strliof(path, "/"), &dir, &name);
 
-  memcpy(dir_path, path, last_index);
-  memcpy(dev_name, path + last_index + 1, length - 1 - last_index);
+  nameidata *nd = path_walk(dir);
+  return nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, name, mode, dev);
+}
 
-  nameidata *nd = path_walk(dir_path);
-  return nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, dev_name, mode, dev);
+int simple_setattr(vfs_dentry *d, iattr *attrs)
+{
+  vfs_inode *inode = d->d_inode;
+
+  if (attrs->ia_valid & ATTR_SIZE)
+    inode->i_size = attrs->ia_size;
+  return 0;
+}
+
+int do_truncate(vfs_dentry *dentry, int32_t length)
+{
+  vfs_inode *inode = dentry->d_inode;
+  iattr *attrs = kmalloc(sizeof(iattr));
+  attrs->ia_valid = ATTR_SIZE;
+  attrs->ia_size = length;
+
+  if (inode->i_op->setattr)
+    inode->i_op->setattr(dentry, attrs);
+  else
+    simple_setattr(dentry, attrs);
+  return 0;
+}
+
+int vfs_truncate(const char *path, int32_t length)
+{
+  nameidata *nd = path_walk(path);
+  return do_truncate(nd->dentry, length);
+}
+
+int vfs_ftruncate(uint32_t fd, int32_t length)
+{
+  vfs_file *f = current_process->files->fd[fd];
+  return do_truncate(f->f_dentry, length);
 }

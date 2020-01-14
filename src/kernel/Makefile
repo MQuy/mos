@@ -12,7 +12,7 @@ LD = /usr/local/bin/i386-elf-ld
 GDB = /usr/local/bin/i386-elf-gdb
 
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -I$(INCLUDE)
+CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -Wno-unused-parameter -Wno-discarded-qualifiers -I$(INCLUDE)
 
 kernel.bin: ${OBJ}
 	${CC} -o $@ -T linker.ld $^ -ffreestanding -nostdlib -lgcc -g

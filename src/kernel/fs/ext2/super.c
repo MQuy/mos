@@ -1,8 +1,8 @@
 #include <kernel/utils/string.h>
 #include <kernel/utils/math.h>
 #include <include/errno.h>
-#include <kernel/memory/malloc.h>
 #include <kernel/memory/pmm.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/devices/ata.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/buffer.h>
@@ -10,7 +10,7 @@
 
 ext2_group_desc *ext2_get_group_desc(vfs_superblock *sb, uint32_t group)
 {
-  ext2_group_desc *gdp = malloc(sizeof(ext2_group_desc));
+  ext2_group_desc *gdp = kmalloc(sizeof(ext2_group_desc));
   ext2_superblock *ext2_sb = EXT2_SB(sb);
   uint32_t block = ext2_sb->s_first_data_block + 1 + group / EXT2_GROUPS_PER_BLOCK(ext2_sb);
   char *group_block_buf = ext2_bread_block(sb, block);
@@ -125,7 +125,7 @@ void ext2_write_super(vfs_superblock *sb)
   ext2_bwrite_block(sb, ext2_sb->s_first_data_block, (char *)ext2_sb);
 }
 
-vfs_super_operations ext2_super_opereations = {
+vfs_super_operations ext2_super_operations = {
     .alloc_inode = ext2_alloc_inode,
     .read_inode = ext2_read_inode,
     .write_inode = ext2_write_inode,
@@ -134,7 +134,7 @@ vfs_super_operations ext2_super_opereations = {
 
 int ext2_fill_super(vfs_superblock *sb)
 {
-  ext2_superblock *ext2_sb = (ext2_superblock *)malloc(sizeof(ext2_superblock));
+  ext2_superblock *ext2_sb = (ext2_superblock *)kmalloc(sizeof(ext2_superblock));
   char *buf = ext2_bread_block(sb, 1);
   memcpy(ext2_sb, (ext2_superblock *)buf, sb->s_blocksize);
 
@@ -142,17 +142,18 @@ int ext2_fill_super(vfs_superblock *sb)
     return -EINVAL;
 
   sb->s_fs_info = ext2_sb;
-  sb->s_op = &ext2_super_opereations;
+  sb->s_op = &ext2_super_operations;
   sb->s_blocksize = EXT2_BLOCK_SIZE(ext2_sb);
   sb->s_blocksize_bits = ext2_sb->s_log_block_size;
   sb->s_magic = EXT2_SUPER_MAGIC;
   return 0;
 }
 
-vfs_superblock *ext2_mount(struct vfs_file_system_type *fs_type,
-                           char *dev_name, char *dir_name)
+vfs_mount *ext2_mount(struct vfs_file_system_type *fs_type,
+                      char *dev_name, char *dir_name)
 {
-  vfs_superblock *sb = (vfs_superblock *)malloc(sizeof(vfs_superblock));
+  vfs_mount *mnt = kmalloc(sizeof(vfs_mount));
+  vfs_superblock *sb = (vfs_superblock *)kmalloc(sizeof(vfs_superblock));
   sb->s_blocksize = EXT2_MIN_BLOCK_SIZE;
   sb->mnt_devname = dev_name;
   sb->s_type = fs_type;
@@ -168,7 +169,11 @@ vfs_superblock *ext2_mount(struct vfs_file_system_type *fs_type,
 
   sb->s_root = d_root;
 
-  return sb;
+  mnt->mnt_sb = sb;
+  mnt->mnt_mountpoint = mnt->mnt_root = sb->s_root;
+  mnt->mnt_devname = dev_name;
+
+  return mnt;
 }
 
 vfs_file_system_type ext2_fs_type = {

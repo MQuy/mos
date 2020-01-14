@@ -186,3 +186,8 @@ void pmm_mark_used_addr(physical_addr paddr)
     used_frames++;
   }
 }
+
+uint32_t get_total_frames()
+{
+  return max_frames;
+}

@@ -1,4 +1,4 @@
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include "semaphore.h"
 
@@ -22,7 +22,7 @@ void acquire_semaphore(semaphore *sem)
   }
   else
   {
-    semaphore_waiter *waiter = malloc(sizeof(semaphore_waiter));
+    semaphore_waiter *waiter = kmalloc(sizeof(semaphore_waiter));
     waiter->task = current_thread;
 
     list_add_tail(&waiter->sibling, &sem->wait_list);

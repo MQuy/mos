@@ -5,13 +5,10 @@
 #include <kernel/cpu/tss.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
-#include <kernel/memory/malloc.h>
 #include <kernel/proc/elf.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/system/time.h>
 #include "task.h"
-
-#define KERNEL_THREAD_SIZE 0x2000
 
 extern void enter_usermode(uint32_t eip, uint32_t esp);
 extern void return_usermode(uint32_t uregs);
@@ -25,7 +22,7 @@ static uint32_t next_tid = 0;
 
 files_struct *clone_file_descriptor_table(process *parent)
 {
-  files_struct *files = malloc(sizeof(files_struct));
+  files_struct *files = kmalloc(sizeof(files_struct));
 
   if (parent)
   {
@@ -39,6 +36,27 @@ files_struct *clone_file_descriptor_table(process *parent)
   return files;
 }
 
+mm_struct *clone_mm_struct(process *parent)
+{
+  mm_struct *mm = kmalloc(sizeof(mm_struct));
+  memcpy(mm, parent->mm, sizeof(mm_struct));
+  INIT_LIST_HEAD(&mm->mmap);
+
+  vm_area_struct *iter = NULL;
+  list_for_each_entry(iter, &parent->mm->mmap, vm_sibling)
+  {
+    vm_area_struct *clone = kmalloc(sizeof(vm_area_struct));
+    clone->vm_start = iter->vm_start;
+    clone->vm_end = iter->vm_end;
+    clone->vm_file = iter->vm_file;
+    clone->vm_flags = iter->vm_flags;
+    clone->vm_mm = mm;
+    list_add_tail(&clone->vm_sibling, &mm->mmap);
+  }
+
+  return mm;
+}
+
 void kernel_thread_entry(thread *t, void *flow())
 {
   flow();
@@ -49,9 +67,9 @@ thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, 
 {
   disable_interrupts();
 
-  thread *t = malloc(sizeof(thread));
+  thread *t = kmalloc(sizeof(thread));
   t->tid = next_tid++;
-  t->kernel_stack = (uint32_t)(malloc(KERNEL_THREAD_SIZE) + KERNEL_THREAD_SIZE);
+  t->kernel_stack = (uint32_t)(kmalloc(STACK_SIZE) + STACK_SIZE);
   t->parent = parent;
   t->state = state;
   t->esp = t->kernel_stack - sizeof(trap_frame);
@@ -85,7 +103,7 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
 {
   disable_interrupts();
 
-  process *p = malloc(sizeof(process));
+  process *p = kmalloc(sizeof(process));
   p->pid = next_pid++;
   p->name = strdup(name);
   if (pdir)
@@ -94,7 +112,10 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
     p->pdir = vmm_get_directory();
   p->parent = parent;
   p->files = clone_file_descriptor_table(parent);
-  p->fs = malloc(sizeof(fs_struct));
+  p->fs = kmalloc(sizeof(fs_struct));
+
+  p->mm = kmalloc(sizeof(mm_struct));
+  INIT_LIST_HEAD(&p->mm->mmap);
 
   if (parent)
   {
@@ -140,7 +161,7 @@ void user_thread_entry(thread *t)
 void user_thread_elf_entry(thread *t, const char *path)
 {
   char *buf = vfs_read(path);
-  Elf32_Layout *elf_layout = elf_load(buf, t->parent->pdir);
+  Elf32_Layout *elf_layout = elf_load(buf);
   t->user_stack = elf_layout->stack;
   tss_set_stack(0x10, t->kernel_stack);
   enter_usermode(elf_layout->stack, elf_layout->entry);
@@ -150,11 +171,12 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
 {
   disable_interrupts();
 
-  thread *t = malloc(sizeof(thread));
+  thread *t = kmalloc(sizeof(thread));
   t->tid = next_tid++;
   t->parent = parent;
   t->state = state;
-  t->kernel_stack = (uint32_t)(malloc(KERNEL_THREAD_SIZE) + KERNEL_THREAD_SIZE);
+  t->policy = policy;
+  t->kernel_stack = (uint32_t)(kmalloc(STACK_SIZE) + STACK_SIZE);
   t->esp = t->kernel_stack - sizeof(trap_frame);
   plist_node_init(&t->sched_sibling, priority);
 
@@ -194,17 +216,19 @@ process *process_fork(process *parent)
   disable_interrupts();
 
   // fork process
-  process *p = malloc(sizeof(process));
+  process *p = kmalloc(sizeof(process));
   p->pid = next_pid++;
   p->gid = parent->pid;
   p->name = strdup(parent->name);
   p->parent = parent;
+  p->mm = clone_mm_struct(parent);
+
   INIT_LIST_HEAD(&p->children);
   INIT_LIST_HEAD(&p->threads);
 
   list_add_tail(&p->sibling, &parent->children);
 
-  p->fs = malloc(sizeof(fs_struct));
+  p->fs = kmalloc(sizeof(fs_struct));
   memcpy(p->fs, parent->fs, sizeof(fs_struct));
 
   p->files = clone_file_descriptor_table(parent);
@@ -212,12 +236,13 @@ process *process_fork(process *parent)
 
   // copy active parent's thread
   thread *parent_thread = parent->active_thread;
-  thread *t = malloc(sizeof(thread));
+  thread *t = kmalloc(sizeof(thread));
   t->tid = next_tid++;
   t->state = THREAD_READY;
+  t->policy = parent_thread->policy;
   t->time_slice = 0;
   t->parent = p;
-  t->kernel_stack = (uint32_t)(malloc(KERNEL_THREAD_SIZE) + KERNEL_THREAD_SIZE);
+  t->kernel_stack = (uint32_t)(kmalloc(STACK_SIZE) + STACK_SIZE);
   t->user_stack = parent_thread->user_stack;
   // NOTE: MQ 2019-12-18 Setup trap frame
   t->esp = t->kernel_stack - sizeof(trap_frame);

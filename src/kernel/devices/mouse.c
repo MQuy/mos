@@ -1,6 +1,6 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/hal.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include "mouse.h"
 
 #define MOUSE_LEFT_CLICK 0x01

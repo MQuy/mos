@@ -1,6 +1,6 @@
 #include <kernel/utils/hashmap.h>
 #include <kernel/locking/semaphore.h>
-#include <kernel/memory/malloc.h>
+#include <kernel/memory/vmm.h>
 #include <include/errno.h>
 #include "message_queue.h"
 
@@ -17,7 +17,7 @@ void mq_init()
 
 int32_t mq_open(const char *name, int32_t flags)
 {
-  message_queue *mq = malloc(sizeof(message_queue));
+  message_queue *mq = kmalloc(sizeof(message_queue));
   INIT_LIST_HEAD(&mq->senders);
   INIT_LIST_HEAD(&mq->receivers);
   INIT_LIST_HEAD(&mq->messages);
@@ -35,7 +35,7 @@ int32_t mq_close(const char *name)
   if (mq)
   {
     hashmap_remove(&mq_map, name);
-    free(mq);
+    kfree(mq);
   }
   return ret;
 }
@@ -47,7 +47,7 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   if (!mq)
     return -EINVAL;
 
-  char *kernel_buf = malloc(msize);
+  char *kernel_buf = kmalloc(msize);
   memcpy(kernel_buf, user_buf, msize);
 
   mq_receiver *iter = NULL;
@@ -71,7 +71,7 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   }
   else
   {
-    mq_message *msg = malloc(sizeof(mq_message));
+    mq_message *msg = kmalloc(sizeof(mq_message));
     msg->buf = kernel_buf;
     msg->msize = msize;
     msg->mtype = mtype;
@@ -116,7 +116,7 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
   }
   else
   {
-    mq_receiver *mqr = malloc(sizeof(mq_receiver));
+    mq_receiver *mqr = kmalloc(sizeof(mq_receiver));
     mqr->mtype = mtype;
     mqr->msize = msize;
     mqr->receiver = current_thread;

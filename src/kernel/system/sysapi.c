@@ -1,10 +1,12 @@
+#include <include/ctype.h>
+#include <include/errno.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/utils/printf.h>
 #include <kernel/proc/task.h>
 #include <kernel/proc/elf.h>
 #include <kernel/fs/vfs.h>
-#include <kernel/fs/pipe.h>
+#include <kernel/fs/pipefs/pipe.h>
 #include <kernel/ipc/message_queue.h>
 #include "sysapi.h"
 
@@ -55,6 +57,22 @@ int32_t sys_pipe(int32_t *fd)
   return do_pipe(fd);
 }
 
+int32_t sys_mmap(uint32_t addr, size_t length, uint32_t prot, uint32_t flags,
+                 int32_t fd)
+{
+  return do_mmap(addr, length, prot, flags, fd);
+}
+
+int32_t sys_truncate(const char *path, int32_t length)
+{
+  return vfs_truncate(path, length);
+}
+
+int32_t sys_ftruncate(uint32_t fd, int32_t length)
+{
+  return vfs_ftruncate(fd, length);
+}
+
 int32_t sys_msgopen(const char *name, int32_t flags)
 {
   return mq_open(name, flags);
@@ -63,6 +81,21 @@ int32_t sys_msgopen(const char *name, int32_t flags)
 int32_t sys_msgclose(const char *name)
 {
   return mq_close(name);
+}
+
+int32_t sys_brk(uint32_t brk)
+{
+  mm_struct *current_mm = current_process->mm;
+  if (brk < current_mm->start_brk)
+    return -EINVAL;
+
+  do_brk(current_mm->start_brk, brk - current_mm->start_brk);
+  return brk;
+}
+
+int32_t sys_sbrk(intptr_t increment)
+{
+  return sys_brk(current_process->mm->brk + increment);
 }
 
 int32_t sys_msgsnd(const char *name, char *buf, int32_t mtype, uint32_t msize)
@@ -81,7 +114,13 @@ int32_t sys_msgrcv(const char *name, char *buf, int32_t mtype, uint32_t msize)
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_brk 17
+#define __NR_sbrk 18
 #define __NR_pipe 42
+#define __NR_mmap 90
+#define __NR_munmap 91
+#define __NR_truncate 92
+#define __NR_ftruncate 93
 #define __NR_msgopen 200
 #define __NR_msgclose 201
 #define __NR_msgrcv 202
@@ -94,7 +133,12 @@ static void *syscalls[] = {
     [__NR_write] = sys_write,
     [__NR_open] = sys_open,
     [__NR_close] = sys_close,
+    [__NR_brk] = sys_brk,
+    [__NR_sbrk] = sys_sbrk,
     [__NR_pipe] = sys_pipe,
+    [__NR_mmap] = sys_mmap,
+    [__NR_truncate] = sys_truncate,
+    [__NR_ftruncate] = sys_ftruncate,
     [__NR_msgopen] = sys_msgopen,
     [__NR_msgclose] = sys_msgclose,
     [__NR_msgsnd] = sys_msgsnd,

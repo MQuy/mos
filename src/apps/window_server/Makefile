@@ -1,8 +1,8 @@
 TOPDIR  := $(shell if [ "$$PWD" != "" ] ; then echo $$PWD ; else pwd ; fi)
 INCLUDE = $(TOPDIR)/../../
 
-C_SOURCES = $(wildcard window_server.c ../../include/*.c ../../libc/*.c)
-HEADERS = $(wildcard *.h ../../include/*.h ../../libc/*.h)
+C_SOURCES = $(wildcard window_server.c ../../include/*.c ../../libc/*.c ../../libc/**/*.c)
+HEADERS = $(wildcard *.h ../../include/*.h ../../libc/*.h ../../libc/**/*.h)
 
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.c=.o}

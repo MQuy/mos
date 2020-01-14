@@ -2,13 +2,16 @@
 #define MEMORY_VMM_H
 
 #include <stdint.h>
+#include <include/list.h>
 #include "pmm.h"
 #include "kernel_info.h"
 
-#define KERNEL_HEAP_BOTTOM 0xD0000000
 #define KERNEL_HEAP_TOP 0xF0000000
-#define USER_STACK_BOTTOM 0xAFF00000
-#define USER_STACK_TOP 0xB0000000
+#define KERNEL_HEAP_BOTTOM 0xD0000000
+#define USER_HEAP_TOP 0x40000000
+
+struct vm_area_struct;
+struct mm_struct;
 
 //! i86 architecture defines this format so be careful if you modify it
 enum PAGE_PTE_FLAGS
@@ -55,6 +58,13 @@ typedef uint32_t virtual_addr;
 #define PAGES_PER_TABLE 1024
 #define PAGES_PER_DIR 1024
 
+typedef struct page
+{
+  uint32_t frame;
+  struct list_head sibling;
+  uint32_t virtual;
+} page;
+
 typedef struct ptable
 {
   pt_entry m_entries[PAGES_PER_TABLE];
@@ -68,11 +78,31 @@ typedef struct pdirectory
 void vmm_init();
 pdirectory *vmm_get_directory();
 void vmm_map_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
+void vmm_unmap_address(pdirectory *va_dir, uint32_t virt);
 void *create_kernel_stack(int32_t blocks);
 pdirectory *vmm_create_address_space(pdirectory *dir);
 physical_addr vmm_get_physical_address(virtual_addr vaddr);
 pdirectory *vmm_fork(pdirectory *va_dir);
 
-extern void *sbrk(size_t n);
+// malloc.c
+void *sbrk(size_t n);
+void *kmalloc(size_t n);
+void *kcalloc(size_t n, size_t size);
+void *krealloc(void *ptr, size_t size);
+void kfree(void *ptr);
+void *kalign_heap(size_t size);
+
+// mmap.c
+struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len);
+int expand_stack(struct vm_area_struct *vma, unsigned long address);
+int32_t do_mmap(uint32_t addr,
+                size_t len, uint32_t prot,
+                uint32_t flag, int32_t fd);
+int do_munmap(struct mm_struct *mm, uint32_t addr, size_t len);
+uint32_t do_brk(uint32_t addr, size_t len);
+
+// highmem.c
+void kmap(page *p);
+void kunmap(page *p);
 
 #endif
