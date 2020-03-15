@@ -139,29 +139,26 @@ void shift_area(vm_area_struct *vma, vm_area_struct *new_vma)
 {
   if (vma->vm_start == new_vma->vm_start)
   {
-    if (vma->vm_end == new_vma->vm_end)
-      return;
-    uint32_t min_addr = min(vma->vm_end, new_vma->vm_end);
-    uint32_t max_addr = max(vma->vm_end, new_vma->vm_end);
-    for (uint32_t addr = min_addr; addr < max_addr; addr += PMM_FRAME_SIZE)
-      if (vma->vm_end > new_vma->vm_end)
+    if (new_vma->vm_end > vma->vm_end)
+    {
+      uint32_t nframes = (new_vma->vm_end - vma->vm_end) / PMM_FRAME_SIZE;
+      uint32_t paddr = pmm_alloc_blocks(nframes);
+      for (uint32_t vaddr = vma->vm_end; vaddr < new_vma->vm_end; vaddr += PMM_FRAME_SIZE, paddr += PMM_FRAME_SIZE)
+        vmm_map_address(current_process->pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+    }
+    else if (new_vma->vm_end < vma->vm_end)
+      for (uint32_t addr = new_vma->vm_end; addr < vma->vm_end; addr += PMM_FRAME_SIZE)
         vmm_unmap_address(current_process->pdir, addr);
-      else
-        vmm_map_address(current_process->pdir,
-                        addr,
-                        pmm_alloc_block(),
-                        I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
   }
   else
   {
     uint32_t old_length = vma->vm_end - vma->vm_start;
     uint32_t new_length = new_vma->vm_end - new_vma->vm_start;
-    uint32_t frame = 0;
-    for (; frame < new_length; frame += PMM_FRAME_SIZE)
+    for (uint32_t vaddr = 0; vaddr < new_length; vaddr += PMM_FRAME_SIZE)
     {
-      uint32_t paddr = frame < old_length ? vmm_get_physical_address(vma->vm_start + frame) : pmm_alloc_block();
+      uint32_t paddr = vaddr < old_length ? vmm_get_physical_address(vma->vm_start + vaddr) : pmm_alloc_block();
       vmm_map_address(current_process->pdir,
-                      new_vma->vm_start + frame,
+                      new_vma->vm_start + vaddr,
                       paddr,
                       I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     };
@@ -173,7 +170,8 @@ uint32_t do_brk(uint32_t addr, size_t len)
 {
   mm_struct *mm = current_process->mm;
   vm_area_struct *vma = find_vma(mm, addr);
-  uint32_t new_brk = addr + len;
+  uint32_t new_brk = PAGE_ALIGN(addr + len);
+  mm->brk = new_brk;
 
   if (!vma || vma->vm_end >= new_brk)
     return 0;
@@ -189,6 +187,7 @@ uint32_t do_brk(uint32_t addr, size_t len)
     vma->vm_file->f_op->mmap(vma->vm_file, new_vma);
   else
     shift_area(vma, new_vma);
+  memcpy(vma, new_vma, sizeof(vm_area_struct));
 
   return 0;
 }

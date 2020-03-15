@@ -1,3 +1,28 @@
+
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * lib/plist.c
+ *
+ * Descending-priority-sorted double-linked list
+ *
+ * (C) 2002-2003 Intel Corp
+ * Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>.
+ *
+ * 2001-2005 (c) MontaVista Software, Inc.
+ * Daniel Walker <dwalker@mvista.com>
+ *
+ * (C) 2005 Thomas Gleixner <tglx@linutronix.de>
+ *
+ * Simplifications of the original code by
+ * Oleg Nesterov <oleg@tv-sign.ru>
+ *
+ * Based on simple lists (include/linux/list.h).
+ *
+ * This file contains the add / del functions which are considered to
+ * be too large to inline. See include/linux/plist.h for further
+ * information.
+ */
+
 #include "plist.h"
 
 #define plist_check_head(h) \

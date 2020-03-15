@@ -10,20 +10,16 @@
 #define TEXT_COLOR 0xFFFFFF
 #define BACKGROUND_COLOR 0x000000
 
-extern process *current_process;
-
 static uint32_t current_column = 0;
 static uint32_t current_row = 0;
 
-static char *video_paddr;
-static uint32_t video_bpp, video_pitch;
-static uint32_t video_width, video_height;
+static struct framebuffer *current_fb;
 
 void print_char(const char c)
 {
-  psf_putchar(c, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, VIDEO_VADDR, video_pitch);
+  psf_putchar(c, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, VIDEO_VADDR, current_fb->pitch);
 
-  if (current_column >= video_width)
+  if (current_column >= current_fb->width)
   {
     current_column = 0;
     current_row += 1;
@@ -36,10 +32,10 @@ void print_char(const char c)
 
 void print_string(const char *s)
 {
-  psf_puts(s, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, VIDEO_VADDR, video_pitch);
+  psf_puts(s, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, VIDEO_VADDR, current_fb->pitch);
 
   uint32_t length = strlen(s);
-  if (current_column + length >= video_width)
+  if (current_column + length >= current_fb->width)
   {
     current_column = 0;
     current_row += 1;
@@ -127,19 +123,20 @@ int printf(const char *fmt, ...)
 
 void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 {
-  video_paddr = multiboot_framebuffer->common.framebuffer_addr;
-  video_bpp = multiboot_framebuffer->common.framebuffer_bpp;
-  video_pitch = multiboot_framebuffer->common.framebuffer_pitch;
-  video_width = multiboot_framebuffer->common.framebuffer_width;
-  video_height = multiboot_framebuffer->common.framebuffer_height;
+  current_fb = kmalloc(sizeof(struct framebuffer));
+  current_fb->addr = multiboot_framebuffer->common.framebuffer_addr;
+  current_fb->bpp = multiboot_framebuffer->common.framebuffer_bpp;
+  current_fb->pitch = multiboot_framebuffer->common.framebuffer_pitch;
+  current_fb->width = multiboot_framebuffer->common.framebuffer_width;
+  current_fb->height = multiboot_framebuffer->common.framebuffer_height;
 
-  uint32_t screen_size = video_height * video_pitch;
+  uint32_t screen_size = current_fb->height * current_fb->pitch;
   uint32_t blocks = div_ceil(screen_size, PMM_FRAME_SIZE);
   for (uint32_t i = 0; i < blocks; ++i)
     vmm_map_address(
         vmm_get_directory(),
         VIDEO_VADDR + i * PMM_FRAME_SIZE,
-        video_paddr + i * PMM_FRAME_SIZE,
+        current_fb->addr + i * PMM_FRAME_SIZE,
         I86_PTE_PRESENT | I86_PTE_WRITABLE);
 }
 
@@ -151,4 +148,9 @@ void console_setup()
   long fd = vfs_open("/fonts/ter-powerline-v16n.psf");
   vfs_fread(fd, buf, stat->size);
   psf_init(buf, stat->size);
+}
+
+struct framebuffer *get_framebuffer()
+{
+  return current_fb;
 }

@@ -44,6 +44,7 @@ typedef struct message_queue
 void mq_init();
 int32_t mq_open(const char *name, int32_t flags);
 int32_t mq_close(const char *name);
+int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t msize);
 int32_t mq_send(const char *name, char *buf, int32_t mtype, uint32_t msize);
 int32_t mq_receive(const char *name, char *buf, int32_t mtype, uint32_t msize);
 

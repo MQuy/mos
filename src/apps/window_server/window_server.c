@@ -1,32 +1,33 @@
 #include <stdint.h>
-#include <stddef.h>
-#include <include/ctype.h>
-#include <include/fcntl.h>
-#include <include/mman.h>
+#include <include/msgui.h>
 #include <libc/unistd.h>
+#include <libc/gui/layout.h>
 #include <libc/stdlib.h>
+#include "src/window_manager.h"
 
-#define SHARED_NAME "window_server"
-#define SHARED_SIZE 32
-
-int main()
+int main(struct framebuffer fb)
 {
-  void *addr;
-  int32_t fd;
+  init_layout(&fb);
+  draw_layout();
 
-  switch (fork())
+  while (true)
   {
-  case 0:
-    fd = shm_open(SHARED_NAME, O_RDONLY, 0);
-    addr = mmap(NULL, SHARED_SIZE, PROT_READ, MAP_SHARED, fd);
-    break;
-
-  default:
-    fd = shm_open(SHARED_NAME, O_RDWR | O_CREAT, 0);
-    ftruncate(fd, SHARED_SIZE);
-    addr = mmap(NULL, SHARED_SIZE, PROT_WRITE, MAP_SHARED, fd);
-    memcpy(addr, "hello world", 12);
-    break;
+    struct msgui *buf = malloc(sizeof(struct msgui));
+    msgrcv(WINDOW_SERVER_SHM, buf, 0, sizeof(struct msgui));
+    if (buf->type == MSGUI_WINDOW)
+    {
+      struct msgui_window *msgwin = (struct msgui_window *)buf->data;
+      struct window *win = create_window(msgwin);
+      msgsnd(msgwin->sender, win->name, 0, WINDOW_NAME_LENGTH);
+    }
+    else
+    {
+      // TODO: delegate events to active window
+      struct msgui_event *event = buf->data;
+      if (event->type == MSGUI_MOUSE)
+        mouse_change(event);
+      draw_layout();
+    }
   }
 
   return 0;

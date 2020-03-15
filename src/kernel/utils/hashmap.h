@@ -9,6 +9,7 @@
 #define __HASHMAP_H__
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*
  * Define HASHMAP_METRICS to compile in performance analysis
@@ -275,5 +276,8 @@ double hashmap_collisions_mean(const struct hashmap *map);
  */
 double hashmap_collisions_variance(const struct hashmap *map);
 #endif
+
+size_t hashmap_hash_uint32(const void *key);
+int hashmap_compare_uint32(const void *a, const void *b);
 
 #endif /* __HASHMAP_H__ */

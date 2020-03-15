@@ -1,6 +1,8 @@
 #ifndef INCLUDE_FCNTL_H
 #define INCLUDE_FCNTL_H
 
+#include "ctype.h"
+
 #define O_ACCMODE 0003
 #define O_RDONLY 00
 #define O_WRONLY 01
@@ -20,5 +22,22 @@
 #define O_LARGEFILE 0400000 /* will be set by the kernel on every open */
 #define O_DIRECT 02000000   /* direct disk access - should check with OSF/1 */
 #define O_NOATIME 04000000
+
+struct stat
+{
+  unsigned long ino;
+  dev_t dev;
+  umode_t mode;
+  unsigned int nlink;
+  uid_t uid;
+  gid_t gid;
+  dev_t rdev;
+  loff_t size;
+  struct timespec atime;
+  struct timespec mtime;
+  struct timespec ctime;
+  unsigned long blksize;
+  unsigned long blocks;
+};
 
 #endif

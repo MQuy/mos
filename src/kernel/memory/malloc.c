@@ -1,15 +1,25 @@
 #include <include/errno.h>
 #include <kernel/utils/string.h>
+#include <stdbool.h>
 #include "vmm.h"
+
+#define BLOCK_MAGIC 0x464E
 
 typedef struct block_meta
 {
   size_t size;
   struct block_meta *next;
   bool free;
+  uint32_t magic;
 } block_meta;
 
-block_meta *blocklist;
+block_meta *blocklist, *lastblock;
+
+void validate_kblock(block_meta *block)
+{
+  if (block->magic != BLOCK_MAGIC)
+    *(uint32_t *)BLOCK_MAGIC;
+}
 
 block_meta *find_free_block(block_meta **last, size_t size)
 {
@@ -22,6 +32,21 @@ block_meta *find_free_block(block_meta **last, size_t size)
   return current;
 }
 
+void split_block(block_meta *block, size_t size)
+{
+  if (block->size > size + sizeof(block_meta))
+  {
+    struct block_meta *splited_block = (struct block_meta *)((char *)block + size + sizeof(struct block_meta));
+    splited_block->free = true;
+    splited_block->magic = BLOCK_MAGIC;
+    splited_block->size = block->size - size - sizeof(struct block_meta);
+    splited_block->next = block->next;
+
+    block->size = size;
+    block->next = splited_block;
+  }
+}
+
 block_meta *request_space(block_meta *last, size_t size)
 {
   block_meta *block = sbrk(size + sizeof(block_meta));
@@ -32,6 +57,7 @@ block_meta *request_space(block_meta *last, size_t size)
   block->size = size;
   block->next = NULL;
   block->free = false;
+  block->magic = BLOCK_MAGIC;
   return block;
 }
 
@@ -46,17 +72,21 @@ void *kmalloc(size_t size)
   {
     block = find_free_block(&last, size);
     if (block)
-      block->free = false;
-    else
     {
-      block = request_space(last, size);
+      block->free = false;
+      split_block(block, size);
     }
+    else
+      block = request_space(lastblock, size);
   }
   else
   {
     block = request_space(NULL, size);
     blocklist = block;
   }
+
+  lastblock = block;
+  validate_kblock(block);
 
   if (block)
     return block + 1;
@@ -72,12 +102,18 @@ void *kcalloc(size_t n, size_t size)
   return block;
 }
 
+struct block_meta *get_block_ptr(void *ptr)
+{
+  return (struct block_meta *)ptr - 1;
+}
+
 void kfree(void *ptr)
 {
   if (!ptr)
     return;
 
-  block_meta *block = (block_meta *)ptr;
+  block_meta *block = get_block_ptr(ptr);
+  validate_kblock(block);
   block->free = true;
 }
 

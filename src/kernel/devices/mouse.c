@@ -1,6 +1,8 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/fs/vfs.h>
+#include <kernel/system/uiserver.h>
 #include "mouse.h"
 
 #define MOUSE_LEFT_CLICK 0x01
@@ -9,10 +11,15 @@
 
 #define MOUSE_PORT 0x60
 #define MOUSE_STATUS 0x64
+#define MOUSE_ABIT 0x02
+#define MOUSE_BBIT 0x01
+#define MOUSE_WRITE 0xD4
+#define MOUSE_F_BIT 0x20
+#define MOUSE_V_BIT 0x08
 
 static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[4];
-static mouse_device mouse_device_info;
+static struct mouse_device mouse_device_info;
 
 void mouse_calculate_position()
 {
@@ -20,8 +27,26 @@ void mouse_calculate_position()
   uint8_t state = mouse_byte[0];
   int move_x = mouse_byte[1];
   int move_y = mouse_byte[2];
-  mouse_device_info.x += move_x - ((state << 4) & 0x100);
-  mouse_device_info.y += move_y - ((state << 3) & 0x100);
+
+  if (move_x && state & (1 << 4))
+  {
+    /* Sign bit */
+    move_x = move_x - 0x100;
+  }
+  if (move_y && state & (1 << 5))
+  {
+    /* Sign bit */
+    move_y = move_y - 0x100;
+  }
+  if (state & (1 << 6) || state & (1 << 7))
+  {
+    /* Overflow */
+    move_x = 0;
+    move_y = 0;
+  }
+
+  mouse_device_info.x = move_x;
+  mouse_device_info.y = move_y;
 
   mouse_device_info.state = 0;
   if (state & MOUSE_LEFT_CLICK)
@@ -41,15 +66,15 @@ void mouse_calculate_position()
 int32_t mouse_handler(interrupt_registers *regs)
 {
   uint8_t status = inportb(MOUSE_STATUS);
-  if ((status & 0x01) && (status & 0x20))
+  if ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT))
   {
 
-    int8_t mouse_in = inportb(MOUSE_PORT);
+    uint8_t mouse_in = inportb(MOUSE_PORT);
     switch (mouse_cycle)
     {
     case 0:
       mouse_byte[0] = mouse_in;
-      if (!(mouse_in & 0x8) || (mouse_in & 0x80) || (mouse_in & 0x40))
+      if (!(mouse_in & MOUSE_V_BIT))
         break;
       mouse_cycle++;
       break;
@@ -60,6 +85,8 @@ int32_t mouse_handler(interrupt_registers *regs)
     case 2:
       mouse_byte[2] = mouse_in;
       mouse_calculate_position();
+      if (mouse_device_info.x != 0 || mouse_device_info.y != 0 || mouse_device_info.state != 0)
+        enqueue_mouse_event(&mouse_device_info);
       break;
     }
   }

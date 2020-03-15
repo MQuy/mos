@@ -13,11 +13,14 @@
 #define __NR_close 6
 #define __NR_brk 17
 #define __NR_sbrk 18
+#define __NR_getpid 20
 #define __NR_pipe 42
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
 #define __NR_ftruncate 93
+#define __NR_stat 106
+#define __NR_fstat 108
 #define __NR_msgopen 200
 #define __NR_msgclose 201
 #define __NR_msgrcv 202
@@ -112,6 +115,18 @@ static inline int32_t open(const char *path, int32_t flag, int32_t mode)
   return syscall_open(path, flag, mode);
 }
 
+_syscall2(fstat, int32_t, struct stat *);
+static inline int32_t fstat(int32_t fd, struct stat *buf)
+{
+  return syscall_fstat(fd, buf);
+}
+
+_syscall2(stat, const char *, struct stat *);
+static inline int32_t stat(const char *path, struct stat *buf)
+{
+  return syscall_stat(path, buf);
+}
+
 _syscall1(close, uint32_t);
 static inline int32_t close(uint32_t fd)
 {
@@ -183,6 +198,12 @@ _syscall2(munmap, void *, size_t);
 static inline int32_t munmap(void *addr, size_t length)
 {
   return syscall_munmap(addr, length);
+}
+
+_syscall0(getpid);
+static inline int32_t getpid()
+{
+  return syscall_getpid();
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);

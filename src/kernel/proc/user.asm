@@ -11,7 +11,8 @@ enter_usermode:
 	mov eax, [esp + 4]
 	; set address in user stack which causes the page fault when finishing a user thread
 	sub eax, 4
-	mov dword [eax], 0xFFFFFFFF
+	mov ebx, [esp + 12]
+	mov dword [eax], ebx
 
 	mov ebx, [esp + 8] ; user entry
 

@@ -140,16 +140,16 @@ int do_getattr(vfs_mount *mnt, vfs_dentry *dentry, kstat *stat)
   return 0;
 }
 
-void vfs_stat(const char *path, kstat *stat)
+int vfs_stat(const char *path, kstat *stat)
 {
   nameidata *nd = path_walk(path);
-  do_getattr(nd->mnt, nd->dentry, stat);
+  return do_getattr(nd->mnt, nd->dentry, stat);
 }
 
-void vfs_fstat(uint32_t fd, kstat *stat)
+int vfs_fstat(uint32_t fd, kstat *stat)
 {
   vfs_file *f = current_process->files->fd[fd];
-  do_getattr(f->f_vfsmnt, f->f_dentry, stat);
+  return do_getattr(f->f_vfsmnt, f->f_dentry, stat);
 }
 
 int vfs_mknod(const char *path, int mode, dev_t dev)

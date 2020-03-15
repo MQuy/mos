@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <include/mman.h>
+#include <include/msgui.h>
 #include "cpu/hal.h"
 #include "cpu/gdt.h"
 #include "cpu/idt.h"
@@ -19,12 +21,35 @@
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "devices/char/memory.h"
+#include "system/uiserver.h"
 #include "ipc/message_queue.h"
 #include "system/console.h"
 #include "multiboot2.h"
 
 extern thread *current_thread;
 extern vfs_file_system_type ext2_fs_type;
+
+void setup_window_server(Elf32_Layout *elf_layout)
+{
+  uiserver_init(current_thread);
+  mq_open(WINDOW_SERVER_SHM, 0);
+
+  struct framebuffer *fb = get_framebuffer();
+  uint32_t screen_size = fb->height * fb->pitch;
+  struct vm_area_struct *area = get_unmapped_area(NULL, screen_size);
+  uint32_t blocks = (area->vm_end - area->vm_start) / PMM_FRAME_SIZE;
+  for (uint32_t iblock = 0; iblock < blocks; ++iblock)
+    vmm_map_address(
+        current_thread->parent->pdir,
+        area->vm_start + iblock * PMM_FRAME_SIZE,
+        fb->addr + iblock * PMM_FRAME_SIZE,
+        I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+
+  elf_layout->stack -= sizeof(struct framebuffer);
+  struct framebuffer *ws_fb = (struct framebuffer *)elf_layout->stack;
+  memcpy(ws_fb, fb, sizeof(struct framebuffer));
+  ws_fb->addr = area->vm_start;
+}
 
 void kernel_init()
 {
@@ -46,7 +71,7 @@ void kernel_init()
   // register system apis
   syscall_init();
 
-  process_load("window server", "/bin/window_server");
+  process_load("window server", "/bin/window_server", setup_window_server);
 
   // idle
   update_thread(current_thread, THREAD_WAITING);

@@ -40,6 +40,44 @@ int32_t mq_close(const char *name)
   return ret;
 }
 
+// NOTE: MQ 2020-03-13 The method only be called in kernel
+int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t msize)
+{
+  message_queue *mq = hashmap_get(&mq_map, name);
+
+  if (!mq)
+    return -EINVAL;
+
+  mq_receiver *iter = NULL;
+  mq_receiver *mqr = NULL;
+  list_for_each_entry(iter, &mq->receivers, sibling)
+  {
+    if (iter->mtype == mtype)
+    {
+      mqr = iter;
+      break;
+    }
+  }
+
+  if (mqr)
+  {
+    mqr->sender = current_thread;
+    mqr->msize = msize;
+    mqr->buf = kernel_buf;
+    list_del(&mqr->sibling);
+    update_thread(mqr->receiver, THREAD_READY);
+  }
+  else
+  {
+    mq_message *msg = kmalloc(sizeof(mq_message));
+    msg->buf = kernel_buf;
+    msg->msize = msize;
+    msg->mtype = mtype;
+    msg->sender = current_thread;
+    list_add_tail(&msg->sibling, &mq->messages);
+  }
+}
+
 int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
 {
   message_queue *mq = hashmap_get(&mq_map, name);
@@ -113,6 +151,7 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
   {
     buf = mqm->buf;
     sender_id = mqm->sender->tid;
+    list_del(&mqm->sibling);
   }
   else
   {
@@ -129,6 +168,7 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
 
     buf = mqr->buf;
     sender_id = mqr->sender->tid;
+    list_del(&mqr->sibling);
   }
 
   // send ack signal to sender

@@ -47,6 +47,16 @@ int32_t sys_open(const char *path, int32_t flag, int32_t mode)
   return vfs_open(path);
 }
 
+int32_t sys_fstat(int32_t fd, kstat *stat)
+{
+  return vfs_fstat(fd, stat);
+}
+
+int32_t sys_stat(const char *path, kstat *stat)
+{
+  return vfs_stat(path, stat);
+}
+
 int32_t sys_close(uint32_t fd)
 {
   return vfs_close(fd);
@@ -108,6 +118,11 @@ int32_t sys_msgrcv(const char *name, char *buf, int32_t mtype, uint32_t msize)
   return mq_receive(name, buf, mtype, msize);
 }
 
+int32_t sys_getpid()
+{
+  return current_process->pid;
+}
+
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -116,11 +131,14 @@ int32_t sys_msgrcv(const char *name, char *buf, int32_t mtype, uint32_t msize)
 #define __NR_close 6
 #define __NR_brk 17
 #define __NR_sbrk 18
+#define __NR_getpid 20
 #define __NR_pipe 42
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
 #define __NR_ftruncate 93
+#define __NR_stat 106
+#define __NR_fstat 108
 #define __NR_msgopen 200
 #define __NR_msgclose 201
 #define __NR_msgrcv 202
@@ -132,9 +150,12 @@ static void *syscalls[] = {
     [__NR_read] = sys_read,
     [__NR_write] = sys_write,
     [__NR_open] = sys_open,
+    [__NR_stat] = sys_stat,
+    [__NR_fstat] = sys_fstat,
     [__NR_close] = sys_close,
     [__NR_brk] = sys_brk,
     [__NR_sbrk] = sys_sbrk,
+    [__NR_getpid] = sys_getpid,
     [__NR_pipe] = sys_pipe,
     [__NR_mmap] = sys_mmap,
     [__NR_truncate] = sys_truncate,

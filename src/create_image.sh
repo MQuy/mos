@@ -7,6 +7,7 @@ hdiutil attach hdd.img -mountpoint /Volumes/$VOLUME_NAME
 mkdir "/Volumes/${VOLUME_NAME}/demo"
 cp sample.txt "/Volumes/${VOLUME_NAME}/demo/sample.txt"
 cp -R assets/fonts "/Volumes/${VOLUME_NAME}"
+cp -R assets/images "/Volumes/${VOLUME_NAME}"
 mkdir "/Volumes/${VOLUME_NAME}/bin"
 mkdir "/Volumes/${VOLUME_NAME}/dev"
 cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"

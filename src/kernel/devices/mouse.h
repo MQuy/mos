@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef struct mouse_device
+struct mouse_device
 {
   uint32_t x;
   uint32_t y;

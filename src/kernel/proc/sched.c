@@ -12,6 +12,7 @@ extern void do_switch(uint32_t addr_current_kernel_esp, uint32_t next_kernel_esp
 extern thread *current_thread;
 extern process *current_process;
 
+struct thread *idle_thread;
 struct plist_head terminated_list, waiting_list;
 struct plist_head kernel_ready_list, system_ready_list, app_ready_list;
 
@@ -46,6 +47,7 @@ thread *pick_next_thread_to_run()
     nt = pick_next_thread_from_list(&system_ready_list);
   if (!nt)
     nt = pick_next_thread_from_list(&app_ready_list);
+
   return nt;
 }
 
@@ -96,7 +98,8 @@ void update_thread(thread *thread, uint8_t state)
 
 void switch_thread(thread *nt)
 {
-  disable_interrupts();
+  if (current_thread == nt)
+    return;
 
   thread *pt = current_thread;
 
@@ -121,6 +124,8 @@ void schedule()
   thread *nt = pick_next_thread_to_run();
 
   if (!nt)
+  {
+    update_thread(current_thread, THREAD_RUNNING);
     do
     {
       enable_interrupts();
@@ -128,9 +133,10 @@ void schedule()
       disable_interrupts();
       nt = pick_next_thread_to_run();
     } while (!nt);
+  }
 
-  unlock_scheduler();
   switch_thread(nt);
+  unlock_scheduler();
 }
 
 void sleep(uint32_t delay)

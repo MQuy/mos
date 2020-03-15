@@ -772,3 +772,13 @@ double hashmap_collisions_variance(const struct hashmap *map)
   return total_variance / map->num_entries;
 }
 #endif
+
+size_t hashmap_hash_uint32(const void *key)
+{
+  return *(uint32_t *)key; 
+}
+
+int hashmap_compare_uint32(const void *a, const void *b)
+{
+  return *(int32_t *)a - *(int32_t *)b;
+}

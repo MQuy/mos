@@ -77,15 +77,15 @@ int32_t page_fault(interrupt_registers *regs)
 											 "mov %%eax, %0			\n"
 											 : "=r"(faultAddr));
 
-	DebugPrintf("\nPage Fault at 0x%x", faultAddr);
-	DebugPrintf("\nReason: %s, %s, %s%s%s",
-							error_code & 0b1 ? "protection violation" : "non-present page",
-							error_code & 0b10 ? "write" : "read",
-							error_code & 0b100 ? "user mode" : "supervisor mode",
-							error_code & 0b1000 ? ", reserved" : "",
-							error_code & 0b10000 ? ", instruction fetch" : "");
-	for (;;)
-		;
+	// DebugPrintf("\nPage Fault at 0x%x", faultAddr);
+	// DebugPrintf("\nReason: %s, %s, %s%s%s",
+	// 						error_code & 0b1 ? "protection violation" : "non-present page",
+	// 						error_code & 0b10 ? "write" : "read",
+	// 						error_code & 0b100 ? "user mode" : "supervisor mode",
+	// 						error_code & 0b1000 ? ", reserved" : "",
+	// 						error_code & 0b10000 ? ", instruction fetch" : "");
+	// for (;;)
+	// 	;
 }
 
 int32_t fpu_fault(interrupt_registers *regs)

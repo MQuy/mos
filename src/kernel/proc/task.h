@@ -8,6 +8,7 @@
 #include <kernel/utils/plist.h>
 #include <kernel/locking/semaphore.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/proc/elf.h>
 
 #define MAX_FD 256
 #define PROCESS_TRAPPED_PAGE_FAULT 0xFFFFFFFF
@@ -32,13 +33,15 @@ typedef enum thread_state
   THREAD_RUNNING,
   THREAD_WAITING,
   THREAD_TERMINATED,
+  THREAD_IDLE,
 } thread_state;
 
 typedef enum thread_policy
 {
   THREAD_KERNEL_POLICY,
   THREAD_SYSTEM_POLICY,
-  THREAD_APP_POLICY
+  THREAD_APP_POLICY,
+  THREAD_IDLE_POLICY,
 } thread_policy;
 
 typedef struct files_struct
@@ -58,7 +61,7 @@ typedef struct trap_frame
   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
   uint32_t eip;                                    // eip is saved on stack by the caller's "CALL" instruction
   uint32_t return_address;
-  uint32_t parameter1, parameter2;
+  uint32_t parameter1, parameter2, parameter3;
 } trap_frame;
 
 typedef struct vm_area_struct
@@ -78,7 +81,7 @@ typedef struct mm_struct
   uint32_t free_area_cache;
   uint32_t start_code, end_code, start_data, end_data;
   // NOTE: MQ 2020-01-30
-  // end_brk is marked as the end of heap section which we can expand later
+  // end_brk is marked as the end of heap section, brk is end but in range start_brk<->end_brk and expand later
   // better way is only mapping start_brk->brk and handling page fault brk->end_brk
   uint32_t start_brk, brk, end_brk, start_stack;
 } mm_struct;
@@ -121,13 +124,14 @@ void task_init();
 void sched_init();
 
 thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, int priority);
-thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority);
+thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(Elf32_Layout *));
 void update_thread(thread *thread, uint8_t state);
 process *create_process(process *parent, const char *name, pdirectory *pdir);
-void process_load(const char *pname, const char *path);
+void process_load(const char *pname, const char *path, void *setup(Elf32_Layout *));
 process *process_fork(process *parent);
 void queue_thread(thread *t);
 void switch_thread(thread *nt);
 void schedule();
+process *get_process(pid_t pid);
 
 #endif

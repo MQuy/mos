@@ -3,6 +3,7 @@
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/utils/printf.h>
+#include <kernel/system/uiserver.h>
 #include "kybrd.h"
 
 //============================================================================
@@ -379,6 +380,7 @@ int32_t i86_kybrd_irq(interrupt_registers *registers)
 					kkybrd_set_leds(_numlock, _capslock, _scrolllock);
 					break;
 				}
+				enqueue_keyboard_event(key);
 			}
 		}
 

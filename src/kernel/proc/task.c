@@ -8,9 +8,10 @@
 #include <kernel/proc/elf.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/system/time.h>
+#include <kernel/utils/hashmap.h>
 #include "task.h"
 
-extern void enter_usermode(uint32_t eip, uint32_t esp);
+extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
 extern void return_usermode(uint32_t uregs);
 extern void irq_schedule_handler(interrupt_registers *regs);
 extern void thread_page_fault(interrupt_registers *regs);
@@ -19,6 +20,7 @@ volatile thread *current_thread;
 volatile process *current_process;
 static uint32_t next_pid = 0;
 static uint32_t next_tid = 0;
+struct hashmap mprocess;
 
 files_struct *clone_file_descriptor_table(process *parent)
 {
@@ -126,6 +128,8 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
   INIT_LIST_HEAD(&p->children);
   INIT_LIST_HEAD(&p->threads);
 
+  hashmap_put(&mprocess, &p->pid, p);
+
   enable_interrupts();
 
   return p;
@@ -142,14 +146,17 @@ void setup_swapper_process()
 void task_init(void *func)
 {
   sched_init();
+  hashmap_init(&mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
   setup_swapper_process();
-  register_interrupt_handler(IRQ0, irq_schedule_handler);
+  // register_interrupt_handler(IRQ0, irq_schedule_handler);
   register_interrupt_handler(14, thread_page_fault);
 
   process *init = create_process(current_process, "init", current_process->pdir);
-  thread *nt = create_kernel_thread(init, func, THREAD_READY, 0);
+  thread *nt = create_kernel_thread(init, func, THREAD_WAITING, 0);
 
-  switch_thread(nt);
+  update_thread(current_thread, THREAD_TERMINATED);
+  update_thread(nt, THREAD_READY);
+  schedule();
 }
 
 void user_thread_entry(thread *t)
@@ -158,16 +165,18 @@ void user_thread_entry(thread *t)
   return_usermode(&t->uregs);
 }
 
-void user_thread_elf_entry(thread *t, const char *path)
+void user_thread_elf_entry(thread *t, const char *path, void *setup(Elf32_Layout *))
 {
   char *buf = vfs_read(path);
   Elf32_Layout *elf_layout = elf_load(buf);
   t->user_stack = elf_layout->stack;
   tss_set_stack(0x10, t->kernel_stack);
-  enter_usermode(elf_layout->stack, elf_layout->entry);
+  if (setup)
+    setup(&elf_layout->stack);
+  enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
 }
 
-thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority)
+thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(Elf32_Layout *))
 {
   disable_interrupts();
 
@@ -183,6 +192,7 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
   trap_frame *frame = (trap_frame *)t->esp;
   memset(frame, 0, sizeof(trap_frame));
 
+  frame->parameter3 = (uint32_t)setup;
   frame->parameter2 = (uint32_t)path;
   frame->parameter1 = (uint32_t)t;
   frame->return_address = PROCESS_TRAPPED_PAGE_FAULT;
@@ -204,10 +214,10 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
   return t;
 }
 
-void process_load(const char *pname, const char *path)
+void process_load(const char *pname, const char *path, void *setup(Elf32_Layout *))
 {
   process *p = create_process(current_process, pname, current_process->pdir);
-  thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, 0);
+  thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, 0, setup);
   queue_thread(t);
 }
 
@@ -270,4 +280,9 @@ process *process_fork(process *parent)
   enable_interrupts();
 
   return p;
+}
+
+process *get_process(pid_t pid)
+{
+  return hashmap_get(&mprocess, &pid);
 }
