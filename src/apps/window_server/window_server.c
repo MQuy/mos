@@ -22,10 +22,11 @@ int main(struct framebuffer fb)
     }
     else
     {
-      // TODO: delegate events to active window
       struct msgui_event *event = buf->data;
       if (event->type == MSGUI_MOUSE)
-        mouse_change(event);
+        handle_mouse_event(event);
+      else if (event->type == MSGUI_KEYBOARD)
+        handle_keyboard_event(event);
       draw_layout();
     }
   }

@@ -115,6 +115,20 @@ char *strcpy(char *s1, const char *s2)
 	return s1_p;
 }
 
+char *strncpy(char *dest, const char *src, size_t count)
+{
+	char *tmp = dest;
+
+	while (count)
+	{
+		if ((*tmp = *src) != 0)
+			src++;
+		tmp++;
+		count--;
+	}
+	return dest;
+}
+
 //! returns length of string
 size_t strlen(const char *str)
 {

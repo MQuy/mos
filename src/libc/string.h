@@ -6,7 +6,9 @@
 
 void itoa(unsigned i, unsigned base, char *buf);
 void itoa_s(long long i, unsigned base, char *buf);
+int atoi(char *buf);
 char *strcpy(char *s1, const char *s2);
+char *strncpy(char *dest, const char *src, size_t count);
 size_t strlen(const char *str);
 int strcmp(const char *str1, const char *str2);
 char *strdup(const char *src);

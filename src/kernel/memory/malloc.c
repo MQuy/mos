@@ -97,7 +97,7 @@ void *kmalloc(size_t size)
 void *kcalloc(size_t n, size_t size)
 {
   void *block = kmalloc(n * size);
-  if (!block)
+  if (block)
     memset(block, 0, n * size);
   return block;
 }

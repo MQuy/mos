@@ -16,14 +16,15 @@ enum ui_event_type
 struct ui_event
 {
   enum ui_event_type event_type;
+  int32_t keychar;
+  bool shift, ctrl;
+  int32_t mouse_x, mouse_y;
   struct list_head listeners;
 };
 
 struct ui_queue
 {
-  enum ui_event_type event_type;
-  int32_t keychar;
-  bool shift, ctrl;
+  struct ui_event *event;
   struct ui_queue *next;
 };
 

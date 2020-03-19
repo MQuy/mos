@@ -73,6 +73,26 @@ void itoa_s(long long i, unsigned base, char *buf)
   itoa(i, base, buf);
 }
 
+int atoi(char *s)
+{
+  int sign = 1;
+  if (*s == '-')
+  {
+    sign = -1;
+    s++;
+  }
+  else if (*s == '+')
+    s++;
+
+  int res = 0;
+  while (*s && '0' <= *s && *s <= '9')
+  {
+    res = 10 * res + (*s - '0');
+    s++;
+  }
+  return res * sign;
+}
+
 int strcmp(const char *cs, const char *ct)
 {
   unsigned char c1, c2;
@@ -113,6 +133,20 @@ char *strcpy(char *s1, const char *s2)
   while (*s1++ = *s2++)
     ;
   return s1_p;
+}
+
+char *strncpy(char *dest, const char *src, size_t count)
+{
+  char *tmp = dest;
+
+  while (count)
+  {
+    if ((*tmp = *src) != 0)
+      src++;
+    tmp++;
+    count--;
+  }
+  return dest;
 }
 
 //! returns length of string

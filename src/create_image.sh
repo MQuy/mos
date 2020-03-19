@@ -4,13 +4,18 @@ DISK_NAME="$(hdiutil attach -nomount hdd.img)"
 $(brew --prefix e2fsprogs)/sbin/mkfs.ext2 $DISK_NAME
 hdiutil detach $DISK_NAME
 hdiutil attach hdd.img -mountpoint /Volumes/$VOLUME_NAME
-mkdir "/Volumes/${VOLUME_NAME}/demo"
-cp sample.txt "/Volumes/${VOLUME_NAME}/demo/sample.txt"
-cp -R assets/fonts "/Volumes/${VOLUME_NAME}"
-cp -R assets/images "/Volumes/${VOLUME_NAME}"
-mkdir "/Volumes/${VOLUME_NAME}/bin"
 mkdir "/Volumes/${VOLUME_NAME}/dev"
+
+mkdir "/Volumes/${VOLUME_NAME}/usr"
+mkdir "/Volumes/${VOLUME_NAME}/usr/share"
+cp -R assets/fonts "/Volumes/${VOLUME_NAME}/usr/share"
+cp -R assets/images "/Volumes/${VOLUME_NAME}/usr/share"
+
+mkdir "/Volumes/${VOLUME_NAME}/bin"
 cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
+
+mkdir "/Volumes/${VOLUME_NAME}/etc"
+cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"
 hdiutil detach $DISK_NAME
 
 DISK_NAME="$(hdiutil attach -nomount hdd.img)"

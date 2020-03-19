@@ -118,7 +118,7 @@ void *malloc(size_t size)
 void *calloc(size_t n, size_t size)
 {
   void *block = malloc(n * size);
-  if (!block)
+  if (block)
     memset(block, 0, n * size);
   return block;
 }

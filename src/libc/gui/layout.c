@@ -26,7 +26,6 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
   win->graphic.y = y;
   win->graphic.width = width;
   win->graphic.height = height;
-  win->graphic.bg_color = 0;
 
   INIT_LIST_HEAD(&win->children);
   INIT_LIST_HEAD(&win->events);

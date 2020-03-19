@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <include/list.h>
 #include <include/msgui.h>
+#include <libc/hashtable/hashmap.h>
 #include "framebuffer.h"
 #include "event.h"
 
@@ -12,13 +13,22 @@ struct graphic
   char *buf;
   int32_t x, y;
   uint32_t width, height;
-  uint32_t bg_color;
 };
 
 struct ui_mouse
 {
   struct graphic graphic;
   int32_t state;
+};
+
+struct icon
+{
+  char *label;
+  char *exec_path;
+  char *icon_path;
+  struct graphic icon_graphic;
+  struct graphic box_graphic;
+  bool active;
 };
 
 struct desktop
@@ -28,6 +38,7 @@ struct desktop
   struct framebuffer *fb;
   struct window *active_window;
   struct list_head children;
+  struct hashmap icons;
 };
 
 struct window

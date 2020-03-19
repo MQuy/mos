@@ -10,6 +10,7 @@ void itoa_s(long long i, unsigned base, char *buf);
 char *strcpy(char *s1, const char *s2);
 size_t strlen(const char *str);
 int strcmp(const char *str1, const char *str2);
+char *strncpy(char *dest, const char *src, size_t count);
 char *strdup(const char *src);
 char *strchr(const char *s, int c);
 char *strrchr(const char *s, int c);

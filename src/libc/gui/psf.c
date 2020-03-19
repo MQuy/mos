@@ -4,8 +4,6 @@
 #include <kernel/memory/vmm.h>
 #include "psf.h"
 
-#define PSF_MAGIC 0x864ab572
-
 static uint16_t *unicode;
 static char *psf_start;
 
@@ -25,7 +23,7 @@ void psf_init(char *buff, size_t size)
   if (font->flags & PSF_HAS_UNICODE_TABLE && s < psf_end)
   {
     /* allocate memory for translation table */
-    unicode = kmalloc(USHRT_MAX * sizeof(uint16_t));
+    unicode = malloc(USHRT_MAX * sizeof(uint16_t));
     memset(unicode, 0, USHRT_MAX * sizeof(uint16_t));
     // decode translation table
     while (s < psf_end && glyph < USHRT_MAX)
