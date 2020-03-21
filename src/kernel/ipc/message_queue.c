@@ -22,7 +22,7 @@ int32_t mq_open(const char *name, int32_t flags)
   INIT_LIST_HEAD(&mq->receivers);
   INIT_LIST_HEAD(&mq->messages);
 
-  if (!hashmap_put(&mq_map, name, mq))
+  if (!hashmap_put(&mq_map, strdup(name), mq))
     return -EINVAL;
 
   return 0;
@@ -118,11 +118,9 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   }
 
   if (mtype >= 0)
-  {
     // NOTE: MQ 2020-01-06 Negative thread id number is reserved for ack channel
     // waiting to receive an ack from receiver
     return mq_receive(name, NULL, -current_thread->tid, 0);
-  }
   else
     return 0;
 }
@@ -163,7 +161,7 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
     update_thread(current_thread, THREAD_WAITING);
     schedule();
 
-    if (!mqr->buf)
+    if (!mqr->buf && mtype >= 0)
       return -EINVAL;
 
     buf = mqr->buf;
@@ -171,9 +169,13 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
     list_del(&mqr->sibling);
   }
 
-  // send ack signal to sender
-  mq_send(name, NULL, -sender_id, 0);
-  memcpy(user_buf, buf, msize);
+  if (sender_id != current_thread->tid)
+    // send ack signal to sender
+    mq_send(name, NULL, -sender_id, 0);
+  if (mtype >= 0)
+    memcpy(user_buf, buf, msize);
 
   return 0;
 }
+
+// p (*(struct msgui_window *)(*(struct msgui *)0xd0200574)->data)->sender

@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#define WINDOW_NAME_LENGTH 6
+// NOTE: MQ 2020-03-21 window name's length is 6, plus the null-terminated '\0'
+#define WINDOW_NAME_LENGTH 7
 #define WINDOW_SERVER_SHM "/dev/shm/window_server"
 
 #define MOUSE_LEFT_CLICK 0x01
@@ -28,14 +29,15 @@ struct msgui_window
 {
   int32_t x, y;
   uint32_t width, height;
-  char *parent;
-  char *sender;
+  char parent[WINDOW_NAME_LENGTH];
+  char sender[WINDOW_NAME_LENGTH];
 };
 
 enum msgui_type
 {
   MSGUI_WINDOW,
   MSGUI_EVENT,
+  MSGUI_RENDER,
 };
 
 struct msgui

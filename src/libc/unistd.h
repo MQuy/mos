@@ -15,6 +15,7 @@
 #define __NR_sbrk 18
 #define __NR_getpid 20
 #define __NR_pipe 42
+#define __NR_posix_spawn 49
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -204,6 +205,12 @@ _syscall0(getpid);
 static inline int32_t getpid()
 {
   return syscall_getpid();
+}
+
+_syscall1(posix_spawn, char *);
+static inline int32_t posix_spawn(char *path)
+{
+  return syscall_posix_spawn(path);
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);

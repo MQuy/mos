@@ -11,8 +11,8 @@
 // MQ 2019-08-08
 // Explain how list_head works https://kernelnewbies.org/FAQ/LinkedLists
 
-#define LIST_POISON1 ((void *)0x00100100)
-#define LIST_POISON2 ((void *)0x00200200)
+#define LIST_POISON1 NULL
+#define LIST_POISON2 NULL
 
 typedef struct list_head
 {
@@ -41,7 +41,7 @@ static inline bool __list_add_valid(struct list_head *new,
 }
 static inline bool __list_del_entry_valid(struct list_head *entry)
 {
-  return true;
+  return entry->next != LIST_POISON1 && entry->prev != LIST_POISON2;
 }
 
 /*

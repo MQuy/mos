@@ -123,6 +123,11 @@ int32_t sys_getpid()
   return current_process->pid;
 }
 
+int32_t sys_posix_spawn(char *path)
+{
+  process_load(path, path, NULL);
+}
+
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -133,6 +138,7 @@ int32_t sys_getpid()
 #define __NR_sbrk 18
 #define __NR_getpid 20
 #define __NR_pipe 42
+#define __NR_posix_spawn 49
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -157,6 +163,7 @@ static void *syscalls[] = {
     [__NR_sbrk] = sys_sbrk,
     [__NR_getpid] = sys_getpid,
     [__NR_pipe] = sys_pipe,
+    [__NR_posix_spawn] = sys_posix_spawn,
     [__NR_mmap] = sys_mmap,
     [__NR_truncate] = sys_truncate,
     [__NR_ftruncate] = sys_ftruncate,

@@ -43,7 +43,7 @@ struct desktop
 
 struct window
 {
-  char *name;
+  char name[WINDOW_NAME_LENGTH];
   struct graphic graphic;
   struct desktop *parent;
   struct widget *active_widget;
@@ -69,5 +69,6 @@ void set_pixel(char *pixel_dest, uint8_t red, uint8_t green, uint8_t blue, uint8
 void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height);
 void gui_create_label(struct window *parent, struct ui_label *label, int32_t x, int32_t y, uint32_t width, uint32_t height, char *text);
 void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, int32_t y, uint32_t width, uint32_t height, char *content);
+void enter_event_loop(struct window *win);
 
 #endif

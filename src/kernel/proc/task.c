@@ -193,7 +193,7 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
   memset(frame, 0, sizeof(trap_frame));
 
   frame->parameter3 = (uint32_t)setup;
-  frame->parameter2 = (uint32_t)path;
+  frame->parameter2 = (uint32_t)strdup(path);
   frame->parameter1 = (uint32_t)t;
   frame->return_address = PROCESS_TRAPPED_PAGE_FAULT;
   frame->eip = (uint32_t)user_thread_elf_entry;

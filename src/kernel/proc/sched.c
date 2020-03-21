@@ -160,29 +160,29 @@ int32_t irq_schedule_handler(interrupt_registers *regs)
 {
   lock_scheduler();
 
-  bool is_schedulable = false;
-  uint32_t time = get_milliseconds_from_boot();
-  current_thread->time_slice++;
+  // bool is_schedulable = false;
+  // uint32_t time = get_milliseconds_from_boot();
+  // current_thread->time_slice++;
 
-  thread *t = NULL;
-  plist_for_each_entry(t, &waiting_list, sched_sibling)
-  {
-    if (t->expiry_when >= time)
-    {
-      update_thread(t, THREAD_READY);
-      is_schedulable = true;
-    }
-  }
+  // thread *t = NULL;
+  // plist_for_each_entry(t, &waiting_list, sched_sibling)
+  // {
+  //   if (t->expiry_when >= time)
+  //   {
+  //     update_thread(t, THREAD_READY);
+  //     is_schedulable = true;
+  //   }
+  // }
 
-  if (current_thread->time_slice >= SLICE_THRESHOLD && current_thread->sched_sibling.prio == THREAD_APP_POLICY)
-  {
-    update_thread(current_thread, THREAD_READY);
-    is_schedulable = true;
-  }
+  // if (current_thread->time_slice >= SLICE_THRESHOLD && current_thread->sched_sibling.prio == THREAD_APP_POLICY)
+  // {
+  //   update_thread(current_thread, THREAD_READY);
+  //   is_schedulable = true;
+  // }
 
-  // NOTE: MQ 2019-10-15 If counter is 1, it means that there is not running scheduler
-  if (is_schedulable && scheduler_lock_counter == 1)
-    schedule();
+  // // NOTE: MQ 2019-10-15 If counter is 1, it means that there is not running scheduler
+  // if (is_schedulable && scheduler_lock_counter == 1)
+  //   schedule();
 
   unlock_scheduler();
 

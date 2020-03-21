@@ -8,7 +8,6 @@ typedef __kernel_dev_t dev_t;
 
 typedef unsigned short umode_t;
 typedef long long loff_t;
-typedef long intptr_t;
 typedef long off_t;
 typedef unsigned long long ino_t;
 typedef unsigned short mode_t;

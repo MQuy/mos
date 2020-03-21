@@ -14,7 +14,7 @@ uint32_t nwin = 1;
 
 char *get_window_name()
 {
-  char *wd = calloc(1, WINDOW_NAME_LENGTH + 1);
+  char *wd = calloc(1, WINDOW_NAME_LENGTH);
   memcpy(wd, "wd0000", WINDOW_NAME_LENGTH);
   for (int32_t i = 5, inum = nwin++; i > 1; --i, inum /= 10)
     wd[i] = (inum % 10) + '0';
@@ -57,17 +57,29 @@ struct window *create_window(struct msgui_window *msgwin)
   ftruncate(fd, screen_size);
 
   struct window *win = malloc(sizeof(struct window));
-  win->name = window_name;
+  memcpy(win->name, window_name, WINDOW_NAME_LENGTH);
   win->graphic.buf = mmap(NULL, screen_size, PROT_WRITE, MAP_SHARED, fd);
   win->graphic.x = msgwin->x;
   win->graphic.y = msgwin->y;
   win->graphic.width = msgwin->width;
   win->graphic.height = msgwin->height;
+  for (uint32_t i = 0; i < msgwin->height; ++i)
+  {
+    char *ibuf = win->graphic.buf + i * msgwin->height * 4;
+    for (uint32_t j = 0; j < msgwin->width; ++j)
+    {
+      ibuf[0] = 0xFF;
+      ibuf[1] = 0xFF;
+      ibuf[2] = 0xFF;
+      ibuf[3] = 0xFF;
+      ibuf += 4;
+    }
+  }
 
   INIT_LIST_HEAD(&win->children);
   INIT_LIST_HEAD(&win->events);
 
-  if (msgwin->parent)
+  if (msgwin->parent && strlen(msgwin->parent))
   {
     struct window *parent = find_window_in_root(msgwin->parent);
     list_add_tail(&win->sibling, &parent->children);
@@ -290,6 +302,7 @@ void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
   }
 }
 
+// TODO: MQ 2020-03-21 Improve render speed via dirty rects
 void draw_layout()
 {
   char *buf = malloc(desktop->fb->pitch * desktop->fb->height);
@@ -386,9 +399,7 @@ void handle_mouse_event(struct msgui_event *event)
       if (icon)
       {
         if (icon->active)
-        {
-          // TODO: Open app
-        }
+          posix_spawn(icon->exec_path);
         else
           icon->active = true;
       }
