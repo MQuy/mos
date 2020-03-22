@@ -2,34 +2,6 @@
 #include <libc/stdlib.h>
 #include "string.h"
 
-//! copies count bytes from src to dest
-void *memcpy(void *dest, const void *src, size_t len)
-{
-  char *d = dest;
-  const char *s = src;
-  while (len--)
-    *d++ = *s++;
-  return dest;
-}
-
-//! sets count bytes of dest to val
-void *memset(void *dest, char val, size_t len)
-{
-  unsigned char *ptr = dest;
-  while (len-- > 0)
-    *ptr++ = val;
-  return dest;
-}
-
-//! sets count bytes of dest to val
-unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count)
-{
-  unsigned short *temp = (unsigned short *)dest;
-  for (; count != 0; count--)
-    *temp++ = val;
-  return dest;
-}
-
 static char tbuf[32];
 static char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
