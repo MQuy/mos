@@ -46,18 +46,21 @@ void mouse_calculate_position()
   mouse_device_info.y = move_y;
 
   mouse_device_info.state = 0;
-  if (state & MOUSE_LEFT_CLICK)
-  {
-    mouse_device_info.state |= MOUSE_LEFT_CLICK;
-  }
-  if (state & MOUSE_RIGHT_CLICK)
-  {
-    mouse_device_info.state |= MOUSE_RIGHT_CLICK;
-  }
-  if (state & MOUSE_MIDDLE_CLICK)
-  {
-    mouse_device_info.state |= MOUSE_MIDDLE_CLICK;
-  }
+  // FIXME: MQ 2020-03-22 on Mac 10.15.3, qemu 4.2.0
+  // after left/right clicking, next mouse events, first mouse packet state still has left/right state
+  // workaround via using left/right command to simuate left/right click
+  // if (state & MOUSE_LEFT_CLICK)
+  // {
+  //   mouse_device_info.state |= MOUSE_LEFT_CLICK;
+  // }
+  // if (state & MOUSE_RIGHT_CLICK)
+  // {
+  //   mouse_device_info.state |= MOUSE_RIGHT_CLICK;
+  // }
+  // if (state & MOUSE_MIDDLE_CLICK)
+  // {
+  //   mouse_device_info.state |= MOUSE_MIDDLE_CLICK;
+  // }
 }
 
 int32_t mouse_handler(interrupt_registers *regs)
@@ -133,31 +136,38 @@ uint8_t mouse_read(void)
 
 void mouse_init()
 {
+  // empty input buffer
+  while ((inportb(MOUSE_STATUS) & 0x01))
+  {
+    inportb(MOUSE_PORT);
+  }
+
   uint8_t status = 0;
 
   mouse_device_info.x = mouse_device_info.y = 0;
   mouse_device_info.state = 0;
 
+  // activate mouse device
   mouse_wait(1);
   outportb(MOUSE_STATUS, 0xA8);
 
+  // get commando-byte, set bit 1 (enables IRQ12), send back
   mouse_wait(1);
   outportb(MOUSE_STATUS, 0x20);
 
   mouse_wait(0);
-  status = (inportb(MOUSE_PORT) | 2);
+  status = (inportb(MOUSE_PORT) | 3);
 
   mouse_wait(1);
   outportb(MOUSE_STATUS, 0x60);
-
   mouse_wait(1);
   outportb(MOUSE_PORT, status);
 
-  //set sample rate
+  // set sample rate
   mouse_write(0xF6);
   mouse_read();
 
-  //start sending packets
+  // start sending packets
   mouse_write(0xF4);
   mouse_read();
 

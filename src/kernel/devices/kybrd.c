@@ -1,4 +1,5 @@
 #include <include/ctype.h>
+#include <include/msgui.h>
 #include <kernel/utils/string.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
@@ -215,6 +216,12 @@ static int _kkybrd_scancode_std[] = {
 		KEY_HOME,					//0x47
 		KEY_KP_8,					//0x48	//keypad up arrow
 		KEY_PAGEUP,				//0x49
+		KEY_UNKNOWN,			//0x4a
+		KEY_UNKNOWN,			//0x4b
+		KEY_UNKNOWN,			//0x4c
+		KEY_UNKNOWN,			//0x4d
+		KEY_UNKNOWN,			//0x4e
+		KEY_UNKNOWN,			//0x4f
 		KEY_KP_2,					//0x50	//keypad down arrow
 		KEY_KP_3,					//0x51	//keypad page down
 		KEY_KP_0,					//0x52	//keypad insert key
@@ -223,7 +230,11 @@ static int _kkybrd_scancode_std[] = {
 		KEY_UNKNOWN,			//0x55
 		KEY_UNKNOWN,			//0x56
 		KEY_F11,					//0x57
-		KEY_F12						//0x58
+		KEY_F12,					//0x58
+		KEY_UNKNOWN,			//0x59
+		KEY_UNKNOWN,			//0x5a
+		KEY_LCOMMAND,			//0x5b
+		KEY_RCOMMAND,			//0x5c
 };
 
 //! invalid scan code. Used to indicate the last scan code is not to be reused
@@ -380,7 +391,20 @@ int32_t i86_kybrd_irq(interrupt_registers *registers)
 					kkybrd_set_leds(_numlock, _capslock, _scrolllock);
 					break;
 				}
-				enqueue_keyboard_event(key);
+				// FIXME: MQ 2020-03-22 on Mac 10.15.3, qemu 4.2.0
+				// after left/right clicking, next mouse events, first mouse packet state still has left/right state
+				// workaround via using left/right command to simuate left/right click
+				if (key == KEY_LCOMMAND || key == KEY_RCOMMAND)
+				{
+					struct mouse_device *mouse = kcalloc(1, sizeof(struct mouse_device));
+					mouse->x = 0;
+					mouse->y = 0;
+					mouse->state = key == KEY_LCOMMAND ? MOUSE_LEFT_CLICK : MOUSE_RIGHT_CLICK;
+					enqueue_mouse_event(mouse);
+					kfree(mouse);
+				}
+				else
+					enqueue_keyboard_event(key);
 			}
 		}
 
