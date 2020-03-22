@@ -266,9 +266,9 @@ void draw_desktop_icons(char *buf)
 
     uint8_t label_length = strlen(icon->label);
     // TODO Implement multi lines label
-    if (label_length <= 20)
+    if (label_length <= 10)
     {
-      uint8_t padding = ((20 - label_length) / 2) * 16;
+      uint8_t padding = ((10 - label_length) / 2) * 8;
       psf_puts(icon->label, 4 + padding, 58, 0xffffffff, 0x00000000, box_graphic->buf, box_graphic->width * 4);
     }
     draw_alpha_graphic(

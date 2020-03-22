@@ -145,11 +145,12 @@ void setup_swapper_process()
 
 void task_init(void *func)
 {
-  sched_init();
   hashmap_init(&mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
-  setup_swapper_process();
+  sched_init();
   // register_interrupt_handler(IRQ0, irq_schedule_handler);
   register_interrupt_handler(14, thread_page_fault);
+
+  setup_swapper_process();
 
   process *init = create_process(current_process, "init", current_process->pdir);
   thread *nt = create_kernel_thread(init, func, THREAD_WAITING, 0);

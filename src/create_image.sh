@@ -18,10 +18,13 @@ cd apps/window_server && make clean && make
 cd ../..
 cd apps/terminal && make clean && make
 cd ../..
+cd apps/calculator && make clean && make
+cd ../..
 
 mkdir "/Volumes/${VOLUME_NAME}/bin"
 cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
 cp apps/terminal/terminal "/Volumes/${VOLUME_NAME}/bin"
+cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
 
 mkdir "/Volumes/${VOLUME_NAME}/etc"
 cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"

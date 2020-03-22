@@ -63,20 +63,3 @@ void enter_event_loop(struct window *win)
     // TODO MQ 2020-03-21 Add message listerns for ui event
   };
 }
-
-void set_pixel(char *pixel_dest, uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha_raw)
-{
-  uint8_t red_dest = pixel_dest[0];
-  uint8_t green_dest = pixel_dest[1];
-  uint8_t blue_dest = pixel_dest[2];
-  uint8_t alpha_raw_dest = pixel_dest[3];
-
-  float alpha = alpha_raw / (float)255;
-  float alpha_dest = alpha_raw_dest / (float)255;
-
-  float adj = (1 - alpha) * alpha_dest;
-  pixel_dest[0] = red * alpha + adj * red_dest;
-  pixel_dest[1] = green * alpha + adj * green_dest;
-  pixel_dest[2] = blue * alpha + adj * blue_dest;
-  pixel_dest[3] = (alpha + adj) * 255;
-}

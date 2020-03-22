@@ -121,9 +121,7 @@ void psf_puts(
     uint32_t cx, uint32_t cy,
     uint32_t fg, uint32_t bg, char *fb, uint32_t scanline)
 {
+  psf_t *font = (psf_t *)psf_start;
   for (uint32_t i = 0, length = strlen(s); i < length; i++)
-  {
-    psf_t *font = (psf_t *)psf_start;
     psf_putchar(s[i], cx + i * font->width, cy, fg, bg, fb, scanline);
-  }
 }
