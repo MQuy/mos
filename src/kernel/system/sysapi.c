@@ -125,7 +125,8 @@ int32_t sys_getpid()
 
 int32_t sys_posix_spawn(char *path)
 {
-  process_load(path, path, NULL);
+  int top = get_top_priority_from_list(THREAD_READY, THREAD_SYSTEM_POLICY);
+  process_load(path, path, top - 1, NULL);
 }
 
 #define __NR_exit 1

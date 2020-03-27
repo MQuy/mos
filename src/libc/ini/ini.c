@@ -279,7 +279,7 @@ int ini_parse(const char *filename, ini_handler handler, void *user)
 {
     int error;
 
-    int32_t fd = open(filename, NULL, NULL);
+    int32_t fd = open(filename, 0, 0);
     if (!fd)
         return -1;
     error = ini_parse_file(fd, handler, user);
@@ -317,11 +317,7 @@ static char *ini_reader_string(char *str, int num, void *stream)
 }
 
 /* See documentation in header file. */
-int ini_parse_string(const char *string, ini_handler handler, void *user)
+int ini_parse_string(char *string, ini_handler handler, void *user)
 {
-    ini_parse_string_ctx ctx;
-
-    ctx.ptr = string;
-    ctx.num_left = strlen(string);
-    return ini_parse_stream(&ctx, handler, user);
+    return ini_parse_stream(string, handler, user);
 }

@@ -65,7 +65,7 @@ typedef int (*ini_handler)(void *user, const char *section,
    /* Same as ini_parse(), but takes a zero-terminated string with the INI data
 instead of a file. Useful for parsing INI data from a network socket or
 already in memory. */
-   int ini_parse_string(const char *string, ini_handler handler, void *user);
+   int ini_parse_string(char *string, ini_handler handler, void *user);
 
 /* Nonzero to allow multi-line value parsing, in the style of Python's
    configparser. If allowed, ini_parse() will call the handler with the same

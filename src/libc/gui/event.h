@@ -16,7 +16,7 @@ enum ui_event_type
 struct ui_event
 {
   enum ui_event_type event_type;
-  int32_t keychar;
+  int32_t key;
   bool shift, ctrl;
   int32_t mouse_x, mouse_y;
   struct list_head listeners;

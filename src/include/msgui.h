@@ -22,7 +22,7 @@ struct msgui_event
   enum msgui_event_type type;
   int32_t mouse_x, mouse_y;
   int32_t mouse_state;
-  int32_t keycode;
+  int32_t key;
 };
 
 struct msgui_window
@@ -33,11 +33,17 @@ struct msgui_window
   char sender[WINDOW_NAME_LENGTH];
 };
 
+struct msgui_focus
+{
+  char sender[WINDOW_NAME_LENGTH];
+};
+
 enum msgui_type
 {
   MSGUI_WINDOW,
   MSGUI_EVENT,
   MSGUI_RENDER,
+  MSGUI_FOCUS,
 };
 
 struct msgui

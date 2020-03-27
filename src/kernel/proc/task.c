@@ -215,10 +215,10 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
   return t;
 }
 
-void process_load(const char *pname, const char *path, void *setup(Elf32_Layout *))
+void process_load(const char *pname, const char *path, int priority, void *setup(Elf32_Layout *))
 {
   process *p = create_process(current_process, pname, current_process->pdir);
-  thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, 0, setup);
+  thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);
   queue_thread(t);
 }
 

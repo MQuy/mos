@@ -33,7 +33,6 @@ typedef enum thread_state
   THREAD_RUNNING,
   THREAD_WAITING,
   THREAD_TERMINATED,
-  THREAD_IDLE,
 } thread_state;
 
 typedef enum thread_policy
@@ -41,7 +40,6 @@ typedef enum thread_policy
   THREAD_KERNEL_POLICY,
   THREAD_SYSTEM_POLICY,
   THREAD_APP_POLICY,
-  THREAD_IDLE_POLICY,
 } thread_policy;
 
 typedef struct files_struct
@@ -127,11 +125,13 @@ thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, 
 thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(Elf32_Layout *));
 void update_thread(thread *thread, uint8_t state);
 process *create_process(process *parent, const char *name, pdirectory *pdir);
-void process_load(const char *pname, const char *path, void *setup(Elf32_Layout *));
+void process_load(const char *pname, const char *path, int priority, void *setup(Elf32_Layout *));
 process *process_fork(process *parent);
 void queue_thread(thread *t);
 void switch_thread(thread *nt);
 void schedule();
+struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy);
+int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
 process *get_process(pid_t pid);
 
 #endif

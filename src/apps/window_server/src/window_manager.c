@@ -63,18 +63,6 @@ struct window *create_window(struct msgui_window *msgwin)
   win->graphic.y = msgwin->y;
   win->graphic.width = msgwin->width;
   win->graphic.height = msgwin->height;
-  for (uint32_t i = 0; i < msgwin->height; ++i)
-  {
-    char *ibuf = win->graphic.buf + i * msgwin->height * 4;
-    for (uint32_t j = 0; j < msgwin->width; ++j)
-    {
-      ibuf[0] = 0xFF;
-      ibuf[1] = 0xFF;
-      ibuf[2] = 0xFF;
-      ibuf[3] = 0xFF;
-      ibuf += 4;
-    }
-  }
 
   INIT_LIST_HEAD(&win->children);
   INIT_LIST_HEAD(&win->events);
@@ -179,16 +167,6 @@ void init_dekstop_graphic()
   bmp_draw(graphic, buf, 0, 0);
 }
 
-void init_fonts()
-{
-  uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", NULL, NULL);
-  struct stat *stat = malloc(sizeof(struct stat));
-  fstat(fd, stat);
-  char *buf = malloc(stat->size);
-  read(fd, buf, stat->size);
-  psf_init(buf, stat->size);
-}
-
 void init_layout(struct framebuffer *fb)
 {
   desktop = malloc(sizeof(struct desktop));
@@ -201,6 +179,7 @@ void init_layout(struct framebuffer *fb)
   init_mouse();
 }
 
+// TODO: MQ 2020-03-24 Handle when win is not in buf's area
 void draw_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
   for (uint32_t i = 0; i < height; ++i)
@@ -216,6 +195,7 @@ void draw_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y,
   }
 }
 
+// TODO: MQ 2020-03-24 Handle when win is not in buf's area
 void draw_alpha_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
   for (uint32_t i = 0; i < height; ++i)
@@ -293,6 +273,7 @@ void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
   int32_t ax = px + win->graphic.x;
   int32_t ay = py + win->graphic.y;
 
+  // NOTE: MQ 2020-03-24 we don't support alpha channel for window due to slow render
   draw_graphic(buf, desktop->fb->pitch, win->graphic.buf, ax, ay, win->graphic.width, win->graphic.height);
 
   struct window *iter_w;
@@ -417,4 +398,17 @@ void handle_mouse_event(struct msgui_event *event)
 
 void handle_keyboard_event(struct msgui_event *event)
 {
+  if (desktop->active_window)
+  {
+    struct ui_event *ui_event = malloc(sizeof(ui_event));
+    ui_event->event_type = KEY_PRESS;
+    ui_event->key = event->key;
+    msgsnd(desktop->active_window->name, ui_event, 0, sizeof(struct ui_event));
+  }
+}
+
+void handle_focus_event(struct msgui_focus *focus)
+{
+  struct window *win = find_window_in_root(focus->sender);
+  desktop->active_window = win;
 }

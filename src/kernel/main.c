@@ -71,7 +71,7 @@ void kernel_init()
   // register system apis
   syscall_init();
 
-  process_load("window server", "/bin/window_server", setup_window_server);
+  process_load("window server", "/bin/window_server", 0, setup_window_server);
 
   // idle
   update_thread(current_thread, THREAD_WAITING);

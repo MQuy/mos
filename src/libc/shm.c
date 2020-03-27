@@ -1,5 +1,6 @@
-#include "unistd.h"
-#include "string.h"
+#include <libc/unistd.h>
+#include <libc/string.h>
+#include <libc/stdlib.h>
 
 static const char defaultdir[] = "/dev/shm/";
 

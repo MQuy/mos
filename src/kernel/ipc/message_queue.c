@@ -169,7 +169,7 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
     list_del(&mqr->sibling);
   }
 
-  if (sender_id != current_thread->tid)
+  if (sender_id != current_thread->tid && mtype >= 0)
     // send ack signal to sender
     mq_send(name, NULL, -sender_id, 0);
   if (mtype >= 0)
@@ -177,5 +177,3 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
 
   return 0;
 }
-
-// p (*(struct msgui_window *)(*(struct msgui *)0xd0200574)->data)->sender

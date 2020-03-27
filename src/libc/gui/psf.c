@@ -1,7 +1,7 @@
 #include <include/ctype.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
-#include <kernel/memory/vmm.h>
+#include <libc/stdlib.h>
+#include <libc/string.h>
+#include <libc/math.h>
 #include "psf.h"
 
 static uint16_t *unicode;

@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <include/fcntl.h>
 #include <include/ctype.h>
 
 #define __NR_exit 1

@@ -4,9 +4,44 @@
 #include <libc/stdlib.h>
 #include <libc/unistd.h>
 #include <libc/string.h>
+#include <libc/gui/psf.h>
 #include "layout.h"
 
-void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
+void init_fonts()
+{
+  uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", 0, 0);
+  struct stat *stat = malloc(sizeof(struct stat));
+  fstat(fd, stat);
+  char *buf = malloc(stat->size);
+  read(fd, buf, stat->size);
+  psf_init(buf, stat->size);
+}
+
+struct window *find_child_element_from_position(struct window *win, int32_t px, int32_t py, int32_t mx, int32_t my)
+{
+  struct window *iter_win;
+  list_for_each_entry(iter_win, &win->children, sibling)
+  {
+    int32_t cx = px + iter_win->graphic.x;
+    int32_t cy = py + iter_win->graphic.y;
+
+    if (cx < mx && mx < cx + iter_win->graphic.width &&
+        cy < my && my < cy + iter_win->graphic.height)
+      return iter_win;
+
+    struct window *w = find_child_element_from_position(iter_win, cx, cy, mx, my);
+    if (w)
+      return w;
+  }
+  return NULL;
+}
+
+void add_event_handler(struct window *win, char *event_name, EVENT_HANDLER handler)
+{
+  hashmap_put(&win->events, event_name, handler);
+}
+
+void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height, struct ui_style *style)
 {
   char *pid = calloc(1, WINDOW_NAME_LENGTH);
   itoa(getpid(), 10, pid);
@@ -21,16 +56,17 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
   if (parent)
     memcpy(msgwin->parent, parent->name, WINDOW_NAME_LENGTH);
   memcpy(msgwin->sender, pid, WINDOW_NAME_LENGTH);
-  msgopen(msgwin->sender, 0);
   msgsnd(WINDOW_SERVER_SHM, msgui_sender, 0, sizeof(struct msgui));
 
   win->graphic.x = x;
   win->graphic.y = y;
   win->graphic.width = width;
   win->graphic.height = height;
+  win->style = style;
+  win->add_event_listener = add_event_handler;
 
   INIT_LIST_HEAD(&win->children);
-  INIT_LIST_HEAD(&win->events);
+  hashmap_init(&win->events, hashmap_hash_string, hashmap_compare_string, 0);
 
   if (parent)
     list_add_tail(&win->sibling, &parent->children);
@@ -42,24 +78,63 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
   win->graphic.buf = mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd);
 }
 
-void gui_create_label(struct window *parent, struct ui_label *label, int32_t x, int32_t y, uint32_t width, uint32_t height, char *text)
+void gui_label_set_text(struct ui_label *label, char *text)
 {
-  gui_create_window(parent, &label->window, x, y, width, height);
+  memset(label->window.graphic.buf, 0, label->window.graphic.width * label->window.graphic.height * 4);
+
+  label->text = text;
+  uint32_t scanline = label->window.graphic.width * 4;
+  psf_puts(label->text, label->window.style->padding_left, label->window.style->padding_top, 0xffffffff, 0x00, label->window.graphic.buf, scanline);
+}
+
+void gui_create_label(struct window *parent, struct ui_label *label, int32_t x, int32_t y, uint32_t width, uint32_t height, char *text, struct ui_style *style)
+{
+  gui_create_window(parent, &label->window, x, y, width, height, style);
+  label->set_text = gui_label_set_text;
+  label->set_text(label, text);
 }
 
 void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, int32_t y, uint32_t width, uint32_t height, char *content)
 {
-  gui_create_window(parent, &input->window, x, y, width, height);
+  gui_create_window(parent, &input->window, x, y, width, height, NULL);
+}
+
+struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height)
+{
+  char *pid = calloc(1, WINDOW_NAME_LENGTH);
+  itoa(getpid(), 10, pid);
+  msgopen(pid, 0);
+
+  init_fonts();
+  struct window *win = malloc(sizeof(struct window));
+  gui_create_window(NULL, win, 336, 196, 128, 208, NULL);
+
+  msgopen(win->name, 0);
+  return win;
 }
 
 void enter_event_loop(struct window *win)
 {
   struct msgui *msgui = malloc(sizeof(struct msgui));
-  msgui->type = MSGUI_RENDER;
+  msgui->type = MSGUI_FOCUS;
+  struct msgui_focus *msgfocus = msgui->data;
+  memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
   msgsnd(WINDOW_SERVER_SHM, msgui, 0, sizeof(struct msgui));
 
   while (true)
   {
-    // TODO MQ 2020-03-21 Add message listerns for ui event
+    struct ui_event *ui_event = malloc(sizeof(ui_event));
+    msgrcv(win->name, ui_event, 0, sizeof(struct ui_event));
+
+    if (ui_event->event_type == MOUSE_CLICK)
+    {
+      struct window *active_win = find_child_element_from_position(win, win->graphic.x, win->graphic.y, ui_event->mouse_x, ui_event->mouse_y);
+      if (active_win)
+      {
+        EVENT_HANDLER handler = hashmap_get(&active_win->events, "click");
+        if (handler)
+          handler(active_win);
+      }
+    }
   };
 }

@@ -2,21 +2,23 @@
 
 mOS is the hobby operating system which is developed from scratch
 
+[![](http://i3.ytimg.com/vi/-I3gCIqPkuU/maxresdefault.jpg)](https://www.youtube.com/watch?v=-I3gCIqPkuU "mOS demo")
+
 ### Work-in-process features
 
 - [x] Filesystem
 - [x] Program loading
-- [ ] Shell
-- [ ] UI
+- [x] UI (window server <-> userspace apps)
+- [ ] Terminal
 - [ ] Networking
 - [ ] Sound
 - [ ] POSIX
+- [ ] Port GCC (the GNU Compiler Collection)
 - [ ] Symmetric multiprocessing
 
 🍀 Optional features
 
 - [ ] Setup 2-level paging in boot.asm
-- [ ] Keyboard
 - [ ] Dynamic linker
 
 ### Get started

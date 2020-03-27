@@ -1,3 +1,4 @@
+#include <include/limits.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/pic.h>
@@ -51,27 +52,39 @@ thread *pick_next_thread_to_run()
   return nt;
 }
 
-struct plist_head *get_list_from_thread(thread *t)
+struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy)
 {
-  if (t->state == THREAD_READY)
+  if (state == THREAD_READY)
   {
-    if (t->sched_sibling.prio == THREAD_KERNEL_POLICY)
+    if (policy == THREAD_KERNEL_POLICY)
       return &kernel_ready_list;
-    else if (t->sched_sibling.prio == THREAD_SYSTEM_POLICY)
+    else if (policy == THREAD_SYSTEM_POLICY)
       return &system_ready_list;
     else
       return &app_ready_list;
   }
-  else if (t->state == THREAD_WAITING)
+  else if (state == THREAD_WAITING)
     return &waiting_list;
-  else if (t->state == THREAD_TERMINATED)
+  else if (state == THREAD_TERMINATED)
     return &terminated_list;
   return NULL;
 }
 
+int get_top_priority_from_list(enum thread_state state, enum thread_policy policy)
+{
+  struct plist_head *h = get_list_from_thread(state, policy);
+
+  if (plist_head_empty(h))
+    return INT_MAX;
+
+  struct plist_node *node = plist_first(h);
+  if (node)
+    return node->prio;
+}
+
 void queue_thread(thread *t)
 {
-  struct plist_head *h = get_list_from_thread(t);
+  struct plist_head *h = get_list_from_thread(t->state, t->policy);
 
   if (h)
     plist_add(&t->sched_sibling, h);
@@ -79,7 +92,7 @@ void queue_thread(thread *t)
 
 void remove_thread(thread *t)
 {
-  struct plist_head *h = get_list_from_thread(t);
+  struct plist_head *h = get_list_from_thread(t->state, t->policy);
 
   if (h)
     plist_del(&t->sched_sibling, h);
@@ -125,7 +138,7 @@ void schedule()
 
   if (!nt)
   {
-    update_thread(current_thread, THREAD_RUNNING);
+    // update_thread(current_thread, THREAD_RUNNING);
     do
     {
       enable_interrupts();
