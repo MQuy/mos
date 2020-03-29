@@ -57,7 +57,7 @@ vfs_super_operations tmpfs_super_operations = {
 
 int tmpfs_fill_super(vfs_superblock *sb)
 {
-  tmpfs_sb_info *sbinfo = kmalloc(sizeof(tmpfs_sb_info));
+  tmpfs_sb_info *sbinfo = kcalloc(1, sizeof(struct tmpfs_sb_info));
   sbinfo->max_blocks = get_total_frames() / 2;
   sbinfo->free_blocks = sbinfo->max_blocks;
   sbinfo->max_inodes = sbinfo->max_blocks;
@@ -73,8 +73,8 @@ int tmpfs_fill_super(vfs_superblock *sb)
 vfs_mount *tmpfs_mount(struct vfs_file_system_type *fs_type,
                        char *dev_name, char *dir_name)
 {
-  vfs_mount *mnt = kmalloc(sizeof(vfs_mount));
-  vfs_superblock *sb = kmalloc(sizeof(vfs_superblock));
+  vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
+  vfs_superblock *sb = kcalloc(1, sizeof(struct vfs_superblock));
   sb->s_blocksize = PMM_FRAME_SIZE;
   sb->mnt_devname = dev_name;
   sb->s_type = fs_type;

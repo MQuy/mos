@@ -25,7 +25,7 @@ void psf_init(char *buff, size_t size)
   if (font->flags & PSF_HAS_UNICODE_TABLE && s < psf_end)
   {
     /* allocate memory for translation table */
-    unicode = kmalloc(USHRT_MAX * sizeof(uint16_t));
+    unicode = kcalloc(USHRT_MAX, sizeof(uint16_t));
     memset(unicode, 0, USHRT_MAX * sizeof(uint16_t));
     // decode translation table
     while (s < psf_end && glyph < USHRT_MAX)

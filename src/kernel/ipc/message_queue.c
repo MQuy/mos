@@ -17,7 +17,7 @@ void mq_init()
 
 int32_t mq_open(const char *name, int32_t flags)
 {
-  message_queue *mq = kmalloc(sizeof(message_queue));
+  message_queue *mq = kcalloc(1, sizeof(struct message_queue));
   INIT_LIST_HEAD(&mq->senders);
   INIT_LIST_HEAD(&mq->receivers);
   INIT_LIST_HEAD(&mq->messages);
@@ -69,7 +69,7 @@ int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t m
   }
   else
   {
-    mq_message *msg = kmalloc(sizeof(mq_message));
+    mq_message *msg = kcalloc(1, sizeof(struct mq_message));
     msg->buf = kernel_buf;
     msg->msize = msize;
     msg->mtype = mtype;
@@ -85,7 +85,7 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   if (!mq)
     return -EINVAL;
 
-  char *kernel_buf = kmalloc(msize);
+  char *kernel_buf = kcalloc(msize, sizeof(char));
   memcpy(kernel_buf, user_buf, msize);
 
   mq_receiver *iter = NULL;
@@ -109,7 +109,7 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   }
   else
   {
-    mq_message *msg = kmalloc(sizeof(mq_message));
+    mq_message *msg = kcalloc(1, sizeof(struct mq_message));
     msg->buf = kernel_buf;
     msg->msize = msize;
     msg->mtype = mtype;
@@ -143,17 +143,19 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
     }
   }
 
-  char *buf = NULL;
+  char *kernel_buf = NULL;
+  void *msg = NULL;
   tid_t sender_id;
   if (mqm)
   {
-    buf = mqm->buf;
+    msg = mqm;
+    kernel_buf = mqm->buf;
     sender_id = mqm->sender->tid;
     list_del(&mqm->sibling);
   }
   else
   {
-    mq_receiver *mqr = kmalloc(sizeof(mq_receiver));
+    mq_receiver *mqr = kcalloc(1, sizeof(struct mq_receiver));
     mqr->mtype = mtype;
     mqr->msize = msize;
     mqr->receiver = current_thread;
@@ -164,7 +166,8 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
     if (!mqr->buf && mtype >= 0)
       return -EINVAL;
 
-    buf = mqr->buf;
+    msg = mqr;
+    kernel_buf = mqr->buf;
     sender_id = mqr->sender->tid;
     list_del(&mqr->sibling);
   }
@@ -173,7 +176,11 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
     // send ack signal to sender
     mq_send(name, NULL, -sender_id, 0);
   if (mtype >= 0)
-    memcpy(user_buf, buf, msize);
+  {
+    memcpy(user_buf, kernel_buf, msize);
+    kfree(kernel_buf);
+  }
+  kfree(msg);
 
   return 0;
 }

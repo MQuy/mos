@@ -16,7 +16,7 @@ int tmpfs_setsize(vfs_inode *inode, loff_t new_size)
         uint32_t extended_frames = (aligned_new_size - aligned_size) / PMM_FRAME_SIZE;
         for (uint32_t i = 0; i < extended_frames; ++i)
         {
-            page *p = kmalloc(sizeof(page));
+            page *p = kcalloc(1, sizeof(struct page));
             p->frame = pmm_alloc_block();
             list_add_tail(&p->sibling, &inode->i_data.pages);
         }

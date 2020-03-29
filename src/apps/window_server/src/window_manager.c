@@ -1,5 +1,6 @@
 #include <include/fcntl.h>
 #include <include/mman.h>
+#include <include/cdefs.h>
 #include <libc/stdlib.h>
 #include <libc/unistd.h>
 #include <libc/string.h>
@@ -10,6 +11,7 @@
 #include "window_manager.h"
 
 struct desktop *desktop;
+char *desktop_buf;
 uint32_t nwin = 1;
 
 char *get_window_name()
@@ -56,16 +58,16 @@ struct window *create_window(struct msgui_window *msgwin)
   uint32_t screen_size = msgwin->height * msgwin->width * 4;
   ftruncate(fd, screen_size);
 
-  struct window *win = malloc(sizeof(struct window));
+  struct window *win = calloc(1, sizeof(struct window));
   memcpy(win->name, window_name, WINDOW_NAME_LENGTH);
-  win->graphic.buf = mmap(NULL, screen_size, PROT_WRITE, MAP_SHARED, fd);
+  win->graphic.buf = (char *)mmap(NULL, screen_size, PROT_WRITE, MAP_SHARED, fd);
   win->graphic.x = msgwin->x;
   win->graphic.y = msgwin->y;
   win->graphic.width = msgwin->width;
   win->graphic.height = msgwin->height;
 
   INIT_LIST_HEAD(&win->children);
-  INIT_LIST_HEAD(&win->events);
+  hashmap_init(&win->events, hashmap_hash_string, hashmap_compare_string, 0);
 
   if (msgwin->parent && strlen(msgwin->parent))
   {
@@ -78,22 +80,22 @@ struct window *create_window(struct msgui_window *msgwin)
   return win;
 }
 
-static int icon_ini_handler(void *_desktop, const char *section, const char *name,
+static int icon_ini_handler(__unused void *_desktop, const char *section, const char *name,
                             const char *value)
 {
   struct icon *icon = hashmap_get(&desktop->icons, section);
   if (!icon)
   {
-    icon = malloc(sizeof(struct icon));
+    icon = calloc(1, sizeof(struct icon));
 
     icon->icon_graphic.x = 20;
     icon->icon_graphic.y = 4;
     icon->icon_graphic.width = icon->icon_graphic.height = 48;
-    icon->icon_graphic.buf = malloc(icon->icon_graphic.width * icon->icon_graphic.height * 4);
+    icon->icon_graphic.buf = calloc(icon->icon_graphic.width * icon->icon_graphic.height * 4, sizeof(char));
 
     icon->box_graphic.width = 88;
     icon->box_graphic.height = 82;
-    icon->box_graphic.buf = malloc(icon->box_graphic.width * icon->box_graphic.height * 4);
+    icon->box_graphic.buf = calloc(icon->box_graphic.width * icon->box_graphic.height * 4, sizeof(char));
 
     hashmap_put(&desktop->icons, section, icon);
   }
@@ -107,6 +109,8 @@ static int icon_ini_handler(void *_desktop, const char *section, const char *nam
     icon->box_graphic.x = atoi(value);
   else if (!strcmp(name, "py"))
     icon->box_graphic.y = atoi(value);
+
+  return 1;
 }
 
 void init_icons()
@@ -118,12 +122,11 @@ void init_icons()
   while (iter)
   {
     struct icon *icon = hashmap_iter_get_data(iter);
-    struct graphic *graphic = &icon->box_graphic;
 
-    uint32_t fd = open(icon->icon_path, NULL, NULL);
-    struct stat *stat = malloc(sizeof(struct stat));
+    uint32_t fd = open(icon->icon_path, 0, 0);
+    struct stat *stat = calloc(1, sizeof(struct stat));
     fstat(fd, stat);
-    char *buf = malloc(stat->size);
+    char *buf = calloc(stat->size, sizeof(char));
     read(fd, buf, stat->size);
     bmp_draw(&icon->icon_graphic, buf, 0, 0);
 
@@ -138,12 +141,12 @@ void init_mouse()
   graphic->y = 0;
   graphic->width = 20;
   graphic->height = 20;
-  graphic->buf = malloc(graphic->width * graphic->height * 4);
+  graphic->buf = calloc(graphic->width * graphic->height * 4, sizeof(char));
 
-  uint32_t fd = open("/usr/share/images/cursor.bmp", NULL, NULL);
-  struct stat *stat = malloc(sizeof(struct stat));
+  uint32_t fd = open("/usr/share/images/cursor.bmp", 0, 0);
+  struct stat *stat = calloc(1, sizeof(struct stat));
   fstat(fd, stat);
-  char *buf = malloc(stat->size);
+  char *buf = calloc(stat->size, sizeof(char));
   read(fd, buf, stat->size);
 
   bmp_draw(graphic, buf, 0, 0);
@@ -156,20 +159,21 @@ void init_dekstop_graphic()
   graphic->y = 0;
   graphic->width = desktop->fb->width;
   graphic->height = desktop->fb->height;
-  graphic->buf = malloc(graphic->width * graphic->height * 4);
+  graphic->buf = calloc(graphic->width * graphic->height * 4, sizeof(char));
 
-  uint32_t fd = open("/usr/share/images/background.bmp", NULL, NULL);
-  struct stat *stat = malloc(sizeof(struct stat));
+  uint32_t fd = open("/usr/share/images/background.bmp", 0, 0);
+  struct stat *stat = calloc(1, sizeof(struct stat));
   fstat(fd, stat);
-  char *buf = malloc(stat->size);
+  char *buf = calloc(stat->size, sizeof(char));
   read(fd, buf, stat->size);
 
   bmp_draw(graphic, buf, 0, 0);
+  desktop_buf = calloc(desktop->fb->pitch * desktop->fb->height, sizeof(char));
 }
 
 void init_layout(struct framebuffer *fb)
 {
-  desktop = malloc(sizeof(struct desktop));
+  desktop = calloc(1, sizeof(struct desktop));
   desktop->fb = fb;
   INIT_LIST_HEAD(&desktop->children);
 
@@ -286,20 +290,17 @@ void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
 // TODO: MQ 2020-03-21 Improve render speed via dirty rects
 void draw_layout()
 {
-  char *buf = malloc(desktop->fb->pitch * desktop->fb->height);
-
-  draw_graphic(buf, desktop->fb->pitch, desktop->graphic.buf, 0, 0, desktop->graphic.width, desktop->graphic.height);
-  draw_desktop_icons(buf);
+  draw_graphic(desktop_buf, desktop->fb->pitch, desktop->graphic.buf, 0, 0, desktop->graphic.width, desktop->graphic.height);
+  draw_desktop_icons(desktop_buf);
 
   struct window *iter_win;
   list_for_each_entry(iter_win, &desktop->children, sibling)
   {
-    draw_window(buf, iter_win, 0, 0);
+    draw_window(desktop_buf, iter_win, 0, 0);
   }
-  draw_mouse(buf);
+  draw_mouse(desktop_buf);
 
-  memcpy(desktop->fb->addr, buf, desktop->fb->pitch * desktop->fb->height);
-  free(buf);
+  memcpy((char *)desktop->fb->addr, desktop_buf, desktop->fb->pitch * desktop->fb->height);
 }
 
 void mouse_change(struct msgui_event *event)
@@ -311,12 +312,12 @@ void mouse_change(struct msgui_event *event)
 
   if (graphic->x < 0)
     graphic->x = 0;
-  else if (graphic->x > desktop->graphic.width - graphic->width)
+  else if (graphic->x + (int32_t)graphic->width > (int32_t)desktop->graphic.width)
     graphic->x = desktop->graphic.width - graphic->width;
 
   if (graphic->y < 0)
     graphic->y = 0;
-  else if (graphic->y > desktop->graphic.height - graphic->height)
+  else if (graphic->y + (int32_t)graphic->height > (int32_t)desktop->graphic.height)
     graphic->y = desktop->graphic.height - graphic->height;
 
   desktop->mouse.state = event->mouse_state;
@@ -327,8 +328,8 @@ struct window *get_window_from_mouse_position(int32_t px, int32_t py)
   struct window *iter_win;
   list_for_each_entry(iter_win, &desktop->children, sibling)
   {
-    if (iter_win->graphic.x < px && px < iter_win->graphic.x + iter_win->graphic.width &&
-        iter_win->graphic.y < py && py < iter_win->graphic.y + iter_win->graphic.height)
+    if (iter_win->graphic.x < px && px < iter_win->graphic.x + (int32_t)iter_win->graphic.width &&
+        iter_win->graphic.y < py && py < iter_win->graphic.y + (int32_t)iter_win->graphic.height)
       return iter_win;
   }
   return NULL;
@@ -347,8 +348,8 @@ struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
     struct icon *icon = hashmap_iter_get_data(iter);
     struct graphic *graphic = &icon->box_graphic;
 
-    if (graphic->x <= px && px <= graphic->x + graphic->width &&
-        graphic->y <= py && py <= graphic->y + graphic->height)
+    if (graphic->x <= px && px <= graphic->x + (int32_t)graphic->width &&
+        graphic->y <= py && py <= graphic->y + (int32_t)graphic->height)
       return icon;
 
     iter = hashmap_iter_next(&desktop->icons, iter);
@@ -366,11 +367,11 @@ void handle_mouse_event(struct msgui_event *event)
     struct window *active_win = get_window_from_mouse_position(mouse->graphic.x, mouse->graphic.y);
     if (active_win && active_win == desktop->active_window)
     {
-      struct ui_event *ui_event = malloc(sizeof(ui_event));
+      struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
       ui_event->event_type = MOUSE_CLICK;
       ui_event->mouse_x = desktop->mouse.graphic.x;
       ui_event->mouse_y = desktop->mouse.graphic.y;
-      msgsnd(active_win->name, ui_event, 0, sizeof(struct ui_event));
+      msgsnd(active_win->name, (char *)ui_event, 0, sizeof(struct ui_event));
     }
     else if (active_win)
       desktop->active_window = active_win;
@@ -400,10 +401,10 @@ void handle_keyboard_event(struct msgui_event *event)
 {
   if (desktop->active_window)
   {
-    struct ui_event *ui_event = malloc(sizeof(ui_event));
+    struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
     ui_event->event_type = KEY_PRESS;
     ui_event->key = event->key;
-    msgsnd(desktop->active_window->name, ui_event, 0, sizeof(struct ui_event));
+    msgsnd(desktop->active_window->name, (char *)ui_event, 0, sizeof(struct ui_event));
   }
 }
 

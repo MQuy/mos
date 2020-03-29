@@ -11,7 +11,7 @@ int32_t shm_open(const char *name, int32_t flags, int32_t mode)
     fname = name;
   else
   {
-    fname = malloc(strlen(name) + sizeof(defaultdir));
+    fname = calloc(strlen(name) + sizeof(defaultdir), sizeof(char));
     strcpy(fname, defaultdir);
     strcat(fname, name);
   }

@@ -22,7 +22,7 @@ void acquire_semaphore(semaphore *sem)
   }
   else
   {
-    semaphore_waiter *waiter = kmalloc(sizeof(semaphore_waiter));
+    semaphore_waiter *waiter = kcalloc(1, sizeof(struct semaphore_waiter));
     waiter->task = current_thread;
 
     list_add_tail(&waiter->sibling, &sem->wait_list);

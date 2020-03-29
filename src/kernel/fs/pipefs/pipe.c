@@ -90,14 +90,14 @@ vfs_file_operations pipe_fops = {
 
 pipe *alloc_pipe()
 {
-  pipe *p = kmalloc(sizeof(pipe));
+  pipe *p = kcalloc(1, sizeof(struct pipe));
   p->files = 0;
   p->readers = 0;
   p->writers = 0;
 
   sema_init(&p->mutex, 1);
 
-  char *buf = kmalloc(PIPE_SIZE);
+  char *buf = kcalloc(PIPE_SIZE, sizeof(char));
   p->buf = circular_buf_init(buf, PIPE_SIZE);
 
   return p;
@@ -125,16 +125,16 @@ vfs_inode *get_pipe_inode()
 int do_pipe(int *fd)
 {
   vfs_inode *inode = get_pipe_inode();
-  vfs_dentry *dentry = kmalloc(sizeof(vfs_dentry));
+  vfs_dentry *dentry = kcalloc(1, sizeof(struct vfs_dentry));
   dentry->d_inode = inode;
 
-  vfs_file *f1 = kmalloc(sizeof(vfs_file));
+  vfs_file *f1 = kcalloc(1, sizeof(struct vfs_file));
   f1->f_flags = O_RDONLY;
   f1->f_op = &pipe_fops;
   f1->f_dentry = dentry;
   f1->f_count = 1;
 
-  vfs_file *f2 = kmalloc(sizeof(vfs_file));
+  vfs_file *f2 = kcalloc(1, sizeof(struct vfs_file));
   f2->f_flags = O_WRONLY;
   f2->f_op = &pipe_fops;
   f2->f_dentry = dentry;

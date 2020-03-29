@@ -7,7 +7,7 @@ extern process *current_process;
 
 vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 {
-  vfs_dentry *d = kmalloc(sizeof(vfs_dentry));
+  vfs_dentry *d = kcalloc(1, sizeof(struct vfs_dentry));
   d->d_name = name;
   d->d_parent = parent;
   INIT_LIST_HEAD(&d->d_subdirs);
@@ -20,13 +20,13 @@ vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name)
 
 nameidata *path_walk(const char *path)
 {
-  nameidata *nd = kmalloc(sizeof(nameidata));
+  nameidata *nd = kcalloc(1, sizeof(struct nameidata));
   nd->dentry = current_process->fs->d_root;
   nd->mnt = current_process->fs->mnt_root;
 
   for (int i = 1, length = strlen(path); i < length; ++i)
   {
-    char *part_name = kmalloc(length);
+    char *part_name = kcalloc(length, sizeof(char));
 
     for (int j = 0; path[i] != '/' && i < length; ++i, ++j)
       part_name[j] = path[i];
@@ -74,7 +74,7 @@ long vfs_open(const char *path)
   int fd = find_unused_fd_slot();
   nameidata *nd = path_walk(path);
 
-  vfs_file *file = kmalloc(sizeof(vfs_file));
+  vfs_file *file = kcalloc(1, sizeof(struct vfs_file));
   file->f_dentry = nd->dentry;
   file->f_vfsmnt = nd->mnt;
   file->f_pos = 0;
@@ -173,7 +173,7 @@ int simple_setattr(vfs_dentry *d, iattr *attrs)
 int do_truncate(vfs_dentry *dentry, int32_t length)
 {
   vfs_inode *inode = dentry->d_inode;
-  iattr *attrs = kmalloc(sizeof(iattr));
+  iattr *attrs = kcalloc(1, sizeof(struct iattr));
   attrs->ia_valid = ATTR_SIZE;
   attrs->ia_size = length;
 

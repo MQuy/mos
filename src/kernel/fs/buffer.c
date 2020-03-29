@@ -9,7 +9,7 @@
 char *bread(char *dev_name, sector_t sector, uint32_t size)
 {
   ata_device *device = get_ata_device(dev_name);
-  char *buf = kmalloc(div_ceil(size, BYTES_PER_SECTOR) * BYTES_PER_SECTOR);
+  char *buf = kcalloc(div_ceil(size, BYTES_PER_SECTOR) * BYTES_PER_SECTOR, sizeof(char));
   ata_read(device, sector, div_ceil(size, BYTES_PER_SECTOR), (uint16_t *)buf);
   return buf;
 }

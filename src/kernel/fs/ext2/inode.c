@@ -47,7 +47,7 @@ uint32_t ext2_create_block(vfs_superblock *sb)
     ext2_bwrite_block(sb, gdp->bg_block_bitmap, bitmap_buf);
 
     // clear block data
-    char *data_buf = kmalloc(sb->s_blocksize);
+    char *data_buf = kcalloc(sb->s_blocksize, sizeof(char));
     ext2_bwrite_block(sb, block, data_buf);
 
     return block;
@@ -95,7 +95,7 @@ vfs_inode *ext2_create_inode(vfs_inode *dir, char *filename, mode_t mode)
     ext2_bwrite_block(dir->i_sb, gdp->bg_inode_bitmap, inode_bitmap_buf);
 
     // inode table
-    ext2_inode *ei_new = kmalloc(sizeof(ext2_inode));
+    ext2_inode *ei_new = kcalloc(1, sizeof(struct ext2_inode));
     ei_new->i_links_count = 1;
     vfs_inode *inode = dir->i_sb->s_op->alloc_inode(dir->i_sb);
     inode->i_ino = ino;

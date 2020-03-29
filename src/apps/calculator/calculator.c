@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <include/cdefs.h>
 #include <libc/unistd.h>
 #include <libc/string.h>
 #include <libc/stdlib.h>
@@ -35,7 +36,7 @@ struct ui_label *create_label(
     struct ui_style *style,
     EVENT_HANDLER handler)
 {
-  struct ui_label *label = malloc(sizeof(struct ui_label));
+  struct ui_label *label = calloc(1, sizeof(struct ui_label));
   gui_create_label(parent, label, x, y, width, height, text, style);
   label->window.add_event_listener(&label->window, "click", handler);
   return label;
@@ -53,7 +54,7 @@ void on_click_label(struct window *win)
   lresult->set_text(lresult, text);
 }
 
-void on_click_label_ac(struct window *win)
+void on_click_label_ac(__unused struct window *win)
 {
   struct ui_label *lresult = labels[LABEL_RESULT];
   char *text = calloc(1, sizeof(char));
@@ -61,11 +62,11 @@ void on_click_label_ac(struct window *win)
 }
 
 // TODO: MQ 2020-03-27 Handle equal click
-void on_click_label_equal(struct window *win)
+void on_click_label_equal(__unused struct window *win)
 {
 }
 
-int main(struct framebuffer fb)
+int main()
 {
   struct window *win = init_window(336, 196, 128, 208);
 
@@ -82,10 +83,10 @@ int main(struct framebuffer fb)
     }
   }
 
-  struct ui_style *style1 = malloc(sizeof(struct ui_style));
+  struct ui_style *style1 = calloc(1, sizeof(struct ui_style));
   style1->padding_top = 8;
   style1->padding_left = 10;
-  struct ui_style *style2 = malloc(sizeof(struct ui_style));
+  struct ui_style *style2 = calloc(1, sizeof(struct ui_style));
   style2->padding_top = 8;
   style2->padding_left = 26;
 

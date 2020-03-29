@@ -29,22 +29,7 @@ int32_t strliof(const char *s1, const char *s2);
 int32_t strlsplat(const char *s1, uint32_t pos, char **sf, char **sl);
 
 #define _inline inline __attribute__((always_inline))
-static _inline void *memcpy(void *restrict dest, const void *restrict src, long n)
-{
-  asm volatile("cld; rep movsb"
-               : "=c"((int){0})
-               : "D"(dest), "S"(src), "c"(n)
-               : "flags", "memory");
-  return dest;
-}
-
-static _inline void *memset(void *dest, int c, long n)
-{
-  asm volatile("cld; rep stosb"
-               : "=c"((int){0})
-               : "D"(dest), "a"(c), "c"(n)
-               : "flags", "memory");
-  return dest;
-}
+void *memcpy(void *dest, const void *src, size_t count);
+void *memset(void *dest, char val, size_t count);
 
 #endif

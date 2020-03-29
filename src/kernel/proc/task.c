@@ -24,11 +24,11 @@ struct hashmap mprocess;
 
 files_struct *clone_file_descriptor_table(process *parent)
 {
-  files_struct *files = kmalloc(sizeof(files_struct));
+  files_struct *files = kcalloc(1, sizeof(struct files_struct));
 
   if (parent)
   {
-    memcpy(files, parent->files, sizeof(files_struct));
+    memcpy(files, parent->files, sizeof(struct files_struct));
     // NOTE: MQ 2019-12-30 Increasing file description usage when forking because child refers to the same one
     for (uint32_t i = 0; i < MAX_FD; ++i)
       if (parent->files->fd[i])
@@ -40,14 +40,14 @@ files_struct *clone_file_descriptor_table(process *parent)
 
 mm_struct *clone_mm_struct(process *parent)
 {
-  mm_struct *mm = kmalloc(sizeof(mm_struct));
-  memcpy(mm, parent->mm, sizeof(mm_struct));
+  mm_struct *mm = kcalloc(1, sizeof(struct mm_struct));
+  memcpy(mm, parent->mm, sizeof(struct mm_struct));
   INIT_LIST_HEAD(&mm->mmap);
 
   vm_area_struct *iter = NULL;
   list_for_each_entry(iter, &parent->mm->mmap, vm_sibling)
   {
-    vm_area_struct *clone = kmalloc(sizeof(vm_area_struct));
+    vm_area_struct *clone = kcalloc(1, sizeof(struct vm_area_struct));
     clone->vm_start = iter->vm_start;
     clone->vm_end = iter->vm_end;
     clone->vm_file = iter->vm_file;
@@ -69,16 +69,16 @@ thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, 
 {
   disable_interrupts();
 
-  thread *t = kmalloc(sizeof(thread));
+  thread *t = kcalloc(1, sizeof(struct thread));
   t->tid = next_tid++;
-  t->kernel_stack = (uint32_t)(kmalloc(STACK_SIZE) + STACK_SIZE);
+  t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
   t->parent = parent;
   t->state = state;
-  t->esp = t->kernel_stack - sizeof(trap_frame);
+  t->esp = t->kernel_stack - sizeof(struct trap_frame);
   plist_node_init(&t->sched_sibling, priority);
 
   trap_frame *frame = (trap_frame *)t->esp;
-  memset(frame, 0, sizeof(trap_frame));
+  memset(frame, 0, sizeof(struct trap_frame));
 
   frame->parameter2 = eip;
   frame->parameter1 = (uint32_t)t;
@@ -105,7 +105,7 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
 {
   disable_interrupts();
 
-  process *p = kmalloc(sizeof(process));
+  process *p = kcalloc(1, sizeof(struct process));
   p->pid = next_pid++;
   p->name = strdup(name);
   if (pdir)
@@ -114,14 +114,14 @@ process *create_process(process *parent, const char *name, pdirectory *pdir)
     p->pdir = vmm_get_directory();
   p->parent = parent;
   p->files = clone_file_descriptor_table(parent);
-  p->fs = kmalloc(sizeof(fs_struct));
+  p->fs = kcalloc(1, sizeof(struct fs_struct));
 
-  p->mm = kmalloc(sizeof(mm_struct));
+  p->mm = kcalloc(1, sizeof(struct mm_struct));
   INIT_LIST_HEAD(&p->mm->mmap);
 
   if (parent)
   {
-    memcpy(p->fs, parent->fs, sizeof(fs_struct));
+    memcpy(p->fs, parent->fs, sizeof(struct fs_struct));
     list_add_tail(&p->sibling, &parent->children);
   }
 
@@ -181,17 +181,17 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
 {
   disable_interrupts();
 
-  thread *t = kmalloc(sizeof(thread));
+  thread *t = kcalloc(1, sizeof(struct thread));
   t->tid = next_tid++;
   t->parent = parent;
   t->state = state;
   t->policy = policy;
-  t->kernel_stack = (uint32_t)(kmalloc(STACK_SIZE) + STACK_SIZE);
-  t->esp = t->kernel_stack - sizeof(trap_frame);
+  t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
+  t->esp = t->kernel_stack - sizeof(struct trap_frame);
   plist_node_init(&t->sched_sibling, priority);
 
   trap_frame *frame = (trap_frame *)t->esp;
-  memset(frame, 0, sizeof(trap_frame));
+  memset(frame, 0, sizeof(struct trap_frame));
 
   frame->parameter3 = (uint32_t)setup;
   frame->parameter2 = (uint32_t)strdup(path);
@@ -227,7 +227,7 @@ process *process_fork(process *parent)
   disable_interrupts();
 
   // fork process
-  process *p = kmalloc(sizeof(process));
+  process *p = kcalloc(1, sizeof(struct process));
   p->pid = next_pid++;
   p->gid = parent->pid;
   p->name = strdup(parent->name);
@@ -239,27 +239,27 @@ process *process_fork(process *parent)
 
   list_add_tail(&p->sibling, &parent->children);
 
-  p->fs = kmalloc(sizeof(fs_struct));
-  memcpy(p->fs, parent->fs, sizeof(fs_struct));
+  p->fs = kcalloc(1, sizeof(struct fs_struct));
+  memcpy(p->fs, parent->fs, sizeof(struct fs_struct));
 
   p->files = clone_file_descriptor_table(parent);
   p->pdir = vmm_fork(parent->pdir);
 
   // copy active parent's thread
   thread *parent_thread = parent->active_thread;
-  thread *t = kmalloc(sizeof(thread));
+  thread *t = kcalloc(1, sizeof(struct thread));
   t->tid = next_tid++;
   t->state = THREAD_READY;
   t->policy = parent_thread->policy;
   t->time_slice = 0;
   t->parent = p;
-  t->kernel_stack = (uint32_t)(kmalloc(STACK_SIZE) + STACK_SIZE);
+  t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
   t->user_stack = parent_thread->user_stack;
   // NOTE: MQ 2019-12-18 Setup trap frame
-  t->esp = t->kernel_stack - sizeof(trap_frame);
+  t->esp = t->kernel_stack - sizeof(struct trap_frame);
   plist_node_init(&t->sched_sibling, parent_thread->sched_sibling.prio);
 
-  memcpy(&t->uregs, &parent_thread->uregs, sizeof(interrupt_registers));
+  memcpy(&t->uregs, &parent_thread->uregs, sizeof(struct interrupt_registers));
   t->uregs.eax = 0;
 
   trap_frame *frame = (trap_frame *)t->esp;

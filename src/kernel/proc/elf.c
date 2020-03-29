@@ -65,7 +65,7 @@ Elf32_Layout *elf_load(char *buf)
     return NULL;
 
   mm_struct *mm = current_process->mm;
-  Elf32_Layout *layout = kmalloc(sizeof(Elf32_Layout));
+  Elf32_Layout *layout = kcalloc(1, sizeof(struct Elf32_Layout));
   layout->entry = elf_header->e_entry;
   for (Elf32_Phdr *ph = buf + elf_header->e_phoff;
        ph && ph < (buf + elf_header->e_phoff + elf_header->e_phentsize * elf_header->e_phnum);

@@ -126,7 +126,7 @@ int ini_parse_stream(char *buf, ini_handler handler,
     int error = 0;
 
 #if !INI_USE_STACK
-    line = (char *)malloc(INI_INITIAL_ALLOC);
+    line = (char *)calloc(INI_INITIAL_ALLOC, sizeof(char));
     if (!line)
     {
         return -2;
@@ -267,9 +267,9 @@ int ini_parse_stream(char *buf, ini_handler handler,
 /* See documentation in header file. */
 int ini_parse_file(int32_t fd, ini_handler handler, void *user)
 {
-    struct stat *stat = malloc(sizeof(struct stat));
+    struct stat *stat = calloc(1, sizeof(struct stat));
     fstat(fd, stat);
-    char *buf = malloc(stat->size);
+    char *buf = calloc(stat->size, sizeof(char));
     read(fd, buf, stat->size);
     return ini_parse_stream(buf, handler, user);
 }

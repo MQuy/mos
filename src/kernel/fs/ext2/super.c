@@ -10,12 +10,12 @@
 
 ext2_group_desc *ext2_get_group_desc(vfs_superblock *sb, uint32_t group)
 {
-  ext2_group_desc *gdp = kmalloc(sizeof(ext2_group_desc));
+  ext2_group_desc *gdp = kcalloc(1, sizeof(struct ext2_group_desc));
   ext2_superblock *ext2_sb = EXT2_SB(sb);
   uint32_t block = ext2_sb->s_first_data_block + 1 + group / EXT2_GROUPS_PER_BLOCK(ext2_sb);
   char *group_block_buf = ext2_bread_block(sb, block);
-  uint32_t offset = group % EXT2_GROUPS_PER_BLOCK(ext2_sb) * sizeof(ext2_group_desc);
-  memcpy(gdp, group_block_buf + offset, sizeof(ext2_group_desc));
+  uint32_t offset = group % EXT2_GROUPS_PER_BLOCK(ext2_sb) * sizeof(struct ext2_group_desc);
+  memcpy(gdp, group_block_buf + offset, sizeof(struct ext2_group_desc));
   return gdp;
 }
 
@@ -24,9 +24,9 @@ void ext2_write_group_desc(vfs_superblock *sb, ext2_group_desc *gdp)
   ext2_superblock *ext2_sb = EXT2_SB(sb);
   uint32_t group = get_group_from_block(ext2_sb, gdp->bg_block_bitmap);
   uint32_t block = ext2_sb->s_first_data_block + 1 + group / EXT2_GROUPS_PER_BLOCK(ext2_sb);
-  uint32_t offset = group % EXT2_GROUPS_PER_BLOCK(ext2_sb) * sizeof(ext2_group_desc);
+  uint32_t offset = group % EXT2_GROUPS_PER_BLOCK(ext2_sb) * sizeof(struct ext2_group_desc);
   char *group_block_buf = ext2_bread_block(sb, block);
-  memcpy(group_block_buf + offset, gdp, sizeof(ext2_group_desc));
+  memcpy(group_block_buf + offset, gdp, sizeof(struct ext2_group_desc));
   ext2_bwrite_block(sb, block, group_block_buf);
 }
 
@@ -36,7 +36,7 @@ ext2_inode *ext2_get_inode(vfs_superblock *sb, ino_t ino)
   uint32_t group = get_group_from_inode(ext2_sb, ino);
   ext2_group_desc *gdp = ext2_get_group_desc(sb, group);
   uint32_t block = gdp->bg_inode_table + get_relative_inode_in_group(ext2_sb, ino) / EXT2_INODES_PER_BLOCK(ext2_sb);
-  uint32_t offset = (get_relative_inode_in_group(ext2_sb, ino) % EXT2_INODES_PER_BLOCK(ext2_sb)) * sizeof(ext2_inode);
+  uint32_t offset = (get_relative_inode_in_group(ext2_sb, ino) % EXT2_INODES_PER_BLOCK(ext2_sb)) * sizeof(struct ext2_inode);
   char *table_buf = ext2_bread_block(sb, block);
 
   return (ext2_inode *)(table_buf + offset);
@@ -112,10 +112,10 @@ void ext2_write_inode(vfs_inode *i)
   uint32_t group = get_group_from_inode(ext2_sb, i->i_ino);
   ext2_group_desc *gdp = ext2_get_group_desc(i->i_sb, group);
   uint32_t block = gdp->bg_inode_table + get_relative_inode_in_group(ext2_sb, i->i_ino) / EXT2_INODES_PER_BLOCK(ext2_sb);
-  uint32_t offset = (get_relative_inode_in_group(ext2_sb, i->i_ino) % EXT2_INODES_PER_BLOCK(ext2_sb)) * sizeof(ext2_inode);
+  uint32_t offset = (get_relative_inode_in_group(ext2_sb, i->i_ino) % EXT2_INODES_PER_BLOCK(ext2_sb)) * sizeof(struct ext2_inode);
   char *buf = ext2_bread_block(i->i_sb, block);
 
-  memcpy(buf + offset, ei, sizeof(ext2_inode));
+  memcpy(buf + offset, ei, sizeof(struct ext2_inode));
   ext2_bwrite_block(i->i_sb, block, buf);
 }
 
@@ -134,7 +134,7 @@ vfs_super_operations ext2_super_operations = {
 
 int ext2_fill_super(vfs_superblock *sb)
 {
-  ext2_superblock *ext2_sb = (ext2_superblock *)kmalloc(sizeof(ext2_superblock));
+  ext2_superblock *ext2_sb = (ext2_superblock *)kcalloc(1, sizeof(struct ext2_superblock));
   char *buf = ext2_bread_block(sb, 1);
   memcpy(ext2_sb, (ext2_superblock *)buf, sb->s_blocksize);
 
@@ -152,8 +152,8 @@ int ext2_fill_super(vfs_superblock *sb)
 vfs_mount *ext2_mount(struct vfs_file_system_type *fs_type,
                       char *dev_name, char *dir_name)
 {
-  vfs_mount *mnt = kmalloc(sizeof(vfs_mount));
-  vfs_superblock *sb = (vfs_superblock *)kmalloc(sizeof(vfs_superblock));
+  vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
+  vfs_superblock *sb = (vfs_superblock *)kcalloc(1, sizeof(struct vfs_superblock));
   sb->s_blocksize = EXT2_MIN_BLOCK_SIZE;
   sb->mnt_devname = dev_name;
   sb->s_type = fs_type;

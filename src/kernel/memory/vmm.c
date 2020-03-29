@@ -72,7 +72,7 @@ void vmm_init()
 
   physical_addr pa_dir = pmm_alloc_block();
   pdirectory *va_dir = (pdirectory *)(pa_dir + KERNEL_HIGHER_HALF);
-  memset(va_dir, 0, sizeof(pdirectory));
+  memset(va_dir, 0, sizeof(struct pdirectory));
 
   vmm_init_and_map(va_dir, 0xC0000000, 0x00000000);
 
@@ -99,7 +99,7 @@ void vmm_init_and_map(pdirectory *va_dir, virtual_addr vaddr, physical_addr padd
 {
   physical_addr pa_table = pmm_alloc_block();
   ptable *va_table = (ptable *)(pa_table + KERNEL_HIGHER_HALF);
-  memset(va_table, 0, sizeof(ptable));
+  memset(va_table, 0, sizeof(struct ptable));
 
   virtual_addr ivirtual = vaddr;
   physical_addr iframe = paddr;
@@ -160,7 +160,7 @@ pdirectory *vmm_create_address_space(pdirectory *current)
 {
   char *aligned_object = kalign_heap(PMM_FRAME_SIZE);
   // NOTE: MQ 2019-11-24 page directory, page table have to be aligned by 4096
-  pdirectory *va_dir = kcalloc(1, sizeof(pdirectory));
+  pdirectory *va_dir = kcalloc(1, sizeof(struct pdirectory));
   if (aligned_object)
     kfree(aligned_object);
 
@@ -219,7 +219,7 @@ void vmm_create_page_table(pdirectory *va_dir, uint32_t virt, uint32_t flags)
   va_dir->m_entries[get_page_directory_index(virt)] = pa_table | flags;
   vmm_flush_tlb_entry(virt);
 
-  memset(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(ptable));
+  memset(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(struct ptable));
 }
 
 void vmm_unmap_address(pdirectory *va_dir, uint32_t virt)
@@ -250,9 +250,9 @@ pdirectory *vmm_fork(pdirectory *va_dir)
       ptable *forked_pt = (ptable *)heap_current;
       physical_addr forked_pt_paddr = pmm_alloc_block();
       vmm_map_address(va_dir, forked_pt, forked_pt_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-      memset(forked_pt, 0, sizeof(ptable));
+      memset(forked_pt, 0, sizeof(struct ptable));
 
-      heap_current += sizeof(ptable);
+      heap_current += sizeof(struct ptable);
       ptable *pt = (ptable *)(PAGE_TABLE_BASE + ipd * PMM_FRAME_SIZE);
       for (uint32_t ipt = 0; ipt < PAGES_PER_TABLE; ++ipt)
       {

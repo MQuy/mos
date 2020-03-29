@@ -2,6 +2,25 @@
 #include <libc/stdlib.h>
 #include "string.h"
 
+//! copies count bytes from src to dest
+void *memcpy(void *dest, const void *src, size_t len)
+{
+  char *d = dest;
+  const char *s = src;
+  while (len--)
+    *d++ = *s++;
+  return dest;
+}
+
+//! sets count bytes of dest to val
+void *memset(void *dest, char val, size_t len)
+{
+  unsigned char *ptr = dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
+}
+
 static char tbuf[32];
 static char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
@@ -132,7 +151,7 @@ size_t strlen(const char *str)
 
 char *strdup(const char *src)
 {
-  char *dst = malloc(strlen(src) + 1); // Space for length plus nul
+  char *dst = calloc(strlen(src) + 1, sizeof(char)); // Space for length plus nul
   if (dst == NULL)
     return NULL;    // No memory
   strcpy(dst, src); // Copy the characters
@@ -314,9 +333,9 @@ int32_t strliof(const char *s1, const char *s2)
 int32_t strlsplat(const char *s1, uint32_t pos, char **sf, char **sl)
 {
   uint32_t length = strlen(s1);
-  *sf = malloc(pos);
+  *sf = calloc(pos, sizeof(char));
   memcpy(*sf, s1, pos);
-  *sl = malloc(length - 1 - pos);
+  *sl = calloc(length - 1 - pos, sizeof(char));
   memcpy(*sl, s1 + pos + 1, length - 1 - pos);
   return 0;
 }

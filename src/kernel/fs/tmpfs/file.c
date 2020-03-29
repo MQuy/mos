@@ -96,16 +96,6 @@ int tmpfs_mmap_file(vfs_file *file, vm_area_struct *new_vma)
     addr += sb->s_blocksize;
   }
 
-  if (!vma)
-    inode->i_data.i_mmap = new_vma;
-  else if (vma->vm_start == new_vma->vm_start)
-  {
-    if (vma->vm_end > new_vma->vm_end)
-      for (uint32_t addr = new_vma->vm_end; addr < vma->vm_end; addr += PMM_FRAME_SIZE)
-        vmm_unmap_address(current_process->pdir, addr);
-    else
-      do_munmap(current_process->pdir, vma->vm_start, vma->vm_end - vma->vm_start);
-  }
   return 0;
 }
 

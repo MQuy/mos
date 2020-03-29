@@ -9,7 +9,7 @@ static struct qelement
 
 void queue_push(struct queue *q, void *data)
 {
-  struct qelement *qe = kmalloc(sizeof(struct qelement));
+  struct qelement *qe = kcalloc(1, sizeof(struct qelement));
   qe->data = data;
   list_add_tail(q->qhead, qe->sibling);
 }

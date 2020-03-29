@@ -184,7 +184,7 @@ static inline struct ext2_inode *EXT2_INODE(vfs_inode *inode)
 
 #define EXT2_BLOCK_SIZE(sb) (EXT2_MIN_BLOCK_SIZE << sb->s_log_block_size)
 #define EXT2_INODES_PER_BLOCK(sb) (EXT2_BLOCK_SIZE(sb) / sb->s_inode_size)
-#define EXT2_GROUPS_PER_BLOCK(sb) (EXT2_BLOCK_SIZE(sb) / sizeof(ext2_group_desc))
+#define EXT2_GROUPS_PER_BLOCK(sb) (EXT2_BLOCK_SIZE(sb) / sizeof(struct ext2_group_desc))
 
 #define get_group_from_inode(sb, ino) ((ino - EXT2_STARTING_INO) / sb->s_inodes_per_group)
 #define get_relative_inode_in_group(sb, ino) ((ino - EXT2_STARTING_INO) % sb->s_inodes_per_group)

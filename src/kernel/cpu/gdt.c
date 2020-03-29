@@ -12,7 +12,7 @@ void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t acces
     return;
 
   //! null out the descriptor
-  memset((void *)&_gdt[i], 0, sizeof(gdt_descriptor));
+  memset((void *)&_gdt[i], 0, sizeof(struct gdt_descriptor));
 
   //! set limit and base addresses
   _gdt[i].baseLo = (uint16_t)(base & 0xffff);

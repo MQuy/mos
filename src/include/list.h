@@ -3,9 +3,10 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <include/cdefs.h>
 
 #define container_of(ptr, type, member) ({			\
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+        typeof( ((type *)0)->member ) *__mptr = (ptr);	\
         (type *)( (char *)__mptr - offsetof(type,member) ); })
 
 // MQ 2019-08-08
@@ -33,9 +34,9 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
   list->prev = list;
 }
 
-static inline bool __list_add_valid(struct list_head *new,
-                                    struct list_head *prev,
-                                    struct list_head *next)
+static inline bool __list_add_valid(__unused struct list_head *new,
+                                    __unused struct list_head *prev,
+                                    __unused struct list_head *next)
 {
   return true;
 }

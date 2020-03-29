@@ -160,7 +160,7 @@ typedef struct
   Elf32_Word p_align;
 } Elf32_Phdr;
 
-typedef struct
+typedef struct Elf32_Layout
 {
   uint32_t stack;
   uint32_t entry;

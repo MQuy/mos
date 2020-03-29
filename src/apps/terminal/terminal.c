@@ -3,10 +3,9 @@
 #include <libc/gui/layout.h>
 #include <libc/stdlib.h>
 
-int main(struct framebuffer fb)
+int main()
 {
-  struct window *win = malloc(sizeof(struct window));
-  gui_create_window(NULL, win, 100, 100, 100, 100);
+  struct window *win = init_window(100, 100, 100, 100);
   enter_event_loop(win);
 
   return 0;

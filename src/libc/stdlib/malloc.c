@@ -16,28 +16,35 @@ typedef struct block_meta
   uint32_t magic;
 } block_meta;
 
-block_meta *blocklist;
+static block_meta *blocklist = NULL;
 
 void validate_block(block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
-    *(uint32_t *)BLOCK_MAGIC;
+  {
+    uint32_t x = 1;
+  }
 }
 
 block_meta *find_free_block(block_meta **last, size_t size)
 {
+  uint32_t bcount = 0;
   block_meta *current = (block_meta *)blocklist;
   while (current && !(current->free && current->size >= size))
   {
+    bcount++;
+    validate_block(current);
     *last = current;
     current = current->next;
+    if (current)
+      validate_block(current);
   }
   return current;
 }
 
 void split_block(block_meta *block, size_t size)
 {
-  if (block->size > size + sizeof(block_meta))
+  if (block->size > size + sizeof(struct block_meta))
   {
     struct block_meta *splited_block = (struct block_meta *)((char *)block + size + sizeof(struct block_meta));
     splited_block->free = true;
@@ -71,7 +78,7 @@ void *get_heap(uint32_t size)
 block_meta *request_space(block_meta *last, size_t size)
 {
 
-  block_meta *block = get_heap(size + sizeof(block_meta));
+  block_meta *block = get_heap(size + sizeof(struct block_meta));
 
   if (last)
     last->next = block;
@@ -109,6 +116,10 @@ void *malloc(size_t size)
 
   validate_block(block);
 
+  if (block == 0x6363e8)
+  {
+    uint32_t x = 0;
+  }
   if (block)
     return block + 1;
   else
@@ -146,9 +157,9 @@ void *realloc(void *ptr, size_t size)
     return NULL;
   }
   else if (!ptr)
-    return malloc(size);
+    return calloc(size, sizeof(char));
 
-  void *newptr = malloc(size);
+  void *newptr = calloc(size, sizeof(char));
   memcpy(newptr, ptr, size);
   return newptr;
 }

@@ -183,7 +183,7 @@ int32_t syscall_dispatcher(interrupt_registers *regs)
   if (!func)
     return;
 
-  memcpy(&current_thread->uregs, regs, sizeof(interrupt_registers));
+  memcpy(&current_thread->uregs, regs, sizeof(struct interrupt_registers));
 
   uint32_t ret = func(regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
   regs->eax = ret;

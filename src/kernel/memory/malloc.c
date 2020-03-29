@@ -13,30 +13,35 @@ typedef struct block_meta
   uint32_t magic;
 } block_meta;
 
-block_meta *blocklist, *lastblock;
+static block_meta *kblocklist = NULL;
 
 void validate_kblock(block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
-    *(uint32_t *)BLOCK_MAGIC;
+  {
+    uint32_t x = 1;
+  }
 }
 
 block_meta *find_free_block(block_meta **last, size_t size)
 {
-  block_meta *current = (block_meta *)blocklist;
+  block_meta *current = (block_meta *)kblocklist;
   while (current && !(current->free && current->size >= size))
   {
+    validate_kblock(current);
     *last = current;
     current = current->next;
+    if (current)
+      validate_kblock(current);
   }
   return current;
 }
 
 void split_block(block_meta *block, size_t size)
 {
-  if (block->size > size + sizeof(block_meta))
+  if (block->size > size + sizeof(struct block_meta))
   {
-    struct block_meta *splited_block = (struct block_meta *)((char *)block + size + sizeof(struct block_meta));
+    struct block_meta *splited_block = (struct block_meta *)((char *)block + sizeof(struct block_meta) + size);
     splited_block->free = true;
     splited_block->magic = BLOCK_MAGIC;
     splited_block->size = block->size - size - sizeof(struct block_meta);
@@ -49,7 +54,7 @@ void split_block(block_meta *block, size_t size)
 
 block_meta *request_space(block_meta *last, size_t size)
 {
-  block_meta *block = sbrk(size + sizeof(block_meta));
+  block_meta *block = sbrk(size + sizeof(struct block_meta));
 
   if (last)
     last->next = block;
@@ -66,10 +71,11 @@ void *kmalloc(size_t size)
   if (size <= 0)
     return NULL;
 
-  block_meta *block, *last;
+  block_meta *block;
 
-  if (blocklist)
+  if (kblocklist)
   {
+    block_meta *last = kblocklist;
     block = find_free_block(&last, size);
     if (block)
     {
@@ -77,15 +83,14 @@ void *kmalloc(size_t size)
       split_block(block, size);
     }
     else
-      block = request_space(lastblock, size);
+      block = request_space(last, size);
   }
   else
   {
     block = request_space(NULL, size);
-    blocklist = block;
+    kblocklist = block;
   }
 
-  lastblock = block;
   validate_kblock(block);
 
   if (block)
@@ -124,9 +129,9 @@ void kfree(void *ptr)
 // |                 |
 // |                 |
 // |                 | new object address m = (size * n)
-// ------------------- m - sizeof(block_meta)
+// ------------------- m - sizeof(struct block_meta)
 // |                 | empty object (>= 1)
-// ------------------- padding - sizeof(block_meta)
+// ------------------- padding - sizeof(struct block_meta)
 void *kalign_heap(size_t size)
 {
   uint32_t heap_addr = sbrk(0);
@@ -135,12 +140,12 @@ void *kalign_heap(size_t size)
     return NULL;
 
   uint32_t padding_size = div_ceil(heap_addr, size) * size - heap_addr;
-  uint32_t required_size = sizeof(block_meta) * 2;
+  uint32_t required_size = sizeof(struct block_meta) * 2;
 
   while (padding_size <= KERNEL_HEAP_TOP)
   {
     if (padding_size > required_size)
-      return kmalloc(padding_size - required_size);
+      return kcalloc(padding_size - required_size, sizeof(char));
     padding_size += size;
   }
   return NULL;
@@ -154,9 +159,9 @@ void *krealloc(void *ptr, size_t size)
     return NULL;
   }
   else if (!ptr)
-    return kmalloc(size);
+    return kcalloc(size, sizeof(char));
 
-  void *newptr = kmalloc(size);
+  void *newptr = kcalloc(size, sizeof(char));
   memcpy(newptr, ptr, size);
   return newptr;
 }

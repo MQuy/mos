@@ -132,7 +132,7 @@ uint32_t apic_read(uint32_t apic_base, uint32_t reg)
 void enable_apic()
 {
   uint32_t padd_apic_base = cpu_get_apic_base();
-  uint32_t vadd_apic_base = kmalloc(0x1000);
+  uint32_t vadd_apic_base = kcalloc(0x1000, sizeof(char));
 
   vmm_map_address(vmm_get_directory(), vadd_apic_base, padd_apic_base, I86_PTE_PRESENT | I86_PTE_WRITABLE);
 

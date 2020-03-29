@@ -2,6 +2,25 @@
 #include <kernel/memory/vmm.h>
 #include "string.h"
 
+//! copies count bytes from src to dest
+void *memcpy(void *dest, const void *src, size_t len)
+{
+	char *d = dest;
+	const char *s = src;
+	while (len--)
+		*d++ = *s++;
+	return dest;
+}
+
+//! sets count bytes of dest to val
+void *memset(void *dest, char val, size_t len)
+{
+	unsigned char *ptr = dest;
+	while (len-- > 0)
+		*ptr++ = val;
+	return dest;
+}
+
 static char tbuf[32];
 static char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
@@ -112,7 +131,7 @@ size_t strlen(const char *str)
 
 char *strdup(const char *src)
 {
-	char *dst = kmalloc(strlen(src) + 1); // Space for length plus nul
+	char *dst = kcalloc(strlen(src) + 1, sizeof(char)); // Space for length plus nul
 	if (dst == NULL)
 		return NULL;		// No memory
 	strcpy(dst, src); // Copy the characters

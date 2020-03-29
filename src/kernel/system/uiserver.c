@@ -15,7 +15,7 @@ void uiserver_init(thread *t)
 
 void enqueue_mouse_event(struct mouse_device *md)
 {
-  struct msgui_event *event = kmalloc(sizeof(struct msgui_event));
+  struct msgui_event *event = kcalloc(1, sizeof(struct msgui_event));
   event->mouse_x = md->x;
   event->mouse_y = md->y;
   event->mouse_state = md->state;
@@ -25,7 +25,7 @@ void enqueue_mouse_event(struct mouse_device *md)
 
 void enqueue_keyboard_event(int32_t key)
 {
-  struct msgui_event *event = kmalloc(sizeof(struct msgui_event));
+  struct msgui_event *event = kcalloc(1, sizeof(struct msgui_event));
   event->key = key;
   event->type = MSGUI_KEYBOARD;
   enqueue_event(event);
@@ -37,7 +37,7 @@ void enqueue_event(struct msgui_event *event)
   {
     uint32_t x = 0;
   }
-  struct msgui *msgui = kmalloc(sizeof(struct msgui));
+  struct msgui *msgui = kcalloc(1, sizeof(struct msgui));
   msgui->type = MSGUI_EVENT;
   memcpy(msgui->data, event, sizeof(struct msgui_event));
   if (current_thread == wsthread || current_thread->state == THREAD_WAITING)

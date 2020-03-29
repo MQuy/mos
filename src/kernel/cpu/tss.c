@@ -20,12 +20,12 @@ void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 	uint32_t base = (uint32_t)&TSS;
 
 	//! install descriptor
-	gdt_set_descriptor(idx, base, base + sizeof(tss_entry),
+	gdt_set_descriptor(idx, base, base + sizeof(struct tss_entry),
 										 I86_GDT_DESC_ACCESS | I86_GDT_DESC_EXEC_CODE | I86_GDT_DESC_DPL | I86_GDT_DESC_MEMORY,
 										 0);
 
 	//! initialize TSS
-	memset((void *)&TSS, 0, sizeof(tss_entry));
+	memset((void *)&TSS, 0, sizeof(struct tss_entry));
 
 	//! set stack and segments
 	TSS.ss0 = kernelSS;
@@ -36,7 +36,7 @@ void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 	TSS.ds = 0x13;
 	TSS.fs = 0x13;
 	TSS.gs = 0x13;
-	TSS.iomap = sizeof(tss_entry);
+	TSS.iomap = sizeof(struct tss_entry);
 
 	tss_flush();
 }

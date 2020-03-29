@@ -88,7 +88,7 @@ static _inline void inportsw(uint16_t portid, void *addr, size_t count)
                        : "memory");
 }
 
-static _inline outportsw(uint16_t portid, const void *addr, size_t count)
+static _inline void outportsw(uint16_t portid, const void *addr, size_t count)
 {
   __asm__ __volatile__("rep outsw"
                        : "+S"(addr), "+c"(count)

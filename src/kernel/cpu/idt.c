@@ -127,7 +127,7 @@ void idt_init()
 
 void register_interrupt_handler(uint32_t n, I86_IRQ_HANDLER handler)
 {
-  interrupt_handler *ih = kmalloc(sizeof(interrupt_handler));
+  interrupt_handler *ih = kcalloc(1, sizeof(struct interrupt_handler));
   ih->handler = handler;
   list_add_tail(&ih->sibling, &interrupt_handlers[n]);
 }

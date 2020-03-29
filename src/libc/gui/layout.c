@@ -10,9 +10,9 @@
 void init_fonts()
 {
   uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", 0, 0);
-  struct stat *stat = malloc(sizeof(struct stat));
+  struct stat *stat = calloc(1, sizeof(struct stat));
   fstat(fd, stat);
-  char *buf = malloc(stat->size);
+  char *buf = calloc(stat->size, sizeof(char));
   read(fd, buf, stat->size);
   psf_init(buf, stat->size);
 }
@@ -46,7 +46,7 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
   char *pid = calloc(1, WINDOW_NAME_LENGTH);
   itoa(getpid(), 10, pid);
 
-  struct msgui *msgui_sender = malloc(sizeof(struct msgui));
+  struct msgui *msgui_sender = calloc(1, sizeof(struct msgui));
   msgui_sender->type = MSGUI_WINDOW;
   struct msgui_window *msgwin = msgui_sender->data;
   msgwin->x = x;
@@ -106,8 +106,8 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
   msgopen(pid, 0);
 
   init_fonts();
-  struct window *win = malloc(sizeof(struct window));
-  gui_create_window(NULL, win, 336, 196, 128, 208, NULL);
+  struct window *win = calloc(1, sizeof(struct window));
+  gui_create_window(NULL, win, x, y, width, height, NULL);
 
   msgopen(win->name, 0);
   return win;
@@ -115,15 +115,16 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
 
 void enter_event_loop(struct window *win)
 {
-  struct msgui *msgui = malloc(sizeof(struct msgui));
+  struct msgui *msgui = calloc(1, sizeof(struct msgui));
   msgui->type = MSGUI_FOCUS;
   struct msgui_focus *msgfocus = msgui->data;
   memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
   msgsnd(WINDOW_SERVER_SHM, msgui, 0, sizeof(struct msgui));
 
+  struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
   while (true)
   {
-    struct ui_event *ui_event = malloc(sizeof(ui_event));
+    memset(ui_event, 0, sizeof(struct ui_event));
     msgrcv(win->name, ui_event, 0, sizeof(struct ui_event));
 
     if (ui_event->event_type == MOUSE_CLICK)

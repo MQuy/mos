@@ -216,7 +216,7 @@ isr14:
     pop ebx
     pop eax
 
-    add esp, 20
+    add esp, 12
     ret
 
 ; 15: Reserved Exception

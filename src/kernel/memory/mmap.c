@@ -10,7 +10,7 @@ extern process *current_process;
 vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
 {
   mm_struct *mm = current_process->mm;
-  vm_area_struct *vma = kmalloc(sizeof(vm_area_struct));
+  vm_area_struct *vma = kcalloc(1, sizeof(struct vm_area_struct));
   vma->vm_mm = mm;
 
   if (!addr || addr < mm->end_brk)
@@ -128,7 +128,7 @@ int expand_area(vm_area_struct *vma, unsigned long address)
     {
       list_del(&vma->vm_sibling);
       vm_area_struct *vma_expand = get_unmapped_area(NULL, address - vma->vm_start);
-      memcpy(vma, vma_expand, sizeof(vm_area_struct));
+      memcpy(vma, vma_expand, sizeof(struct vm_area_struct));
       kfree(vma_expand);
     }
   }
@@ -176,8 +176,8 @@ uint32_t do_brk(uint32_t addr, size_t len)
   if (!vma || vma->vm_end >= new_brk)
     return 0;
 
-  vm_area_struct *new_vma = kmalloc(sizeof(vm_area_struct));
-  memcpy(new_vma, vma, sizeof(vm_area_struct));
+  vm_area_struct *new_vma = kcalloc(1, sizeof(struct vm_area_struct));
+  memcpy(new_vma, vma, sizeof(struct vm_area_struct));
   if (new_brk > mm->brk)
     expand_area(new_vma, new_brk);
   else
@@ -187,7 +187,7 @@ uint32_t do_brk(uint32_t addr, size_t len)
     vma->vm_file->f_op->mmap(vma->vm_file, new_vma);
   else
     shift_area(vma, new_vma);
-  memcpy(vma, new_vma, sizeof(vm_area_struct));
+  memcpy(vma, new_vma, sizeof(struct vm_area_struct));
 
   return 0;
 }

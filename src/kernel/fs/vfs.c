@@ -58,7 +58,7 @@ int find_unused_fd_slot()
 
 vfs_inode *init_inode()
 {
-  vfs_inode *i = kmalloc(sizeof(vfs_inode));
+  vfs_inode *i = kcalloc(1, sizeof(struct vfs_inode));
   i->i_blocks = 0;
   i->i_size = 0;
   sema_init(&i->i_sem, 1);

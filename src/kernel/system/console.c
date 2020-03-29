@@ -123,7 +123,7 @@ int printf(const char *fmt, ...)
 
 void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 {
-  current_fb = kmalloc(sizeof(struct framebuffer));
+  current_fb = kcalloc(1, sizeof(struct framebuffer));
   current_fb->addr = multiboot_framebuffer->common.framebuffer_addr;
   current_fb->bpp = multiboot_framebuffer->common.framebuffer_bpp;
   current_fb->pitch = multiboot_framebuffer->common.framebuffer_pitch;
@@ -142,9 +142,9 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 
 void console_setup()
 {
-  kstat *stat = kmalloc(sizeof(kstat));
+  kstat *stat = kcalloc(1, sizeof(struct kstat));
   vfs_stat("/usr/share/fonts/ter-powerline-v16n.psf", stat);
-  char *buf = kmalloc(stat->size);
+  char *buf = kcalloc(stat->size, sizeof(char));
   long fd = vfs_open("/usr/share/fonts/ter-powerline-v16n.psf");
   vfs_fread(fd, buf, stat->size);
   psf_init(buf, stat->size);

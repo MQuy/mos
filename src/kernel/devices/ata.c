@@ -47,7 +47,7 @@ uint8_t ata_init()
 
 ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)
 {
-  ata_device *device = kmalloc(sizeof(ata_device));
+  ata_device *device = kcalloc(1, sizeof(struct ata_device));
   device->io_base = io_addr1;
   device->associated_io_base = io_addr2;
   device->irq = irq;

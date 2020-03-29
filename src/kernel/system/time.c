@@ -20,7 +20,7 @@ uint8_t get_rtc_register(uint32_t reg)
 time *get_current_time()
 {
   uint8_t second, minute, hour, day, month, year;
-  time *t = kmalloc(sizeof(time));
+  time *t = kcalloc(1, sizeof(struct time));
 
   while (get_update_flag())
     ;
@@ -61,7 +61,7 @@ time *get_current_time()
 
 time *get_time_from_seconds(uint32_t seconds)
 {
-  time *t = kmalloc(sizeof(time));
+  time *t = kcalloc(1, sizeof(struct time));
   uint32_t days = seconds / (24 * 3600);
 
   // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days

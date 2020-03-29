@@ -8,9 +8,9 @@ extern process *current_process;
 char *vfs_read(const char *path)
 {
   long fd = vfs_open(path);
-  kstat *stat = kmalloc(sizeof(kstat));
+  kstat *stat = kcalloc(1, sizeof(struct kstat));
   vfs_fstat(fd, stat);
-  char *buf = kmalloc(stat->size);
+  char *buf = kcalloc(stat->size, sizeof(char));
   vfs_fread(fd, buf, stat->size);
   return buf;
 }
