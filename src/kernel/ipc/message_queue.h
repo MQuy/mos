@@ -6,40 +6,40 @@
 #include <include/list.h>
 #include <kernel/proc/task.h>
 
-typedef struct mq_sender
+struct mq_sender
 {
-  thread *sender;
+  struct thread *sender;
   size_t msize;
   int32_t mtype;
   char *buf;
-  list_head sibling;
-} mq_sender;
+  struct list_head sibling;
+};
 
-typedef struct mq_receiver
+struct mq_receiver
 {
-  thread *receiver;
-  thread *sender;
+  struct thread *receiver;
+  struct thread *sender;
   char *buf;
   int32_t mtype;
   uint32_t msize;
-  list_head sibling;
-} mq_receiver;
+  struct list_head sibling;
+};
 
-typedef struct mq_message
+struct mq_message
 {
-  thread *sender;
+  struct thread *sender;
   char *buf;
   int32_t mtype;
   uint32_t msize;
-  list_head sibling;
-} mq_message;
+  struct list_head sibling;
+};
 
-typedef struct message_queue
+struct message_queue
 {
-  list_head messages;
-  list_head receivers;
-  list_head senders;
-} message_queue;
+  struct list_head messages;
+  struct list_head receivers;
+  struct list_head senders;
+};
 
 void mq_init();
 int32_t mq_open(const char *name, int32_t flags);

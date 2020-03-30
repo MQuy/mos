@@ -6,15 +6,15 @@
 
 #define MAX_ATA_DEVICE 4
 
-static ata_device devices[MAX_ATA_DEVICE];
+static struct ata_device devices[MAX_ATA_DEVICE];
 static uint8_t number_of_actived_devices = 0;
 
-uint8_t ata_identify(ata_device *device);
-uint8_t atapi_identify(ata_device *device);
-ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name);
-uint8_t ata_polling(ata_device *device);
-uint8_t ata_polling_identify(ata_device *device);
-void ata_400ns_delays(ata_device *device);
+uint8_t ata_identify(struct ata_device *device);
+uint8_t atapi_identify(struct ata_device *device);
+struct ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name);
+uint8_t ata_polling(struct ata_device *device);
+uint8_t ata_polling_identify(struct ata_device *device);
+void ata_400ns_delays(struct ata_device *device);
 
 volatile bool ata_irq_called;
 
@@ -45,9 +45,9 @@ uint8_t ata_init()
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
 }
 
-ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)
+struct ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)
 {
-  ata_device *device = kcalloc(1, sizeof(struct ata_device));
+  struct ata_device *device = kcalloc(1, sizeof(struct ata_device));
   device->io_base = io_addr1;
   device->associated_io_base = io_addr2;
   device->irq = irq;
@@ -70,7 +70,7 @@ ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool i
   return 0;
 }
 
-uint8_t ata_identify(ata_device *device)
+uint8_t ata_identify(struct ata_device *device)
 {
   outportb(device->io_base + 6, device->is_master ? 0xA0 : 0xB0);
   ata_400ns_delays(device);
@@ -96,7 +96,7 @@ uint8_t ata_identify(ata_device *device)
   return ATA_IDENTIFY_ERR;
 }
 
-uint8_t ata_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+uint8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   outportb(device->io_base + 6, (device->is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
   ata_400ns_delays(device);
@@ -121,7 +121,7 @@ uint8_t ata_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *
   }
 }
 
-uint8_t ata_write(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+uint8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   outportb(device->io_base + 6, (device->is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
   ata_400ns_delays(device);
@@ -147,7 +147,7 @@ uint8_t ata_write(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t 
   }
 }
 
-uint8_t atapi_identify(ata_device *device)
+uint8_t atapi_identify(struct ata_device *device)
 {
   outportb(device->io_base + 6, device->is_master ? 0xA0 : 0xB0);
   ata_400ns_delays(device);
@@ -169,7 +169,7 @@ uint8_t atapi_identify(ata_device *device)
   return ATA_IDENTIFY_ERR;
 }
 
-void atapi_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+void atapi_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   uint8_t packet[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -203,7 +203,7 @@ void atapi_read(ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *b
   }
 }
 
-void ata_400ns_delays(ata_device *device)
+void ata_400ns_delays(struct ata_device *device)
 {
   inportb(device->io_base + 7);
   inportb(device->io_base + 7);
@@ -211,7 +211,7 @@ void ata_400ns_delays(ata_device *device)
   inportb(device->io_base + 7);
 }
 
-uint8_t ata_polling(ata_device *device)
+uint8_t ata_polling(struct ata_device *device)
 {
   uint8_t status;
 
@@ -225,7 +225,7 @@ uint8_t ata_polling(ata_device *device)
   }
 }
 
-uint8_t ata_polling_identify(ata_device *device)
+uint8_t ata_polling_identify(struct ata_device *device)
 {
   uint8_t status;
 
@@ -256,7 +256,7 @@ uint8_t ata_polling_identify(ata_device *device)
   return ATA_IDENTIFY_SUCCESS;
 }
 
-ata_device *get_ata_device(char *dev_name)
+struct ata_device *get_ata_device(char *dev_name)
 {
   for (uint8_t i = 0; i < MAX_ATA_DEVICE; ++i)
   {

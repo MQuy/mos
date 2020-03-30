@@ -42,27 +42,27 @@ typedef enum thread_policy
   THREAD_APP_POLICY,
 } thread_policy;
 
-typedef struct files_struct
+struct files_struct
 {
-  semaphore lock;
+  struct semaphore lock;
   struct vfs_file *fd[MAX_FD];
-} files_struct;
+};
 
-typedef struct fs_struct
+struct fs_struct
 {
   struct vfs_dentry *d_root;
   struct vfs_mount *mnt_root;
-} fs_struct;
+};
 
-typedef struct trap_frame
+struct trap_frame
 {
   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
   uint32_t eip;                                    // eip is saved on stack by the caller's "CALL" instruction
   uint32_t return_address;
   uint32_t parameter1, parameter2, parameter3;
-} trap_frame;
+};
 
-typedef struct vm_area_struct
+struct vm_area_struct
 {
   struct mm_struct *vm_mm;
   uint32_t vm_start;
@@ -71,9 +71,9 @@ typedef struct vm_area_struct
 
   struct list_head vm_sibling;
   struct vfs_file *vm_file;
-} vm_area_struct;
+};
 
-typedef struct mm_struct
+struct mm_struct
 {
   struct list_head mmap;
   uint32_t free_area_cache;
@@ -82,9 +82,9 @@ typedef struct mm_struct
   // end_brk is marked as the end of heap section, brk is end but in range start_brk<->end_brk and expand later
   // better way is only mapping start_brk->brk and handling page fault brk->end_brk
   uint32_t start_brk, brk, end_brk, start_stack;
-} mm_struct;
+};
 
-typedef struct thread
+struct thread
 {
   tid_t tid;
   enum thread_state state;
@@ -99,9 +99,9 @@ typedef struct thread
   struct interrupt_registers uregs;
   struct list_head sibling;
   struct plist_node sched_sibling;
-} thread;
+};
 
-typedef struct process
+struct process
 {
   pid_t pid;
   uid_t uid;
@@ -116,22 +116,22 @@ typedef struct process
   struct list_head sibling;
   struct list_head children;
   struct list_head threads;
-} process;
+};
 
 void task_init();
 void sched_init();
 
-thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, int priority);
-thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(Elf32_Layout *));
-void update_thread(thread *thread, uint8_t state);
-process *create_process(process *parent, const char *name, pdirectory *pdir);
-void process_load(const char *pname, const char *path, int priority, void *setup(Elf32_Layout *));
-process *process_fork(process *parent);
-void queue_thread(thread *t);
-void switch_thread(thread *nt);
+struct thread *create_kernel_thread(struct process *parent, uint32_t eip, thread_state state, int priority);
+struct thread *create_user_thread(struct process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(struct Elf32_Layout *));
+void update_thread(struct thread *thread, uint8_t state);
+struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir);
+void process_load(const char *pname, const char *path, int priority, void *setup(struct Elf32_Layout *));
+struct process *process_fork(struct process *parent);
+void queue_thread(struct thread *t);
+void switch_thread(struct thread *nt);
 void schedule();
 struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy);
 int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
-process *get_process(pid_t pid);
+struct process *get_process(pid_t pid);
 
 #endif

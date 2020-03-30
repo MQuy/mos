@@ -63,7 +63,7 @@ void mouse_calculate_position()
   // }
 }
 
-int32_t mouse_handler(interrupt_registers *regs)
+int32_t mouse_handler(struct interrupt_registers *regs)
 {
   uint8_t status = inportb(MOUSE_STATUS);
   if ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT))

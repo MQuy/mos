@@ -11,9 +11,9 @@
 #define ERR_WRONG_VERSION 4
 #define ERR_NOT_SUPPORTED_TYPE 5
 
-extern process *current_process;
+extern struct process *current_process;
 
-int elf_verify(Elf32_Ehdr *elf_header)
+int elf_verify(struct Elf32_Ehdr *elf_header)
 {
   if (!(elf_header->e_ident[EI_MAG0] == ELFMAG0 &&
         elf_header->e_ident[EI_MAG1] == ELFMAG1 &&
@@ -57,17 +57,17 @@ int elf_verify(Elf32_Ehdr *elf_header)
 * 	| .text section |
 * 	+---------------+
 */
-Elf32_Layout *elf_load(char *buf)
+struct Elf32_Layout *elf_load(char *buf)
 {
-  Elf32_Ehdr *elf_header = (Elf32_Ehdr *)buf;
+  struct Elf32_Ehdr *elf_header = (struct Elf32_Ehdr *)buf;
 
   if (elf_verify(elf_header) != NO_ERROR || elf_header->e_phoff == NULL)
     return NULL;
 
-  mm_struct *mm = current_process->mm;
-  Elf32_Layout *layout = kcalloc(1, sizeof(struct Elf32_Layout));
+  struct mm_struct *mm = current_process->mm;
+  struct Elf32_Layout *layout = kcalloc(1, sizeof(struct Elf32_Layout));
   layout->entry = elf_header->e_entry;
-  for (Elf32_Phdr *ph = buf + elf_header->e_phoff;
+  for (struct Elf32_Phdr *ph = buf + elf_header->e_phoff;
        ph && ph < (buf + elf_header->e_phoff + elf_header->e_phentsize * elf_header->e_phnum);
        ++ph)
   {

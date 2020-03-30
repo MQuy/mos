@@ -8,17 +8,17 @@
 static uint32_t remaining_from_last_used = 0;
 static uint32_t heap_current = 0;
 
-typedef struct block_meta
+struct block_meta
 {
   size_t size;
   struct block_meta *next;
   bool free;
   uint32_t magic;
-} block_meta;
+};
 
-static block_meta *blocklist = NULL;
+static struct block_meta *blocklist = NULL;
 
-void validate_block(block_meta *block)
+void validate_block(struct block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
   {
@@ -26,10 +26,10 @@ void validate_block(block_meta *block)
   }
 }
 
-block_meta *find_free_block(block_meta **last, size_t size)
+struct block_meta *find_free_block(struct block_meta **last, size_t size)
 {
   uint32_t bcount = 0;
-  block_meta *current = (block_meta *)blocklist;
+  struct block_meta *current = (struct block_meta *)blocklist;
   while (current && !(current->free && current->size >= size))
   {
     bcount++;
@@ -42,7 +42,7 @@ block_meta *find_free_block(block_meta **last, size_t size)
   return current;
 }
 
-void split_block(block_meta *block, size_t size)
+void split_block(struct block_meta *block, size_t size)
 {
   if (block->size > size + sizeof(struct block_meta))
   {
@@ -75,10 +75,10 @@ void *get_heap(uint32_t size)
   return heap_base;
 }
 
-block_meta *request_space(block_meta *last, size_t size)
+struct block_meta *request_space(struct block_meta *last, size_t size)
 {
 
-  block_meta *block = get_heap(size + sizeof(struct block_meta));
+  struct block_meta *block = get_heap(size + sizeof(struct block_meta));
 
   if (last)
     last->next = block;
@@ -95,7 +95,7 @@ void *malloc(size_t size)
   if (size <= 0)
     return NULL;
 
-  block_meta *block, *last;
+  struct block_meta *block, *last;
 
   if (blocklist)
   {
@@ -144,7 +144,7 @@ void free(void *ptr)
   if (!ptr)
     return;
 
-  block_meta *block = get_block_ptr(ptr);
+  struct block_meta *block = get_block_ptr(ptr);
   validate_block(block);
   block->free = true;
 }

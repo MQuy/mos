@@ -5,9 +5,9 @@
 #include <kernel/system/time.h>
 #include "ext2.h"
 
-loff_t ext2_llseek_file(vfs_file *file, loff_t ppos)
+loff_t ext2_llseek_file(struct vfs_file *file, loff_t ppos)
 {
-    vfs_inode *inode = file->f_dentry->d_inode;
+    struct vfs_inode *inode = file->f_dentry->d_inode;
 
     if (ppos > inode->i_size || ppos < 0)
         return -EINVAL;
@@ -16,7 +16,7 @@ loff_t ext2_llseek_file(vfs_file *file, loff_t ppos)
     return ppos;
 }
 
-void ext2_read_direct_block(vfs_superblock *sb, ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
     char *block_buf = ext2_bread_block(sb, block);
     int32_t pstart = (ppos > *p) ? ppos - *p : 0;
@@ -27,32 +27,32 @@ void ext2_read_direct_block(vfs_superblock *sb, ext2_inode *ei, uint32_t block, 
     *iter_buf += sb->s_blocksize - pstart - pend;
 }
 
-void ext2_read_indirect_block(vfs_superblock *sb, ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+void ext2_read_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
     uint32_t *block_buf = ext2_bread_block(sb, block);
     for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
         ext2_read_direct_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
-void ext2_read_doubly_indirect_block(vfs_superblock *sb, ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+void ext2_read_doubly_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
     uint32_t *block_buf = ext2_bread_block(sb, block);
     for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
         ext2_read_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
-void ext2_read_triply_indirect_block(vfs_superblock *sb, ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+void ext2_read_triply_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
     uint32_t *block_buf = ext2_bread_block(sb, block);
     for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
         ext2_read_triply_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
-ssize_t ext2_read_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
-    vfs_inode *inode = file->f_dentry->d_inode;
-    ext2_inode *ei = EXT2_INODE(inode);
-    vfs_superblock *sb = inode->i_sb;
+    struct vfs_inode *inode = file->f_dentry->d_inode;
+    struct ext2_inode *ei = EXT2_INODE(inode);
+    struct vfs_superblock *sb = inode->i_sb;
 
     uint32_t p = (ppos / sb->s_blocksize) * sb->s_blocksize;
     char *iter_buf = buf;
@@ -83,11 +83,11 @@ ssize_t ext2_read_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
     return count;
 }
 
-ssize_t ext2_write_file(vfs_file *file, const char *buf, size_t count, loff_t ppos)
+ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
-    vfs_inode *inode = file->f_dentry->d_inode;
-    ext2_inode *ei = EXT2_INODE(inode);
-    vfs_superblock *sb = inode->i_sb;
+    struct vfs_inode *inode = file->f_dentry->d_inode;
+    struct ext2_inode *ei = EXT2_INODE(inode);
+    struct vfs_superblock *sb = inode->i_sb;
 
     if (ppos + count > inode->i_size)
     {
@@ -125,10 +125,10 @@ ssize_t ext2_write_file(vfs_file *file, const char *buf, size_t count, loff_t pp
     return count;
 }
 
-vfs_file_operations ext2_file_operations = {
+struct vfs_file_operations ext2_file_operations = {
     .llseek = ext2_llseek_file,
     .read = ext2_read_file,
     .write = ext2_write_file,
 };
 
-vfs_file_operations ext2_dir_operations = {};
+struct vfs_file_operations ext2_dir_operations = {};

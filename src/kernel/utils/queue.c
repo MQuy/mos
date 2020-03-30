@@ -4,7 +4,7 @@
 static struct qelement
 {
   void *data;
-  list_head *sibling;
+  struct list_head *sibling;
 };
 
 void queue_push(struct queue *q, void *data)

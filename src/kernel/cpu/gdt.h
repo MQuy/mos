@@ -43,7 +43,7 @@
 //! 4k grandularity. default: none
 #define I86_GDT_GRAND_4K 0x80 //10000000
 
-typedef struct gdt_descriptor
+struct __attribute__((packed)) gdt_descriptor
 {
 
   //! bits 0-15 of segment limit
@@ -60,13 +60,13 @@ typedef struct gdt_descriptor
 
   //! bits 24-32 of base address
   uint8_t baseHi;
-} __attribute__((packed)) gdt_descriptor;
+};
 
-typedef struct gdtr
+struct __attribute__((packed)) gdtr
 {
   uint16_t limit;
   uint32_t base;
-} __attribute__((packed)) gdtr;
+};
 
 void gdt_init();
 void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t access, uint8_t grand);

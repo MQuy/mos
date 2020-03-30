@@ -17,7 +17,7 @@
 
 #define DISPATCHER_ISR 0x7F
 
-typedef struct idt_descriptor
+struct __attribute__((packed)) idt_descriptor
 {
   uint16_t baseLo;
 
@@ -26,28 +26,28 @@ typedef struct idt_descriptor
   uint8_t flags;
 
   uint16_t baseHi;
-} __attribute__((packed)) idt_descriptor;
+};
 
-typedef struct idtr
+struct __attribute__((packed)) idtr
 {
   uint16_t limit;
 
   uint32_t base;
-} __attribute__((packed)) idtr;
+};
 
 /* Struct which aggregates many registers */
-typedef struct interrupt_registers
+struct __attribute__((packed)) interrupt_registers
 {
   uint32_t gs, fs, es, ds;                         // Data segment selector
   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
   uint32_t int_no, err_code;                       // Interrupt number and error code (if applicable)
   uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically.
-} __attribute__((packed)) interrupt_registers;
+};
 
 #define IRQ_HANDLER_CONTINUE 0
 #define IRQ_HANDLER_STOP 1
-typedef void (*I86_IVT)(interrupt_registers *regs);
-typedef int32_t (*I86_IRQ_HANDLER)(interrupt_registers *registers);
+typedef void (*I86_IVT)(struct interrupt_registers *regs);
+typedef int32_t (*I86_IRQ_HANDLER)(struct interrupt_registers *registers);
 
 void idt_init();
 void setvect(uint32_t i, I86_IVT irq);
@@ -124,7 +124,7 @@ extern void irq15();
 #define IRQ14 46
 #define IRQ15 47
 
-void isr_handler(interrupt_registers *);
-void irq_handler(interrupt_registers *);
+void isr_handler(struct interrupt_registers *);
+void irq_handler(struct interrupt_registers *);
 
 #endif

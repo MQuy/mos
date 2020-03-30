@@ -55,7 +55,7 @@ Superblock is an in-memory mapping from a superblock in device, has important fi
   - `open_namei()` creates nameidata structure (dentry, mount), invokes `path_lookup()` check permission and walk through pathname to create dentries if they don't exist
   - `dentry_open()` initializes file structure
 
-`path_lookup(char *name, nameidata *nd)`
+`path_lookup(char *name, struct nameidata *nd)`
 
 - break pathname into components (except the last one), for each component:
   - get the last resolved component (inode, dentry), and the component's name
@@ -167,7 +167,7 @@ is called after cleaning of internal data structures and data in file itself.
 #### File system
 
 ```c
-typedef struct vfs_file_system_type {
+struct vfs_file_system_type {
   char *name;
   struct vfs_superblock *mount(struct vfs_filesystem_type *, char *dev_name, char *dir_name);
   int unmount(struct vfs_file_system_type *, char *dev_name, char *dir_name);
@@ -177,7 +177,7 @@ typedef struct vfs_file_system_type {
 #### Mount
 
 ```c
-typedef struct vfs_mount {
+struct vfs_mount {
   struct dentry *d_root;
   struct dentry *d_mountpoint;
   struct vfs_filesystem_type *fs_type;
@@ -189,28 +189,28 @@ typedef struct vfs_mount {
 #### Superblock
 
 ```c
-typedef struct vfs_superblock {
+struct vfs_superblock {
   struct vfs_mount *mount;
   struct dentry *d_root;
   void *sb_info; // for example -> ext2_superblock
   struct vfs_superblock_operations *s_ops;
 } vfs_superblock;
 
-typedef struct vfs_superblock_operations {
-  struct vfs_inode *allow_inode(vfs_superblock *);
+struct vfs_superblock_operations {
+  struct vfs_inode *allow_inode(struct vfs_superblock *);
 } vfs_superblock_operations;
 ```
 
 #### Inode
 
 ```c
-typedef struct vfs_inode {
+struct vfs_inode {
   uint32_t ino;
   void *i_info;
   struct vfs_inode_operations *i_ops;
 } vfs_inode;
 
-typedef struct vfs_inode_operations {
+struct vfs_inode_operations {
   struct vfs_dentry *lookup(struct vfs_inode *parent, struct vfs_dentry *child, struct nameidata *);
   int (*create) (struct inode *,struct dentry *, umode_t, bool);
 } vfs_inode_operations;
@@ -219,13 +219,13 @@ typedef struct vfs_inode_operations {
 #### File
 
 ```c
-typedef struct vfs_file {
+struct vfs_file {
   uint_32t ppos;
   struct vfs_dentry *d_file;
   struct vfs_file_operations *f_ops;
 } vfs_file;
 
-typedef struct vfs_file_operations {
+struct vfs_file_operations {
   int read(struct vfs_file *f, char *buf, uint32_t ppos, uint32_t size);
   int write(struct vfs_file *f, char *buf, uint32_t ppos, uint32_t size);
   int llseek(struct vfs_file *f, uint32_t ppos);
@@ -236,7 +236,7 @@ typedef struct vfs_file_operations {
 #### Dentry
 
 ```c
-typedef struct vfs_dentry {
+struct vfs_dentry {
   struct vfs_superblock *sb;
   struct vfs_inode *i_node;
   struct vfs_dentry *d_parent;
@@ -245,10 +245,10 @@ typedef struct vfs_dentry {
   struct vfs_dentry_operations *d_ops;
 } vfs_dentry;
 
-typedef struct vfs_dentry_operations {
+struct vfs_dentry_operations {
 } vfs_dentry_operations;
 
-typedef struct nameidata {
+struct nameidata {
   struct vfs_dentry *dentry;
   struct vfs_mount *mnt;
 } nameidata;
@@ -257,16 +257,16 @@ typedef struct nameidata {
 #### Process
 
 ```c
-typedef struct files_struct {
+struct files_struct {
   struct file *fd[256];
 } files_struct;
 
-typedef struct fs_struct {
+struct fs_struct {
   struct dentry *d_root;
   struct vfs_mount *mnt_root;
 } fs_struct;
 
-typedef struct process {
+struct process {
   struct fs_struct *fs;
   struct files_struct *files;
   struct process *parent;

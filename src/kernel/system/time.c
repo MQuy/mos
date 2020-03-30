@@ -17,10 +17,10 @@ uint8_t get_rtc_register(uint32_t reg)
   return inportb(CMOS_DATA);
 }
 
-time *get_current_time()
+struct time *get_current_time()
 {
   uint8_t second, minute, hour, day, month, year;
-  time *t = kcalloc(1, sizeof(struct time));
+  struct time *t = kcalloc(1, sizeof(struct time));
 
   while (get_update_flag())
     ;
@@ -59,9 +59,9 @@ time *get_current_time()
   return t;
 }
 
-time *get_time_from_seconds(uint32_t seconds)
+struct time *get_time_from_seconds(uint32_t seconds)
 {
-  time *t = kcalloc(1, sizeof(struct time));
+  struct time *t = kcalloc(1, sizeof(struct time));
   uint32_t days = seconds / (24 * 3600);
 
   // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days
@@ -86,7 +86,7 @@ time *get_time_from_seconds(uint32_t seconds)
 }
 
 // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#days_from_civil
-uint32_t get_days(time *t)
+uint32_t get_days(struct time *t)
 {
   int32_t year = t->year;
   uint32_t month = t->month;
@@ -101,7 +101,7 @@ uint32_t get_days(time *t)
   return era * 146097 + (doe)-719468;
 }
 
-uint32_t get_seconds(time *t)
+uint32_t get_seconds(struct time *t)
 {
   if (t == NULL)
     t = get_current_time();
@@ -109,7 +109,7 @@ uint32_t get_seconds(time *t)
   return get_days(t) * 24 * 3600 + t->hour * 3600 + t->minute * 60 + t->second;
 }
 
-time *get_time(uint32_t seconds)
+struct time *get_time(uint32_t seconds)
 {
   return seconds == NULL ? get_current_time() : get_time_from_seconds(seconds);
 }

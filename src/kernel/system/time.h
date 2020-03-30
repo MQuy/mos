@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef struct time
+struct time
 {
   uint8_t second;
   uint8_t minute;
@@ -11,9 +11,9 @@ typedef struct time
   uint8_t day;
   uint8_t month;
   uint16_t year;
-} time;
+};
 
-uint32_t get_seconds(time *);
-time *get_time(uint32_t seconds);
+uint32_t get_seconds(struct time *);
+struct time *get_time(uint32_t seconds);
 
 #endif

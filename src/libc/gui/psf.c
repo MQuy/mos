@@ -14,7 +14,7 @@ void psf_init(char *buff, size_t size)
   uint16_t glyph = 0;
   char *psf_end = psf_start + size;
   /* cast the address to PSF header struct */
-  psf_t *font = (psf_t *)psf_start;
+  struct psf_t *font = (struct psf_t *)psf_start;
   /* get the offset of the table */
   char *s = (char *)((char *)psf_start +
                      font->headersize +
@@ -78,7 +78,7 @@ void psf_putchar(
     uint32_t fg, uint32_t bg, char *fb, uint32_t scanline)
 {
   /* cast the address to PSF header struct */
-  psf_t *font = (psf_t *)psf_start;
+  struct psf_t *font = (struct psf_t *)psf_start;
   /* we need to know how many bytes encode one row */
   int bytesperline = div_ceil(font->width, 8);
   /* unicode translation */
@@ -121,7 +121,7 @@ void psf_puts(
     uint32_t cx, uint32_t cy,
     uint32_t fg, uint32_t bg, char *fb, uint32_t scanline)
 {
-  psf_t *font = (psf_t *)psf_start;
+  struct psf_t *font = (struct psf_t *)psf_start;
   for (uint32_t i = 0, length = strlen(s); i < length; i++)
     psf_putchar(s[i], cx + i * font->width, cy, fg, bg, fb, scanline);
 }

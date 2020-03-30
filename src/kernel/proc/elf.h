@@ -62,7 +62,7 @@ typedef int32_t Elf32_Sword; // Signed int
 #define EM_860 7   // Intel 80860
 #define EM_MIPS 8  // MIPS RS3000 (big-endian only)
 
-typedef struct
+struct Elf32_Ehdr
 {
   unsigned char e_ident[EI_NIDENT];
   Elf32_Half e_type;
@@ -78,7 +78,7 @@ typedef struct
   Elf32_Half e_shentsize;
   Elf32_Half e_shnum;
   Elf32_Half e_shstrndx;
-} Elf32_Ehdr;
+};
 
 // sh_type
 #define SHT_NULL 0
@@ -114,7 +114,7 @@ typedef struct
 #define SHN_COMMON 0xfff2
 #define SHN_HIRESERVE 0xffff
 
-typedef struct
+struct Elf32_Shdr
 {
   Elf32_Word sh_name;
   Elf32_Word sh_type;
@@ -126,7 +126,7 @@ typedef struct
   Elf32_Word sh_info;
   Elf32_Word sh_addralign;
   Elf32_Word sh_entsize;
-} Elf32_Shdr;
+};
 
 #define PF_X 0x1
 #define PF_W 0x2
@@ -148,7 +148,7 @@ typedef struct
 
 #define PT_GNU_STACK (PT_LOOS + 0x474e551)
 
-typedef struct
+struct Elf32_Phdr
 {
   Elf32_Word p_type;
   Elf32_Off p_offset;
@@ -158,14 +158,14 @@ typedef struct
   Elf32_Word p_memsz;
   Elf32_Word p_flags;
   Elf32_Word p_align;
-} Elf32_Phdr;
+};
 
-typedef struct Elf32_Layout
+struct Elf32_Layout
 {
   uint32_t stack;
   uint32_t entry;
-} Elf32_Layout;
+};
 
-Elf32_Layout *elf_load(char *);
+struct Elf32_Layout *elf_load(char *);
 
 #endif

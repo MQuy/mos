@@ -5,11 +5,11 @@
 #include <kernel/proc/task.h>
 #include "tmpfs.h"
 
-extern process *current_process;
+extern struct process *current_process;
 
-loff_t tmpfs_llseek_file(vfs_file *file, loff_t ppos)
+loff_t tmpfs_llseek_file(struct vfs_file *file, loff_t ppos)
 {
-  vfs_inode *inode = file->f_dentry->d_inode;
+  struct vfs_inode *inode = file->f_dentry->d_inode;
 
   if (ppos > inode->i_size || ppos < 0)
     return -EINVAL;
@@ -18,16 +18,16 @@ loff_t tmpfs_llseek_file(vfs_file *file, loff_t ppos)
   return ppos;
 }
 
-ssize_t tmpfs_read_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
-  vfs_inode *inode = file->f_dentry->d_inode;
-  vfs_superblock *sb = inode->i_sb;
+  struct vfs_inode *inode = file->f_dentry->d_inode;
+  struct vfs_superblock *sb = inode->i_sb;
 
   if (ppos + count > inode->i_size)
     return -1;
 
   uint32_t p = 0;
-  page *iter_page;
+  struct page *iter_page;
   char *iter_buf = buf;
   list_for_each_entry(iter_page, &inode->i_data.pages, sibling)
   {
@@ -49,16 +49,16 @@ ssize_t tmpfs_read_file(vfs_file *file, char *buf, size_t count, loff_t ppos)
   return count;
 }
 
-ssize_t tmpfs_write_file(vfs_file *file, const char *buf, size_t count, loff_t ppos)
+ssize_t tmpfs_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
-  vfs_inode *inode = file->f_dentry->d_inode;
-  vfs_superblock *sb = inode->i_sb;
+  struct vfs_inode *inode = file->f_dentry->d_inode;
+  struct vfs_superblock *sb = inode->i_sb;
 
   if (ppos + count > inode->i_size)
     tmpfs_setsize(inode, ppos + count);
 
   uint32_t p = 0;
-  page *iter_page;
+  struct page *iter_page;
   char *iter_buf = buf;
   list_for_each_entry(iter_page, &inode->i_data.pages, sibling)
   {
@@ -80,13 +80,13 @@ ssize_t tmpfs_write_file(vfs_file *file, const char *buf, size_t count, loff_t p
   return count;
 }
 
-int tmpfs_mmap_file(vfs_file *file, vm_area_struct *new_vma)
+int tmpfs_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 {
-  vfs_inode *inode = file->f_dentry->d_inode;
-  vfs_superblock *sb = inode->i_sb;
-  vm_area_struct *vma = inode->i_data.i_mmap;
+  struct vfs_inode *inode = file->f_dentry->d_inode;
+  struct vfs_superblock *sb = inode->i_sb;
+  struct vm_area_struct *vma = inode->i_data.i_mmap;
 
-  page *iter_page;
+  struct page *iter_page;
   uint32_t addr = new_vma->vm_start;
   list_for_each_entry(iter_page, &inode->i_data.pages, sibling)
   {
@@ -99,11 +99,11 @@ int tmpfs_mmap_file(vfs_file *file, vm_area_struct *new_vma)
   return 0;
 }
 
-vfs_file_operations tmpfs_file_operations = {
+struct vfs_file_operations tmpfs_file_operations = {
     .llseek = tmpfs_llseek_file,
     .read = tmpfs_read_file,
     .write = tmpfs_write_file,
     .mmap = tmpfs_mmap_file,
 };
 
-vfs_file_operations tmpfs_dir_operations = {};
+struct vfs_file_operations tmpfs_dir_operations = {};

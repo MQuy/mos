@@ -31,11 +31,11 @@ https://github.com/benhoyt/inih
 #define MAX_NAME 50
 
 /* Used by ini_parse_string() to keep track of string parsing state. */
-typedef struct
+struct ini_parse_string_ctx
 {
     const char *ptr;
     size_t num_left;
-} ini_parse_string_ctx;
+};
 
 /* Strip whitespace chars off end of given string, in place. Return s. */
 static char *rstrip(char *s)
@@ -291,7 +291,7 @@ int ini_parse(const char *filename, ini_handler handler, void *user)
    is the fgets() equivalent used by ini_parse_string(). */
 static char *ini_reader_string(char *str, int num, void *stream)
 {
-    ini_parse_string_ctx *ctx = (ini_parse_string_ctx *)stream;
+    struct ini_parse_string_ctx *ctx = (struct ini_parse_string_ctx *)stream;
     const char *ctx_ptr = ctx->ptr;
     size_t ctx_num_left = ctx->num_left;
     char *strp = str;

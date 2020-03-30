@@ -58,31 +58,31 @@ typedef uint32_t virtual_addr;
 #define PAGES_PER_TABLE 1024
 #define PAGES_PER_DIR 1024
 
-typedef struct page
+struct page
 {
   uint32_t frame;
   struct list_head sibling;
   uint32_t virtual;
-} page;
+};
 
-typedef struct ptable
+struct ptable
 {
   pt_entry m_entries[PAGES_PER_TABLE];
-} ptable;
+};
 
-typedef struct pdirectory
+struct pdirectory
 {
   pd_entry m_entries[PAGES_PER_DIR];
-} pdirectory;
+};
 
 void vmm_init();
-pdirectory *vmm_get_directory();
-void vmm_map_address(pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
-void vmm_unmap_address(pdirectory *va_dir, uint32_t virt);
+struct pdirectory *vmm_get_directory();
+void vmm_map_address(struct pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
+void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt);
 void *create_kernel_stack(int32_t blocks);
-pdirectory *vmm_create_address_space(pdirectory *dir);
+struct pdirectory *vmm_create_address_space(struct pdirectory *dir);
 physical_addr vmm_get_physical_address(virtual_addr vaddr);
-pdirectory *vmm_fork(pdirectory *va_dir);
+struct pdirectory *vmm_fork(struct pdirectory *va_dir);
 
 // malloc.c
 void *sbrk(size_t n);
@@ -102,7 +102,7 @@ int do_munmap(struct mm_struct *mm, uint32_t addr, size_t len);
 uint32_t do_brk(uint32_t addr, size_t len);
 
 // highmem.c
-void kmap(page *p);
-void kunmap(page *p);
+void kmap(struct page *p);
+void kunmap(struct page *p);
 
 #endif

@@ -47,13 +47,13 @@ window {
   graphic graphic;
   desktop *parent;
   widget *active_widget;
-  list_head<ui_event> events;
+  struct list_head<ui_event> events;
 }
 
 widget {
   graphic graphic;
   window *parent;
-  list_head<ui_event> events;
+  struct list_head<ui_event> events;
 }
 
 label {
@@ -69,7 +69,7 @@ input {
 
 ui_event {
   ui_event_type type;
-  list_head<void *on_event> listeners;
+  struct list_head<void *on_event> listeners;
 }
 ```
 

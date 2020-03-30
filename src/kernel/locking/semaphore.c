@@ -2,15 +2,15 @@
 #include <kernel/proc/task.h>
 #include "semaphore.h"
 
-extern thread *current_thread;
+extern struct thread *current_thread;
 
-typedef struct semaphore_waiter
+struct semaphore_waiter
 {
   struct list_head sibling;
   struct thread *task;
-} semaphore_waiter;
+};
 
-void acquire_semaphore(semaphore *sem)
+void acquire_semaphore(struct semaphore *sem)
 {
   disable_interrupts();
   spin_lock(&sem->lock);
@@ -22,7 +22,7 @@ void acquire_semaphore(semaphore *sem)
   }
   else
   {
-    semaphore_waiter *waiter = kcalloc(1, sizeof(struct semaphore_waiter));
+    struct semaphore_waiter *waiter = kcalloc(1, sizeof(struct semaphore_waiter));
     waiter->task = current_thread;
 
     list_add_tail(&waiter->sibling, &sem->wait_list);
@@ -32,7 +32,7 @@ void acquire_semaphore(semaphore *sem)
   }
 }
 
-void release_semaphore(semaphore *sem)
+void release_semaphore(struct semaphore *sem)
 {
   disable_interrupts();
   spin_lock(&sem->lock);
@@ -43,7 +43,7 @@ void release_semaphore(semaphore *sem)
   }
   else
   {
-    semaphore_waiter *waiter = list_first_entry(&sem->wait_list, struct semaphore_waiter, sibling);
+    struct semaphore_waiter *waiter = list_first_entry(&sem->wait_list, struct semaphore_waiter, sibling);
 
     list_del(&waiter->sibling);
     update_thread(waiter->task, THREAD_READY);

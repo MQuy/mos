@@ -13,18 +13,18 @@
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
 extern void return_usermode(uint32_t uregs);
-extern void irq_schedule_handler(interrupt_registers *regs);
-extern void thread_page_fault(interrupt_registers *regs);
+extern void irq_schedule_handler(struct interrupt_registers *regs);
+extern void thread_page_fault(struct interrupt_registers *regs);
 
-volatile thread *current_thread;
-volatile process *current_process;
+volatile struct thread *current_thread;
+volatile struct process *current_process;
 static uint32_t next_pid = 0;
 static uint32_t next_tid = 0;
 struct hashmap mprocess;
 
-files_struct *clone_file_descriptor_table(process *parent)
+struct files_struct *clone_file_descriptor_table(struct process *parent)
 {
-  files_struct *files = kcalloc(1, sizeof(struct files_struct));
+  struct files_struct *files = kcalloc(1, sizeof(struct files_struct));
 
   if (parent)
   {
@@ -38,16 +38,16 @@ files_struct *clone_file_descriptor_table(process *parent)
   return files;
 }
 
-mm_struct *clone_mm_struct(process *parent)
+struct mm_struct *clone_mm_struct(struct process *parent)
 {
-  mm_struct *mm = kcalloc(1, sizeof(struct mm_struct));
+  struct mm_struct *mm = kcalloc(1, sizeof(struct mm_struct));
   memcpy(mm, parent->mm, sizeof(struct mm_struct));
   INIT_LIST_HEAD(&mm->mmap);
 
-  vm_area_struct *iter = NULL;
+  struct vm_area_struct *iter = NULL;
   list_for_each_entry(iter, &parent->mm->mmap, vm_sibling)
   {
-    vm_area_struct *clone = kcalloc(1, sizeof(struct vm_area_struct));
+    struct vm_area_struct *clone = kcalloc(1, sizeof(struct vm_area_struct));
     clone->vm_start = iter->vm_start;
     clone->vm_end = iter->vm_end;
     clone->vm_file = iter->vm_file;
@@ -59,17 +59,17 @@ mm_struct *clone_mm_struct(process *parent)
   return mm;
 }
 
-void kernel_thread_entry(thread *t, void *flow())
+void kernel_thread_entry(struct thread *t, void *flow())
 {
   flow();
   schedule();
 }
 
-thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, int priority)
+struct thread *create_kernel_thread(struct process *parent, uint32_t eip, thread_state state, int priority)
 {
   disable_interrupts();
 
-  thread *t = kcalloc(1, sizeof(struct thread));
+  struct thread *t = kcalloc(1, sizeof(struct thread));
   t->tid = next_tid++;
   t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
   t->parent = parent;
@@ -77,7 +77,7 @@ thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, 
   t->esp = t->kernel_stack - sizeof(struct trap_frame);
   plist_node_init(&t->sched_sibling, priority);
 
-  trap_frame *frame = (trap_frame *)t->esp;
+  struct trap_frame *frame = (struct trap_frame *)t->esp;
   memset(frame, 0, sizeof(struct trap_frame));
 
   frame->parameter2 = eip;
@@ -101,11 +101,11 @@ thread *create_kernel_thread(process *parent, uint32_t eip, thread_state state, 
   return t;
 }
 
-process *create_process(process *parent, const char *name, pdirectory *pdir)
+struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir)
 {
   disable_interrupts();
 
-  process *p = kcalloc(1, sizeof(struct process));
+  struct process *p = kcalloc(1, sizeof(struct process));
   p->pid = next_pid++;
   p->name = strdup(name);
   if (pdir)
@@ -152,24 +152,24 @@ void task_init(void *func)
 
   setup_swapper_process();
 
-  process *init = create_process(current_process, "init", current_process->pdir);
-  thread *nt = create_kernel_thread(init, func, THREAD_WAITING, 0);
+  struct process *init = create_process(current_process, "init", current_process->pdir);
+  struct thread *nt = create_kernel_thread(init, func, THREAD_WAITING, 0);
 
   update_thread(current_thread, THREAD_TERMINATED);
   update_thread(nt, THREAD_READY);
   schedule();
 }
 
-void user_thread_entry(thread *t)
+void user_thread_entry(struct thread *t)
 {
   tss_set_stack(0x10, t->kernel_stack);
   return_usermode(&t->uregs);
 }
 
-void user_thread_elf_entry(thread *t, const char *path, void *setup(Elf32_Layout *))
+void user_thread_elf_entry(struct thread *t, const char *path, void *setup(struct Elf32_Layout *))
 {
   char *buf = vfs_read(path);
-  Elf32_Layout *elf_layout = elf_load(buf);
+  struct Elf32_Layout *elf_layout = elf_load(buf);
   t->user_stack = elf_layout->stack;
   tss_set_stack(0x10, t->kernel_stack);
   if (setup)
@@ -177,11 +177,11 @@ void user_thread_elf_entry(thread *t, const char *path, void *setup(Elf32_Layout
   enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
 }
 
-thread *create_user_thread(process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(Elf32_Layout *))
+struct thread *create_user_thread(struct process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(struct Elf32_Layout *))
 {
   disable_interrupts();
 
-  thread *t = kcalloc(1, sizeof(struct thread));
+  struct thread *t = kcalloc(1, sizeof(struct thread));
   t->tid = next_tid++;
   t->parent = parent;
   t->state = state;
@@ -190,7 +190,7 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
   t->esp = t->kernel_stack - sizeof(struct trap_frame);
   plist_node_init(&t->sched_sibling, priority);
 
-  trap_frame *frame = (trap_frame *)t->esp;
+  struct trap_frame *frame = (struct trap_frame *)t->esp;
   memset(frame, 0, sizeof(struct trap_frame));
 
   frame->parameter3 = (uint32_t)setup;
@@ -215,19 +215,19 @@ thread *create_user_thread(process *parent, const char *path, thread_state state
   return t;
 }
 
-void process_load(const char *pname, const char *path, int priority, void *setup(Elf32_Layout *))
+void process_load(const char *pname, const char *path, int priority, void *setup(struct Elf32_Layout *))
 {
-  process *p = create_process(current_process, pname, current_process->pdir);
-  thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);
+  struct process *p = create_process(current_process, pname, current_process->pdir);
+  struct thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);
   queue_thread(t);
 }
 
-process *process_fork(process *parent)
+struct process *process_fork(struct process *parent)
 {
   disable_interrupts();
 
   // fork process
-  process *p = kcalloc(1, sizeof(struct process));
+  struct process *p = kcalloc(1, sizeof(struct process));
   p->pid = next_pid++;
   p->gid = parent->pid;
   p->name = strdup(parent->name);
@@ -246,8 +246,8 @@ process *process_fork(process *parent)
   p->pdir = vmm_fork(parent->pdir);
 
   // copy active parent's thread
-  thread *parent_thread = parent->active_thread;
-  thread *t = kcalloc(1, sizeof(struct thread));
+  struct thread *parent_thread = parent->active_thread;
+  struct thread *t = kcalloc(1, sizeof(struct thread));
   t->tid = next_tid++;
   t->state = THREAD_READY;
   t->policy = parent_thread->policy;
@@ -262,7 +262,7 @@ process *process_fork(process *parent)
   memcpy(&t->uregs, &parent_thread->uregs, sizeof(struct interrupt_registers));
   t->uregs.eax = 0;
 
-  trap_frame *frame = (trap_frame *)t->esp;
+  struct trap_frame *frame = (struct trap_frame *)t->esp;
   frame->parameter1 = (uint32_t)t;
   frame->return_address = PROCESS_TRAPPED_PAGE_FAULT;
   frame->eip = (uint32_t)user_thread_entry;
@@ -283,7 +283,7 @@ process *process_fork(process *parent)
   return p;
 }
 
-process *get_process(pid_t pid)
+struct process *get_process(pid_t pid)
 {
   return hashmap_get(&mprocess, &pid);
 }

@@ -5,13 +5,13 @@
 #include <include/list.h>
 #include "spinlock.h"
 
-typedef struct semaphore
+struct semaphore
 {
   spinlock_t lock;
   uint32_t count;
   uint32_t capacity;
   struct list_head wait_list;
-} semaphore;
+};
 
 #define __SEMAPHORE_INITIALIZER(name, n)           \
   {                                                \
@@ -22,14 +22,14 @@ typedef struct semaphore
   }
 
 #define DEFINE_SEMAPHORE(name) \
-  semaphore name = __SEMAPHORE_INITIALIZER(name, 1)
+  struct semaphore name = __SEMAPHORE_INITIALIZER(name, 1)
 
-static inline void sema_init(semaphore *sem, int val)
+static inline void sema_init(struct semaphore *sem, int val)
 {
-  *sem = (semaphore)__SEMAPHORE_INITIALIZER(*sem, val);
+  *sem = (struct semaphore)__SEMAPHORE_INITIALIZER(*sem, val);
 }
 
-void acquire_semaphore(semaphore *sem);
-void release_semaphore(semaphore *sem);
+void acquire_semaphore(struct semaphore *sem);
+void release_semaphore(struct semaphore *sem);
 
 #endif

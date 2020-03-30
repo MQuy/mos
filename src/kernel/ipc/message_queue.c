@@ -4,9 +4,9 @@
 #include <include/errno.h>
 #include "message_queue.h"
 
-extern thread *current_thread;
+extern struct thread *current_thread;
 
-semaphore mq_locking;
+struct semaphore mq_locking;
 struct hashmap mq_map;
 
 void mq_init()
@@ -17,7 +17,7 @@ void mq_init()
 
 int32_t mq_open(const char *name, int32_t flags)
 {
-  message_queue *mq = kcalloc(1, sizeof(struct message_queue));
+  struct message_queue *mq = kcalloc(1, sizeof(struct message_queue));
   INIT_LIST_HEAD(&mq->senders);
   INIT_LIST_HEAD(&mq->receivers);
   INIT_LIST_HEAD(&mq->messages);
@@ -31,7 +31,7 @@ int32_t mq_open(const char *name, int32_t flags)
 int32_t mq_close(const char *name)
 {
   int32_t ret = 0;
-  message_queue *mq = hashmap_get(&mq_map, name);
+  struct message_queue *mq = hashmap_get(&mq_map, name);
   if (mq)
   {
     hashmap_remove(&mq_map, name);
@@ -43,13 +43,13 @@ int32_t mq_close(const char *name)
 // NOTE: MQ 2020-03-13 The method only be called in kernel
 int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t msize)
 {
-  message_queue *mq = hashmap_get(&mq_map, name);
+  struct message_queue *mq = hashmap_get(&mq_map, name);
 
   if (!mq)
     return -EINVAL;
 
-  mq_receiver *iter = NULL;
-  mq_receiver *mqr = NULL;
+  struct mq_receiver *iter = NULL;
+  struct mq_receiver *mqr = NULL;
   list_for_each_entry(iter, &mq->receivers, sibling)
   {
     if (iter->mtype == mtype)
@@ -69,7 +69,7 @@ int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t m
   }
   else
   {
-    mq_message *msg = kcalloc(1, sizeof(struct mq_message));
+    struct mq_message *msg = kcalloc(1, sizeof(struct mq_message));
     msg->buf = kernel_buf;
     msg->msize = msize;
     msg->mtype = mtype;
@@ -80,7 +80,7 @@ int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t m
 
 int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
 {
-  message_queue *mq = hashmap_get(&mq_map, name);
+  struct message_queue *mq = hashmap_get(&mq_map, name);
 
   if (!mq)
     return -EINVAL;
@@ -88,8 +88,8 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   char *kernel_buf = kcalloc(msize, sizeof(char));
   memcpy(kernel_buf, user_buf, msize);
 
-  mq_receiver *iter = NULL;
-  mq_receiver *mqr = NULL;
+  struct mq_receiver *iter = NULL;
+  struct mq_receiver *mqr = NULL;
   list_for_each_entry(iter, &mq->receivers, sibling)
   {
     if (iter->mtype == mtype)
@@ -109,7 +109,7 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
   }
   else
   {
-    mq_message *msg = kcalloc(1, sizeof(struct mq_message));
+    struct mq_message *msg = kcalloc(1, sizeof(struct mq_message));
     msg->buf = kernel_buf;
     msg->msize = msize;
     msg->mtype = mtype;
@@ -127,13 +127,13 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
 
 int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
 {
-  message_queue *mq = hashmap_get(&mq_map, name);
+  struct message_queue *mq = hashmap_get(&mq_map, name);
 
   if (!mq)
     return -EINVAL;
 
-  mq_message *iter = NULL;
-  mq_message *mqm = NULL;
+  struct mq_message *iter = NULL;
+  struct mq_message *mqm = NULL;
   list_for_each_entry(iter, &mq->messages, sibling)
   {
     if (iter->mtype == mtype)
@@ -155,7 +155,7 @@ int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msi
   }
   else
   {
-    mq_receiver *mqr = kcalloc(1, sizeof(struct mq_receiver));
+    struct mq_receiver *mqr = kcalloc(1, sizeof(struct mq_receiver));
     mqr->mtype = mtype;
     mqr->msize = msize;
     mqr->receiver = current_thread;

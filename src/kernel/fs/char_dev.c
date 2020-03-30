@@ -3,9 +3,9 @@
 
 struct list_head devlist;
 
-char_device *get_chrdev(uint32_t major)
+struct char_device *get_chrdev(uint32_t major)
 {
-  char_device *iter = NULL;
+  struct char_device *iter = NULL;
   list_for_each_entry(iter, &devlist, sibling)
   {
     if (iter->major == major)
@@ -14,9 +14,9 @@ char_device *get_chrdev(uint32_t major)
   return NULL;
 }
 
-int register_chrdev(char_device *new_dev)
+int register_chrdev(struct char_device *new_dev)
 {
-  char_device *exist = get_chrdev(new_dev->major);
+  struct char_device *exist = get_chrdev(new_dev->major);
   if (exist == NULL)
   {
     list_add_tail(&new_dev->sibling, &devlist);
@@ -28,7 +28,7 @@ int register_chrdev(char_device *new_dev)
 
 int unregister_chrdev(uint32_t major)
 {
-  char_device *dev = get_chrdev(major);
+  struct char_device *dev = get_chrdev(major);
   if (dev)
   {
     list_del(&dev->sibling);
@@ -38,9 +38,9 @@ int unregister_chrdev(uint32_t major)
     return -ENODEV;
 }
 
-int chrdev_open(vfs_inode *inode, vfs_file *filp)
+int chrdev_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
-  char_device *dev = get_chrdev(MAJOR(inode->i_rdev));
+  struct char_device *dev = get_chrdev(MAJOR(inode->i_rdev));
   if (dev == NULL)
     return -ENODEV;
 
@@ -52,7 +52,7 @@ int chrdev_open(vfs_inode *inode, vfs_file *filp)
   return -EINVAL;
 }
 
-vfs_file_operations def_chr_fops = {
+struct vfs_file_operations def_chr_fops = {
     .open = chrdev_open,
 };
 

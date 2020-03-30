@@ -4,7 +4,7 @@
 #define PKMAP_BASE 0xE0000000
 #define LAST_PKMAP 1024
 
-extern process *current_process;
+extern struct process *current_process;
 
 uint32_t pkmap[LAST_PKMAP];
 
@@ -32,7 +32,7 @@ int get_pkmap_free()
   return -1;
 }
 
-void kmap(page *p)
+void kmap(struct page *p)
 {
   uint32_t block = get_pkmap_free();
   uint32_t vaddr = block * PMM_FRAME_SIZE + PKMAP_BASE;
@@ -42,7 +42,7 @@ void kmap(page *p)
   p->virtual = vaddr;
 }
 
-void kunmap(page *p)
+void kunmap(struct page *p)
 {
   if (!p->virtual)
     return;

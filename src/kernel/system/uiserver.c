@@ -5,10 +5,10 @@
 #include <kernel/utils/queue.h>
 #include "uiserver.h"
 
-extern thread *current_thread;
-static thread *wsthread;
+extern struct thread *current_thread;
+static struct thread *wsthread;
 
-void uiserver_init(thread *t)
+void uiserver_init(struct thread *t)
 {
   wsthread = t;
 }

@@ -5,7 +5,7 @@
 #include <kernel/fs/vfs.h>
 
 /*
- * Special vfs_inode numbers
+ * Special struct vfs_inode numbers
  */
 #define EXT2_BAD_INO 1         /* Bad blocks vfs_inode */
 #define EXT2_ROOT_INO 2        /* Root vfs_inode */
@@ -20,7 +20,7 @@
 #define EXT2_DIR_REC_LEN(name_len) (((name_len) + 8 + EXT2_DIR_ROUND) & \
                                     ~EXT2_DIR_ROUND)
 
-typedef struct ext2_superblock
+struct ext2_superblock
 {
   uint32_t s_inodes_count;      /* Inodes count */
   uint32_t s_blocks_count;      /* Blocks count */
@@ -74,9 +74,9 @@ typedef struct ext2_superblock
   uint32_t s_default_mount_opts;
   uint32_t s_first_meta_bg; /* First metablock block group */
   uint32_t s_reserved[190]; /* Padding to the end of the block */
-} ext2_superblock;
+};
 
-typedef struct ext2_group_desc
+struct ext2_group_desc
 {
   uint32_t bg_block_bitmap;
   uint32_t bg_inode_bitmap;
@@ -86,9 +86,9 @@ typedef struct ext2_group_desc
   uint16_t bg_used_dirs_count;
   uint16_t bg_pad;
   uint32_t bg_reserved[3];
-} ext2_group_desc;
+};
 
-typedef struct ext2_inode
+struct ext2_inode
 {
   uint16_t i_mode;        /* File mode */
   uint16_t i_uid;         /* Low 16 bits of Owner Uid */
@@ -147,11 +147,11 @@ typedef struct ext2_inode
       uint32_t m_i_reserved2[2];
     } masix2;
   } osd2; /* OS dependent 2 */
-} ext2_inode;
+};
 
 #define EXT2_NAME_LEN 255
 
-typedef struct ext2_dir_entry
+struct ext2_dir_entry
 {
   uint32_t ino;
   // NOTE: 2019-07-28 rec_len has to be calculated by EXT2_DIR_REC_LEN
@@ -159,7 +159,7 @@ typedef struct ext2_dir_entry
   uint8_t name_len;
   uint8_t file_type;
   char name[EXT2_NAME_LEN];
-} ext2_dir_entry;
+};
 
 enum
 {
@@ -169,12 +169,12 @@ enum
   EXT2_FT_MAX
 };
 
-static inline struct ext2_superblock *EXT2_SB(vfs_superblock *sb)
+static inline struct ext2_superblock *EXT2_SB(struct vfs_superblock *sb)
 {
   return sb->s_fs_info;
 }
 
-static inline struct ext2_inode *EXT2_INODE(vfs_inode *inode)
+static inline struct ext2_inode *EXT2_INODE(struct vfs_inode *inode)
 {
   return inode->i_fs_info;
 }
@@ -194,29 +194,29 @@ static inline struct ext2_inode *EXT2_INODE(vfs_inode *inode)
 // super.c
 void init_ext2_fs();
 void exit_ext2_fs();
-char *ext2_bread_block(vfs_superblock *sb, uint32_t iblock);
-char *ext2_bread(vfs_superblock *sb, uint32_t iblock, uint32_t size);
-void ext2_bwrite_block(vfs_superblock *sb, uint32_t iblock, char *buf);
-void ext2_bwrite(vfs_superblock *sb, uint32_t iblock, char *buf, uint32_t size);
-vfs_inode *ext2_alloc_inode(vfs_superblock *sb);
-void ext2_read_inode(vfs_inode *);
-void ext2_write_inode(vfs_inode *);
-ext2_group_desc *ext2_get_group_desc(vfs_superblock *sb, uint32_t block_group);
-void ext2_write_group_desc(vfs_superblock *sb, ext2_group_desc *gdp);
+char *ext2_bread_block(struct vfs_superblock *sb, uint32_t iblock);
+char *ext2_bread(struct vfs_superblock *sb, uint32_t iblock, uint32_t size);
+void ext2_bwrite_block(struct vfs_superblock *sb, uint32_t iblock, char *buf);
+void ext2_bwrite(struct vfs_superblock *sb, uint32_t iblock, char *buf, uint32_t size);
+struct vfs_inode *ext2_alloc_inode(struct vfs_superblock *sb);
+void ext2_read_inode(struct vfs_inode *);
+void ext2_write_inode(struct vfs_inode *);
+struct ext2_group_desc *ext2_get_group_desc(struct vfs_superblock *sb, uint32_t block_group);
+void ext2_write_group_desc(struct vfs_superblock *sb, struct ext2_group_desc *gdp);
 
-extern vfs_super_operations ext2_super_operations;
+extern struct vfs_super_operations ext2_super_operations;
 
 // vfs_inode.c
-uint32_t ext2_create_block(vfs_superblock *sb);
+uint32_t ext2_create_block(struct vfs_superblock *sb);
 
-extern vfs_inode_operations ext2_dir_inode_operations;
-extern vfs_inode_operations ext2_file_inode_operations;
-extern vfs_inode_operations ext2_special_inode_operations;
+extern struct vfs_inode_operations ext2_dir_inode_operations;
+extern struct vfs_inode_operations ext2_file_inode_operations;
+extern struct vfs_inode_operations ext2_special_inode_operations;
 
 // file.c
-extern vfs_file_operations ext2_file_operations;
-extern vfs_file_operations ext2_dir_operations;
+extern struct vfs_file_operations ext2_file_operations;
+extern struct vfs_file_operations ext2_dir_operations;
 
-extern vfs_file_operations def_chr_fops;
+extern struct vfs_file_operations def_chr_fops;
 
 #endif

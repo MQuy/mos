@@ -6,7 +6,7 @@
 
 struct queue
 {
-  list_head *qhead;
+  struct list_head *qhead;
   uint32_t number_of_items;
 };
 

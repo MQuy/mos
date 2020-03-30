@@ -142,7 +142,7 @@ void console_init(struct multiboot_tag_framebuffer *multiboot_framebuffer)
 
 void console_setup()
 {
-  kstat *stat = kcalloc(1, sizeof(struct kstat));
+  struct kstat *stat = kcalloc(1, sizeof(struct kstat));
   vfs_stat("/usr/share/fonts/ter-powerline-v16n.psf", stat);
   char *buf = kcalloc(stat->size, sizeof(char));
   long fd = vfs_open("/usr/share/fonts/ter-powerline-v16n.psf");

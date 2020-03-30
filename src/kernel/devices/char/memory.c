@@ -6,14 +6,14 @@
 #define NULL_DEVICE 3
 #define RANDOM_DEVICE 8
 
-extern vfs_file_operations def_chr_fops;
+extern struct vfs_file_operations def_chr_fops;
 
-int null_open(vfs_inode *inode, vfs_file *filp)
+int null_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
   return 0;
 }
 
-int null_release(vfs_inode *inode, vfs_file *filp)
+int null_release(struct vfs_inode *inode, struct vfs_file *filp)
 {
   return 0;
 }
@@ -32,7 +32,7 @@ ssize_t null_write(struct vfs_file *file, const char *buf, size_t count, loff_t 
   return 0;
 }
 
-vfs_file_operations null_fops = {
+struct vfs_file_operations null_fops = {
     .llseek = null_llseek,
     .read = null_read,
     .write = null_write,
@@ -40,12 +40,12 @@ vfs_file_operations null_fops = {
     .release = null_release,
 };
 
-int random_open(vfs_inode *inode, vfs_file *filp)
+int random_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
   return 0;
 }
 
-int random_release(vfs_inode *inode, vfs_file *filp)
+int random_release(struct vfs_inode *inode, struct vfs_file *filp)
 {
   return 0;
 }
@@ -66,7 +66,7 @@ ssize_t random_write(struct vfs_file *file, const char *buf, size_t count, loff_
   return count;
 }
 
-vfs_file_operations random_fops = {
+struct vfs_file_operations random_fops = {
     .llseek = random_llseek,
     .read = random_read,
     .write = random_write,
@@ -74,7 +74,7 @@ vfs_file_operations random_fops = {
     .release = random_release,
 };
 
-int memory_open(vfs_inode *inode, vfs_file *filp)
+int memory_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
   switch (MINOR(inode->i_rdev))
   {
@@ -88,11 +88,11 @@ int memory_open(vfs_inode *inode, vfs_file *filp)
   return -EINVAL;
 }
 
-vfs_file_operations memory_fops = {
+struct vfs_file_operations memory_fops = {
     .open = memory_open,
 };
 
-char_device chrdev_memory = {
+struct char_device chrdev_memory = {
     .name = "memory",
     .major = MEMORY_MAJOR,
     .f_ops = &memory_fops,

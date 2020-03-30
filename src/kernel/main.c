@@ -26,10 +26,10 @@
 #include "system/console.h"
 #include "multiboot2.h"
 
-extern thread *current_thread;
-extern vfs_file_system_type ext2_fs_type;
+extern struct thread *current_thread;
+extern struct vfs_file_system_type ext2_fs_type;
 
-void setup_window_server(Elf32_Layout *elf_layout)
+void setup_window_server(struct Elf32_Layout *elf_layout)
 {
   uiserver_init(current_thread);
   mq_open(WINDOW_SERVER_SHM, 0);

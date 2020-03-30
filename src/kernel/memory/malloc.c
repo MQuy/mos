@@ -5,17 +5,17 @@
 
 #define BLOCK_MAGIC 0x464E
 
-typedef struct block_meta
+struct block_meta
 {
   size_t size;
   struct block_meta *next;
   bool free;
   uint32_t magic;
-} block_meta;
+};
 
-static block_meta *kblocklist = NULL;
+static struct block_meta *kblocklist = NULL;
 
-void validate_kblock(block_meta *block)
+void validate_kblock(struct block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
   {
@@ -23,9 +23,9 @@ void validate_kblock(block_meta *block)
   }
 }
 
-block_meta *find_free_block(block_meta **last, size_t size)
+struct block_meta *find_free_block(struct block_meta **last, size_t size)
 {
-  block_meta *current = (block_meta *)kblocklist;
+  struct block_meta *current = (struct block_meta *)kblocklist;
   while (current && !(current->free && current->size >= size))
   {
     validate_kblock(current);
@@ -37,7 +37,7 @@ block_meta *find_free_block(block_meta **last, size_t size)
   return current;
 }
 
-void split_block(block_meta *block, size_t size)
+void split_block(struct block_meta *block, size_t size)
 {
   if (block->size > size + sizeof(struct block_meta))
   {
@@ -52,9 +52,9 @@ void split_block(block_meta *block, size_t size)
   }
 }
 
-block_meta *request_space(block_meta *last, size_t size)
+struct block_meta *request_space(struct block_meta *last, size_t size)
 {
-  block_meta *block = sbrk(size + sizeof(struct block_meta));
+  struct block_meta *block = sbrk(size + sizeof(struct block_meta));
 
   if (last)
     last->next = block;
@@ -71,11 +71,11 @@ void *kmalloc(size_t size)
   if (size <= 0)
     return NULL;
 
-  block_meta *block;
+  struct block_meta *block;
 
   if (kblocklist)
   {
-    block_meta *last = kblocklist;
+    struct block_meta *last = kblocklist;
     block = find_free_block(&last, size);
     if (block)
     {
@@ -117,7 +117,7 @@ void kfree(void *ptr)
   if (!ptr)
     return;
 
-  block_meta *block = get_block_ptr(ptr);
+  struct block_meta *block = get_block_ptr(ptr);
   validate_kblock(block);
   block->free = true;
 }

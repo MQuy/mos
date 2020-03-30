@@ -10,8 +10,8 @@
 extern void irq_task_handler();
 extern void do_switch(uint32_t addr_current_kernel_esp, uint32_t next_kernel_esp, uint32_t cr3);
 
-extern thread *current_thread;
-extern process *current_process;
+extern struct thread *current_thread;
+extern struct process *current_process;
 
 struct thread *idle_thread;
 struct plist_head terminated_list, waiting_list;
@@ -31,19 +31,19 @@ void unlock_scheduler()
     enable_interrupts();
 }
 
-thread *pick_next_thread_from_list(struct plist_head *list)
+struct thread *pick_next_thread_from_list(struct plist_head *list)
 {
   if (plist_head_empty(list))
     return NULL;
 
-  thread *t = plist_first_entry(list, thread, sched_sibling);
+  struct thread *t = plist_first_entry(list, struct thread, sched_sibling);
   plist_del(&t->sched_sibling, list);
   return t;
 }
 
-thread *pick_next_thread_to_run()
+struct thread *pick_next_thread_to_run()
 {
-  thread *nt = pick_next_thread_from_list(&kernel_ready_list);
+  struct thread *nt = pick_next_thread_from_list(&kernel_ready_list);
   if (!nt)
     nt = pick_next_thread_from_list(&system_ready_list);
   if (!nt)
@@ -82,7 +82,7 @@ int get_top_priority_from_list(enum thread_state state, enum thread_policy polic
     return node->prio;
 }
 
-void queue_thread(thread *t)
+void queue_thread(struct thread *t)
 {
   struct plist_head *h = get_list_from_thread(t->state, t->policy);
 
@@ -90,7 +90,7 @@ void queue_thread(thread *t)
     plist_add(&t->sched_sibling, h);
 }
 
-void remove_thread(thread *t)
+void remove_thread(struct thread *t)
 {
   struct plist_head *h = get_list_from_thread(t->state, t->policy);
 
@@ -98,7 +98,7 @@ void remove_thread(thread *t)
     plist_del(&t->sched_sibling, h);
 }
 
-void update_thread(thread *thread, uint8_t state)
+void update_thread(struct thread *thread, uint8_t state)
 {
   lock_scheduler();
 
@@ -109,12 +109,12 @@ void update_thread(thread *thread, uint8_t state)
   unlock_scheduler();
 }
 
-void switch_thread(thread *nt)
+void switch_thread(struct thread *nt)
 {
   if (current_thread == nt)
     return;
 
-  thread *pt = current_thread;
+  struct thread *pt = current_thread;
 
   current_thread = nt;
   current_thread->time_slice = 0;
@@ -134,7 +134,7 @@ void schedule()
   if (current_thread->state == THREAD_RUNNING)
     return;
 
-  thread *nt = pick_next_thread_to_run();
+  struct thread *nt = pick_next_thread_to_run();
 
   if (!nt)
   {
@@ -169,7 +169,7 @@ void sleep(uint32_t delay)
 }
 
 #define SLICE_THRESHOLD 50
-int32_t irq_schedule_handler(interrupt_registers *regs)
+int32_t irq_schedule_handler(struct interrupt_registers *regs)
 {
   lock_scheduler();
 
@@ -177,7 +177,7 @@ int32_t irq_schedule_handler(interrupt_registers *regs)
   uint32_t time = get_milliseconds_from_boot();
   current_thread->time_slice++;
 
-  thread *t = NULL;
+  struct thread *t = NULL;
   plist_for_each_entry(t, &waiting_list, sched_sibling)
   {
     if (t->expiry_when >= time)
@@ -202,7 +202,7 @@ int32_t irq_schedule_handler(interrupt_registers *regs)
   return IRQ_HANDLER_CONTINUE;
 }
 
-int32_t thread_page_fault(interrupt_registers *regs)
+int32_t thread_page_fault(struct interrupt_registers *regs)
 {
 
   uint32_t faultAddr = 0;

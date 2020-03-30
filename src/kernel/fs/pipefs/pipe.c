@@ -6,15 +6,15 @@
 #include <kernel/proc/task.h>
 #include "pipe.h"
 
-extern process *current_process;
+extern struct process *current_process;
 
 // TODO: MQ 2019-01-03 Implement empty for read and full for write (http://man7.org/linux/man-pages/man7/pipe.7.html)
-ssize_t pipe_read(vfs_file *file, char *buf, size_t count, loff_t ppos)
+ssize_t pipe_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
   if (file->f_flags & O_WRONLY)
     return -EINVAL;
 
-  pipe *p = file->f_dentry->d_inode->i_pipe;
+  struct pipe *p = file->f_dentry->d_inode->i_pipe;
   acquire_semaphore(&p->mutex);
   for (uint32_t i = 0; i < count; ++i)
     circular_buf_get(p->buf, buf + i);
@@ -22,12 +22,12 @@ ssize_t pipe_read(vfs_file *file, char *buf, size_t count, loff_t ppos)
   return 0;
 }
 
-ssize_t pipe_write(vfs_file *file, const char *buf, size_t count, loff_t ppos)
+ssize_t pipe_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
   if (file->f_flags & O_RDONLY)
     return -EINVAL;
 
-  pipe *p = file->f_dentry->d_inode->i_pipe;
+  struct pipe *p = file->f_dentry->d_inode->i_pipe;
   acquire_semaphore(&p->mutex);
   for (uint32_t i = 0; i < count; ++i)
     circular_buf_put(p->buf, buf[i]);
@@ -35,9 +35,9 @@ ssize_t pipe_write(vfs_file *file, const char *buf, size_t count, loff_t ppos)
   return 0;
 }
 
-int pipe_open(vfs_inode *inode, vfs_file *file)
+int pipe_open(struct vfs_inode *inode, struct vfs_file *file)
 {
-  pipe *p = inode->i_pipe;
+  struct pipe *p = inode->i_pipe;
 
   acquire_semaphore(&p->mutex);
   switch (file->f_flags)
@@ -54,9 +54,9 @@ int pipe_open(vfs_inode *inode, vfs_file *file)
   return 0;
 }
 
-int pipe_release(vfs_inode *inode, vfs_file *file)
+int pipe_release(struct vfs_inode *inode, struct vfs_file *file)
 {
-  pipe *p = inode->i_pipe;
+  struct pipe *p = inode->i_pipe;
 
   acquire_semaphore(&p->mutex);
   p->files--;
@@ -81,16 +81,16 @@ int pipe_release(vfs_inode *inode, vfs_file *file)
   return 0;
 }
 
-vfs_file_operations pipe_fops = {
+struct vfs_file_operations pipe_fops = {
     .read = pipe_read,
     .write = pipe_write,
     .open = pipe_open,
     .release = pipe_release,
 };
 
-pipe *alloc_pipe()
+struct pipe *alloc_pipe()
 {
-  pipe *p = kcalloc(1, sizeof(struct pipe));
+  struct pipe *p = kcalloc(1, sizeof(struct pipe));
   p->files = 0;
   p->readers = 0;
   p->writers = 0;
@@ -103,13 +103,13 @@ pipe *alloc_pipe()
   return p;
 }
 
-vfs_inode *get_pipe_inode()
+struct vfs_inode *get_pipe_inode()
 {
-  pipe *p = alloc_pipe();
+  struct pipe *p = alloc_pipe();
   p->readers = p->writers = 1;
   p->files = 2;
 
-  vfs_inode *inode = init_inode();
+  struct vfs_inode *inode = init_inode();
 
   inode->i_mode = S_IFIFO;
   inode->i_atime.tv_sec = get_seconds(NULL);
@@ -124,17 +124,17 @@ vfs_inode *get_pipe_inode()
 
 int do_pipe(int *fd)
 {
-  vfs_inode *inode = get_pipe_inode();
-  vfs_dentry *dentry = kcalloc(1, sizeof(struct vfs_dentry));
+  struct vfs_inode *inode = get_pipe_inode();
+  struct vfs_dentry *dentry = kcalloc(1, sizeof(struct vfs_dentry));
   dentry->d_inode = inode;
 
-  vfs_file *f1 = kcalloc(1, sizeof(struct vfs_file));
+  struct vfs_file *f1 = kcalloc(1, sizeof(struct vfs_file));
   f1->f_flags = O_RDONLY;
   f1->f_op = &pipe_fops;
   f1->f_dentry = dentry;
   f1->f_count = 1;
 
-  vfs_file *f2 = kcalloc(1, sizeof(struct vfs_file));
+  struct vfs_file *f2 = kcalloc(1, sizeof(struct vfs_file));
   f2->f_flags = O_WRONLY;
   f2->f_op = &pipe_fops;
   f2->f_dentry = dentry;

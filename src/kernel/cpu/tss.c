@@ -4,7 +4,7 @@
 
 extern void tss_flush();
 
-static tss_entry TSS;
+static struct tss_entry TSS;
 
 void tss_set_stack(uint32_t kernelSS, uint32_t kernelESP)
 {

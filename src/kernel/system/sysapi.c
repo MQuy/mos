@@ -10,8 +10,8 @@
 #include <kernel/ipc/message_queue.h>
 #include "sysapi.h"
 
-extern thread *current_thread;
-extern process *current_process;
+extern struct thread *current_thread;
+extern struct process *current_process;
 
 typedef uint32_t (*SYSTEM_FUNC)(unsigned int, ...);
 
@@ -24,8 +24,8 @@ void sys_exit(int32_t code)
 
 pid_t sys_fork()
 {
-  process *child = process_fork(current_process);
-  thread *t = list_first_entry(&child->threads, struct thread, sibling);
+  struct process *child = process_fork(current_process);
+  struct thread *t = list_first_entry(&child->threads, struct thread, sibling);
 
   queue_thread(t);
 
@@ -47,12 +47,12 @@ int32_t sys_open(const char *path, int32_t flag, int32_t mode)
   return vfs_open(path);
 }
 
-int32_t sys_fstat(int32_t fd, kstat *stat)
+int32_t sys_fstat(int32_t fd, struct kstat *stat)
 {
   return vfs_fstat(fd, stat);
 }
 
-int32_t sys_stat(const char *path, kstat *stat)
+int32_t sys_stat(const char *path, struct kstat *stat)
 {
   return vfs_stat(path, stat);
 }
@@ -95,7 +95,7 @@ int32_t sys_msgclose(const char *name)
 
 int32_t sys_brk(uint32_t brk)
 {
-  mm_struct *current_mm = current_process->mm;
+  struct mm_struct *current_mm = current_process->mm;
   if (brk < current_mm->start_brk)
     return -EINVAL;
 
@@ -174,7 +174,7 @@ static void *syscalls[] = {
     [__NR_msgrcv] = sys_msgrcv,
 };
 
-int32_t syscall_dispatcher(interrupt_registers *regs)
+int32_t syscall_dispatcher(struct interrupt_registers *regs)
 {
   int idx = regs->eax;
 

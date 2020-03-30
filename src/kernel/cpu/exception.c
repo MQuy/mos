@@ -3,72 +3,72 @@
 #include <kernel/cpu/idt.h>
 #include "exception.h"
 
-int32_t divide_by_zero_fault(interrupt_registers *regs)
+int32_t divide_by_zero_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Divide by 0");
 }
 
-int32_t single_step_trap(interrupt_registers *regs)
+int32_t single_step_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("Single step");
 }
 
-int32_t nmi_trap(interrupt_registers *regs)
+int32_t nmi_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("NMI trap");
 }
 
-int32_t breakpoint_trap(interrupt_registers *regs)
+int32_t breakpoint_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("Breakpoint trap");
 }
 
-int32_t overflow_trap(interrupt_registers *regs)
+int32_t overflow_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("Overflow trap");
 }
 
-int32_t bounds_check_fault(interrupt_registers *regs)
+int32_t bounds_check_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Bounds check fault");
 }
 
-int32_t invalid_opcode_fault(interrupt_registers *regs)
+int32_t invalid_opcode_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Invalid opcode");
 }
 
-int32_t no_device_fault(interrupt_registers *regs)
+int32_t no_device_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Device not found");
 }
 
-int32_t double_fault_abort(interrupt_registers *regs)
+int32_t double_fault_abort(struct interrupt_registers *regs)
 {
 	kernel_panic("Double fault");
 }
 
-int32_t invalid_tss_fault(interrupt_registers *regs)
+int32_t invalid_tss_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Invalid TSS");
 }
 
-int32_t no_segment_fault(interrupt_registers *regs)
+int32_t no_segment_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Invalid segment");
 }
 
-int32_t stack_fault(interrupt_registers *regs)
+int32_t stack_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Stack fault");
 }
 
-int32_t general_protection_fault(interrupt_registers *regs)
+int32_t general_protection_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("General Protection Fault");
 }
 
-int32_t page_fault(interrupt_registers *regs)
+int32_t page_fault(struct interrupt_registers *regs)
 {
 	uint32_t faultAddr = 0;
 	int error_code = regs->err_code;
@@ -88,22 +88,22 @@ int32_t page_fault(interrupt_registers *regs)
 	// 	;
 }
 
-int32_t fpu_fault(interrupt_registers *regs)
+int32_t fpu_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("FPU Fault");
 }
 
-int32_t alignment_check_fault(interrupt_registers *regs)
+int32_t alignment_check_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Alignment Check");
 }
 
-int32_t machine_check_abort(interrupt_registers *regs)
+int32_t machine_check_abort(struct interrupt_registers *regs)
 {
 	kernel_panic("Machine Check");
 }
 
-int32_t simd_fpu_fault(interrupt_registers *regs)
+int32_t simd_fpu_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("FPU SIMD fault");
 }

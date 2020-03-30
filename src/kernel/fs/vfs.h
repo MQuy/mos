@@ -30,14 +30,14 @@
 
 struct vm_area_struct;
 
-typedef struct address_space
+struct address_space
 {
   struct vm_area_struct *i_mmap;
   struct list_head pages;
   uint32_t npages;
-} address_space;
+};
 
-typedef struct kstat
+struct kstat
 {
   unsigned long ino;
   dev_t dev;
@@ -52,7 +52,7 @@ typedef struct kstat
   struct timespec ctime;
   unsigned long blksize;
   unsigned long blocks;
-} kstat;
+};
 
 #define ATTR_MODE 1
 #define ATTR_UID 2
@@ -68,7 +68,7 @@ typedef struct kstat
 #define ATTR_KILL_SUID 2048
 #define ATTR_KILL_SGID 4096
 
-typedef struct iattr
+struct iattr
 {
   unsigned int ia_valid;
   umode_t ia_mode;
@@ -79,26 +79,26 @@ typedef struct iattr
   struct timespec ia_mtime;
   struct timespec ia_ctime;
   unsigned int ia_attr_flags;
-} iattr;
+};
 
-typedef struct vfs_file_system_type
+struct vfs_file_system_type
 {
   const char *name;
   struct vfs_mount *(*mount)(struct vfs_file_system_type *, char *, char *);
   void (*unmount)(struct vfs_superblock *);
   struct vfs_file_system_type *next;
-} vfs_file_system_type;
+};
 
-typedef struct vfs_mount
+struct vfs_mount
 {
   struct vfs_dentry *mnt_mountpoint;
   struct vfs_dentry *mnt_root;
   struct vfs_superblock *mnt_sb;
   char *mnt_devname;
   struct list_head sibling;
-} vfs_mount;
+};
 
-typedef struct vfs_superblock
+struct vfs_superblock
 {
   unsigned long s_blocksize;
   dev_t s_dev;
@@ -109,17 +109,17 @@ typedef struct vfs_superblock
   struct vfs_dentry *s_root;
   char *mnt_devname;
   void *s_fs_info;
-} vfs_superblock;
+};
 
-typedef struct vfs_super_operations
+struct vfs_super_operations
 {
   struct vfs_inode *(*alloc_inode)(struct vfs_superblock *sb);
   void (*read_inode)(struct vfs_inode *);
   void (*write_inode)(struct vfs_inode *);
   void (*write_super)(struct vfs_superblock *);
-} vfs_super_operations;
+};
 
-typedef struct vfs_inode
+struct vfs_inode
 {
   unsigned long i_ino;
   umode_t i_mode;
@@ -141,9 +141,9 @@ typedef struct vfs_inode
   struct vfs_file_operations *i_fop;
   struct vfs_superblock *i_sb;
   void *i_fs_info;
-} vfs_inode;
+};
 
-typedef struct vfs_inode_operations
+struct vfs_inode_operations
 {
   struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
   struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
@@ -152,9 +152,9 @@ typedef struct vfs_inode_operations
   void (*truncate)(struct vfs_inode *);
   int (*setattr)(struct vfs_dentry *, struct iattr *);
   int (*getattr)(struct vfs_mount *mnt, struct vfs_dentry *, struct kstat *);
-} vfs_inode_operations;
+};
 
-typedef struct vfs_dentry
+struct vfs_dentry
 {
   struct vfs_inode *d_inode;
   struct vfs_dentry *d_parent;
@@ -162,9 +162,9 @@ typedef struct vfs_dentry
   struct vfs_superblock *d_sb;
   struct list_head d_subdirs;
   struct list_head d_sibling;
-} vfs_dentry;
+};
 
-typedef struct vfs_file
+struct vfs_file
 {
   struct vfs_dentry *f_dentry;
   struct vfs_mount *f_vfsmnt;
@@ -173,9 +173,9 @@ typedef struct vfs_file
   unsigned int f_flags;
   mode_t f_mode;
   loff_t f_pos;
-} vfs_file;
+};
 
-typedef struct vfs_file_operations
+struct vfs_file_operations
 {
   loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
   ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
@@ -183,31 +183,31 @@ typedef struct vfs_file_operations
   int (*mmap)(struct vfs_file *, struct vm_area_struct *);
   int (*open)(struct vfs_inode *, struct vfs_file *);
   int (*release)(struct vfs_inode *, struct vfs_file *);
-} vfs_file_operations;
+};
 
-typedef struct nameidata
+struct nameidata
 {
   struct vfs_dentry *dentry;
   struct vfs_mount *mnt;
-} nameidata;
+};
 
-int register_filesystem(vfs_file_system_type *fs);
-int unregister_filesystem(vfs_file_system_type *fs);
+int register_filesystem(struct vfs_file_system_type *fs);
+int unregister_filesystem(struct vfs_file_system_type *fs);
 int find_unused_fd_slot();
-vfs_mount *lookup_mnt(vfs_dentry *d);
-void vfs_init(vfs_file_system_type *fs, char *dev_name);
-vfs_inode *init_inode();
-void init_special_inode(vfs_inode *inode, umode_t mode, dev_t dev);
-vfs_mount *do_mount(const char *fstype, int flags, const char *name);
+struct vfs_mount *lookup_mnt(struct vfs_dentry *d);
+void vfs_init(struct vfs_file_system_type *fs, char *dev_name);
+struct vfs_inode *init_inode();
+void init_special_inode(struct vfs_inode *inode, umode_t mode, dev_t dev);
+struct vfs_mount *do_mount(const char *fstype, int flags, const char *name);
 
 // open.c
-vfs_dentry *alloc_dentry(vfs_dentry *parent, char *name);
+struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name);
 long vfs_open(const char *path);
 long vfs_close(uint32_t fd);
-int vfs_stat(const char *path, kstat *stat);
-int vfs_fstat(uint32_t fd, kstat *stat);
+int vfs_stat(const char *path, struct kstat *stat);
+int vfs_fstat(uint32_t fd, struct kstat *stat);
 int vfs_mknod(const char *path, int mode, dev_t dev);
-nameidata *path_walk(const char *path);
+struct nameidata *path_walk(const char *path);
 int vfs_truncate(const char *path, int32_t length);
 int vfs_ftruncate(uint32_t fd, int32_t length);
 

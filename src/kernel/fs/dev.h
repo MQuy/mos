@@ -11,18 +11,18 @@
 #define MINOR(dev) ((unsigned int)((dev)&MINORMASK))
 #define MKDEV(ma, mi) (((ma) << MINORBITS) | (mi))
 
-typedef struct char_device
+struct char_device
 {
   const char *name;
   uint32_t major;
   struct list_head sibling;
   struct vfs_file_operations *f_ops;
-} char_device;
+};
 
-int register_chrdev(char_device *dev);
+int register_chrdev(struct char_device *dev);
 int unregister_chrdev(uint32_t major);
 void chrdev_init();
 
-extern vfs_file_operations def_chr_fops;
+extern struct vfs_file_operations def_chr_fops;
 
 #endif

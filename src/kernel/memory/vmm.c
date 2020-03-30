@@ -8,16 +8,16 @@
 #define get_aligned_address(x) (x & ~0xfff)
 #define is_page_enabled(x) (x & 0x1)
 
-void vmm_init_and_map(pdirectory *, virtual_addr, physical_addr);
-void vmm_alloc_ptable(pdirectory *va_dir, uint32_t index);
+void vmm_init_and_map(struct pdirectory *, virtual_addr, physical_addr);
+void vmm_alloc_ptable(struct pdirectory *va_dir, uint32_t index);
 void pt_entry_add_attrib(pt_entry *, uint32_t);
 void pt_entry_set_frame(pt_entry *, uint32_t);
 void pd_entry_add_attrib(pd_entry *, uint32_t);
 void pd_entry_set_frame(pd_entry *, uint32_t);
-void vmm_create_page_table(pdirectory *dir, uint32_t virt, uint32_t flags);
-void vmm_paging(pdirectory *, virtual_addr);
+void vmm_create_page_table(struct pdirectory *dir, uint32_t virt, uint32_t flags);
+void vmm_paging(struct pdirectory *, virtual_addr);
 
-static pdirectory *_current_dir;
+static struct pdirectory *_current_dir;
 
 void vmm_flush_tlb_entry(virtual_addr addr)
 {
@@ -71,7 +71,7 @@ void vmm_init()
   // initialize page table directory
 
   physical_addr pa_dir = pmm_alloc_block();
-  pdirectory *va_dir = (pdirectory *)(pa_dir + KERNEL_HIGHER_HALF);
+  struct pdirectory *va_dir = (struct pdirectory *)(pa_dir + KERNEL_HIGHER_HALF);
   memset(va_dir, 0, sizeof(struct pdirectory));
 
   vmm_init_and_map(va_dir, 0xC0000000, 0x00000000);
@@ -86,7 +86,7 @@ void vmm_init()
   vmm_paging(va_dir, pa_dir);
 }
 
-void vmm_alloc_ptable(pdirectory *va_dir, uint32_t index)
+void vmm_alloc_ptable(struct pdirectory *va_dir, uint32_t index)
 {
   if (is_page_enabled(va_dir->m_entries[index]))
     return;
@@ -95,10 +95,10 @@ void vmm_alloc_ptable(pdirectory *va_dir, uint32_t index)
   va_dir->m_entries[index] = pa_table | I86_PDE_PRESENT | I86_PDE_WRITABLE;
 }
 
-void vmm_init_and_map(pdirectory *va_dir, virtual_addr vaddr, physical_addr paddr)
+void vmm_init_and_map(struct pdirectory *va_dir, virtual_addr vaddr, physical_addr paddr)
 {
   physical_addr pa_table = pmm_alloc_block();
-  ptable *va_table = (ptable *)(pa_table + KERNEL_HIGHER_HALF);
+  struct ptable *va_table = (struct ptable *)(pa_table + KERNEL_HIGHER_HALF);
   memset(va_table, 0, sizeof(struct ptable));
 
   virtual_addr ivirtual = vaddr;
@@ -115,7 +115,7 @@ void vmm_init_and_map(pdirectory *va_dir, virtual_addr vaddr, physical_addr padd
   *entry = pa_table | I86_PDE_PRESENT | I86_PDE_WRITABLE;
 }
 
-void vmm_paging(pdirectory *va_dir, physical_addr pa_dir)
+void vmm_paging(struct pdirectory *va_dir, physical_addr pa_dir)
 {
   _current_dir = va_dir;
 
@@ -156,11 +156,11 @@ physical_addr vmm_get_physical_address(virtual_addr vaddr)
   return table[tindex];
 }
 
-pdirectory *vmm_create_address_space(pdirectory *current)
+struct pdirectory *vmm_create_address_space(struct pdirectory *current)
 {
   char *aligned_object = kalign_heap(PMM_FRAME_SIZE);
   // NOTE: MQ 2019-11-24 page directory, page table have to be aligned by 4096
-  pdirectory *va_dir = kcalloc(1, sizeof(struct pdirectory));
+  struct pdirectory *va_dir = kcalloc(1, sizeof(struct pdirectory));
   if (aligned_object)
     kfree(aligned_object);
 
@@ -176,7 +176,7 @@ pdirectory *vmm_create_address_space(pdirectory *current)
   return va_dir;
 }
 
-pdirectory *vmm_get_directory()
+struct pdirectory *vmm_get_directory()
 {
   return _current_dir;
 }
@@ -198,7 +198,7 @@ pdirectory *vmm_get_directory()
   0xFFC00000 + de * 0x1000 + te * 0x4 is mapped to pd[de] + te * 0x4 (this is what mmu will us to translate vAddr)
   0xFFC00000 + de * 0x1000 + te * 0x4 = xxx <-> *(pt+4*ptx) = xxx
 */
-void vmm_map_address(pdirectory *va_dir, uint32_t virt, uint32_t phys, uint32_t flags)
+void vmm_map_address(struct pdirectory *va_dir, uint32_t virt, uint32_t phys, uint32_t flags)
 {
   if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
     vmm_create_page_table(va_dir, virt, flags);
@@ -209,7 +209,7 @@ void vmm_map_address(pdirectory *va_dir, uint32_t virt, uint32_t phys, uint32_t 
   table[tindex] = phys | flags;
 }
 
-void vmm_create_page_table(pdirectory *va_dir, uint32_t virt, uint32_t flags)
+void vmm_create_page_table(struct pdirectory *va_dir, uint32_t virt, uint32_t flags)
 {
   if (is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
     return;
@@ -222,12 +222,12 @@ void vmm_create_page_table(pdirectory *va_dir, uint32_t virt, uint32_t flags)
   memset(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(struct ptable));
 }
 
-void vmm_unmap_address(pdirectory *va_dir, uint32_t virt)
+void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt)
 {
   if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
     return;
 
-  ptable *pt = (ptable *)(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE);
+  struct ptable *pt = (struct ptable *)(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE);
   uint32_t pte = get_page_table_entry_index(virt);
 
   if (!is_page_enabled(pt->m_entries[pte]))
@@ -237,9 +237,9 @@ void vmm_unmap_address(pdirectory *va_dir, uint32_t virt)
   vmm_flush_tlb_entry(virt);
 }
 
-pdirectory *vmm_fork(pdirectory *va_dir)
+struct pdirectory *vmm_fork(struct pdirectory *va_dir)
 {
-  pdirectory *forked_dir = vmm_create_address_space(va_dir);
+  struct pdirectory *forked_dir = vmm_create_address_space(va_dir);
   char *aligned_object = kalign_heap(PMM_FRAME_SIZE);
   virtual_addr heap_current = sbrk(0);
 
@@ -247,13 +247,13 @@ pdirectory *vmm_fork(pdirectory *va_dir)
   for (uint32_t ipd = 0; ipd < 768; ++ipd)
     if (is_page_enabled(va_dir->m_entries[ipd]))
     {
-      ptable *forked_pt = (ptable *)heap_current;
+      struct ptable *forked_pt = (struct ptable *)heap_current;
       physical_addr forked_pt_paddr = pmm_alloc_block();
       vmm_map_address(va_dir, forked_pt, forked_pt_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
       memset(forked_pt, 0, sizeof(struct ptable));
 
       heap_current += sizeof(struct ptable);
-      ptable *pt = (ptable *)(PAGE_TABLE_BASE + ipd * PMM_FRAME_SIZE);
+      struct ptable *pt = (struct ptable *)(PAGE_TABLE_BASE + ipd * PMM_FRAME_SIZE);
       for (uint32_t ipt = 0; ipt < PAGES_PER_TABLE; ++ipt)
       {
         if (is_page_enabled(pt->m_entries[ipt]))

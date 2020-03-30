@@ -7,7 +7,7 @@
 #define PSF_FONT_MAGIC 0x864ab572
 #define PSF_HAS_UNICODE_TABLE 0x01
 
-typedef struct
+struct psf_t
 {
   uint32_t magic;
   uint32_t version;
@@ -17,7 +17,7 @@ typedef struct
   uint32_t bytesperglyph;
   uint32_t height;
   uint32_t width;
-} psf_t;
+};
 
 void psf_init(char *buff, size_t size);
 void psf_putchar(

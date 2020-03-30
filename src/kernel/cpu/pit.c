@@ -10,7 +10,7 @@
 
 volatile uint32_t pit_ticks = 0;
 
-int32_t pit_interrupt_handler(interrupt_registers *regs)
+int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 {
   pit_ticks++;
 

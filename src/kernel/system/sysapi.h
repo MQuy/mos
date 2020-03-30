@@ -4,7 +4,7 @@
 #include <include/ctype.h>
 #include <kernel/cpu/idt.h>
 
-int32_t syscall_dispatcher(interrupt_registers *registers);
+int32_t syscall_dispatcher(struct interrupt_registers *registers);
 void syscall_init();
 
 int sys_printf(char *);

@@ -10,7 +10,7 @@ extern void idt_flush(uint32_t);
 static struct idt_descriptor _idt[I86_MAX_INTERRUPTS];
 static struct idtr _idtr;
 
-typedef struct interrupt_handler
+struct interrupt_handler
 {
   I86_IRQ_HANDLER handler;
   struct list_head sibling;
@@ -42,7 +42,7 @@ void setvect_flags(uint32_t i, I86_IVT irq, uint32_t flags)
   idt_install_ir(i, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32 | flags, 0x8, irq);
 }
 
-void i86_default_handler(interrupt_registers *regs)
+void i86_default_handler(struct interrupt_registers *regs)
 {
   disable_interrupts();
 
@@ -127,19 +127,19 @@ void idt_init()
 
 void register_interrupt_handler(uint32_t n, I86_IRQ_HANDLER handler)
 {
-  interrupt_handler *ih = kcalloc(1, sizeof(struct interrupt_handler));
+  struct interrupt_handler *ih = kcalloc(1, sizeof(struct interrupt_handler));
   ih->handler = handler;
   list_add_tail(&ih->sibling, &interrupt_handlers[n]);
 }
 
-void handle_interrupt(interrupt_registers *regs)
+void handle_interrupt(struct interrupt_registers *regs)
 {
   uint32_t int_no = regs->int_no & 0xff;
   struct list_head *ihlist = &interrupt_handlers[int_no];
 
   if (!list_empty(ihlist))
   {
-    interrupt_handler *ih;
+    struct interrupt_handler *ih;
     list_for_each_entry_reverse(ih, ihlist, sibling)
     {
       if (ih->handler(regs) == IRQ_HANDLER_STOP)
@@ -152,12 +152,12 @@ void handle_interrupt(interrupt_registers *regs)
   }
 }
 
-void isr_handler(interrupt_registers *reg)
+void isr_handler(struct interrupt_registers *reg)
 {
   handle_interrupt(reg);
 }
 
-void irq_handler(interrupt_registers *reg)
+void irq_handler(struct interrupt_registers *reg)
 {
   if (reg->int_no >= 40)
     outportb(PIC2_COMMAND, PIC_EOI);

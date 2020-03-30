@@ -7,14 +7,14 @@
 
 #define PIPE_SIZE 0x10000
 
-typedef struct pipe
+struct pipe
 {
-  cbuf_handle_t buf;
-  semaphore mutex;
+  struct circular_buf_t *buf;
+  struct semaphore mutex;
   uint32_t files;
   uint32_t readers;
   uint32_t writers;
-} pipe;
+};
 
 int do_pipe(int *fd);
 

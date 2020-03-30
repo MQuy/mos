@@ -5,9 +5,10 @@
 #include <stddef.h>
 #include <include/cdefs.h>
 
-#define container_of(ptr, type, member) ({			\
-        typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-        (type *)( (char *)__mptr - offsetof(type,member) ); })
+#define container_of(ptr, type, member) ({ \
+    const typeof( ((type *)0)->member ) \
+    *__mptr = (ptr); \
+    (type *)( (char *)__mptr - offsetof(type,member) ); })
 
 // MQ 2019-08-08
 // Explain how list_head works https://kernelnewbies.org/FAQ/LinkedLists
@@ -15,10 +16,10 @@
 #define LIST_POISON1 NULL
 #define LIST_POISON2 NULL
 
-typedef struct list_head
+struct list_head
 {
   struct list_head *next, *prev;
-} list_head;
+};
 
 #define LIST_HEAD_INIT(name) \
   {                          \

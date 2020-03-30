@@ -3,14 +3,14 @@
 #include <kernel/memory/vmm.h>
 #include "vmm.h"
 
-extern process *current_process;
+extern struct process *current_process;
 
 // TODO: MQ 2020-01-25 Add support for release block when there is no reference to frame block
 
-vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
+struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
 {
-  mm_struct *mm = current_process->mm;
-  vm_area_struct *vma = kcalloc(1, sizeof(struct vm_area_struct));
+  struct mm_struct *mm = current_process->mm;
+  struct vm_area_struct *vma = kcalloc(1, sizeof(struct vm_area_struct));
   vma->vm_mm = mm;
 
   if (!addr || addr < mm->end_brk)
@@ -23,10 +23,10 @@ vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
     list_add(&vma->vm_sibling, &mm->mmap);
   else
   {
-    vm_area_struct *iter = NULL;
+    struct vm_area_struct *iter = NULL;
     list_for_each_entry(iter, &mm->mmap, vm_sibling)
     {
-      vm_area_struct *next = list_next_entry(iter, vm_sibling);
+      struct vm_area_struct *next = list_next_entry(iter, vm_sibling);
       bool is_last_entry = list_is_last(&iter->vm_sibling, &mm->mmap);
 
       if (addr + len <= iter->vm_start)
@@ -61,9 +61,9 @@ vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
   return vma;
 }
 
-vm_area_struct *find_vma(mm_struct *mm, uint32_t addr)
+struct vm_area_struct *find_vma(struct mm_struct *mm, uint32_t addr)
 {
-  vm_area_struct *iter = NULL;
+  struct vm_area_struct *iter = NULL;
   list_for_each_entry(iter, &mm->mmap, vm_sibling)
   {
     if (iter->vm_start <= addr && addr < iter->vm_end)
@@ -74,9 +74,9 @@ vm_area_struct *find_vma(mm_struct *mm, uint32_t addr)
 }
 
 // NOTE: MQ 2020-01-25 We only support unmap in one area
-int do_munmap(mm_struct *mm, uint32_t addr, size_t len)
+int do_munmap(struct mm_struct *mm, uint32_t addr, size_t len)
 {
-  vm_area_struct *vma = find_vma(mm, addr);
+  struct vm_area_struct *vma = find_vma(mm, addr);
   if (!vma || vma->vm_start < addr)
     return 0;
 
@@ -93,8 +93,8 @@ int32_t do_mmap(uint32_t addr,
                 size_t len, uint32_t prot,
                 uint32_t flag, int32_t fd)
 {
-  vfs_file *file = fd >= 0 ? current_process->files->fd[fd] : NULL;
-  vm_area_struct *vma = get_unmapped_area(addr, len);
+  struct vfs_file *file = fd >= 0 ? current_process->files->fd[fd] : NULL;
+  struct vm_area_struct *vma = get_unmapped_area(addr, len);
 
   if (file)
   {
@@ -111,7 +111,7 @@ int32_t do_mmap(uint32_t addr,
   return vma->vm_start;
 }
 
-int expand_area(vm_area_struct *vma, unsigned long address)
+int expand_area(struct vm_area_struct *vma, unsigned long address)
 {
   address = PAGE_ALIGN(address);
   if (address <= vma->vm_end)
@@ -121,13 +121,13 @@ int expand_area(vm_area_struct *vma, unsigned long address)
     vma->vm_end = address;
   else
   {
-    vm_area_struct *next = list_next_entry(vma, vm_sibling);
+    struct vm_area_struct *next = list_next_entry(vma, vm_sibling);
     if (address <= next->vm_start)
       vma->vm_end = address;
     else
     {
       list_del(&vma->vm_sibling);
-      vm_area_struct *vma_expand = get_unmapped_area(NULL, address - vma->vm_start);
+      struct vm_area_struct *vma_expand = get_unmapped_area(NULL, address - vma->vm_start);
       memcpy(vma, vma_expand, sizeof(struct vm_area_struct));
       kfree(vma_expand);
     }
@@ -135,7 +135,7 @@ int expand_area(vm_area_struct *vma, unsigned long address)
   return 0;
 }
 
-void shift_area(vm_area_struct *vma, vm_area_struct *new_vma)
+void shift_area(struct vm_area_struct *vma, struct vm_area_struct *new_vma)
 {
   if (vma->vm_start == new_vma->vm_start)
   {
@@ -168,15 +168,15 @@ void shift_area(vm_area_struct *vma, vm_area_struct *new_vma)
 // FIXME: MQ 2019-01-16 Currently, we assume that start_brk is not changed
 uint32_t do_brk(uint32_t addr, size_t len)
 {
-  mm_struct *mm = current_process->mm;
-  vm_area_struct *vma = find_vma(mm, addr);
+  struct mm_struct *mm = current_process->mm;
+  struct vm_area_struct *vma = find_vma(mm, addr);
   uint32_t new_brk = PAGE_ALIGN(addr + len);
   mm->brk = new_brk;
 
   if (!vma || vma->vm_end >= new_brk)
     return 0;
 
-  vm_area_struct *new_vma = kcalloc(1, sizeof(struct vm_area_struct));
+  struct vm_area_struct *new_vma = kcalloc(1, sizeof(struct vm_area_struct));
   memcpy(new_vma, vma, sizeof(struct vm_area_struct));
   if (new_brk > mm->brk)
     expand_area(new_vma, new_brk);
