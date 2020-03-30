@@ -65,7 +65,7 @@ void kernel_thread_entry(struct thread *t, void *flow())
   schedule();
 }
 
-struct thread *create_kernel_thread(struct process *parent, uint32_t eip, thread_state state, int priority)
+struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority)
 {
   disable_interrupts();
 
@@ -177,7 +177,7 @@ void user_thread_elf_entry(struct thread *t, const char *path, void *setup(struc
   enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
 }
 
-struct thread *create_user_thread(struct process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(struct Elf32_Layout *))
+struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void *setup(struct Elf32_Layout *))
 {
   disable_interrupts();
 

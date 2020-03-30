@@ -527,10 +527,10 @@ void kkybrd_set_leds(bool num, bool caps, bool scroll)
 }
 
 //! get last key stroke
-KEYCODE kkybrd_get_last_key()
+enum KEYCODE kkybrd_get_last_key()
 {
 
-	return (_scancode != INVALID_SCANCODE) ? ((KEYCODE)_kkybrd_scancode_std[_scancode]) : (KEY_UNKNOWN);
+	return (_scancode != INVALID_SCANCODE) ? ((enum KEYCODE)_kkybrd_scancode_std[_scancode]) : (KEY_UNKNOWN);
 }
 
 //! discards last scan
@@ -541,7 +541,7 @@ void kkybrd_discard_last_key()
 }
 
 //! convert key to an ascii character
-char kkybrd_key_to_ascii(KEYCODE code)
+char kkybrd_key_to_ascii(enum KEYCODE code)
 {
 
 	uint8_t key = code;

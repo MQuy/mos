@@ -26,7 +26,7 @@ struct vfs_file;
 struct vfs_dentry;
 struct vfs_mount;
 
-typedef enum thread_state
+enum thread_state
 {
   THREAD_NEW,
   THREAD_READY,
@@ -35,7 +35,7 @@ typedef enum thread_state
   THREAD_TERMINATED,
 } thread_state;
 
-typedef enum thread_policy
+enum thread_policy
 {
   THREAD_KERNEL_POLICY,
   THREAD_SYSTEM_POLICY,
@@ -121,8 +121,8 @@ struct process
 void task_init();
 void sched_init();
 
-struct thread *create_kernel_thread(struct process *parent, uint32_t eip, thread_state state, int priority);
-struct thread *create_user_thread(struct process *parent, const char *path, thread_state state, thread_policy policy, int priority, void *setup(struct Elf32_Layout *));
+struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority);
+struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void *setup(struct Elf32_Layout *));
 void update_thread(struct thread *thread, uint8_t state);
 struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir);
 void process_load(const char *pname, const char *path, int priority, void *setup(struct Elf32_Layout *));

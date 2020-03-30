@@ -18,7 +18,7 @@
 //    INTERFACE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
 //============================================================================
 
-typedef enum KEYCODE
+enum KEYCODE
 {
 
 	// Alphanumeric keys ////////////////
@@ -210,7 +210,7 @@ bool kkybrd_self_test();
 
 //! returns last scan code, last keystroke
 uint8_t kkybrd_get_last_scan();
-KEYCODE kkybrd_get_last_key();
+enum KEYCODE kkybrd_get_last_key();
 void kkybrd_discard_last_key();
 
 //! updates LEDs
