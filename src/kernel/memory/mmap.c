@@ -104,7 +104,7 @@ int32_t do_mmap(uint32_t addr,
   else
     for (uint32_t vaddr = vma->vm_start; vaddr < vma->vm_end; vaddr += PMM_FRAME_SIZE)
     {
-      physical_addr paddr = pmm_alloc_block();
+      uint32_t paddr = (uint32_t)pmm_alloc_block();
       vmm_map_address(current_process->pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     }
 
@@ -127,7 +127,7 @@ int expand_area(struct vm_area_struct *vma, unsigned long address)
     else
     {
       list_del(&vma->vm_sibling);
-      struct vm_area_struct *vma_expand = get_unmapped_area(NULL, address - vma->vm_start);
+      struct vm_area_struct *vma_expand = get_unmapped_area(0, address - vma->vm_start);
       memcpy(vma, vma_expand, sizeof(struct vm_area_struct));
       kfree(vma_expand);
     }
@@ -142,7 +142,7 @@ void shift_area(struct vm_area_struct *vma, struct vm_area_struct *new_vma)
     if (new_vma->vm_end > vma->vm_end)
     {
       uint32_t nframes = (new_vma->vm_end - vma->vm_end) / PMM_FRAME_SIZE;
-      uint32_t paddr = pmm_alloc_blocks(nframes);
+      uint32_t paddr = (uint32_t)pmm_alloc_blocks(nframes);
       for (uint32_t vaddr = vma->vm_end; vaddr < new_vma->vm_end; vaddr += PMM_FRAME_SIZE, paddr += PMM_FRAME_SIZE)
         vmm_map_address(current_process->pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
     }
@@ -156,7 +156,7 @@ void shift_area(struct vm_area_struct *vma, struct vm_area_struct *new_vma)
     uint32_t new_length = new_vma->vm_end - new_vma->vm_start;
     for (uint32_t vaddr = 0; vaddr < new_length; vaddr += PMM_FRAME_SIZE)
     {
-      uint32_t paddr = vaddr < old_length ? vmm_get_physical_address(vma->vm_start + vaddr) : pmm_alloc_block();
+      uint32_t paddr = vaddr < old_length ? vmm_get_physical_address(vma->vm_start + vaddr) : (uint32_t)pmm_alloc_block();
       vmm_map_address(current_process->pdir,
                       new_vma->vm_start + vaddr,
                       paddr,

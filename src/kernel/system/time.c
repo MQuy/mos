@@ -59,10 +59,10 @@ struct time *get_current_time()
   return t;
 }
 
-struct time *get_time_from_seconds(uint32_t seconds)
+struct time *get_time_from_seconds(int32_t seconds)
 {
   struct time *t = kcalloc(1, sizeof(struct time));
-  uint32_t days = seconds / (24 * 3600);
+  int32_t days = seconds / (24 * 3600);
 
   // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days
   days += 719468;
@@ -109,7 +109,7 @@ uint32_t get_seconds(struct time *t)
   return get_days(t) * 24 * 3600 + t->hour * 3600 + t->minute * 60 + t->second;
 }
 
-struct time *get_time(uint32_t seconds)
+struct time *get_time(int32_t seconds)
 {
-  return seconds == NULL ? get_current_time() : get_time_from_seconds(seconds);
+  return seconds == 0 ? get_current_time() : get_time_from_seconds(seconds);
 }

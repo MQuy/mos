@@ -61,14 +61,14 @@ struct Elf32_Layout *elf_load(char *buf)
 {
   struct Elf32_Ehdr *elf_header = (struct Elf32_Ehdr *)buf;
 
-  if (elf_verify(elf_header) != NO_ERROR || elf_header->e_phoff == NULL)
+  if (elf_verify(elf_header) != NO_ERROR || elf_header->e_phoff == 0)
     return NULL;
 
   struct mm_struct *mm = current_process->mm;
   struct Elf32_Layout *layout = kcalloc(1, sizeof(struct Elf32_Layout));
   layout->entry = elf_header->e_entry;
-  for (struct Elf32_Phdr *ph = buf + elf_header->e_phoff;
-       ph && ph < (buf + elf_header->e_phoff + elf_header->e_phentsize * elf_header->e_phnum);
+  for (struct Elf32_Phdr *ph = (struct Elf32_Phdr *)(buf + elf_header->e_phoff);
+       ph && (char *)ph < (buf + elf_header->e_phoff + elf_header->e_phentsize * elf_header->e_phnum);
        ++ph)
   {
     if (ph->p_type != PT_LOAD)
@@ -93,8 +93,8 @@ struct Elf32_Layout *elf_load(char *buf)
       do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
 
     // NOTE: MQ 2019-11-26 According to elf's spec, p_memsz may be larger than p_filesz due to bss section
-    memset(ph->p_vaddr, 0, ph->p_memsz);
-    memcpy(ph->p_vaddr, buf + ph->p_offset, ph->p_filesz);
+    memset((char *)ph->p_vaddr, 0, ph->p_memsz);
+    memcpy((char *)ph->p_vaddr, buf + ph->p_offset, ph->p_filesz);
   }
 
   uint32_t heap_start = do_mmap(0, UHEAP_SIZE, 0, 0, -1);

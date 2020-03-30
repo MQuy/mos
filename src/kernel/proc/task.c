@@ -12,9 +12,9 @@
 #include "task.h"
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
-extern void return_usermode(uint32_t uregs);
+extern void return_usermode(struct interrupt_registers *regs);
 extern void irq_schedule_handler(struct interrupt_registers *regs);
-extern void thread_page_fault(struct interrupt_registers *regs);
+extern int32_t thread_page_fault(struct interrupt_registers *regs);
 
 volatile struct thread *current_thread;
 volatile struct process *current_process;
@@ -153,7 +153,7 @@ void task_init(void *func)
   setup_swapper_process();
 
   struct process *init = create_process(current_process, "init", current_process->pdir);
-  struct thread *nt = create_kernel_thread(init, func, THREAD_WAITING, 0);
+  struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 0);
 
   update_thread(current_thread, THREAD_TERMINATED);
   update_thread(nt, THREAD_READY);
@@ -166,18 +166,18 @@ void user_thread_entry(struct thread *t)
   return_usermode(&t->uregs);
 }
 
-void user_thread_elf_entry(struct thread *t, const char *path, void *setup(struct Elf32_Layout *))
+void user_thread_elf_entry(struct thread *t, const char *path, void (*setup)(struct Elf32_Layout *))
 {
   char *buf = vfs_read(path);
   struct Elf32_Layout *elf_layout = elf_load(buf);
   t->user_stack = elf_layout->stack;
   tss_set_stack(0x10, t->kernel_stack);
   if (setup)
-    setup(&elf_layout->stack);
+    setup(elf_layout);
   enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
 }
 
-struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void *setup(struct Elf32_Layout *))
+struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *))
 {
   disable_interrupts();
 
@@ -215,7 +215,7 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
   return t;
 }
 
-void process_load(const char *pname, const char *path, int priority, void *setup(struct Elf32_Layout *))
+void process_load(const char *pname, const char *path, int priority, void (*setup)(struct Elf32_Layout *))
 {
   struct process *p = create_process(current_process, pname, current_process->pdir);
   struct thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);

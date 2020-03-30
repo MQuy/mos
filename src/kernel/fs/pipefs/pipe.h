@@ -16,6 +16,6 @@ struct pipe
   uint32_t writers;
 };
 
-int do_pipe(int *fd);
+int32_t do_pipe(int32_t *fd);
 
 #endif

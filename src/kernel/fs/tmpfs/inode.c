@@ -35,8 +35,9 @@ int tmpfs_setsize(struct vfs_inode *inode, loff_t new_size)
 int tmpfs_mknod(struct vfs_inode *dir, char *name, int mode, dev_t dev)
 {
     struct vfs_inode *i = tmpfs_get_inode(dir->i_sb, mode);
-    dir->i_ctime.tv_sec = get_time(NULL);
-    dir->i_mtime.tv_sec = get_time(NULL);
+    uint32_t current_seconds = get_seconds(NULL);
+    dir->i_ctime.tv_sec = current_seconds;
+    dir->i_mtime.tv_sec = current_seconds;
     return 0;
 }
 

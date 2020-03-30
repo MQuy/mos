@@ -22,7 +22,6 @@ void validate_block(struct block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
   {
-    uint32_t x = 1;
   }
 }
 
@@ -72,7 +71,7 @@ void *get_heap(uint32_t size)
   }
 
   heap_current += size;
-  return heap_base;
+  return (void *)heap_base;
 }
 
 struct block_meta *request_space(struct block_meta *last, size_t size)
@@ -116,10 +115,6 @@ void *malloc(size_t size)
 
   validate_block(block);
 
-  if (block == 0x6363e8)
-  {
-    uint32_t x = 0;
-  }
   if (block)
     return block + 1;
   else

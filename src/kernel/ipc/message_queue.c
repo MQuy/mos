@@ -76,6 +76,7 @@ int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t m
     msg->sender = current_thread;
     list_add_tail(&msg->sibling, &mq->messages);
   }
+  return 0;
 }
 
 int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)

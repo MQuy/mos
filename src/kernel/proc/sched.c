@@ -8,7 +8,7 @@
 #include "task.h"
 
 extern void irq_task_handler();
-extern void do_switch(uint32_t addr_current_kernel_esp, uint32_t next_kernel_esp, uint32_t cr3);
+extern void do_switch(uint32_t *addr_current_kernel_esp, uint32_t next_kernel_esp, uint32_t cr3);
 
 extern struct thread *current_thread;
 extern struct process *current_process;
@@ -74,12 +74,13 @@ int get_top_priority_from_list(enum thread_state state, enum thread_policy polic
 {
   struct plist_head *h = get_list_from_thread(state, policy);
 
-  if (plist_head_empty(h))
-    return INT_MAX;
-
-  struct plist_node *node = plist_first(h);
-  if (node)
-    return node->prio;
+  if (!plist_head_empty(h))
+  {
+    struct plist_node *node = plist_first(h);
+    if (node)
+      return node->prio;
+  }
+  return INT_MAX;
 }
 
 void queue_thread(struct thread *t)
@@ -122,7 +123,7 @@ void switch_thread(struct thread *nt)
   current_process = current_thread->parent;
   current_process->active_thread = current_thread;
 
-  uint32_t paddr_cr3 = vmm_get_physical_address(current_thread->parent->pdir);
+  uint32_t paddr_cr3 = vmm_get_physical_address((uint32_t)current_thread->parent->pdir);
   tss_set_stack(0x10, current_thread->kernel_stack);
   do_switch(&pt->esp, current_thread->esp, paddr_cr3);
 }

@@ -122,7 +122,7 @@ struct vfs_inode *get_pipe_inode()
   return inode;
 }
 
-int do_pipe(int *fd)
+int32_t do_pipe(int32_t *fd)
 {
   struct vfs_inode *inode = get_pipe_inode();
   struct vfs_dentry *dentry = kcalloc(1, sizeof(struct vfs_dentry));

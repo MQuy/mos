@@ -204,20 +204,8 @@ isr13:
 
 ; 14: Page Fault Exception (With Error Code!)
 isr14:
-    push eax
-    push ebx
-
-    mov eax, esp
-    add eax, 20
-
-    mov ebx, [esp + 12]
-    mov [eax], ebx
-
-    pop ebx
-    pop eax
-
-    add esp, 12
-    ret
+    push byte 14
+    jmp isr_common_stub
 
 ; 15: Reserved Exception
 isr15:

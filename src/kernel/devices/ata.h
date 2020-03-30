@@ -40,8 +40,8 @@ struct ata_device
 };
 
 uint8_t ata_init();
-uint8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
-uint8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
-void atapi_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+int8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+int8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
+int8_t atapi_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer);
 struct ata_device *get_ata_device(char *dev_name);
 #endif

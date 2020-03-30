@@ -29,6 +29,7 @@
 #define S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
 
 struct vm_area_struct;
+struct vfs_superblock;
 
 struct address_space
 {

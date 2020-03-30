@@ -36,7 +36,7 @@ void setup_window_server(struct Elf32_Layout *elf_layout)
 
   struct framebuffer *fb = get_framebuffer();
   uint32_t screen_size = fb->height * fb->pitch;
-  struct vm_area_struct *area = get_unmapped_area(NULL, screen_size);
+  struct vm_area_struct *area = get_unmapped_area(0, screen_size);
   uint32_t blocks = (area->vm_end - area->vm_start) / PMM_FRAME_SIZE;
   for (uint32_t iblock = 0; iblock < blocks; ++iblock)
     vmm_map_address(

@@ -84,7 +84,6 @@ int tmpfs_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 {
   struct vfs_inode *inode = file->f_dentry->d_inode;
   struct vfs_superblock *sb = inode->i_sb;
-  struct vm_area_struct *vma = inode->i_data.i_mmap;
 
   struct page *iter_page;
   uint32_t addr = new_vma->vm_start;

@@ -104,7 +104,7 @@ void pmm_regions(struct multiboot_tag_mmap *multiboot_mmap)
   }
 }
 
-void pmm_init_region(physical_addr addr, uint32_t length)
+void pmm_init_region(uint32_t addr, uint32_t length)
 {
   uint32_t frame = addr / PMM_FRAME_SIZE;
   uint32_t frames = div_ceil(length, PMM_FRAME_SIZE);
@@ -118,7 +118,7 @@ void pmm_init_region(physical_addr addr, uint32_t length)
   memory_bitmap_set(0);
 }
 
-void pmm_deinit_region(physical_addr addr, uint32_t length)
+void pmm_deinit_region(uint32_t addr, uint32_t length)
 {
   uint32_t frame = addr / PMM_FRAME_SIZE;
   uint32_t frames = div_ceil(length, PMM_FRAME_SIZE);
@@ -143,7 +143,7 @@ void *pmm_alloc_block()
   memory_bitmap_set(frame);
   used_frames++;
 
-  physical_addr addr = frame * PMM_FRAME_SIZE;
+  uint32_t addr = frame * PMM_FRAME_SIZE;
   return (void *)addr;
 }
 
@@ -163,13 +163,13 @@ void *pmm_alloc_blocks(size_t size)
     used_frames++;
   }
 
-  physical_addr addr = frame * PMM_FRAME_SIZE;
+  uint32_t addr = frame * PMM_FRAME_SIZE;
   return (void *)addr;
 }
 
 void pmm_free_block(void *p)
 {
-  physical_addr addr = (physical_addr)p;
+  uint32_t addr = (uint32_t)p;
   uint32_t frame = addr / PMM_FRAME_SIZE;
 
   memory_bitmap_unset(frame);
@@ -177,7 +177,7 @@ void pmm_free_block(void *p)
   used_frames--;
 }
 
-void pmm_mark_used_addr(physical_addr paddr)
+void pmm_mark_used_addr(uint32_t paddr)
 {
   uint32_t frame = paddr / PMM_FRAME_SIZE;
   if (!memory_bitmap_test(frame))

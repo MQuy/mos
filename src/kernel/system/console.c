@@ -17,7 +17,7 @@ static struct framebuffer *current_fb;
 
 void print_char(const char c)
 {
-  psf_putchar(c, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, VIDEO_VADDR, current_fb->pitch);
+  psf_putchar(c, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, (char *)VIDEO_VADDR, current_fb->pitch);
 
   if (current_column >= current_fb->width)
   {
@@ -32,7 +32,7 @@ void print_char(const char c)
 
 void print_string(const char *s)
 {
-  psf_puts(s, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, VIDEO_VADDR, current_fb->pitch);
+  psf_puts(s, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, (char *)VIDEO_VADDR, current_fb->pitch);
 
   uint32_t length = strlen(s);
   if (current_column + length >= current_fb->width)

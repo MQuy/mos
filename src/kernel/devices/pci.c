@@ -69,10 +69,10 @@ void print_device(uint8_t bus, uint8_t device, uint8_t function)
 
   if (vendorID != PCI_INVALID_VENDOR_ID)
   {
-    int deviceID = get_device_id(bus, device, function);
+    // int deviceID = get_device_id(bus, device, function);
     int classCode = get_class_code(bus, device, function);
     int subclassCode = get_subclass_code(bus, device, function);
-    int progif = get_prog_if(bus, device, function);
+    // int progif = get_prog_if(bus, device, function);
 
     if (classCode == PCI_CLASS_CODE_MASS_STORAGE)
     {
@@ -105,7 +105,7 @@ void pci_scan_bus(uint8_t bus)
   for (device = 0; device < 32; device++)
   {
     uint16_t headerType = get_header_type(bus, device, function);
-    if (headerType & PCI_MULTIFUNCTION_DEVICE != 0)
+    if ((headerType & PCI_MULTIFUNCTION_DEVICE) != 0)
     {
       for (function = 0; function < 7; function++)
       {

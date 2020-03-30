@@ -64,7 +64,7 @@ void itoa_s(long long i, unsigned base, char *buf)
   itoa(i, base, buf);
 }
 
-int atoi(char *s)
+int atoi(const char *s)
 {
   int sign = 1;
   if (*s == '-')
@@ -117,13 +117,12 @@ int strncmp(const char *cs, const char *ct, size_t count)
   return 0;
 }
 
-//! copies string s2 to s1
-char *strcpy(char *s1, const char *s2)
+char *strcpy(char *dest, const char *src)
 {
-  char *s1_p = s1;
-  while (*s1++ = *s2++)
+  char *out = dest;
+  for (; (*dest = *src); src++, dest++)
     ;
-  return s1_p;
+  return out;
 }
 
 char *strncpy(char *dest, const char *src, size_t count)

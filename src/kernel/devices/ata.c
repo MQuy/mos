@@ -1,3 +1,4 @@
+#include <include/errno.h>
 #include <kernel/utils/string.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
@@ -43,6 +44,7 @@ uint8_t ata_init()
   ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, false, "/dev/hdb");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
+  return 0;
 }
 
 struct ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8_t irq, bool is_master, char *dev_name)
@@ -96,7 +98,7 @@ uint8_t ata_identify(struct ata_device *device)
   return ATA_IDENTIFY_ERR;
 }
 
-uint8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+int8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   outportb(device->io_base + 6, (device->is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
   ata_400ns_delays(device);
@@ -109,7 +111,7 @@ uint8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uin
   outportb(device->io_base + 7, 0x20);
 
   if (ata_polling(device) == ATA_POLLING_ERR)
-    return;
+    return -ENXIO;
 
   for (int i = 0; i < n_sectors; ++i)
   {
@@ -117,11 +119,12 @@ uint8_t ata_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uin
     ata_400ns_delays(device);
 
     if (ata_polling(device) == ATA_POLLING_ERR)
-      return;
+      return -ENXIO;
   }
+  return 0;
 }
 
-uint8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+int8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   outportb(device->io_base + 6, (device->is_master ? 0xE0 : 0xF0) | ((lba >> 24) & 0x0F));
   ata_400ns_delays(device);
@@ -134,7 +137,7 @@ uint8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, ui
   outportb(device->io_base + 7, 0x30);
 
   if (ata_polling(device) == ATA_POLLING_ERR)
-    return;
+    return -ENXIO;
 
   for (int i = 0; i < n_sectors; ++i)
   {
@@ -143,8 +146,9 @@ uint8_t ata_write(struct ata_device *device, uint32_t lba, uint8_t n_sectors, ui
     ata_400ns_delays(device);
 
     if (ata_polling(device) == ATA_POLLING_ERR)
-      return;
+      return -ENXIO;
   }
+  return 0;
 }
 
 uint8_t atapi_identify(struct ata_device *device)
@@ -169,7 +173,7 @@ uint8_t atapi_identify(struct ata_device *device)
   return ATA_IDENTIFY_ERR;
 }
 
-void atapi_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
+int8_t atapi_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint16_t *buffer)
 {
   uint8_t packet[12] = {0xA8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -199,8 +203,9 @@ void atapi_read(struct ata_device *device, uint32_t lba, uint8_t n_sectors, uint
     inportsw(device->io_base, buffer + 256 * i, 256);
 
     if (ata_polling(device) == ATA_POLLING_ERR)
-      return;
+      return -ENXIO;
   }
+  return 0;
 }
 
 void ata_400ns_delays(struct ata_device *device)

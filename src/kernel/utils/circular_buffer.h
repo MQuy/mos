@@ -11,7 +11,7 @@ struct circular_buf_t;
 /// Pass in a storage buffer and size, returns a circular buffer handle
 /// Requires: buffer is not NULL, size > 0
 /// Ensures: cbuf has been created and is returned in an empty state
-struct circular_buf_t *circular_buf_init(uint8_t *buffer, size_t size);
+struct circular_buf_t *circular_buf_init(char *buffer, size_t size);
 
 /// Free a circular buffer structure
 /// Requires: cbuf is valid and created by circular_buf_init
@@ -25,17 +25,17 @@ void circular_buf_reset(struct circular_buf_t *cbuf);
 /// Put version 1 continues to add data if the buffer is full
 /// Old data is overwritten
 /// Requires: cbuf is valid and created by circular_buf_init
-void circular_buf_put(struct circular_buf_t *cbuf, uint8_t data);
+void circular_buf_put(struct circular_buf_t *cbuf, char data);
 
 /// Put Version 2 rejects new data if the buffer is full
 /// Requires: cbuf is valid and created by circular_buf_init
 /// Returns 0 on success, -1 if buffer is full
-int circular_buf_put2(struct circular_buf_t *cbuf, uint8_t data);
+int circular_buf_put2(struct circular_buf_t *cbuf, char data);
 
 /// Retrieve a value from the buffer
 /// Requires: cbuf is valid and created by circular_buf_init
 /// Returns 0 on success, -1 if the buffer is empty
-int circular_buf_get(struct circular_buf_t *cbuf, uint8_t *data);
+int circular_buf_get(struct circular_buf_t *cbuf, char *data);
 
 /// CHecks if the buffer is empty
 /// Requires: cbuf is valid and created by circular_buf_init
@@ -57,7 +57,7 @@ size_t circular_buf_capacity(struct circular_buf_t *cbuf);
 /// Returns the current number of elements in the buffer
 size_t circular_buf_size(struct circular_buf_t *cbuf);
 
-//TODO: int circular_buf_get_range(struct circular_buf_t cbuf, uint8_t *data, size_t len);
-//TODO: int circular_buf_put_range(struct circular_buf_t cbuf, uint8_t * data, size_t len);
+//TODO: int circular_buf_get_range(struct circular_buf_t cbuf, char *data, size_t len);
+//TODO: int circular_buf_put_range(struct circular_buf_t cbuf, char * data, size_t len);
 
 #endif //CIRCULAR_BUFFER_H_

@@ -7,15 +7,15 @@ static uint32_t remaining_from_last_used = 0;
 void *sbrk(size_t n)
 {
   if (n == 0)
-    return heap_current;
+    return (char *)heap_current;
 
-  char *heap_base = heap_current;
+  char *heap_base = (char *)heap_current;
 
   if (n <= remaining_from_last_used)
     remaining_from_last_used -= n;
   else
   {
-    uint32_t phyiscal_addr = pmm_alloc_blocks(div_ceil(n - remaining_from_last_used, PMM_FRAME_SIZE));
+    uint32_t phyiscal_addr = (uint32_t)pmm_alloc_blocks(div_ceil(n - remaining_from_last_used, PMM_FRAME_SIZE));
     uint32_t page_addr = div_ceil(heap_current, PMM_FRAME_SIZE) * PMM_FRAME_SIZE;
     for (; page_addr < heap_current + n; page_addr += PMM_FRAME_SIZE, phyiscal_addr += PMM_FRAME_SIZE)
       vmm_map_address(vmm_get_directory(),

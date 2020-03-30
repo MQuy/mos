@@ -8,18 +8,18 @@
 #define get_aligned_address(x) (x & ~0xfff)
 #define is_page_enabled(x) (x & 0x1)
 
-void vmm_init_and_map(struct pdirectory *, virtual_addr, physical_addr);
+void vmm_init_and_map(struct pdirectory *, uint32_t, uint32_t);
 void vmm_alloc_ptable(struct pdirectory *va_dir, uint32_t index);
 void pt_entry_add_attrib(pt_entry *, uint32_t);
 void pt_entry_set_frame(pt_entry *, uint32_t);
 void pd_entry_add_attrib(pd_entry *, uint32_t);
 void pd_entry_set_frame(pd_entry *, uint32_t);
 void vmm_create_page_table(struct pdirectory *dir, uint32_t virt, uint32_t flags);
-void vmm_paging(struct pdirectory *, virtual_addr);
+void vmm_paging(struct pdirectory *, uint32_t);
 
 static struct pdirectory *_current_dir;
 
-void vmm_flush_tlb_entry(virtual_addr addr)
+void vmm_flush_tlb_entry(uint32_t addr)
 {
 
   __asm__ __volatile__("invlpg (%0)" ::"r"(addr)
@@ -70,7 +70,7 @@ void vmm_init()
 {
   // initialize page table directory
 
-  physical_addr pa_dir = pmm_alloc_block();
+  uint32_t pa_dir = (uint32_t)pmm_alloc_block();
   struct pdirectory *va_dir = (struct pdirectory *)(pa_dir + KERNEL_HIGHER_HALF);
   memset(va_dir, 0, sizeof(struct pdirectory));
 
@@ -91,18 +91,18 @@ void vmm_alloc_ptable(struct pdirectory *va_dir, uint32_t index)
   if (is_page_enabled(va_dir->m_entries[index]))
     return;
 
-  physical_addr pa_table = pmm_alloc_block();
+  uint32_t pa_table = (uint32_t)pmm_alloc_block();
   va_dir->m_entries[index] = pa_table | I86_PDE_PRESENT | I86_PDE_WRITABLE;
 }
 
-void vmm_init_and_map(struct pdirectory *va_dir, virtual_addr vaddr, physical_addr paddr)
+void vmm_init_and_map(struct pdirectory *va_dir, uint32_t vaddr, uint32_t paddr)
 {
-  physical_addr pa_table = pmm_alloc_block();
+  uint32_t pa_table = (uint32_t)pmm_alloc_block();
   struct ptable *va_table = (struct ptable *)(pa_table + KERNEL_HIGHER_HALF);
   memset(va_table, 0, sizeof(struct ptable));
 
-  virtual_addr ivirtual = vaddr;
-  physical_addr iframe = paddr;
+  uint32_t ivirtual = vaddr;
+  uint32_t iframe = paddr;
 
   for (int i = 0; i < 1024; ++i, ivirtual += PMM_FRAME_SIZE, iframe += PMM_FRAME_SIZE)
   {
@@ -115,7 +115,7 @@ void vmm_init_and_map(struct pdirectory *va_dir, virtual_addr vaddr, physical_ad
   *entry = pa_table | I86_PDE_PRESENT | I86_PDE_WRITABLE;
 }
 
-void vmm_paging(struct pdirectory *va_dir, physical_addr pa_dir)
+void vmm_paging(struct pdirectory *va_dir, uint32_t pa_dir)
 {
   _current_dir = va_dir;
 
@@ -148,9 +148,9 @@ void pd_entry_set_frame(pd_entry *e, uint32_t addr)
   *e = (*e & ~I86_PDE_FRAME) | addr;
 }
 
-physical_addr vmm_get_physical_address(virtual_addr vaddr)
+uint32_t vmm_get_physical_address(uint32_t vaddr)
 {
-  uint32_t *table = PAGE_TABLE_BASE + get_page_directory_index(vaddr) * PMM_FRAME_SIZE;
+  uint32_t *table = (uint32_t *)((char *)PAGE_TABLE_BASE + get_page_directory_index(vaddr) * PMM_FRAME_SIZE);
   uint32_t tindex = get_page_table_entry_index(vaddr);
 
   return table[tindex];
@@ -171,7 +171,7 @@ struct pdirectory *vmm_create_address_space(struct pdirectory *current)
     va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE);
 
   // NOTE: MQ 2019-11-26 Recursive paging for new page directory
-  va_dir->m_entries[1023] = vmm_get_physical_address(va_dir);
+  va_dir->m_entries[1023] = vmm_get_physical_address((uint32_t)va_dir);
 
   return va_dir;
 }
@@ -203,7 +203,7 @@ void vmm_map_address(struct pdirectory *va_dir, uint32_t virt, uint32_t phys, ui
   if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
     vmm_create_page_table(va_dir, virt, flags);
 
-  uint32_t *table = PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE;
+  uint32_t *table = (uint32_t *)((char *)PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE);
   uint32_t tindex = get_page_table_entry_index(virt);
 
   table[tindex] = phys | flags;
@@ -214,12 +214,12 @@ void vmm_create_page_table(struct pdirectory *va_dir, uint32_t virt, uint32_t fl
   if (is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
     return;
 
-  physical_addr pa_table = pmm_alloc_block();
+  uint32_t pa_table = (uint32_t)pmm_alloc_block();
 
   va_dir->m_entries[get_page_directory_index(virt)] = pa_table | flags;
   vmm_flush_tlb_entry(virt);
 
-  memset(PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(struct ptable));
+  memset((char *)PAGE_TABLE_BASE + get_page_directory_index(virt) * PMM_FRAME_SIZE, 0, sizeof(struct ptable));
 }
 
 void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt)
@@ -241,14 +241,14 @@ struct pdirectory *vmm_fork(struct pdirectory *va_dir)
 {
   struct pdirectory *forked_dir = vmm_create_address_space(va_dir);
   char *aligned_object = kalign_heap(PMM_FRAME_SIZE);
-  virtual_addr heap_current = sbrk(0);
+  uint32_t heap_current = (uint32_t)sbrk(0);
 
   // NOTE: MQ 2019-12-15 Any heap changes via malloc is forbidden
   for (uint32_t ipd = 0; ipd < 768; ++ipd)
     if (is_page_enabled(va_dir->m_entries[ipd]))
     {
       struct ptable *forked_pt = (struct ptable *)heap_current;
-      physical_addr forked_pt_paddr = pmm_alloc_block();
+      uint32_t forked_pt_paddr = (uint32_t)pmm_alloc_block();
       vmm_map_address(va_dir, forked_pt, forked_pt_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
       memset(forked_pt, 0, sizeof(struct ptable));
 
@@ -258,18 +258,18 @@ struct pdirectory *vmm_fork(struct pdirectory *va_dir)
       {
         if (is_page_enabled(pt->m_entries[ipt]))
         {
-          char *pte = heap_current;
+          char *pte = (char *)heap_current;
           char *forked_pte = pte + PMM_FRAME_SIZE;
-          heap_current = forked_pte + PMM_FRAME_SIZE;
-          physical_addr forked_pte_paddr = pmm_alloc_block();
+          heap_current = (uint32_t)(forked_pte + PMM_FRAME_SIZE);
+          uint32_t forked_pte_paddr = (uint32_t)pmm_alloc_block();
 
-          vmm_map_address(va_dir, pte, pt->m_entries[ipt], I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-          vmm_map_address(va_dir, forked_pte, forked_pte_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+          vmm_map_address(va_dir, (uint32_t)pte, pt->m_entries[ipt], I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+          vmm_map_address(va_dir, (uint32_t)forked_pte, forked_pte_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 
           memcpy(forked_pte, pte, PMM_FRAME_SIZE);
 
-          vmm_unmap_address(va_dir, pte);
-          vmm_unmap_address(va_dir, forked_pte);
+          vmm_unmap_address(va_dir, (uint32_t)pte);
+          vmm_unmap_address(va_dir, (uint32_t)forked_pte);
 
           forked_pt->m_entries[ipt] = forked_pte_paddr | I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER;
         }

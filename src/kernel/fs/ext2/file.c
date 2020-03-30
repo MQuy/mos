@@ -29,21 +29,21 @@ void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, ui
 
 void ext2_read_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
-    uint32_t *block_buf = ext2_bread_block(sb, block);
+    uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
     for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
         ext2_read_direct_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
 void ext2_read_doubly_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
-    uint32_t *block_buf = ext2_bread_block(sb, block);
+    uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
     for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
         ext2_read_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
 void ext2_read_triply_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
-    uint32_t *block_buf = ext2_bread_block(sb, block);
+    uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
     for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
         ext2_read_triply_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }

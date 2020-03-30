@@ -51,9 +51,6 @@ enum PAGE_PDE_FLAGS
 
 typedef uint32_t pd_entry;
 
-//! virtual address
-typedef uint32_t virtual_addr;
-
 //! i86 architecture defines 1024 entries per table--do not change
 #define PAGES_PER_TABLE 1024
 #define PAGES_PER_DIR 1024
@@ -81,7 +78,7 @@ void vmm_map_address(struct pdirectory *dir, uint32_t virt, uint32_t phys, uint3
 void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt);
 void *create_kernel_stack(int32_t blocks);
 struct pdirectory *vmm_create_address_space(struct pdirectory *dir);
-physical_addr vmm_get_physical_address(virtual_addr vaddr);
+uint32_t vmm_get_physical_address(uint32_t vaddr);
 struct pdirectory *vmm_fork(struct pdirectory *va_dir);
 
 // malloc.c

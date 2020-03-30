@@ -23,7 +23,7 @@ void idt_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IVT irq)
   if (i > I86_MAX_INTERRUPTS)
     return;
 
-  uint64_t base = (uint64_t) & (*irq);
+  uint32_t base = (uint32_t)irq;
 
   _idt[i].baseLo = base & 0xffff;
   _idt[i].baseHi = (base >> 16) & 0xffff;
@@ -56,9 +56,9 @@ void i86_default_handler(struct interrupt_registers *regs)
 void idt_init()
 {
   _idtr.limit = sizeof(struct idt_descriptor) * I86_MAX_INTERRUPTS - 1;
-  _idtr.base = &_idt[0];
+  _idtr.base = (uint32_t)_idt;
 
-  memset(&_idt[0], 0, _idtr.limit);
+  memset(_idt, 0, sizeof(_idt));
 
   for (int i = 0; i < 256; ++i)
   {

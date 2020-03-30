@@ -19,7 +19,6 @@ void validate_kblock(struct block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
   {
-    uint32_t x = 1;
   }
 }
 
@@ -134,7 +133,7 @@ void kfree(void *ptr)
 // ------------------- padding - sizeof(struct block_meta)
 void *kalign_heap(size_t size)
 {
-  uint32_t heap_addr = sbrk(0);
+  uint32_t heap_addr = (uint32_t)sbrk(0);
 
   if (heap_addr % size == 0)
     return NULL;

@@ -14,6 +14,6 @@ struct time
 };
 
 uint32_t get_seconds(struct time *);
-struct time *get_time(uint32_t seconds);
+struct time *get_time(int32_t seconds);
 
 #endif

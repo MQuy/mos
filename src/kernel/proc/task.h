@@ -122,10 +122,10 @@ void task_init();
 void sched_init();
 
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority);
-struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void *setup(struct Elf32_Layout *));
+struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
 void update_thread(struct thread *thread, uint8_t state);
 struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir);
-void process_load(const char *pname, const char *path, int priority, void *setup(struct Elf32_Layout *));
+void process_load(const char *pname, const char *path, int priority, void (*setup)(struct Elf32_Layout *));
 struct process *process_fork(struct process *parent);
 void queue_thread(struct thread *t);
 void switch_thread(struct thread *nt);

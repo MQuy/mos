@@ -122,9 +122,6 @@ static bool _numlock, _scrolllock, _capslock;
 //! shift, alt, and ctrl keys current state
 static bool _shift, _alt, _ctrl;
 
-//! set if keyboard error
-static int _kkybrd_error = 0;
-
 //! set if the Basic Assurance Test (BAT) failed
 static bool _kkybrd_bat_res = false;
 
@@ -298,8 +295,6 @@ void kybrd_enc_send_cmd(uint8_t cmd)
 //!	keyboard interrupt handler
 int32_t i86_kybrd_irq(struct interrupt_registers *registers)
 {
-	static bool _extended = false;
-
 	int code = 0;
 
 	//! read scan code only if the kkybrd controller output buffer is full (scan code is in it)
@@ -310,14 +305,8 @@ int32_t i86_kybrd_irq(struct interrupt_registers *registers)
 		code = kybrd_enc_read_buf();
 
 		//! is this an extended code? If so, set it and return
-		if (code == 0xE0 || code == 0xE1)
-			_extended = true;
-		else
+		if (code != 0xE0 && code != 0xE1)
 		{
-
-			//! either the second byte of an extended scan code or a single byte scan code
-			_extended = false;
-
 			//! test if this is a break code (Original XT Scan Code Set specific)
 			if (code & 0x80)
 			{ //test bit 7
@@ -526,13 +515,6 @@ void kkybrd_set_leds(bool num, bool caps, bool scroll)
 	kybrd_enc_send_cmd(data);
 }
 
-//! get last key stroke
-enum KEYCODE kkybrd_get_last_key()
-{
-
-	return (_scancode != INVALID_SCANCODE) ? ((enum KEYCODE)_kkybrd_scancode_std[_scancode]) : (KEY_UNKNOWN);
-}
-
 //! discards last scan
 void kkybrd_discard_last_key()
 {
@@ -556,6 +538,7 @@ char kkybrd_key_to_ascii(enum KEYCODE code)
 				key -= 32;
 
 		if (_shift && !_capslock)
+		{
 			if (key >= '0' && key <= '9')
 				switch (key)
 				{
@@ -641,7 +624,7 @@ char kkybrd_key_to_ascii(enum KEYCODE code)
 					break;
 				}
 			}
-
+		}
 		//! return the key
 		return key;
 	}

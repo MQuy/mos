@@ -7,7 +7,7 @@
 // The definition of our circular buffer structure is hidden from the user
 struct circular_buf_t
 {
-  uint8_t *buffer;
+  char *buffer;
   size_t head;
   size_t tail;
   size_t max; //of the buffer
@@ -33,7 +33,7 @@ static void retreat_pointer(struct circular_buf_t *cbuf)
   cbuf->tail = (cbuf->tail + 1) % cbuf->max;
 }
 
-struct circular_buf_t *circular_buf_init(uint8_t *buffer, size_t size)
+struct circular_buf_t *circular_buf_init(char *buffer, size_t size)
 {
   struct circular_buf_t *cbuf = kcalloc(1, sizeof(struct circular_buf_t));
 
@@ -80,14 +80,14 @@ size_t circular_buf_capacity(struct circular_buf_t *cbuf)
   return cbuf->max;
 }
 
-void circular_buf_put(struct circular_buf_t *cbuf, uint8_t data)
+void circular_buf_put(struct circular_buf_t *cbuf, char data)
 {
   cbuf->buffer[cbuf->head] = data;
 
   advance_pointer(cbuf);
 }
 
-int circular_buf_put2(struct circular_buf_t *cbuf, uint8_t data)
+int circular_buf_put2(struct circular_buf_t *cbuf, char data)
 {
   int r = -1;
 
@@ -101,7 +101,7 @@ int circular_buf_put2(struct circular_buf_t *cbuf, uint8_t data)
   return r;
 }
 
-int circular_buf_get(struct circular_buf_t *cbuf, uint8_t *data)
+int circular_buf_get(struct circular_buf_t *cbuf, char *data)
 {
   int r = -1;
 

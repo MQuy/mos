@@ -127,6 +127,7 @@ int32_t sys_posix_spawn(char *path)
 {
   int top = get_top_priority_from_list(THREAD_READY, THREAD_SYSTEM_POLICY);
   process_load(path, path, top - 1, NULL);
+  return 0;
 }
 
 #define __NR_exit 1
@@ -181,7 +182,7 @@ int32_t syscall_dispatcher(struct interrupt_registers *regs)
   SYSTEM_FUNC func = (SYSTEM_FUNC)syscalls[idx];
 
   if (!func)
-    return;
+    return IRQ_HANDLER_STOP;
 
   memcpy(&current_thread->uregs, regs, sizeof(struct interrupt_registers));
 

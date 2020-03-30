@@ -210,14 +210,13 @@ bool kkybrd_self_test();
 
 //! returns last scan code, last keystroke
 uint8_t kkybrd_get_last_scan();
-enum KEYCODE kkybrd_get_last_key();
 void kkybrd_discard_last_key();
 
 //! updates LEDs
 void kkybrd_set_leds(bool num, bool caps, bool scroll);
 
 //! converts keycode to ascii character (takes account of caps lock and shift keys)
-char kkybrd_key_to_ascii(KEYCODE);
+char kkybrd_key_to_ascii(enum KEYCODE keycode);
 
 //! keyboard enable / disable
 void kkybrd_disable();
