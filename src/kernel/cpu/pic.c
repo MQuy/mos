@@ -53,3 +53,39 @@ void pic_disable()
 
   pic_eoi(8);
 }
+
+void pic_set_mask(unsigned char irq_line)
+{
+  uint16_t port;
+  uint8_t value;
+
+  if (irq_line < 8)
+  {
+    port = PIC1_DATA;
+  }
+  else
+  {
+    port = PIC2_DATA;
+    irq_line -= 8;
+  }
+  value = inportb(port) | (1 << irq_line);
+  outportb(port, value);
+}
+
+void pic_clear_mask(unsigned char irq_line)
+{
+  uint16_t port;
+  uint8_t value;
+
+  if (irq_line < 8)
+  {
+    port = PIC1_DATA;
+  }
+  else
+  {
+    port = PIC2_DATA;
+    irq_line -= 8;
+  }
+  value = inportb(port) & ~(1 << irq_line);
+  outportb(port, value);
+}

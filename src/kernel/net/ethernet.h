@@ -1,0 +1,16 @@
+#ifndef NET_ETHERNET
+#define NET_ETHERNET
+
+#include <stdint.h>
+
+struct __attribute__((packed)) ethernet_header
+{
+  uint8_t dmac[6];
+  uint8_t smac[6];
+  uint16_t type;
+  uint8_t payload[];
+};
+
+int32_t ethernet_send_packet(uint8_t *dmac, uint8_t *payload, uint32_t size, uint16_t protocal);
+
+#endif

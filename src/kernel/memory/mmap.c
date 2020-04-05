@@ -156,7 +156,7 @@ void shift_area(struct vm_area_struct *vma, struct vm_area_struct *new_vma)
     uint32_t new_length = new_vma->vm_end - new_vma->vm_start;
     for (uint32_t vaddr = 0; vaddr < new_length; vaddr += PMM_FRAME_SIZE)
     {
-      uint32_t paddr = vaddr < old_length ? vmm_get_physical_address(vma->vm_start + vaddr) : (uint32_t)pmm_alloc_block();
+      uint32_t paddr = vaddr < old_length ? vmm_get_physical_address(vma->vm_start + vaddr, false) : (uint32_t)pmm_alloc_block();
       vmm_map_address(current_process->pdir,
                       new_vma->vm_start + vaddr,
                       paddr,

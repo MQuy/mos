@@ -27,5 +27,7 @@
 #define PIC_EOI 0x20 /* End-of-interrupt command code */
 
 void pic_remap();
+void pic_set_mask(unsigned char irq_line);
+void pic_clear_mask(unsigned char irq_line);
 
 #endif

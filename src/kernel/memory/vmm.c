@@ -148,12 +148,15 @@ void pd_entry_set_frame(pd_entry *e, uint32_t addr)
   *e = (*e & ~I86_PDE_FRAME) | addr;
 }
 
-uint32_t vmm_get_physical_address(uint32_t vaddr)
+uint32_t vmm_get_physical_address(uint32_t vaddr, bool is_page)
 {
   uint32_t *table = (uint32_t *)((char *)PAGE_TABLE_BASE + get_page_directory_index(vaddr) * PMM_FRAME_SIZE);
   uint32_t tindex = get_page_table_entry_index(vaddr);
-
-  return table[tindex];
+  uint32_t paddr = table[tindex];
+  if (is_page)
+    return paddr;
+  else
+    return (paddr & ~0xfff) | (vaddr & 0xfff);
 }
 
 struct pdirectory *vmm_create_address_space(struct pdirectory *current)
@@ -168,10 +171,10 @@ struct pdirectory *vmm_create_address_space(struct pdirectory *current)
     return NULL;
 
   for (uint32_t i = 768; i < 1023; ++i)
-    va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE);
+    va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE, true);
 
   // NOTE: MQ 2019-11-26 Recursive paging for new page directory
-  va_dir->m_entries[1023] = vmm_get_physical_address((uint32_t)va_dir);
+  va_dir->m_entries[1023] = vmm_get_physical_address((uint32_t)va_dir, true);
 
   return va_dir;
 }

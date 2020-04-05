@@ -18,6 +18,8 @@
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "devices/ata.h"
+#include "net/rtl8139.h"
+#include "net/arp.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "devices/char/memory.h"
@@ -57,7 +59,7 @@ void kernel_init()
   srand(get_seconds(NULL));
 
   // FIXME: MQ 2019-11-19 ata_init is not called in pci_scan_buses without enabling -O2
-  // pci_scan_buses();
+  pci_init();
   ata_init();
 
   vfs_init(&ext2_fs_type, "/dev/hda");
@@ -65,17 +67,22 @@ void kernel_init()
 
   console_setup();
 
+  rtl8139_init();
+  uint8_t bmac[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  uint8_t dip[] = {192, 168, 1, 73};
+  arp_send_packet(bmac, dip);
+
   // init ipc message queue
   mq_init();
 
   // register system apis
   syscall_init();
 
-  process_load("window server", "/bin/window_server", 0, setup_window_server);
+  // process_load("window server", "/bin/window_server", 0, setup_window_server);
 
   // idle
-  update_thread(current_thread, THREAD_WAITING);
-  schedule();
+  // update_thread(current_thread, THREAD_WAITING);
+  // schedule();
 
   for (;;)
     ;

@@ -62,6 +62,13 @@ struct page
   uint32_t virtual;
 };
 
+struct pages
+{
+  uint32_t paddr;
+  uint32_t number_of_frames;
+  uint32_t vaddr;
+};
+
 struct ptable
 {
   pt_entry m_entries[PAGES_PER_TABLE];
@@ -78,7 +85,7 @@ void vmm_map_address(struct pdirectory *dir, uint32_t virt, uint32_t phys, uint3
 void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt);
 void *create_kernel_stack(int32_t blocks);
 struct pdirectory *vmm_create_address_space(struct pdirectory *dir);
-uint32_t vmm_get_physical_address(uint32_t vaddr);
+uint32_t vmm_get_physical_address(uint32_t vaddr, bool is_page);
 struct pdirectory *vmm_fork(struct pdirectory *va_dir);
 
 // malloc.c
@@ -100,6 +107,8 @@ uint32_t do_brk(uint32_t addr, size_t len);
 
 // highmem.c
 void kmap(struct page *p);
+void kmaps(struct pages *p);
 void kunmap(struct page *p);
+void kunmaps(struct pages *p);
 
 #endif

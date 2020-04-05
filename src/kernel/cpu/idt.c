@@ -159,9 +159,9 @@ void isr_handler(struct interrupt_registers *reg)
 
 void irq_handler(struct interrupt_registers *reg)
 {
+  handle_interrupt(reg);
+
   if (reg->int_no >= 40)
     outportb(PIC2_COMMAND, PIC_EOI);
   outportb(PIC1_COMMAND, PIC_EOI);
-
-  handle_interrupt(reg);
 }

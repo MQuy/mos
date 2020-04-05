@@ -255,6 +255,10 @@ int DebugPrintf(const char *str, ...)
 	return i;
 }
 
+void debug_print(enum debug_level level, const char *str, ...)
+{
+}
+
 //============================================================================
 //    INTERFACE CLASS BODIES
 //============================================================================

@@ -123,7 +123,7 @@ void switch_thread(struct thread *nt)
   current_process = current_thread->parent;
   current_process->active_thread = current_thread;
 
-  uint32_t paddr_cr3 = vmm_get_physical_address((uint32_t)current_thread->parent->pdir);
+  uint32_t paddr_cr3 = vmm_get_physical_address((uint32_t)current_thread->parent->pdir, true);
   tss_set_stack(0x10, current_thread->kernel_stack);
   do_switch(&pt->esp, current_thread->esp, paddr_cr3);
 }

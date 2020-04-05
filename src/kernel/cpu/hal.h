@@ -80,6 +80,22 @@ static _inline void outportl(unsigned short _port, unsigned int _data)
                : "dN"(_port), "a"(_data));
 }
 
+static _inline unsigned short inports(unsigned short _port)
+{
+  unsigned short rv;
+  asm volatile("inw %1, %0"
+               : "=a"(rv)
+               : "dN"(_port));
+  return rv;
+}
+
+static _inline void outports(unsigned short _port, unsigned short _data)
+{
+  asm volatile("outw %1, %0"
+               :
+               : "dN"(_port), "a"(_data));
+}
+
 static _inline void inportsw(uint16_t portid, void *addr, size_t count)
 {
   __asm__ __volatile__("rep insw"

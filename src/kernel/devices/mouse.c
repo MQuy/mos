@@ -172,4 +172,5 @@ void mouse_init()
   mouse_read();
 
   register_interrupt_handler(IRQ12, mouse_handler);
+  pic_clear_mask(12);
 }

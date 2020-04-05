@@ -10,14 +10,14 @@
 #define TEXT_COLOR 0xFFFFFF
 #define BACKGROUND_COLOR 0x000000
 
-static uint32_t current_column = 0;
-static uint32_t current_row = 0;
+uint32_t current_column = 0;
+uint32_t current_row = 0;
 
 static struct framebuffer *current_fb;
 
 void print_char(const char c)
 {
-  psf_putchar(c, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, (char *)VIDEO_VADDR, current_fb->pitch);
+  psf_putchar(c, current_column * 12, current_row * 16, TEXT_COLOR, BACKGROUND_COLOR, (char *)VIDEO_VADDR, current_fb->pitch);
 
   if (current_column >= current_fb->width)
   {
@@ -32,7 +32,7 @@ void print_char(const char c)
 
 void print_string(const char *s)
 {
-  psf_puts(s, current_column, current_row, TEXT_COLOR, BACKGROUND_COLOR, (char *)VIDEO_VADDR, current_fb->pitch);
+  psf_puts(s, current_column * 12, current_row * 16, TEXT_COLOR, BACKGROUND_COLOR, (char *)VIDEO_VADDR, current_fb->pitch);
 
   uint32_t length = strlen(s);
   if (current_column + length >= current_fb->width)

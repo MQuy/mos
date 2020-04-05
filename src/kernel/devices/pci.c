@@ -1,83 +1,117 @@
 #include <kernel/cpu/hal.h>
 #include <kernel/utils/printf.h>
+#include <kernel/system/console.h>
+#include <kernel/memory/vmm.h>
 #include "pci.h"
 #include "ata.h"
 
-uint16_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
+extern uint32_t current_row, current_column;
+static struct list_head ldevs;
+
+uint32_t pci_get_address(uint8_t bus, uint8_t slot, uint8_t func)
 {
-  uint32_t address;
   uint32_t lbus = (uint32_t)bus;
   uint32_t lslot = (uint32_t)slot;
   uint32_t lfunc = (uint32_t)func;
-  uint16_t tmp = 0;
 
-  /* create configuration address as per Figure 1 */
-  address = (uint32_t)((lbus << 16) | (lslot << 11) |
-                       (lfunc << 8) | (offset & 0xfc) | ((uint32_t)0x80000000));
+  return (lbus << 16) | (lslot << 11) | (lfunc << 8) | 0x80000000;
+}
 
+uint32_t pci_read_field(uint32_t address, uint8_t offset)
+{
   /* write out the address */
-  outportl(0xCF8, address);
-  /* read in the data */
-  /* (offset & 2) * 8) = 0 will choose the first word of the 32 bits register */
-  tmp = (uint16_t)((inportl(0xCFC) >> ((offset & 2) * 8)) & 0xffff);
-  return (tmp);
+  outportl(PCI_ADDRESS_PORT, address | (offset & 0xfc));
+  return inportl(PCI_VALUE_PORT);
 }
 
-uint16_t get_vender_id(uint16_t bus, uint16_t device, uint16_t function)
+void pci_write_field(uint32_t address, uint8_t offset, uint32_t value)
 {
-  return pci_read_word(bus, device, function, 0);
+  outportl(PCI_ADDRESS_PORT, address | (offset & 0xfc));
+  outportl(PCI_VALUE_PORT, value);
 }
 
-uint16_t get_device_id(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t pci_get_device_id(uint32_t address)
 {
-  return pci_read_word(bus, device, function, 2);
+  uint32_t reg = pci_read_field(address, 0x0);
+  return (reg >> 16) & 0xFFFF;
 }
 
-uint16_t get_class_code(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t pci_get_vender_id(uint32_t address)
 {
-  uint32_t reg = pci_read_word(bus, device, function, 0xA);
-  return (reg & 0xFF00) >> 8;
+  uint32_t reg = pci_read_field(address, 0x0);
+  return reg & 0xFFFF;
 }
 
-uint16_t get_subclass_code(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t pci_get_status(uint32_t address)
 {
-  uint32_t reg = pci_read_word(bus, device, function, 0xA);
-  return (reg & 0x00FF);
+  uint32_t reg = pci_read_field(address, 0x4);
+  return (reg >> 16) & 0xFFFF;
 }
 
-uint16_t get_prog_if(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t pci_get_command(uint32_t address)
 {
-  uint32_t reg = pci_read_word(bus, device, function, 0x8);
-  return (reg & 0xFF00) >> 8;
+  uint32_t reg = pci_read_field(address, 0x4);
+  return reg & 0xFFFF;
 }
 
-uint16_t get_header_type(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t pci_get_class_code(uint32_t address)
 {
-  uint32_t reg = pci_read_word(bus, device, function, 0xD);
-  return (reg & 0x00FF);
+  uint32_t reg = pci_read_field(address, 0x8);
+  return (reg >> 24) & 0xFF;
 }
 
-uint16_t get_secondary_bus(uint16_t bus, uint16_t device, uint16_t function)
+uint16_t pci_get_subclass_code(uint32_t address)
 {
-  uint32_t reg = pci_read_word(bus, device, function, 0x12);
-  return (reg & 0xFF00) >> 8;
+  uint32_t reg = pci_read_field(address, 0x8);
+  return (reg >> 16) & 0xFF;
 }
 
-void print_device(uint8_t bus, uint8_t device, uint8_t function)
+uint16_t pci_get_prog_if(uint32_t address)
 {
-  int vendorID = get_vender_id(bus, device, function);
+  uint32_t reg = pci_read_field(address, 0x8);
+  return (reg >> 8) & 0xFF;
+}
+
+uint16_t pci_get_header_type(uint32_t address)
+{
+  uint32_t reg = pci_read_field(address, 0xC);
+  return (reg >> 16) & 0xFF;
+}
+
+uint16_t pci_get_secondary_bus(uint32_t address)
+{
+  uint32_t reg = pci_read_field(address, 0x18);
+  return (reg >> 8) & 0xFF;
+}
+
+uint8_t pci_get_interrupt_line(uint32_t address)
+{
+  uint32_t reg = pci_read_field(address, 0x3C);
+  return reg & 0xFF;
+}
+
+void reg_device(uint8_t bus, uint8_t device, uint8_t function)
+{
+  uint32_t address = pci_get_address(bus, device, function);
+  int vendorID = pci_get_vender_id(address);
 
   if (vendorID != PCI_INVALID_VENDOR_ID)
   {
-    // int deviceID = get_device_id(bus, device, function);
-    int classCode = get_class_code(bus, device, function);
-    int subclassCode = get_subclass_code(bus, device, function);
-    // int progif = get_prog_if(bus, device, function);
+    int deviceID = pci_get_device_id(address);
+    int classCode = pci_get_class_code(address);
+    int subclassCode = pci_get_subclass_code(address);
+    int progif = pci_get_prog_if(address);
+    int headerType = pci_get_header_type(address);
 
-    if (classCode == PCI_CLASS_CODE_MASS_STORAGE)
+    if (classCode != PCI_CLASS_CODE_BRIDGE_DEVICE)
     {
-      if (subclassCode == PCI_SUBCLASS_IDE)
-        ata_init();
+      struct pci_device *dev = kmalloc(sizeof(struct pci_device));
+      dev->address = address;
+      dev->vendorID = vendorID;
+      dev->deviceID = deviceID;
+      dev->bar0 = pci_read_field(address, PCI_BAR0);
+
+      list_add_tail(&dev->sibling, &ldevs);
     }
   }
 }
@@ -86,13 +120,14 @@ void pci_check_function(uint8_t bus, uint8_t device, uint8_t function)
 {
   uint8_t secondary_bus;
 
-  print_device(bus, device, function);
+  reg_device(bus, device, function);
 
-  uint16_t baseClass = get_class_code(bus, device, function);
-  uint16_t subClass = get_subclass_code(bus, device, function);
+  uint32_t address = pci_get_address(bus, device, function);
+  uint16_t baseClass = pci_get_class_code(address);
+  uint16_t subClass = pci_get_subclass_code(address);
   if ((baseClass == PCI_CLASS_CODE_BRIDGE_DEVICE) && (subClass == PCI_SUBCLASS_PCI_TO_PCI_BRIDGE))
   {
-    secondary_bus = get_secondary_bus(bus, device, function);
+    secondary_bus = pci_get_secondary_bus(address);
     pci_scan_bus(secondary_bus);
   }
 }
@@ -104,7 +139,8 @@ void pci_scan_bus(uint8_t bus)
 
   for (device = 0; device < 32; device++)
   {
-    uint16_t headerType = get_header_type(bus, device, function);
+    uint32_t address = pci_get_address(bus, device, function);
+    uint16_t headerType = pci_get_header_type(address);
     if ((headerType & PCI_MULTIFUNCTION_DEVICE) != 0)
     {
       for (function = 0; function < 7; function++)
@@ -121,7 +157,7 @@ void pci_scan_bus(uint8_t bus)
 
 void pci_scan_buses()
 {
-  int headerType = get_header_type(0, 0, 0);
+  int headerType = pci_get_header_type(pci_get_address(0, 0, 0));
   if ((headerType & PCI_MULTIFUNCTION_DEVICE) == 0)
   {
     pci_scan_bus(0);
@@ -131,11 +167,27 @@ void pci_scan_buses()
     uint8_t function, bus;
     for (function = 0; function < 8; function++)
     {
-      // FIXME: MQ 2019-05-20 Should it be == instead of !=
-      if (get_vender_id(0, 0, function) != PCI_INVALID_VENDOR_ID)
+      if (pci_get_vender_id(pci_get_address(0, 0, function)) == PCI_INVALID_VENDOR_ID)
         break;
       bus = function;
       pci_scan_bus(bus);
     }
   }
+}
+
+struct pci_device *get_pci_device(int32_t vendorID, int32_t deviceID)
+{
+  struct pci_device *iter_dev;
+  list_for_each_entry(iter_dev, &ldevs, sibling)
+  {
+    if (iter_dev->vendorID == vendorID && iter_dev->deviceID == deviceID)
+      return iter_dev;
+  }
+  return NULL;
+}
+
+void pci_init()
+{
+  INIT_LIST_HEAD(&ldevs);
+  pci_scan_buses();
 }
