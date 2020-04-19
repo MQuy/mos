@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-struct __attribute__((packed)) ethernet_header
+struct __attribute__((packed)) ethernet_packet
 {
   uint8_t dmac[6];
   uint8_t smac[6];
@@ -11,6 +11,6 @@ struct __attribute__((packed)) ethernet_header
   uint8_t payload[];
 };
 
-int32_t ethernet_send_packet(uint8_t *dmac, uint8_t *payload, uint32_t size, uint16_t protocal);
+int32_t ethernet_send_packet(uint8_t *dmac, void *payload, uint32_t size, uint16_t protocal);
 
 #endif

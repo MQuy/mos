@@ -20,6 +20,7 @@
 #include "devices/ata.h"
 #include "net/rtl8139.h"
 #include "net/arp.h"
+#include "net/ip.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "devices/char/memory.h"
@@ -68,9 +69,7 @@ void kernel_init()
   console_setup();
 
   rtl8139_init();
-  uint8_t bmac[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  uint8_t dip[] = {192, 168, 1, 73};
-  arp_send_packet(bmac, dip);
+  dhcp_discovery();
 
   // init ipc message queue
   mq_init();

@@ -4,10 +4,10 @@
 #include <kernel/net/rtl8139.h>
 #include "ethernet.h"
 
-int32_t ethernet_send_packet(uint8_t *dmac, uint8_t *payload, uint32_t size, uint16_t protocal)
+int32_t ethernet_send_packet(uint8_t *dmac, void *payload, uint32_t size, uint16_t protocal)
 {
-  uint32_t eh_size = sizeof(struct ethernet_header) + size;
-  struct ethernet_header *eh = kmalloc(eh_size);
+  uint32_t eh_size = sizeof(struct ethernet_packet) + size;
+  struct ethernet_packet *eh = kmalloc(eh_size);
 
   eh->type = htons(protocal);
   memcpy(eh->dmac, dmac, sizeof(eh->dmac));
