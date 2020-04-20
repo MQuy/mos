@@ -77,7 +77,7 @@ void rtl8139_receive_packet()
               i += 2 + dhcp_packet->options[i + 1];
             }
             if (message_type == 0x02)
-              dhcp_request(ntohl(server_ip), ntohl(dhcp_packet->yiaddr));
+              dhcp_request(ntohl(server_ip), ntohl(dhcp_packet->yiaddr), dhcp_packet->xip);
             else if (message_type == 0x05)
             {
               cip = ntohl(dhcp_packet->yiaddr);
@@ -86,6 +86,13 @@ void rtl8139_receive_packet()
               arp_send_packet(bmac, cip, 0, ARP_REQUEST);
               // dhcp_release(packet->smac, ntohl(dhcp_packet->yiaddr), ntohl(server_ip));
             }
+          }
+          else if (ip_packet->protocal == IP4_PROTOCAL_ICMP && cip)
+          {
+            struct icmp_packet *icmp_packet = ip_packet->payload;
+            uint16_t identifer = ntohs(icmp_packet->rest_of_header & 0xFFFF);
+            uint16_t seq_number = ntohs((icmp_packet->rest_of_header >> 16) & 0xFFFF);
+            icmp_reply(packet->smac, ntohl(ip_packet->dest_ip), ntohl(ip_packet->source_ip), identifer, seq_number);
           }
         }
       }

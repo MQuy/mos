@@ -4,10 +4,15 @@
 #include <stdint.h>
 
 #define IP4_PROTOCAL_UDP 17
+#define IP4_PROTOCAL_ICMP 1
+
 #define DHCP_REQUEST 1
 #define DHCP_REPLY 2
 #define DHCP_ETHERNET 1
 #define DHCP_MAGIC 0x63825363
+
+#define ICMP_REPLY 0
+#define ICMP_ECHO 0
 
 struct __attribute__((packed)) ip4_packet
 {
@@ -55,8 +60,19 @@ struct __attribute__((packed)) dhcp_packet
   uint8_t options[];
 };
 
+struct __attribute__((packed)) icmp_packet
+{
+  uint8_t type;
+  uint8_t code;
+  uint16_t checksum;
+  uint32_t rest_of_header;
+  uint8_t payload[];
+};
+
 void dhcp_discovery();
-void dhcp_request(uint32_t serverip, uint32_t request_ip);
+void dhcp_request(uint32_t serverip, uint32_t request_ip, uint32_t xip);
 void dhcp_release(uint8_t *dmac, uint32_t cip, uint32_t server_ip);
+void icmp_reply(uint8_t *dmac, uint32_t cip, uint32_t server_ip, uint16_t identifier, uint16_t seq_number);
+void icmp_echo(uint8_t *dmac, uint32_t cip, uint32_t server_ip);
 
 #endif
