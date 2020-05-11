@@ -141,3 +141,13 @@ Credited by (Understanding the linux)[https://learning.oreilly.com/library/view/
     - check network card device is idle and can transmit packets
     - if not, the queue is stopped and current `qdisc_run` is terminated -> `NET_TX_SOFTIRQ` softirq is activated. Later time, `net_tx_action` (via scheduler `ksoftirqd_CPUn`) -> `qdisc_run` (retry the transmition)
     - `hard_start_xmit` transfer `sk_buff` to the device's memory via DMA transfer
+
+## mOS Network Flow
+
+### Send a message
+
+![send message](https://i.imgur.com/DYSHrIv.jpg)
+
+### Receive a message
+
+![receive message](https://i.imgur.com/BosmFd5.jpg)
