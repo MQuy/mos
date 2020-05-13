@@ -1,7 +1,7 @@
 #include <include/ctype.h>
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
-#include <kernel/net/rtl8139.h>
+#include <kernel/net/devices/rtl8139.h>
 #include "ethernet.h"
 
 int32_t ethernet_send_packet(uint8_t *dmac, void *payload, uint32_t size, uint16_t protocal)

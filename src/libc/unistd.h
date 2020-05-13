@@ -6,6 +6,7 @@
 #include <include/fcntl.h>
 #include <include/ctype.h>
 
+// FIXME MQ 2020-05-12 copy define constants from linux/include/asm-x86_64/unistd.h
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -21,6 +22,15 @@
 #define __NR_munmap 91
 #define __NR_truncate 92
 #define __NR_ftruncate 93
+#define __NR_socket 97
+#define __NR_connect 98
+#define __NR_accept 99
+#define __NR_getpriority 100
+#define __NR_send 101
+#define __NR_recv 102
+#define __NR_sigreturn 103
+#define __NR_bind 104
+#define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
 #define __NR_msgopen 200

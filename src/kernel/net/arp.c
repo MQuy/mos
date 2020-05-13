@@ -1,6 +1,6 @@
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
-#include <kernel/net/rtl8139.h>
+#include <kernel/net/devices/rtl8139.h>
 #include <kernel/net/ethernet.h>
 #include "arp.h"
 

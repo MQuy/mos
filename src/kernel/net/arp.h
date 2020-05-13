@@ -1,5 +1,5 @@
-#ifndef NET_ARP
-#define NET_ARP
+#ifndef NET_ARP_H
+#define NET_ARP_H
 
 #include <stdint.h>
 

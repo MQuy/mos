@@ -172,6 +172,7 @@ struct vfs_file
   struct vfs_file_operations *f_op;
   long f_count;
   unsigned int f_flags;
+  void *private_data;
   mode_t f_mode;
   loff_t f_pos;
 };

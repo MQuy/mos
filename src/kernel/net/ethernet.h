@@ -1,5 +1,5 @@
-#ifndef NET_ETHERNET
-#define NET_ETHERNET
+#ifndef NET_ETHERNET_H
+#define NET_ETHERNET_H
 
 #include <stdint.h>
 

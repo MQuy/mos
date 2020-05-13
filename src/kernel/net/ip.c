@@ -2,8 +2,8 @@
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/utils/math.h>
-#include "rtl8139.h"
-#include "ethernet.h"
+#include <kernel/net/devices/rtl8139.h>
+#include <kernel/net/ethernet.h>
 #include "ip.h"
 
 #define IP4_TTL 0x80

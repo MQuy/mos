@@ -6,9 +6,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/system/console.h>
 #include <kernel/utils/printf.h>
-#include "ethernet.h"
-#include "ip.h"
-#include "arp.h"
+#include <kernel/net/net.h>
 #include "rtl8139.h"
 
 extern struct process *current_process;
@@ -49,61 +47,10 @@ void rtl8139_receive_packet()
     else
     {
       uint8_t *buf = rx_read_ptr + sizeof(struct rtl8139_rx_header);
-      struct ethernet_packet *packet = buf;
-      if (ntohs(packet->type) == ETH_P_IP)
-      {
-        if (strcmp(packet->dmac, get_mac_address()) == 0)
-        {
-          struct ip4_packet *ip_packet = packet->payload;
-          if (ip_packet->protocal == IP4_PROTOCAL_UDP)
-          {
-            struct udp_packet *udp_packet = ip_packet->payload;
-            struct dhcp_packet *dhcp_packet = udp_packet->payload;
-            uint32_t server_ip;
-            uint8_t message_type;
+      uint8_t *payload = kcalloc(1, rx_header->size);
 
-            for (uint32_t i = 0; dhcp_packet->options[i] != 0xFF;)
-            {
-              switch (dhcp_packet->options[i])
-              {
-              case 54:
-                server_ip = dhcp_packet->options[i + 2] + (dhcp_packet->options[i + 3] << 8) + (dhcp_packet->options[i + 4] << 16) + (dhcp_packet->options[i + 5] << 24);
-                break;
-              case 53:
-                message_type = dhcp_packet->options[i + 2];
-                break;
-              }
-
-              i += 2 + dhcp_packet->options[i + 1];
-            }
-            if (message_type == 0x02)
-              dhcp_request(ntohl(server_ip), ntohl(dhcp_packet->yiaddr), dhcp_packet->xip);
-            else if (message_type == 0x05)
-            {
-              cip = ntohl(dhcp_packet->yiaddr);
-              // ARP Probe
-              char bmac[] = {0, 0, 0, 0, 0, 0};
-              arp_send_packet(bmac, cip, 0, ARP_REQUEST);
-              // dhcp_release(packet->smac, ntohl(dhcp_packet->yiaddr), ntohl(server_ip));
-            }
-          }
-          else if (ip_packet->protocal == IP4_PROTOCAL_ICMP && cip)
-          {
-            struct icmp_packet *icmp_packet = ip_packet->payload;
-            uint16_t identifer = ntohs(icmp_packet->rest_of_header & 0xFFFF);
-            uint16_t seq_number = ntohs((icmp_packet->rest_of_header >> 16) & 0xFFFF);
-            icmp_reply(packet->smac, ntohl(ip_packet->dest_ip), ntohl(ip_packet->source_ip), identifer, seq_number);
-          }
-        }
-      }
-      else if (ntohs(packet->type) == ETH_P_ARP)
-      {
-        struct arp_packet *arp_packet = packet->payload;
-        if (ntohl(arp_packet->tpa) == cip)
-        {
-          arp_send_packet(arp_packet->sha, ntohl(arp_packet->spa), cip, ARP_REPLY);
-        }
-      }
+      memcpy(payload, buf, rx_header->size);
+      push_rx_queue(payload, rx_header->size);
     }
     outportw(ioaddr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
   }
