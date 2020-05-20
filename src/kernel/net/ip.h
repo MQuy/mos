@@ -6,6 +6,9 @@
 #define IP4_PROTOCAL_UDP 17
 #define IP4_PROTOCAL_ICMP 1
 
+struct socket;
+struct sk_buff;
+
 struct __attribute__((packed)) ip4_packet
 {
   uint8_t ihl : 4;
@@ -22,5 +25,7 @@ struct __attribute__((packed)) ip4_packet
   uint32_t dest_ip;
   uint8_t payload[];
 };
+
+void ip4_sendmsg(struct socket *, struct sk_buff *);
 
 #endif

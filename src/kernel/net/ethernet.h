@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+struct sk_buff;
+
 struct __attribute__((packed)) ethernet_packet
 {
   uint8_t dmac[6];
@@ -11,6 +13,6 @@ struct __attribute__((packed)) ethernet_packet
   uint8_t payload[];
 };
 
-int32_t ethernet_send_packet(uint8_t *dmac, void *payload, uint32_t size, uint16_t protocal);
+void ethernet_sendmsg(struct sk_buff *skb);
 
 #endif

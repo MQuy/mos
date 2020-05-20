@@ -6,8 +6,10 @@
 #include <kernel/proc/task.h>
 #include <kernel/proc/elf.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/fs/pipefs/pipe.h>
 #include <kernel/ipc/message_queue.h>
+#include <kernel/net/net.h>
 #include "sysapi.h"
 
 extern struct thread *current_thread;
@@ -130,6 +132,38 @@ int32_t sys_posix_spawn(char *path)
   return 0;
 }
 
+int32_t sys_socket(int32_t family, enum socket_type type, int32_t protocal)
+{
+  char *path = get_next_socket_path();
+  int32_t fd = vfs_open(path);
+  socket_setup(family, type, protocal, current_process->files->fd[fd]);
+  return fd;
+}
+
+int32_t sys_bind(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
+{
+  struct socket *sock = sockfd_lookup(sockfd);
+  return sock->ops->bind(sock, addr, addrlen);
+}
+
+int32_t sys_connect(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
+{
+  struct socket *sock = sockfd_lookup(sockfd);
+  return sock->ops->connect(sock, addr, addrlen);
+}
+
+int32_t sys_send(int32_t sockfd, void *msg, size_t len)
+{
+  struct socket *sock = sockfd_lookup(sockfd);
+  return sock->ops->sendmsg(sock, msg, len);
+}
+
+int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
+{
+  struct socket *sock = sockfd_lookup(sockfd);
+  return sock->ops->recvmsg(sock, msg, len);
+}
+
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -178,6 +212,11 @@ static void *syscalls[] = {
     [__NR_mmap] = sys_mmap,
     [__NR_truncate] = sys_truncate,
     [__NR_ftruncate] = sys_ftruncate,
+    [__NR_socket] = sys_socket,
+    [__NR_connect] = sys_connect,
+    [__NR_bind] = sys_bind,
+    [__NR_send] = sys_send,
+    [__NR_recv] = sys_recv,
     [__NR_msgopen] = sys_msgopen,
     [__NR_msgclose] = sys_msgclose,
     [__NR_msgsnd] = sys_msgsnd,

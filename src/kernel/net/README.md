@@ -95,8 +95,8 @@ const char *mesg[] = "Hello, how are you?";
 sockfd = socket(PF_INET, SOCK_DGRAM, 0);
 
 addr_local.sin_family = AF_INET;
-addr.sin_port = htons(50000);
-addr.sin_addr.s_addr = htonl(0xc0a050f0); /* 192.160.80.240 */
+addr_local.sin_port = htons(50000);
+addr_local.sin_addr.s_addr = htonl(0xc0a050f0); /* 192.160.80.240 */
 bind(sockfd, (struct sockaddr *) & addr_local, sizeof(struct sockaddr_in));
 
 addr_remote.sin_family = AF_INET;
@@ -141,6 +141,8 @@ Credited by (Understanding the linux)[https://learning.oreilly.com/library/view/
     - check network card device is idle and can transmit packets
     - if not, the queue is stopped and current `qdisc_run` is terminated -> `NET_TX_SOFTIRQ` softirq is activated. Later time, `net_tx_action` (via scheduler `ksoftirqd_CPUn`) -> `qdisc_run` (retry the transmition)
     - `hard_start_xmit` transfer `sk_buff` to the device's memory via DMA transfer
+
+✍️ C doesn't have object-oriented concept but Linux uses [data inheritance](https://lwn.net/Articles/446317/) for example `inet_sock`/`sock` ...
 
 ## mOS Network Flow
 

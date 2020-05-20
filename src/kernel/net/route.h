@@ -13,8 +13,8 @@
 
 struct neighbour
 {
-  uint8_t ha[6];
-  uint8_t ip[4];
+  uint8_t dha[6];
+  uint32_t dip;
   uint8_t nud_state;
   struct net_device *dev;
   struct list_head sibling;
@@ -22,9 +22,9 @@ struct neighbour
 
 struct rtable
 {
-  uint8_t ip_dst[4];
-  uint8_t netmask[4];
-  uint8_t gateway[4];
+  uint32_t dip;
+  uint32_t netmask;
+  uint32_t gateway;
   struct net_device *dev;
 };
 

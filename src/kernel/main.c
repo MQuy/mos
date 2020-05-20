@@ -18,7 +18,6 @@
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "devices/ata.h"
-#include "net/rtl8139.h"
 #include "net/arp.h"
 #include "net/ip.h"
 #include "fs/vfs.h"
@@ -67,9 +66,6 @@ void kernel_init()
   chrdev_memory_init();
 
   console_setup();
-
-  rtl8139_init();
-  dhcp_discovery();
 
   // init ipc message queue
   mq_init();

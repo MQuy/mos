@@ -2,19 +2,20 @@
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/devices/rtl8139.h>
+#include <kernel/net/net.h>
 #include "ethernet.h"
 
-int32_t ethernet_send_packet(uint8_t *dmac, void *payload, uint32_t size, uint16_t protocal)
+void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, uint8_t *smac, uint8_t *dmac)
 {
-  uint32_t eh_size = sizeof(struct ethernet_packet) + size;
-  struct ethernet_packet *eh = kmalloc(eh_size);
+  packet->type = htons(protocal);
+  memcpy(packet->dmac, dmac, sizeof(packet->dmac));
+  memcpy(packet->smac, smac, sizeof(packet->smac));
+}
 
-  eh->type = htons(protocal);
-  memcpy(eh->dmac, dmac, sizeof(eh->dmac));
-  memcpy(eh->smac, get_mac_address(), sizeof(eh->smac));
-  memcpy(eh->payload, payload, eh_size);
+void ethernet_sendmsg(struct sk_buff *skb)
+{
+  skb_push(skb, sizeof(struct ethernet_packet));
 
-  rtl8139_send_packet(eh, eh_size);
-
-  return 0;
+  skb->mac.eh = skb->data;
+  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr);
 }

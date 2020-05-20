@@ -11,30 +11,29 @@
 
 extern struct process *current_process;
 
-static uint32_t ioaddr;
 static char rx_buffer[RX_PADDING_BUFFER_SIZE] __attribute__((aligned(4)));
 // NOTE: MQ 2020-04-10 The maximum ethernet transmitted packet's size is 1792 -> one page
 static char tx_buffer[4][PMM_FRAME_SIZE] __attribute__((aligned(4)));
-static uint8_t mac_address[6];
 static uint8_t tx_counter = 0;
+static uint8_t broadcast_mac_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static struct net_device *rtl_netdev;
 
 void rtl8139_send_packet(void *payload, uint32_t size)
 {
   memcpy(tx_buffer[tx_counter], payload, size);
 
-  outportl(ioaddr + 0x20 + tx_counter * 4, vmm_get_physical_address(&tx_buffer[tx_counter], false));
-  outportl(ioaddr + 0x10 + tx_counter * 4, size);
+  outportl(rtl_netdev->base_addr + 0x20 + tx_counter * 4, vmm_get_physical_address(&tx_buffer[tx_counter], false));
+  outportl(rtl_netdev->base_addr + 0x10 + tx_counter * 4, size);
 
   tx_counter = tx_counter >= 3 ? 0 : tx_counter + 1;
 }
 
-uint32_t cip;
 void rtl8139_receive_packet()
 {
-  while ((inportb(ioaddr + RTL8139_ChipCmd) & RTL8139_RxBufEmpty) == 0)
+  while ((inportb(rtl_netdev->base_addr + RTL8139_ChipCmd) & RTL8139_RxBufEmpty) == 0)
   {
-    uint16_t rx_buf_addr = inportw(ioaddr + RTL8139_RxBufAddr);
-    uint16_t rx_buf_ptr = inportw(ioaddr + RTL8139_RxBufPtr) + 0x10;
+    uint16_t rx_buf_addr = inportw(rtl_netdev->base_addr + RTL8139_RxBufAddr);
+    uint16_t rx_buf_ptr = inportw(rtl_netdev->base_addr + RTL8139_RxBufPtr) + 0x10;
     uint32_t rx_read_ptr = rx_buffer + rx_buf_ptr;
     struct rtl8139_rx_header *rx_header = (struct rtl8139_rx_header *)rx_read_ptr;
 
@@ -52,43 +51,42 @@ void rtl8139_receive_packet()
       memcpy(payload, buf, rx_header->size);
       push_rx_queue(payload, rx_header->size);
     }
-    outportw(ioaddr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
+    outportw(rtl_netdev->base_addr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
   }
 }
 
 int rtl8139_irq_handler(struct interrupt_registers *regs)
 {
-  uint16_t status = inportw(ioaddr + RTL8139_IntrStatus);
+  uint16_t status = inportw(rtl_netdev->base_addr + RTL8139_IntrStatus);
 
   if (!status)
     return;
 
-  outportw(ioaddr + RTL8139_IntrStatus, status);
+  outportw(rtl_netdev->base_addr + RTL8139_IntrStatus, status);
 
   if (status & TOK)
   {
   }
   if (status & ROK)
-  {
     rtl8139_receive_packet();
-  }
 
   return IRQ_HANDLER_CONTINUE;
 }
 
 uint8_t *get_mac_address()
 {
-  return mac_address;
+  return rtl_netdev->dev_addr;
 }
 
 void rtl8139_init()
 {
   struct pci_device *dev = get_pci_device(RTL8139_VENDOR_ID, RTL8139_DEVICE_ID);
-  ioaddr = dev->bar0 & 0xFFFFFFFC;
+  uint32_t ioaddr = dev->bar0 & 0xFFFFFFFC;
   memset(rx_buffer, 0, RX_PADDING_BUFFER_SIZE);
 
+  uint8_t mac_addr[6];
   for (int i = 0; i < 6; ++i)
-    mac_address[i] = inportb(ioaddr + RTL8139_MAC0 + i);
+    mac_addr[i] = inportb(ioaddr + RTL8139_MAC0 + i);
 
   // Enable bus master
   uint32_t command_reg = pci_read_field(dev->address, PCI_COMMAND);
@@ -132,4 +130,14 @@ void rtl8139_init()
   int8_t interrupt_line = pci_get_interrupt_line(dev->address);
   register_interrupt_handler(32 + interrupt_line, rtl8139_irq_handler);
   pic_clear_mask(interrupt_line);
+
+  struct net_device *rtl_netdev = kcalloc(1, sizeof(struct net_device));
+  rtl_netdev->state = NETDEV_STATE_PRESENT;
+  rtl_netdev->base_addr = ioaddr;
+  rtl_netdev->irq = interrupt_line;
+  memcpy(rtl_netdev->name, "rtl8139", 7);
+  memcpy(rtl_netdev->dev_addr, mac_addr, 6);
+  memcpy(rtl_netdev->broadcast, broadcast_mac_addr, 6);
+
+  add_net_device(rtl_netdev);
 }
