@@ -28,13 +28,13 @@ struct ip4_packet *ip4_build_header(struct ip4_packet *packet, uint16_t packet_s
 
 void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
 {
-  skb_push(skb, sizeof(struct ip4_packet));
-
-  skb->nh.iph = skb->data;
-  ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_UDP, sock->saddr, sock->daddr);
-
+  struct inet_sock *isk = inet_sk(sock->sk);
   // NOTE: MQ 2020-05-21 We don't need to perform routing, only support one router
-  skb->dev = sock->dev;
+  skb->dev = isk->sk.dev;
 
-  datalink_sendmsg(skb);
+  skb_push(skb, sizeof(struct ethernet_packet));
+  skb->mac.eh = skb->data;
+  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, isk->dsin.sin_addr);
+
+  ethernet_sendmsg(skb);
 }

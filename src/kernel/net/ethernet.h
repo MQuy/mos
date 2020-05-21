@@ -13,6 +13,7 @@ struct __attribute__((packed)) ethernet_packet
   uint8_t payload[];
 };
 
+void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, uint8_t *smac, uint8_t *dmac);
 void ethernet_sendmsg(struct sk_buff *skb);
 
 #endif

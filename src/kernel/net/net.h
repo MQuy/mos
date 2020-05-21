@@ -24,17 +24,10 @@ struct sockaddr
   char sa_data[14];      /* 14 bytes of protocol address	*/
 };
 
-/* Internet address. */
-struct in_addr
-{
-  uint32_t s_addr; /* address in network byte order */
-};
-
 struct sockaddr_in
 {
-  sa_family_t sin_family;  /* address family: AF_INET */
-  uint16_t sin_port;       /* port in network byte order */
-  struct in_addr sin_addr; /* internet address */
+  uint16_t sin_port; /* port in network byte order */
+  uint32_t sin_addr; /* address in network byte order */
 };
 
 #define PACKET_HOST 0      /* To us		*/
@@ -50,13 +43,9 @@ struct sockaddr_in
 
 struct sockaddr_ll
 {
-  unsigned short sll_family;   /* Always AF_PACKET */
-  unsigned short sll_protocol; /* Physical-layer protocol */
-  int sll_ifindex;             /* Interface number */
-  unsigned short sll_hatype;   /* ARP hardware type */
-  unsigned char sll_pkttype;   /* Packet type */
-  unsigned char sll_halen;     /* Length of address */
-  unsigned char sll_addr[8];   /* Physical-layer address */
+  uint16_t sll_protocol; /* Physical-layer protocol */
+  uint8_t sll_pkttype;   /* Packet type */
+  uint8_t sll_addr[8];   /* Physical-layer address */
 };
 
 enum socket_state
@@ -77,23 +66,48 @@ enum socket_type
 
 struct socket
 {
+  uint16_t protocol;
   enum socket_type type;
   enum socket_state state;
   unsigned long flags;
-  struct proto_ops *ops;
-  struct file *file;
 
+  struct file *file;
+  struct sock *sk;
+  struct proto_ops *ops;
+
+  struct list_head sibling;
+};
+
+struct sock
+{
+  struct socket *sock;
+  struct net_device *dev;
   struct list_head tx_queue;
   struct list_head rx_queue;
-  struct list_head sibling;
-
-  // inet
-  struct net_device *dev;
-  uint32_t daddr;
-  uint16_t dport;
-  uint32_t saddr;
-  uint16_t sport;
 };
+
+struct inet_sock
+{
+  struct sock sk;
+  struct sockaddr_in ssin;
+  struct sockaddr_in dsin;
+};
+
+struct packet_sock
+{
+  struct sock sk;
+  struct sockaddr_ll sll;
+};
+
+static inline struct packet_sock *pkt_sk(struct sock *sk)
+{
+  return (struct packet_sock *)sk;
+}
+
+static inline struct inet_sock *inet_sk(struct sock *sk)
+{
+  return (struct inet_sock *)sk;
+}
 
 struct proto_ops
 {
@@ -156,7 +170,7 @@ struct net_device
 
 struct sk_buff
 {
-  struct socket *sk;
+  struct sock *sk;
   struct net_device *dev;
   struct list_head sibling;
   uint32_t len, true_size;
@@ -206,7 +220,7 @@ void inet_init();
 void push_rx_queue(uint8_t *data, uint32_t size);
 void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struct vfs_file *file);
 struct socket *sockfd_lookup(uint32_t fd);
-struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size);
+struct sk_buff *alloc_skb(struct sock *sk, uint32_t header_size, uint32_t payload_size);
 uint16_t singular_checksum(void *packet, uint16_t size);
 uint32_t packet_checksum_start(void *packet, uint16_t size);
 
@@ -218,5 +232,8 @@ extern struct proto_ops udp_proto_ops;
 
 // raw.c
 extern struct proto_ops raw_proto_ops;
+
+// af_packet.c
+extern struct proto_ops packet_proto_ops;
 
 #endif

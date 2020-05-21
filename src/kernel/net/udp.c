@@ -28,11 +28,11 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_size, uint32_t
 
 void udp_build_header(struct sk_buff *skb, void *msg, uint16_t msg_len)
 {
-  struct socket *sk = skb->sk;
+  struct inet_sock *isk = inet_sk(skb->sk);
   struct udp_packet *udp = skb->h.udph;
 
-  udp->source_port = htons(sk->sport);
-  udp->dest_port = htons(sk->dport);
+  udp->source_port = htons(isk->ssin.sin_port);
+  udp->dest_port = htons(isk->dsin.sin_port);
   udp->length = htons(msg_len);
   udp->checksum = 0;
   memcpy(udp->payload, msg, msg_len);
@@ -42,29 +42,37 @@ void udp_build_header(struct sk_buff *skb, void *msg, uint16_t msg_len)
 
 int udp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
 {
-  struct sockaddr_in *usin = (struct sockaddr_in *)myaddr;
-  sock->saddr = usin->sin_addr.s_addr;
-  sock->sport = usin->sin_port;
+  struct inet_sock *isk = inet_sk(sock->sk);
+  memcpy(&isk->ssin, myaddr, sockaddr_len);
 }
 
 int udp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
-  struct sockaddr_in *usin = (struct sockaddr_in *)vaddr;
-  sock->daddr = usin->sin_addr.s_addr;
-  sock->dport = usin->sin_port;
+  struct inet_sock *isk = inet_sk(sock->sk);
+  memcpy(&isk->dsin, vaddr, sockaddr_len);
+
   // TODO: MQ 2020-05-21 We don't need to perform routing, only supporting one router
-  sock->dev = get_current_net_device();
 }
 
 int udp_sendmsg(struct socket *sock, char *msg, size_t msg_len)
 {
-  struct sk_buff *skb = alloc_skb(MAX_UDP_HEADER, msg_len);
+  struct inet_sock *isk = inet_sk(sock->sk);
+  struct sk_buff *skb = alloc_skb(sock->sk, MAX_UDP_HEADER, msg_len);
 
+  // increase tail -> copy msg into data-tail space
   skb_put(skb, msg_len);
-  skb_push(skb, sizeof(struct udp_packet));
+  memcpy(skb->data, msg, msg_len);
 
+  // decrease data -> copy udp header into new expanding newdata-olddata
+  skb_push(skb, sizeof(struct udp_packet));
   skb->h.udph = skb->data;
   udp_build_header(skb->h.udph, msg, msg_len);
+
+  // decrease data -> copy ip4 header into new expending newdata-olddata
+  skb_push(skb, sizeof(struct ip4_packet));
+  skb->nh.iph = skb->data;
+  ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_UDP, isk->ssin.sin_addr, isk->dsin.sin_addr);
+
   ip4_sendmsg(sock, skb);
 }
 

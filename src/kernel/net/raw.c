@@ -3,16 +3,14 @@
 
 int raw_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
 {
-  struct sockaddr_in *usin = (struct sockaddr_in *)myaddr;
-  sock->saddr = usin->sin_addr.s_addr;
-  sock->sport = usin->sin_port;
+  struct inet_sock *isk = inet_sk(sock->sk);
+  memcpy(&isk->ssin, myaddr, sockaddr_len);
 }
 
 int raw_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
-  struct sockaddr_in *usin = (struct sockaddr_in *)vaddr;
-  sock->daddr = usin->sin_addr.s_addr;
-  sock->dport = usin->sin_port;
+  struct inet_sock *isk = inet_sk(sock->sk);
+  memcpy(&isk->dsin, vaddr, sockaddr_len);
 }
 
 int raw_sendmsg(struct socket *sock, char *msg, size_t msg_len)

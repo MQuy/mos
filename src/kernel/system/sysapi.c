@@ -190,6 +190,7 @@ int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
+#define __NR_sendto 133
 #define __NR_msgopen 200
 #define __NR_msgclose 201
 #define __NR_msgrcv 202
@@ -219,6 +220,7 @@ static void *syscalls[] = {
     [__NR_recv] = sys_recv,
     [__NR_msgopen] = sys_msgopen,
     [__NR_msgclose] = sys_msgclose,
+    [__NR_sendto] = sys_sendto,
     [__NR_msgsnd] = sys_msgsnd,
     [__NR_msgrcv] = sys_msgrcv,
 };

@@ -1,5 +1,5 @@
-#ifndef NET_ROUTE_H
-#define NET_ROUTE_H
+#ifndef NET_NEIGHBOUR_H
+#define NET_NEIGHBOUR_H
 
 #include <stdint.h>
 #include <include/list.h>
@@ -20,14 +20,6 @@ struct neighbour
   struct list_head sibling;
 };
 
-struct rtable
-{
-  uint32_t dip;
-  uint32_t netmask;
-  uint32_t gateway;
-  struct net_device *dev;
-};
-
-void route_init();
+void neighbour_init();
 
 #endif

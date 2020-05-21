@@ -1,5 +1,6 @@
 #include <include/ctype.h>
 #include <include/if_ether.h>
+#include <kernel/proc/task.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/devices/rtl8139.h>
 #include <kernel/net/net.h>
@@ -14,8 +15,5 @@ void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, ui
 
 void ethernet_sendmsg(struct sk_buff *skb)
 {
-  skb_push(skb, sizeof(struct ethernet_packet));
-
-  skb->mac.eh = skb->data;
-  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr);
+  rtl8139_send_packet(skb->data, skb->len);
 }

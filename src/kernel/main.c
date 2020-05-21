@@ -18,8 +18,7 @@
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "devices/ata.h"
-#include "net/arp.h"
-#include "net/ip.h"
+#include "net/net.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "devices/char/memory.h"
@@ -57,6 +56,8 @@ void kernel_init()
 {
   // setup random's seed
   srand(get_seconds(NULL));
+
+  net_init();
 
   // FIXME: MQ 2019-11-19 ata_init is not called in pci_scan_buses without enabling -O2
   pci_init();
