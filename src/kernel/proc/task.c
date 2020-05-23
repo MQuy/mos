@@ -143,6 +143,14 @@ void setup_swapper_process()
   current_process->active_thread = current_thread;
 }
 
+struct process *create_kernel_process(const char *pname, void *func, int32_t priority)
+{
+  struct process *p = create_process(current_process, pname, current_process->pdir);
+  create_kernel_thread(p, (uint32_t)func, THREAD_WAITING, 0);
+
+  return p;
+}
+
 void task_init(void *func)
 {
   hashmap_init(&mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);

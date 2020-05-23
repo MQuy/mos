@@ -53,6 +53,7 @@ void rtl8139_receive_packet()
     }
     outportw(rtl_netdev->base_addr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
   }
+  net_switch();
 }
 
 int rtl8139_irq_handler(struct interrupt_registers *regs)
@@ -132,12 +133,12 @@ void rtl8139_init()
   pic_clear_mask(interrupt_line);
 
   struct net_device *rtl_netdev = kcalloc(1, sizeof(struct net_device));
-  rtl_netdev->state = NETDEV_STATE_PRESENT;
+  rtl_netdev->state = NETDEV_STATE_UP;
   rtl_netdev->base_addr = ioaddr;
   rtl_netdev->irq = interrupt_line;
   memcpy(rtl_netdev->name, "rtl8139", 7);
   memcpy(rtl_netdev->dev_addr, mac_addr, 6);
-  memcpy(rtl_netdev->broadcast, broadcast_mac_addr, 6);
+  memcpy(rtl_netdev->broadcast_addr, broadcast_mac_addr, 6);
 
   add_net_device(rtl_netdev);
 }

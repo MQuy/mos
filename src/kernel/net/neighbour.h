@@ -21,5 +21,7 @@ struct neighbour
 };
 
 void neighbour_init();
+uint8_t *lookup_mac_addr_from_ip(uint32_t ip);
+uint8_t *lookup_mac_addr_for_ethernet(struct net_device *dev, uint32_t ip);
 
 #endif

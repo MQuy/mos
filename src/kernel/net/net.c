@@ -8,22 +8,20 @@
 #define CHECKSUM_MASK 0xFFFF
 
 extern struct process *current_process;
+extern struct thread *current_thread;
 
-struct list_head lskbuf;
+struct process *net_process;
+struct thread *net_thread;
+struct list_head lrx_skb;
 struct list_head lsocket;
 struct net_device *current_netdev;
 
 void push_rx_queue(uint8_t *data, uint32_t size)
 {
-  struct sk_buff *skb = kcalloc(1, sizeof(struct sk_buff));
+  struct sk_buff *skb = alloc_skb(0, size);
 
-  char *buf = kcalloc(1, size);
-  memcpy(buf, data, size);
-  skb->head = skb->data = buf;
-  skb->tail = skb->end = buf + size;
-  skb->len = size;
-
-  list_add_tail(&skb->sibling, &lskbuf);
+  memcpy(skb->data, data, size);
+  list_add_tail(&skb->sibling, &lrx_skb);
 }
 
 void sock_setup(struct socket *sock, int32_t family)
@@ -35,7 +33,7 @@ void sock_setup(struct socket *sock, int32_t family)
     sk = kcalloc(1, sizeof(struct packet_sock));
 
   sk->dev = get_current_net_device();
-  INIT_LIST_HEAD(&sk->tx_queue);
+  sk->owner_thread = current_thread;
   INIT_LIST_HEAD(&sk->rx_queue);
 
   sock->sk = sk;
@@ -69,7 +67,7 @@ struct socket *sockfd_lookup(uint32_t sockfd)
   return SOCKET_I(&file->f_dentry->d_inode);
 }
 
-struct sk_buff *alloc_skb(struct sock *sk, uint32_t header_size, uint32_t payload_size)
+struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size)
 {
   struct sk_buff *skb = kcalloc(1, sizeof(struct sk_buff));
 
@@ -79,10 +77,8 @@ struct sk_buff *alloc_skb(struct sock *sk, uint32_t header_size, uint32_t payloa
 
   char *data = kcalloc(1, packet_size);
   skb->head = data;
-  skb->data = skb->tail = WORD_ALIGN(header_size);
+  skb->data = skb->tail = WORD_ALIGN((uint32_t)data + header_size);
   skb->end = data + packet_size;
-
-  skb->sk = sk;
 }
 
 uint32_t packet_checksum_start(void *packet, uint16_t size)
@@ -123,10 +119,49 @@ struct net_device *get_current_net_device()
   return current_netdev;
 }
 
+void net_rx_loop()
+{
+  while (true)
+  {
+    struct sk_buff *skb;
+    struct sk_buff *prev_skb = NULL;
+
+    list_for_each_entry(skb, &lrx_skb, sibling)
+    {
+      if (prev_skb)
+        list_del(&prev_skb->sibling);
+
+      struct socket *sock;
+      list_for_each_entry(sock, &lsocket, sibling)
+      {
+        sock->ops->handler(sock, skb);
+      }
+
+      prev_skb = skb;
+    }
+    if (prev_skb)
+      list_del(&prev_skb->sibling);
+
+    update_thread(current_thread, THREAD_WAITING);
+    schedule();
+  }
+}
+
+void net_switch()
+{
+  if (list_empty(&lrx_skb))
+    return;
+  if (net_thread != current_thread)
+    update_thread(net_thread, THREAD_READY);
+}
+
 void net_init()
 {
   INIT_LIST_HEAD(&lsocket);
-  INIT_LIST_HEAD(&lskbuf);
+  INIT_LIST_HEAD(&lrx_skb);
 
   neighbour_init();
+
+  net_process = create_kernel_process("net", net_rx_loop, 0);
+  net_thread = net_process->active_thread;
 }

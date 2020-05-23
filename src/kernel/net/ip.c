@@ -1,9 +1,11 @@
 #include <include/ctype.h>
+#include <include/errno.h>
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/utils/math.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/net.h>
+#include <kernel/net/neighbour.h>
 #include "ip.h"
 
 #define IP4_TTL 0x80
@@ -34,7 +36,30 @@ void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
 
   skb_push(skb, sizeof(struct ethernet_packet));
   skb->mac.eh = skb->data;
-  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, isk->dsin.sin_addr);
+  uint8_t *dmac = lookup_mac_addr_for_ethernet(isk->dsin.sin_addr);
+  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, dmac);
 
   ethernet_sendmsg(skb);
+}
+
+// Check ip header valid, adjust skb *data
+int32_t ip4_rcv(struct sk_buff *skb, uint32_t protocal)
+{
+  struct ethernet_packet *eh = skb->data;
+
+  if (htons(eh->type) != ETH_P_IP)
+    return -EPROTO;
+
+  skb->mac.eh = eh;
+  skb_pull(skb, sizeof(struct ethernet_packet));
+
+  struct ip4_packet *iph = skb->data;
+
+  if (htons(iph->protocal) == protocal)
+    return -EPROTO;
+
+  skb->nh.iph = iph;
+  skb_pull(skb, sizeof(struct ip4_packet));
+
+  return 0;
 }

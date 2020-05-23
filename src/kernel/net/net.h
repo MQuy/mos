@@ -45,7 +45,7 @@ struct sockaddr_ll
 {
   uint16_t sll_protocol; /* Physical-layer protocol */
   uint8_t sll_pkttype;   /* Packet type */
-  uint8_t sll_addr[8];   /* Physical-layer address */
+  uint8_t sll_addr[6];   /* Physical-layer address */
 };
 
 enum socket_state
@@ -82,7 +82,7 @@ struct sock
 {
   struct socket *sock;
   struct net_device *dev;
-  struct list_head tx_queue;
+  struct thread *owner_thread;
   struct list_head rx_queue;
 };
 
@@ -128,6 +128,8 @@ struct proto_ops
   int (*shutdown)(struct socket *sock, int flags);
   int (*sendmsg)(struct socket *sock, char *msg, size_t msg_len);
   int (*recvmsg)(struct socket *sock, char *msg, size_t msg_len);
+  // NOTE: MQ 2020-05-24 Handling incoming messages to match and process further
+  int (*handler)(struct socket *sock, struct sk_buff *skb);
 };
 
 struct socket_alloc
@@ -163,9 +165,11 @@ struct net_device
   struct list_head sibling;
 
   uint8_t dev_addr[6];
-  uint8_t broadcast[6];
-  uint32_t gateway;
-  uint32_t ip;
+  uint8_t broadcast_addr[6];
+  uint8_t router_addr[6];
+  uint32_t router_ip;
+  uint32_t local_ip;
+  uint32_t subnet_mask;
 };
 
 struct sk_buff
@@ -216,11 +220,13 @@ static inline void skb_pull(struct sk_buff *skb, uint32_t len)
   skb->len -= len;
 }
 
-void inet_init();
+void net_init();
+void net_rx_loop();
+void net_switch();
 void push_rx_queue(uint8_t *data, uint32_t size);
 void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struct vfs_file *file);
 struct socket *sockfd_lookup(uint32_t fd);
-struct sk_buff *alloc_skb(struct sock *sk, uint32_t header_size, uint32_t payload_size);
+struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size);
 uint16_t singular_checksum(void *packet, uint16_t size);
 uint32_t packet_checksum_start(void *packet, uint16_t size);
 

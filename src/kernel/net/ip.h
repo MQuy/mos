@@ -26,6 +26,8 @@ struct __attribute__((packed)) ip4_packet
   uint8_t payload[];
 };
 
-void ip4_sendmsg(struct socket *, struct sk_buff *);
+struct ip4_packet *ip4_build_header(struct ip4_packet *packet, uint16_t packet_size, uint8_t protocal, uint32_t sip, uint32_t dip);
+void ip4_sendmsg(struct socket *sock, struct sk_buff *skb);
+int32_t ip4_rcv(struct sk_buff *skb, uint32_t protocal);
 
 #endif

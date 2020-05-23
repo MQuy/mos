@@ -37,7 +37,7 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   addr_remote.sll_pkttype = PACKET_BROADCAST;
   sock->ops->connect(sock, &addr_remote, sizeof(struct sockaddr_ll));
 
-  struct arp_packet *sarp = arp_create_packet(dev->broadcast, ip, dev->dev_addr, dev->ip, ARP_REQUEST);
+  struct arp_packet *sarp = arp_create_packet(dev->broadcast_addr, ip, dev->dev_addr, dev->local_ip, ARP_REQUEST);
   sock->ops->sendmsg(sock, sarp, sizeof(struct arp_packet));
 
   struct arp_packet *rarp = kcalloc(1, sizeof(struct arp_packet));
@@ -53,6 +53,14 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   nb->dip = rarp->spa;
   memcpy(nb->dha, rarp->sha, 6);
   list_add_tail(&lneighbour, &nb->sibling);
+}
+
+uint8_t *lookup_mac_addr_for_ethernet(struct net_device *dev, uint32_t ip)
+{
+  if ((dev->subnet_mask & ip) == (dev->local_ip && dev->subnet_mask))
+    return lookup_mac_addr_from_ip(ip);
+  else
+    return dev->router_addr;
 }
 
 void neighbour_init()
