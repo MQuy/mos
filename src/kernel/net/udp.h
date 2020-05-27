@@ -21,4 +21,7 @@ struct ip4_pseudo_header
   uint16_t udp_length;
 };
 
+void udp_build_header(struct sk_buff *skb, uint16_t msg_len, uint32_t sip, uint16_t src_port, uint32_t dip, uint16_t dest_port);
+int32_t udp_validate_header(struct udp_packet *udp);
+
 #endif

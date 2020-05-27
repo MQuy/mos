@@ -1,3 +1,5 @@
+## OSI
+
 ### Physical
 
 Signal in Ethernet card (organ pair for transmit, green pair for receive) is a baud, the common way to classify bits is

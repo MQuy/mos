@@ -16,6 +16,8 @@
 #define WORD_MASK (~(WORD_SIZE - 1))
 #define WORD_ALIGN(addr) (((addr) + WORD_SIZE - 1) & WORD_MASK)
 
+#define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
+
 typedef unsigned short sa_family_t;
 
 struct sockaddr
@@ -127,6 +129,10 @@ struct proto_ops
   int (*listen)(struct socket *sock, int len);
   int (*shutdown)(struct socket *sock, int flags);
   int (*sendmsg)(struct socket *sock, char *msg, size_t msg_len);
+  // TODO: MQ 2020-05-27
+  // At the beging CONNECTED -> READY
+  // At the end READ -> CONNECTED
+  // To make sure each called recvmsg -> only one message
   int (*recvmsg)(struct socket *sock, char *msg, size_t msg_len);
   // NOTE: MQ 2020-05-24 Handling incoming messages to match and process further
   int (*handler)(struct socket *sock, struct sk_buff *skb);
@@ -164,6 +170,7 @@ struct net_device
   uint8_t state;
   struct list_head sibling;
 
+  // ip & mac address
   uint8_t dev_addr[6];
   uint8_t broadcast_addr[6];
   uint8_t router_addr[6];
@@ -201,6 +208,12 @@ struct sk_buff
   uint8_t *tail;
   uint8_t *end;
 };
+
+static inline void skb_reserve(struct sk_buff *skb, uint32_t len)
+{
+  skb->data += len;
+  skb->tail += len;
+}
 
 static inline void skb_put(struct sk_buff *skb, uint32_t len)
 {

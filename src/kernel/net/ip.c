@@ -10,6 +10,21 @@
 
 #define IP4_TTL 0x80
 
+int32_t ip4_validate_header(struct ip4_packet *ip, uint8_t protocal)
+{
+  uint32_t ret = 0;
+  uint16_t received_checksum = ip->header_checksum;
+
+  ip->header_checksum = 0;
+  uint16_t packet_checksum = singular_checksum(ip, sizeof(struct ip_packet));
+
+  if (ip->version != 4 || ip->ihl != 5 || ip->protocal != protocal || received_checksum != packet_checksum)
+    ret = -EPROTO;
+
+  ip->header_checksum = received_checksum;
+  return ret;
+}
+
 struct ip4_packet *ip4_build_header(struct ip4_packet *packet, uint16_t packet_size, uint8_t protocal, uint32_t sip, uint32_t dip)
 {
   packet->version = 4;
@@ -36,7 +51,7 @@ void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
 
   skb_push(skb, sizeof(struct ethernet_packet));
   skb->mac.eh = skb->data;
-  uint8_t *dmac = lookup_mac_addr_for_ethernet(isk->dsin.sin_addr);
+  uint8_t *dmac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
   ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, dmac);
 
   ethernet_sendmsg(skb);

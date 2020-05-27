@@ -28,4 +28,6 @@ struct __attribute__((packed)) dhcp_packet
   uint8_t options[];
 };
 
+int32_t dhcp_setup();
+
 #endif
