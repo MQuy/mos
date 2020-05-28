@@ -20,6 +20,6 @@ struct __attribute__((packed)) arp_packet
     uint32_t tpa;
 };
 
-struct arp_packet *arp_create_packet(uint8_t *dmac, uint32_t dip, uint8_t smac, uint32_t sip, uint16_t op);
+struct arp_packet *arp_create_packet(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t op);
 
 #endif

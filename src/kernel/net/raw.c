@@ -28,8 +28,8 @@ int raw_sendmsg(struct socket *sock, char *msg, size_t msg_len)
   // decrease data -> copy ethernet header into newdata-olddata
   skb_push(skb, sizeof(struct ethernet_packet));
   skb->mac.eh = skb->data;
-  uint8_t *dmac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
-  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->base_addr, dmac);
+  uint8_t *dest_mac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
+  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->base_addr, dest_mac);
 }
 
 int raw_recvmsg(struct socket *sock, char *msg, size_t msg_len)

@@ -6,11 +6,11 @@
 #include <kernel/net/net.h>
 #include "ethernet.h"
 
-void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, uint8_t *smac, uint8_t *dmac)
+void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, uint8_t *source_mac, uint8_t *dest_mac)
 {
   packet->type = htons(protocal);
-  memcpy(packet->dmac, dmac, sizeof(packet->dmac));
-  memcpy(packet->smac, smac, sizeof(packet->smac));
+  memcpy(packet->dest_mac, dest_mac, sizeof(packet->dest_mac));
+  memcpy(packet->source_mac, source_mac, sizeof(packet->source_mac));
 }
 
 void ethernet_sendmsg(struct sk_buff *skb)

@@ -13,8 +13,8 @@
 
 struct neighbour
 {
-  uint8_t dha[6];
-  uint32_t dip;
+  uint8_t ha[6];
+  uint32_t ip;
   uint8_t nud_state;
   struct net_device *dev;
   struct list_head sibling;

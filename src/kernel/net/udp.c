@@ -31,17 +31,17 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t 
   udp_packet->checksum = ~checksum & CHECKSUM_MASK;
 }
 
-void udp_build_header(struct sk_buff *skb, uint16_t packet_len, uint32_t sip, uint16_t src_port, uint32_t dip, uint16_t dest_port)
+void udp_build_header(struct sk_buff *skb, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_port, uint16_t dest_port)
 {
   uint16_t msg_len = packet_len - sizeof(struct udp_packet);
   struct udp_packet *udp = skb->h.udph;
 
-  udp->source_port = htons(src_port);
+  udp->source_port = htons(source_port);
   udp->dest_port = htons(dest_port);
   udp->length = htons(msg_len);
   udp->checksum = 0;
 
-  udp_set_checksum(udp, packet_len, sip, dip);
+  udp_set_checksum(udp, packet_len, source_ip, dest_port);
 }
 
 int udp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)

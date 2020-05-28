@@ -19,7 +19,7 @@ void dhcp_build_header(struct dhcp_packet *dhp, uint8_t op, uint16_t size)
   dhp->magic = htonl(DHCP_MAGIC);
 }
 
-struct sk_buff *dhcp_create_ip_packet(uint8_t op, uint32_t sip, uint32_t dip, uint32_t xip, uint32_t server_ip, uint8_t *options, uint32_t options_len)
+struct sk_buff *dhcp_create_ip_packet(uint8_t op, uint32_t source_ip, uint32_t dest_ip, uint32_t xip, uint32_t server_ip, uint8_t *options, uint32_t options_len)
 {
   uint16_t dhcp_packet_size = sizeof(struct dhcp_packet) + options_len;
   struct sk_buff *skb = alloc_skb(MAX_UDP_HEADER, dhcp_packet_size);
@@ -39,12 +39,12 @@ struct sk_buff *dhcp_create_ip_packet(uint8_t op, uint32_t sip, uint32_t dip, ui
   skb_pull(skb, sizeof(struct udp_packet));
   skb->h.udph = skb->data;
   uint16_t udp_packet_size = sizeof(struct udp_packet) + dhcp_packet_size;
-  udp_build_header(skb->h.udph, udp_packet_size, sip, 68, dip, 67);
+  udp_build_header(skb->h.udph, udp_packet_size, source_ip, 68, dest_ip, 67);
 
   skb_pull(skb, sizeof(struct ip4_packet));
   skb->nh.iph = skb->data;
   uint16_t ip4_packet_size = sizeof(struct ip4_packet) + udp_packet_size;
-  ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, sip, dip);
+  ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, source_ip, dest_ip);
 
   return skb;
 }
@@ -228,6 +228,7 @@ int32_t dhcp_setup()
   struct net_device *dev = sock->sk->dev;
   struct ip4_packet *rip = kcalloc(1, MAX_DHCP_SIZE);
   uint32_t router_ip, subnet_mask, lease_time, server_ip;
+  uint32_t dhcp_xip = htonl(rand());
   int32_t ret;
 
   if (dev->state & NETDEV_STATE_CONNECTED == 0)
@@ -240,7 +241,7 @@ int32_t dhcp_setup()
   sock->ops->connect(sock, &addr_remote, sizeof(struct sockaddr_ll));
 
   uint8_t *options = dhcp_create_discovery_options(18);
-  struct ip4_packet *ip = dhcp_create_ip_packet(DHCP_REQUEST, 0, 0xffffffff, rand(), 0, options, 18);
+  struct ip4_packet *ip = dhcp_create_ip_packet(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, 18);
   sock->ops->sendmsg(sock, ip, sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + 18);
   sock->ops->recvmsg(sock, rip, MAX_DHCP_SIZE);
 
@@ -254,8 +255,8 @@ int32_t dhcp_setup()
     return ret;
 
   // DHCP Request
-  uint8_t *options = dhcp_create_request_options(30, dhcp_offer->yiaddr, server_ip);
-  struct ip4_packet *ip = dhcp_create_ip_packet(DHCP_REQUEST, 0, 0xffffffff, rand(), 0, options, 30);
+  uint8_t *options = dhcp_create_request_options(30, ntohl(dhcp_offer->yiaddr), server_ip);
+  struct ip4_packet *ip = dhcp_create_ip_packet(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, 30);
   sock->ops->sendmsg(sock, ip, sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + 30);
 
   memset(rip, 0, MAX_DHCP_SIZE);
@@ -272,7 +273,7 @@ int32_t dhcp_setup()
   if (!router_mac_address)
     return -EINVAL;
 
-  dev->local_ip = dhcp_ack->yiaddr;
+  dev->local_ip = ntohl(dhcp_ack->yiaddr);
   dev->subnet_mask = subnet_mask;
   dev->router_ip = router_ip;
   memcpy(dev->router_addr, router_mac_address, 6);
