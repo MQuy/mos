@@ -1,3 +1,4 @@
+#include <include/errno.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include <kernel/net/net.h>
@@ -31,7 +32,7 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t 
   udp_packet->checksum = ~checksum & CHECKSUM_MASK;
 }
 
-void udp_build_header(struct sk_buff *skb, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_port, uint16_t dest_port)
+void udp_build_header(struct sk_buff *skb, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_ip, uint16_t dest_port)
 {
   uint16_t msg_len = packet_len - sizeof(struct udp_packet);
   struct udp_packet *udp = skb->h.udph;
@@ -41,7 +42,7 @@ void udp_build_header(struct sk_buff *skb, uint16_t packet_len, uint32_t source_
   udp->length = htons(msg_len);
   udp->checksum = 0;
 
-  udp_set_checksum(udp, packet_len, source_ip, dest_port);
+  udp_set_checksum(udp, packet_len, source_ip, dest_ip);
 }
 
 int udp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
@@ -99,11 +100,16 @@ int udp_recvmsg(struct socket *sock, char *msg, size_t msg_len)
 int udp_handler(struct socket *sock, struct sk_buff *skb)
 {
   struct inet_sock *isk = inet_sk(sock->sk);
-  int32_t ret;
-
-  ret = ip4_rcv(skb, IP4_PROTOCAL_UDP);
+  int32_t ret = ethernet_rcv(skb);
   if (ret < 0)
     return ret;
+
+  ret = ip4_rcv(skb);
+  if (ret < 0)
+    return ret;
+
+  if (skb->nh.iph->protocal != IP4_PROTOCAL_UDP)
+    return -EPROTO;
 
   struct udp_packet *udp = skb->data;
 

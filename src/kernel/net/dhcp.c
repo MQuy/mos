@@ -3,6 +3,7 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/net/net.h>
 #include <kernel/net/udp.h>
+#include <kernel/net/arp.h>
 #include <kernel/net/neighbour.h>
 #include <kernel/utils/math.h>
 #include "dhcp.h"
@@ -227,7 +228,7 @@ int32_t dhcp_setup()
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
   struct ip4_packet *rip = kcalloc(1, MAX_DHCP_SIZE);
-  uint32_t router_ip, subnet_mask, lease_time, server_ip;
+  uint32_t router_ip, subnet_mask, lease_time, server_ip, local_ip;
   uint32_t dhcp_xip = htonl(rand());
   int32_t ret;
 
@@ -268,14 +269,23 @@ int32_t dhcp_setup()
   if (ret < 0)
     return ret;
   parse_dhcp_ack_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &server_ip);
+  local_ip = ntohl(dhcp_ack->yiaddr);
+
+  // ARP Announcement
+  // FIXME MQ 2020-05-29 Can we use dev->broadcast_addr (0xff x6)
+  char broadcast_addr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  arp_create_packet(dev->dev_addr, local_ip, broadcast_addr, local_ip, ARP_REQUEST);
+
+  dev->local_ip = local_ip;
+  dev->subnet_mask = subnet_mask;
+  dev->router_ip = router_ip;
+  dev->lease_time = lease_time;
+  dev->state = NETDEV_STATE_CONNECTING;
 
   uint8_t *router_mac_address = lookup_mac_addr_from_ip(router_ip);
   if (!router_mac_address)
     return -EINVAL;
 
-  dev->local_ip = ntohl(dhcp_ack->yiaddr);
-  dev->subnet_mask = subnet_mask;
-  dev->router_ip = router_ip;
   memcpy(dev->router_addr, router_mac_address, 6);
   dev->state = NETDEV_STATE_CONNECTED;
 

@@ -58,21 +58,12 @@ void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
 }
 
 // Check ip header valid, adjust skb *data
-int32_t ip4_rcv(struct sk_buff *skb, uint32_t protocal)
+int32_t ip4_rcv(struct sk_buff *skb)
 {
-  struct ethernet_packet *eh = skb->data;
-
-  if (htons(eh->type) != ETH_P_IP)
+  if (htons(skb->mac.eh->type) != ETH_P_IP)
     return -EPROTO;
-
-  skb->mac.eh = eh;
-  skb_pull(skb, sizeof(struct ethernet_packet));
 
   struct ip4_packet *iph = skb->data;
-
-  if (htons(iph->protocal) == protocal)
-    return -EPROTO;
-
   skb->nh.iph = iph;
   skb_pull(skb, sizeof(struct ip4_packet));
 

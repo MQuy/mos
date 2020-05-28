@@ -17,3 +17,11 @@ void ethernet_sendmsg(struct sk_buff *skb)
 {
   rtl8139_send_packet(skb->data, skb->len);
 }
+
+int32_t ethernet_rcv(struct sk_buff *skb)
+{
+  skb->mac.eh = skb->data;
+  skb_pull(skb, sizeof(struct ethernet_packet));
+
+  return 0;
+}

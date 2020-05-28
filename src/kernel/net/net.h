@@ -18,6 +18,17 @@
 
 #define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
 
+/* Standard well-defined IP protocols.  */
+enum
+{
+  IPPROTO_IP = 0,    /* Dummy protocol for TCP		*/
+  IPPROTO_ICMP = 1,  /* Internet Control Message Protocol	*/
+  IPPROTO_TCP = 6,   /* Transmission Control Protocol	*/
+  IPPROTO_UDP = 17,  /* User Datagram Protocol		*/
+  IPPROTO_RAW = 255, /* Raw IP packets			*/
+  IPPROTO_MAX
+};
+
 typedef unsigned short sa_family_t;
 
 struct sockaddr
@@ -158,7 +169,8 @@ enum netdev_state
 {
   NETDEV_STATE_OFF = 1,
   NETDEV_STATE_UP = 1 << 1,
-  NETDEV_STATE_CONNECTED = 1 << 2, // interface connects and gets config (dhcp -> ip) from router
+  NETDEV_STATE_CONNECTING = 1 << 2, // lack of mac address
+  NETDEV_STATE_CONNECTED = 1 << 3,  // interface connects and gets config (dhcp -> ip) from router
 };
 
 struct net_device
@@ -175,6 +187,7 @@ struct net_device
   uint8_t broadcast_addr[6];
   uint8_t router_addr[6];
   uint32_t router_ip;
+  uint32_t lease_time;
   uint32_t local_ip;
   uint32_t subnet_mask;
 };

@@ -1,5 +1,7 @@
+#include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/neighbour.h>
+#include <kernel/net/icmp.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/proc/task.h>
@@ -119,6 +121,39 @@ struct net_device *get_current_net_device()
   return current_netdev;
 }
 
+// 1. Check icmp request to local ip -> send ICMP reply
+// 2. Check arp probe asking our mac address -> send arp reply
+void net_default_rx_handler(struct sk_buff *skb)
+{
+  uint32_t ret = ethernet_rcv(skb);
+  if (ret < 0)
+    return;
+
+  if (skb->mac.eh->type == htons(ETH_P_IP))
+  {
+    ret = ip4_rcv(skb);
+    if (ret < 0)
+      return ret;
+
+    if (skb->nh.iph->protocal == IP4_PROTOCAL_ICMP)
+    {
+      ret = icmp_rcv(skb);
+      if (ret < 0)
+        return ret;
+
+      if (skb->h.icmph->code == ICMP_ECHO && skb->h.icmph->type == ICMP_REQUEST &&
+          skb->nh.iph->dest_ip == htonl(current_netdev->local_ip))
+        icmp_reply(skb->nh.iph->source_ip, ntohl(skb->h.icmph->rest_of_header));
+    }
+  }
+  else if (skb->mac.eh->type = ntohs(ETH_P_ARP))
+  {
+    ret = arp_rcv(skb);
+    if (ret < 0)
+      return ret;
+  }
+}
+
 void net_rx_loop()
 {
   while (true)
@@ -136,6 +171,8 @@ void net_rx_loop()
       {
         sock->ops->handler(sock, skb);
       }
+      if ((current_netdev->state & NETDEV_STATE_CONNECTED) != 0)
+        net_default_rx_handler(skb);
 
       prev_skb = skb;
     }

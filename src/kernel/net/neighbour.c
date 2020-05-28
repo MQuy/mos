@@ -29,7 +29,7 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
 
-  if (dev->state & NETDEV_STATE_CONNECTED == 0)
+  if ((dev->state & (NETDEV_STATE_CONNECTED | NETDEV_STATE_CONNECTING)) == 0)
     return NULL;
 
   struct sockaddr_ll addr_remote;
@@ -48,7 +48,7 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
       break;
   }
   struct neighbour *nb = kcalloc(1, sizeof(struct neighbour));
-  nb->dev = get_current_net_device();
+  nb->dev = dev;
   nb->nud_state = NUD_REACHABLE;
   nb->ip = rarp->spa;
   memcpy(nb->ha, rarp->sha, 6);
