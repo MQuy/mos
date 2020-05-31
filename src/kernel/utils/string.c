@@ -21,6 +21,15 @@ void *memset(void *dest, char val, size_t len)
 	return dest;
 }
 
+int memcmp(const void *vl, const void *vr, size_t n)
+{
+	const unsigned char *l = vl;
+	const unsigned char *r = vr;
+	for (; n && *l == *r; n--, l++, r++)
+		;
+	return n ? *l - *r : 0;
+}
+
 static char tbuf[32];
 static char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 

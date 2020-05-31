@@ -63,6 +63,34 @@ uint8_t *lookup_mac_addr_for_ethernet(struct net_device *dev, uint32_t ip)
     return dev->router_addr;
 }
 
+void neighbour_update_mapping(uint8_t *mac_address, uint32_t ip)
+{
+  struct neighbour *nb_iter, *prev_nb;
+  list_for_each_entry(nb_iter, &lneighbour, sibling)
+  {
+    if (prev_nb)
+    {
+      list_del(&prev_nb->sibling);
+      kfree(prev_nb);
+      prev_nb = NULL;
+    }
+    if ((nb_iter->ip == ip || memcmp(nb_iter->ha, mac_address, 6) == 0) && nb_iter->nud_state & NUD_REACHABLE)
+      prev_nb = nb_iter;
+  }
+  if (prev_nb)
+  {
+    list_del(&prev_nb->sibling);
+    kfree(prev_nb);
+  }
+
+  struct neighbour *nb = kcalloc(1, sizeof(struct neighbour));
+  nb->ip = ip;
+  memcpy(nb->ha, mac_address, 6);
+  nb->dev = get_current_net_device();
+  nb->nud_state = NUD_REACHABLE;
+  list_add_tail(&nb->sibling, &lneighbour);
+}
+
 void neighbour_init()
 {
   INIT_LIST_HEAD(&lneighbour);

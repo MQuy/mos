@@ -30,5 +30,6 @@ int32_t strlsplat(const char *s1, uint32_t pos, char **sf, char **sl);
 
 void *memcpy(void *dest, const void *src, size_t count);
 void *memset(void *dest, char val, size_t count);
+int memcmp(const void *vl, const void *vr, size_t n);
 
 #endif

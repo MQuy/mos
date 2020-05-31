@@ -139,6 +139,7 @@ void rtl8139_init()
   memcpy(rtl_netdev->name, "rtl8139", 7);
   memcpy(rtl_netdev->dev_addr, mac_addr, 6);
   memcpy(rtl_netdev->broadcast_addr, broadcast_mac_addr, 6);
+  memset(rtl_netdev, 0, 6);
 
   add_net_device(rtl_netdev);
 }

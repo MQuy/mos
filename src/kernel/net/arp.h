@@ -22,6 +22,6 @@ struct __attribute__((packed)) arp_packet
 
 struct arp_packet *arp_create_packet(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t op);
 int32_t arp_rcv(struct sk_buff *skb);
-void arp_gratuitous(struct sk_buff *skb);
+void arp_send(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t type);
 
 #endif

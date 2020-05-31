@@ -272,9 +272,7 @@ int32_t dhcp_setup()
   local_ip = ntohl(dhcp_ack->yiaddr);
 
   // ARP Announcement
-  // FIXME MQ 2020-05-29 Can we use dev->broadcast_addr (0xff x6)
-  char broadcast_addr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  arp_create_packet(dev->dev_addr, local_ip, broadcast_addr, local_ip, ARP_REQUEST);
+  arp_send(dev->dev_addr, local_ip, dev->zero_addr, local_ip, ARP_REQUEST);
 
   dev->local_ip = local_ip;
   dev->subnet_mask = subnet_mask;

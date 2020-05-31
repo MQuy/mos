@@ -185,11 +185,12 @@ struct net_device
   // ip & mac address
   uint8_t dev_addr[6];
   uint8_t broadcast_addr[6];
+  uint8_t zero_addr[6];
   uint8_t router_addr[6];
   uint32_t router_ip;
-  uint32_t lease_time;
   uint32_t local_ip;
   uint32_t subnet_mask;
+  uint32_t lease_time;
 };
 
 struct sk_buff

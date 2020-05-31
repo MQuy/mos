@@ -121,8 +121,17 @@ struct net_device *get_current_net_device()
   return current_netdev;
 }
 
+bool is_broadcast_mac_address(uint8_t *maddr)
+{
+  if (memcmp(current_netdev->broadcast_addr, maddr, 6) == 0 || memcmp(current_netdev->zero_addr, maddr, 6) == 0)
+    return true;
+  else
+    return false;
+}
+
 // 1. Check icmp request to local ip -> send ICMP reply
 // 2. Check arp probe asking our mac address -> send arp reply
+// 3. Check arp annoucement -> update neighbour arp
 void net_default_rx_handler(struct sk_buff *skb)
 {
   uint32_t ret = ethernet_rcv(skb);
@@ -151,6 +160,11 @@ void net_default_rx_handler(struct sk_buff *skb)
     ret = arp_rcv(skb);
     if (ret < 0)
       return ret;
+
+    if (skb->nh.arph->tpa == current_netdev->local_ip)
+      arp_send(current_netdev->dev_addr, current_netdev->local_ip, skb->nh.arph->sha, skb->nh.arph->spa, ARP_REPLY);
+    else if (skb->nh.arph->tpa == skb->nh.arph->spa && is_broadcast_mac_address(skb->nh.arph->tha))
+      neighbour_update_mapping(skb->nh.arph->sha, skb->nh.arph->spa);
   }
 }
 
