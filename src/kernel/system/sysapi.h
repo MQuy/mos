@@ -4,6 +4,8 @@
 #include <include/ctype.h>
 #include <kernel/cpu/idt.h>
 
+enum socket_type;
+
 int32_t syscall_dispatcher(struct interrupt_registers *registers);
 void syscall_init();
 

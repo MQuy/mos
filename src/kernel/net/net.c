@@ -66,7 +66,7 @@ void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struc
 struct socket *sockfd_lookup(uint32_t sockfd)
 {
   struct vfs_file *file = current_process->files->fd[sockfd];
-  return SOCKET_I(&file->f_dentry->d_inode);
+  return SOCKET_I(file->f_dentry->d_inode);
 }
 
 struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size)
@@ -77,10 +77,11 @@ struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size)
   uint32_t packet_size = header_size + payload_size + WORD_SIZE;
   skb->true_size = packet_size + sizeof(struct sk_buff);
 
-  char *data = kcalloc(1, packet_size);
+  uint8_t *data = kcalloc(1, packet_size);
   skb->head = data;
-  skb->data = skb->tail = WORD_ALIGN((uint32_t)data + header_size);
+  skb->data = skb->tail = (uint8_t *)WORD_ALIGN((uint32_t)data + header_size);
   skb->end = data + packet_size;
+  return skb;
 }
 
 uint32_t packet_checksum_start(void *packet, uint16_t size)
@@ -132,11 +133,11 @@ bool is_broadcast_mac_address(uint8_t *maddr)
 // 1. Check icmp request to local ip -> send ICMP reply
 // 2. Check arp probe asking our mac address -> send arp reply
 // 3. Check arp annoucement -> update neighbour arp
-void net_default_rx_handler(struct sk_buff *skb)
+int32_t net_default_rx_handler(struct sk_buff *skb)
 {
-  uint32_t ret = ethernet_rcv(skb);
+  int32_t ret = ethernet_rcv(skb);
   if (ret < 0)
-    return;
+    return ret;
 
   if (skb->mac.eh->type == htons(ETH_P_IP))
   {
@@ -155,7 +156,7 @@ void net_default_rx_handler(struct sk_buff *skb)
         icmp_reply(skb->nh.iph->source_ip, ntohl(skb->h.icmph->rest_of_header));
     }
   }
-  else if (skb->mac.eh->type = ntohs(ETH_P_ARP))
+  else if (skb->mac.eh->type == ntohs(ETH_P_ARP))
   {
     ret = arp_rcv(skb);
     if (ret < 0)
@@ -166,6 +167,7 @@ void net_default_rx_handler(struct sk_buff *skb)
     else if (skb->nh.arph->tpa == skb->nh.arph->spa && is_broadcast_mac_address(skb->nh.arph->tha))
       neighbour_update_mapping(skb->nh.arph->sha, skb->nh.arph->spa);
   }
+  return 0;
 }
 
 void net_rx_loop()

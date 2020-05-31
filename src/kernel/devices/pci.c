@@ -99,9 +99,6 @@ void reg_device(uint8_t bus, uint8_t device, uint8_t function)
   {
     int deviceID = pci_get_device_id(address);
     int classCode = pci_get_class_code(address);
-    int subclassCode = pci_get_subclass_code(address);
-    int progif = pci_get_prog_if(address);
-    int headerType = pci_get_header_type(address);
 
     if (classCode != PCI_CLASS_CODE_BRIDGE_DEVICE)
     {

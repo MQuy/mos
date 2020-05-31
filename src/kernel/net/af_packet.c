@@ -1,4 +1,5 @@
 #include <include/if_ether.h>
+#include <include/errno.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include <kernel/net/net.h>
@@ -11,9 +12,10 @@ int packet_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len
 {
   struct packet_sock *psk = pkt_sk(sock->sk);
   memcpy(&psk->sll, vaddr, sockaddr_len);
+  return 0;
 }
 
-int packet_sendmsg(struct socket *sock, char *msg, size_t msg_len)
+int packet_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
   struct packet_sock *psk = pkt_sk(sock->sk);
   struct sk_buff *skb = alloc_skb(sizeof(struct ethernet_packet), msg_len);
@@ -27,16 +29,17 @@ int packet_sendmsg(struct socket *sock, char *msg, size_t msg_len)
   {
     // decrease data -> copy ethernet header into newdata-olddata
     skb_push(skb, sizeof(struct ethernet_packet));
-    skb->mac.eh = skb->data;
+    skb->mac.eh = (struct ethernet_packet *)skb->data;
     ethernet_build_header(skb->mac.eh, sock->protocol, skb->dev->dev_addr, psk->sll.sll_addr);
   }
   else
-    skb->mac.eh = skb->data;
+    skb->mac.eh = (struct ethernet_packet *)skb->data;
 
   ethernet_sendmsg(skb);
+  return 0;
 }
 
-int packet_recvmsg(struct socket *sock, char *msg, size_t msg_len)
+int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
   struct sock *sk = sock->sk;
   struct sk_buff *skb;
@@ -53,15 +56,16 @@ int packet_recvmsg(struct socket *sock, char *msg, size_t msg_len)
     memcpy(msg, skb->mac.eh, msg_len);
   else
     memcpy(msg, skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
+  return 0;
 }
 
 int packet_handler(struct socket *sock, struct sk_buff *skb)
 {
   struct sock *sk = sock->sk;
-  struct ethernet_packet *eh = skb->data;
+  struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
 
   if (eh->type != sock->protocol)
-    return;
+    return -EPROTO;
 
   skb->mac.eh = eh;
   if (sock->type != SOCK_RAW)
@@ -69,7 +73,7 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
     if (sock->protocol == htons(ETH_P_ARP))
     {
       skb_push(skb, sizeof(struct arp_packet));
-      skb->nh.arph = skb->data;
+      skb->nh.arph = (struct arp_packet *)skb->data;
     }
   }
 
@@ -78,6 +82,7 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
 
   list_add_tail(&clone_skb->sibling, &sk->rx_queue);
   update_thread(sk->owner_thread, THREAD_READY);
+  return 0;
 }
 
 struct proto_ops packet_proto_ops = {
@@ -86,4 +91,4 @@ struct proto_ops packet_proto_ops = {
     .sendmsg = packet_sendmsg,
     .recvmsg = packet_recvmsg,
     .handler = packet_handler,
-}
+};

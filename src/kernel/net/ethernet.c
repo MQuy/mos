@@ -20,7 +20,7 @@ void ethernet_sendmsg(struct sk_buff *skb)
 
 int32_t ethernet_rcv(struct sk_buff *skb)
 {
-  skb->mac.eh = skb->data;
+  skb->mac.eh = (struct ethernet_packet *)skb->data;
   skb_pull(skb, sizeof(struct ethernet_packet));
 
   return 0;

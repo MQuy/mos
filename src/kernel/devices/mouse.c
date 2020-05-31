@@ -1,5 +1,6 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/hal.h>
+#include <kernel/cpu/pic.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/system/uiserver.h>

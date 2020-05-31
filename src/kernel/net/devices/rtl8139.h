@@ -115,7 +115,6 @@ struct __attribute__((packed)) rtl8139_rx_header
 };
 
 void rtl8139_init();
-uint8_t *get_mac_address();
 void rtl8139_send_packet(void *payload, uint32_t size);
 
 #endif

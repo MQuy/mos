@@ -50,7 +50,7 @@ void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
   skb->dev = isk->sk.dev;
 
   skb_push(skb, sizeof(struct ethernet_packet));
-  skb->mac.eh = skb->data;
+  skb->mac.eh = (struct ethernet_packet *)skb->data;
   uint8_t *dest_mac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
   ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, dest_mac);
 
@@ -63,7 +63,7 @@ int32_t ip4_rcv(struct sk_buff *skb)
   if (htons(skb->mac.eh->type) != ETH_P_IP)
     return -EPROTO;
 
-  struct ip4_packet *iph = skb->data;
+  struct ip4_packet *iph = (struct ip4_packet *)skb->data;
   skb->nh.iph = iph;
   skb_pull(skb, sizeof(struct ip4_packet));
 

@@ -22,7 +22,7 @@ void rtl8139_send_packet(void *payload, uint32_t size)
 {
   memcpy(tx_buffer[tx_counter], payload, size);
 
-  outportl(rtl_netdev->base_addr + 0x20 + tx_counter * 4, vmm_get_physical_address(&tx_buffer[tx_counter], false));
+  outportl(rtl_netdev->base_addr + 0x20 + tx_counter * 4, vmm_get_physical_address((uint32_t)&tx_buffer[tx_counter], false));
   outportl(rtl_netdev->base_addr + 0x10 + tx_counter * 4, size);
 
   tx_counter = tx_counter >= 3 ? 0 : tx_counter + 1;
@@ -32,9 +32,8 @@ void rtl8139_receive_packet()
 {
   while ((inportb(rtl_netdev->base_addr + RTL8139_ChipCmd) & RTL8139_RxBufEmpty) == 0)
   {
-    uint16_t rx_buf_addr = inportw(rtl_netdev->base_addr + RTL8139_RxBufAddr);
     uint16_t rx_buf_ptr = inportw(rtl_netdev->base_addr + RTL8139_RxBufPtr) + 0x10;
-    uint32_t rx_read_ptr = rx_buffer + rx_buf_ptr;
+    uint32_t rx_read_ptr = (uint32_t)rx_buffer + rx_buf_ptr;
     struct rtl8139_rx_header *rx_header = (struct rtl8139_rx_header *)rx_read_ptr;
 
     rx_buf_ptr = (rx_buf_ptr + rx_header->size + sizeof(struct rtl8139_rx_header) + 3) & RX_BUF_PTR_MASK;
@@ -45,7 +44,7 @@ void rtl8139_receive_packet()
     }
     else
     {
-      uint8_t *buf = rx_read_ptr + sizeof(struct rtl8139_rx_header);
+      uint8_t *buf = (uint8_t *)(rx_read_ptr + sizeof(struct rtl8139_rx_header));
       uint8_t *payload = kcalloc(1, rx_header->size);
 
       memcpy(payload, buf, rx_header->size);
@@ -53,15 +52,16 @@ void rtl8139_receive_packet()
     }
     outportw(rtl_netdev->base_addr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
   }
+
   net_switch();
 }
 
-int rtl8139_irq_handler(struct interrupt_registers *regs)
+int32_t rtl8139_irq_handler(struct interrupt_registers *regs)
 {
   uint16_t status = inportw(rtl_netdev->base_addr + RTL8139_IntrStatus);
 
   if (!status)
-    return;
+    return status;
 
   outportw(rtl_netdev->base_addr + RTL8139_IntrStatus, status);
 
@@ -72,11 +72,6 @@ int rtl8139_irq_handler(struct interrupt_registers *regs)
     rtl8139_receive_packet();
 
   return IRQ_HANDLER_CONTINUE;
-}
-
-uint8_t *get_mac_address()
-{
-  return rtl_netdev->dev_addr;
 }
 
 void rtl8139_init()
@@ -106,7 +101,7 @@ void rtl8139_init()
     ;
 
   // Init receive buffer
-  outportl(ioaddr + RTL8139_RxBuf, vmm_get_physical_address(rx_buffer, false)); // send uint32_t memory location to RBSTART (0x30)
+  outportl(ioaddr + RTL8139_RxBuf, vmm_get_physical_address((uint32_t)rx_buffer, false)); // send uint32_t memory location to RBSTART (0x30)
 
   // Set IMR + ISR
   outportw(ioaddr + RTL8139_IntrMask, RTL8139_PCIErr |                 /* PCI error */
@@ -141,5 +136,5 @@ void rtl8139_init()
   memcpy(rtl_netdev->broadcast_addr, broadcast_mac_addr, 6);
   memset(rtl_netdev, 0, 6);
 
-  add_net_device(rtl_netdev);
+  register_net_device(rtl_netdev);
 }

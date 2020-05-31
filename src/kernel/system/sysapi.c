@@ -220,7 +220,6 @@ static void *syscalls[] = {
     [__NR_recv] = sys_recv,
     [__NR_msgopen] = sys_msgopen,
     [__NR_msgclose] = sys_msgclose,
-    [__NR_sendto] = sys_sendto,
     [__NR_msgsnd] = sys_msgsnd,
     [__NR_msgrcv] = sys_msgrcv,
 };

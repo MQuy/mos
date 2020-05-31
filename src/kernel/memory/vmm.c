@@ -252,7 +252,7 @@ struct pdirectory *vmm_fork(struct pdirectory *va_dir)
     {
       struct ptable *forked_pt = (struct ptable *)heap_current;
       uint32_t forked_pt_paddr = (uint32_t)pmm_alloc_block();
-      vmm_map_address(va_dir, forked_pt, forked_pt_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+      vmm_map_address(va_dir, (uint32_t)forked_pt, forked_pt_paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
       memset(forked_pt, 0, sizeof(struct ptable));
 
       heap_current += sizeof(struct ptable);
@@ -277,7 +277,7 @@ struct pdirectory *vmm_fork(struct pdirectory *va_dir)
           forked_pt->m_entries[ipt] = forked_pte_paddr | I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER;
         }
       }
-      vmm_unmap_address(va_dir, forked_pt);
+      vmm_unmap_address(va_dir, (uint32_t)forked_pt);
       forked_dir->m_entries[ipd] = forked_pt_paddr | I86_PDE_PRESENT | I86_PDE_WRITABLE | I86_PDE_USER;
     }
 

@@ -11,9 +11,10 @@ int raw_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
   struct inet_sock *isk = inet_sk(sock->sk);
   memcpy(&isk->dsin, vaddr, sockaddr_len);
+  return 0;
 }
 
-int raw_sendmsg(struct socket *sock, char *msg, size_t msg_len)
+int raw_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
   struct inet_sock *isk = inet_sk(sock->sk);
   struct sk_buff *skb = alloc_skb(sizeof(struct ethernet_packet), msg_len);
@@ -22,17 +23,18 @@ int raw_sendmsg(struct socket *sock, char *msg, size_t msg_len)
 
   // increase tail -> copy msg into data-tail space
   skb_put(skb, msg_len);
-  skb->nh.iph = skb->data;
+  skb->nh.iph = (struct ip4_packet *)skb->data;
   memcpy(skb->data, msg, msg_len);
 
   // decrease data -> copy ethernet header into newdata-olddata
   skb_push(skb, sizeof(struct ethernet_packet));
-  skb->mac.eh = skb->data;
+  skb->mac.eh = (struct ethernet_packet *)skb->data;
   uint8_t *dest_mac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
-  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->base_addr, dest_mac);
+  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, dest_mac);
+  return 0;
 }
 
-int raw_recvmsg(struct socket *sock, char *msg, size_t msg_len)
+int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
   struct sock *sk = sock->sk;
   struct sk_buff *skb;
@@ -46,13 +48,14 @@ int raw_recvmsg(struct socket *sock, char *msg, size_t msg_len)
 
   list_del(&skb->sibling);
   memcpy(msg, skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
+  return 0;
 }
 
 int raw_handler(struct socket *sock, struct sk_buff *skb)
 {
   struct inet_sock *isk = inet_sk(sock->sk);
   struct net_device *dev = sock->sk->dev;
-  struct ethernet_packet *eh = skb->data;
+  struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
 
   if (htons(eh->type) != ETH_P_IP)
     return -EPROTO;
@@ -60,7 +63,7 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
   skb->mac.eh = eh;
   skb_pull(skb, sizeof(struct ethernet_packet));
 
-  struct ip4_packet *iph = skb->data;
+  struct ip4_packet *iph = (struct ip4_packet *)skb->data;
   if (iph->source_ip == isk->dsin.sin_addr && iph->dest_ip == dev->local_ip)
   {
     skb->nh.iph = iph;
@@ -71,6 +74,7 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
     list_add_tail(&clone_skb->sibling, &sock->sk->rx_queue);
     update_thread(sock->sk->owner_thread, THREAD_READY);
   }
+  return 0;
 }
 
 struct proto_ops raw_proto_ops = {
@@ -79,4 +83,4 @@ struct proto_ops raw_proto_ops = {
     .sendmsg = raw_sendmsg,
     .recvmsg = raw_recvmsg,
     .handler = raw_handler,
-}
+};

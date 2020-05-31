@@ -2,6 +2,7 @@
 #define NET_H
 
 #include <include/list.h>
+#include <include/if_ether.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/arp.h>
@@ -84,7 +85,7 @@ struct socket
   enum socket_state state;
   unsigned long flags;
 
-  struct file *file;
+  struct vfs_file *file;
   struct sock *sk;
   struct proto_ops *ops;
 
@@ -139,12 +140,12 @@ struct proto_ops
                  int *sockaddr_len, int peer);
   int (*listen)(struct socket *sock, int len);
   int (*shutdown)(struct socket *sock, int flags);
-  int (*sendmsg)(struct socket *sock, char *msg, size_t msg_len);
+  int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
   // TODO: MQ 2020-05-27
   // At the beging CONNECTED -> READY
   // At the end READ -> CONNECTED
   // To make sure each called recvmsg -> only one message
-  int (*recvmsg)(struct socket *sock, char *msg, size_t msg_len);
+  int (*recvmsg)(struct socket *sock, void *msg, size_t msg_len);
   // NOTE: MQ 2020-05-24 Handling incoming messages to match and process further
   int (*handler)(struct socket *sock, struct sk_buff *skb);
 };

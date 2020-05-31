@@ -1,10 +1,12 @@
 #include <include/errno.h>
 #include <kernel/net/net.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/system/sysapi.h>
 #include "icmp.h"
 
 int32_t icmp_validate_packet(struct icmp_packet *icmp)
 {
+  return 0;
 }
 
 struct icmp_packet *icmp_create_packet(uint8_t type, uint32_t rest_of_header)
@@ -40,7 +42,7 @@ int32_t icmp_rcv(struct sk_buff *skb)
     return -EPROTO;
 
   int32_t ret;
-  struct icmp_packet *icmp = skb->data;
+  struct icmp_packet *icmp = (struct icmp_packet *)skb->data;
 
   ret = icmp_validate_packet(icmp);
   if (ret < 0)
