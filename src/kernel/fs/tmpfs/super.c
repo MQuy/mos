@@ -71,7 +71,7 @@ int tmpfs_fill_super(struct vfs_superblock *sb)
 }
 
 struct vfs_mount *tmpfs_mount(struct vfs_file_system_type *fs_type,
-                       char *dev_name, char *dir_name)
+                              char *dev_name, char *dir_name)
 {
   struct vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
   struct vfs_superblock *sb = kcalloc(1, sizeof(struct vfs_superblock));
