@@ -146,7 +146,9 @@ void setup_swapper_process()
 struct process *create_kernel_process(const char *pname, void *func, int32_t priority)
 {
   struct process *p = create_process(current_process, pname, current_process->pdir);
-  create_kernel_thread(p, (uint32_t)func, THREAD_WAITING, 0);
+  struct thread *th = create_kernel_thread(p, (uint32_t)func, THREAD_WAITING, 0);
+
+  p->active_thread = th;
 
   return p;
 }
@@ -163,6 +165,7 @@ void task_init(void *func)
   struct process *init = create_process(current_process, "init", current_process->pdir);
   struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 0);
 
+  init->active_thread = nt;
   update_thread(current_thread, THREAD_TERMINATED);
   update_thread(nt, THREAD_READY);
   schedule();

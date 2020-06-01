@@ -10,7 +10,7 @@
 #include "dhcp.h"
 
 #define MAX_OPTION_LEN 60
-#define MAX_DHCP_SIZE sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + MAX_OPTION_LEN
+#define DHCP_SIZE(option_len) (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + (option_len))
 
 void dhcp_build_header(struct dhcp_packet *dhp, uint8_t op, uint16_t size)
 {
@@ -39,15 +39,19 @@ struct sk_buff *dhcp_create_skbuff(uint8_t op, uint32_t source_ip, uint32_t dest
   memcpy(dhp->chaddr, dev->dev_addr, 6);
   memcpy(dhp->options, options, options_len);
 
-  skb_pull(skb, sizeof(struct udp_packet));
+  skb_push(skb, sizeof(struct udp_packet));
   skb->h.udph = (struct udp_packet *)skb->data;
   uint16_t udp_packet_size = sizeof(struct udp_packet) + dhcp_packet_size;
   udp_build_header(skb->h.udph, udp_packet_size, source_ip, 68, dest_ip, 67);
 
-  skb_pull(skb, sizeof(struct ip4_packet));
+  skb_push(skb, sizeof(struct ip4_packet));
   skb->nh.iph = (struct ip4_packet *)skb->data;
   uint16_t ip4_packet_size = sizeof(struct ip4_packet) + udp_packet_size;
   ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, source_ip, dest_ip);
+
+  skb_push(skb, sizeof(struct ethernet_packet));
+  skb->mac.eh = (struct ethernet_packet *)skb->data;
+  ethernet_build_header(skb->mac.eh, ETH_P_IP, dev->dev_addr, dev->broadcast_addr);
 
   return skb;
 }
@@ -131,8 +135,10 @@ int32_t dhcp_validate_header(struct dhcp_packet *dhcp)
   return 0;
 }
 
-int32_t dhcp_parse_from_ip_packet(struct ip4_packet *ip, struct dhcp_packet **dhcp)
+int32_t dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet **dhcp)
 {
+  struct ip4_packet *ip = (struct ip4_packet *)((uint32_t)eh + sizeof(struct ethernet_packet));
+
   int32_t ret = ip4_validate_header(ip, IP4_PROTOCAL_UDP);
   if (ret < 0)
     return ret;
@@ -175,9 +181,9 @@ int32_t parse_dhcp_offer_options(uint8_t *options, uint32_t *server_ip)
   for (uint32_t i = 0; options[i] != 0xFF;)
   {
     if (options[i] == 53)
-      get_dhcp_option_value(options, (uint32_t *)&opt_message_type, 1);
+      get_dhcp_option_value(&options[i + 2], (uint32_t *)&opt_message_type, 1);
     else if (options[i] == 54)
-      get_dhcp_option_value(options, &opt_server_ip, 4);
+      get_dhcp_option_value(&options[i + 2], &opt_server_ip, 4);
 
     i += 2 + options[i + 1];
   }
@@ -197,15 +203,15 @@ int32_t parse_dhcp_ack_options(uint8_t *options, uint32_t *subnet_mask, uint32_t
   for (uint32_t i = 0; options[i] != 0xFF;)
   {
     if (options[i] == 1)
-      get_dhcp_option_value(options, &opt_subnet_mask, 4);
+      get_dhcp_option_value(&options[i + 2], &opt_subnet_mask, 4);
     else if (options[i] == 3)
-      get_dhcp_option_value(options, &opt_router_ip, 4);
+      get_dhcp_option_value(&options[i + 2], &opt_router_ip, 4);
     else if (options[i] == 51)
-      get_dhcp_option_value(options, &opt_lease_time, 4);
+      get_dhcp_option_value(&options[i + 2], &opt_lease_time, 4);
     else if (options[i] == 53)
-      get_dhcp_option_value(options, (uint32_t *)&opt_message_type, 1);
+      get_dhcp_option_value(&options[i + 2], (uint32_t *)&opt_message_type, 1);
     else if (options[i] == 54)
-      get_dhcp_option_value(options, &opt_server_ip, 4);
+      get_dhcp_option_value(&options[i + 2], &opt_server_ip, 4);
 
     i += 2 + options[i + 1];
   }
@@ -229,33 +235,30 @@ int32_t parse_dhcp_ack_options(uint8_t *options, uint32_t *subnet_mask, uint32_t
 // 7. Get router ip, router mac address and assign them to net dev
 int32_t dhcp_setup()
 {
-  int32_t sockfd = sys_socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ARP));
+  int32_t sockfd = sys_socket(PF_PACKET, SOCK_RAW, ETH_P_IP);
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
   struct sk_buff *skb;
-  struct ip4_packet *rip = kcalloc(1, MAX_DHCP_SIZE);
+  struct ethernet_packet *recv_eh = kcalloc(1, DHCP_SIZE(MAX_OPTION_LEN));
   uint8_t *options;
   uint32_t router_ip, subnet_mask, lease_time, server_ip, local_ip;
-  uint32_t dhcp_xip = htonl(rand());
+  uint32_t dhcp_xip = rand();
   int32_t ret;
 
-  if ((dev->state & NETDEV_STATE_CONNECTED) == 0)
+  if (dev->state & NETDEV_STATE_OFF)
     return -EBUSY;
 
   // DHCP Discovery
-  struct sockaddr_ll addr_remote;
-  addr_remote.sll_protocol = htons(ETH_P_IP);
-  addr_remote.sll_pkttype = PACKET_BROADCAST;
-  sock->ops->connect(sock, (struct sockaddr *)&addr_remote, sizeof(struct sockaddr_ll));
-
   options = dhcp_create_discovery_options(18);
   skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, 18);
-  sock->ops->sendmsg(sock, skb->nh.iph, sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + 18);
-  sock->ops->recvmsg(sock, rip, MAX_DHCP_SIZE);
+  sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(18));
+
+  memset(recv_eh, 0, DHCP_SIZE(MAX_OPTION_LEN));
+  sock->ops->recvmsg(sock, recv_eh, DHCP_SIZE(MAX_OPTION_LEN));
 
   // DHCP Offer
   struct dhcp_packet *dhcp_offer;
-  ret = dhcp_parse_from_ip_packet(rip, &dhcp_offer);
+  ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_offer);
   if (ret < 0)
     return ret;
   ret = parse_dhcp_offer_options(dhcp_offer->options, &server_ip);
@@ -265,18 +268,21 @@ int32_t dhcp_setup()
   // DHCP Request
   options = dhcp_create_request_options(30, ntohl(dhcp_offer->yiaddr), server_ip);
   skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, 30);
-  sock->ops->sendmsg(sock, skb->nh.iph, sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + 30);
+  sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(30));
 
-  memset(rip, 0, MAX_DHCP_SIZE);
-  sock->ops->recvmsg(sock, rip, MAX_DHCP_SIZE);
+  memset(recv_eh, 0, DHCP_SIZE(MAX_OPTION_LEN));
+  sock->ops->recvmsg(sock, recv_eh, DHCP_SIZE(MAX_OPTION_LEN));
 
   // DHCP Ack
   struct dhcp_packet *dhcp_ack;
-  ret = dhcp_parse_from_ip_packet(rip, &dhcp_ack);
+  ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_ack);
   if (ret < 0)
     return ret;
   parse_dhcp_ack_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &server_ip);
   local_ip = ntohl(dhcp_ack->yiaddr);
+  subnet_mask = ntohl(subnet_mask);
+  router_ip = ntohl(router_ip);
+  lease_time = ntohl(lease_time);
 
   // ARP Announcement
   arp_send(dev->dev_addr, local_ip, dev->zero_addr, local_ip, ARP_REQUEST);
@@ -285,14 +291,8 @@ int32_t dhcp_setup()
   dev->subnet_mask = subnet_mask;
   dev->router_ip = router_ip;
   dev->lease_time = lease_time;
-  dev->state = NETDEV_STATE_CONNECTING;
-
-  uint8_t *router_mac_address = lookup_mac_addr_from_ip(router_ip);
-  if (!router_mac_address)
-    return -EINVAL;
-
-  memcpy(dev->router_addr, router_mac_address, 6);
   dev->state = NETDEV_STATE_CONNECTED;
+  memcpy(dev->router_addr, recv_eh->source_mac, 6);
 
   return ret;
 }

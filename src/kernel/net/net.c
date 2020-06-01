@@ -162,8 +162,8 @@ int32_t net_default_rx_handler(struct sk_buff *skb)
     if (ret < 0)
       return ret;
 
-    if (skb->nh.arph->tpa == current_netdev->local_ip)
-      arp_send(current_netdev->dev_addr, current_netdev->local_ip, skb->nh.arph->sha, skb->nh.arph->spa, ARP_REPLY);
+    if (skb->nh.arph->tpa == htonl(current_netdev->local_ip))
+      arp_send(current_netdev->dev_addr, current_netdev->local_ip, skb->nh.arph->sha, ntohl(skb->nh.arph->spa), ARP_REPLY);
     else if (skb->nh.arph->tpa == skb->nh.arph->spa && is_broadcast_mac_address(skb->nh.arph->tha))
       neighbour_update_mapping(skb->nh.arph->sha, skb->nh.arph->spa);
   }
@@ -180,7 +180,10 @@ void net_rx_loop()
     list_for_each_entry(skb, &lrx_skb, sibling)
     {
       if (prev_skb)
+      {
         list_del(&prev_skb->sibling);
+        kfree(prev_skb);
+      }
 
       struct socket *sock;
       list_for_each_entry(sock, &lsocket, sibling)
@@ -193,7 +196,10 @@ void net_rx_loop()
       prev_skb = skb;
     }
     if (prev_skb)
+    {
       list_del(&prev_skb->sibling);
+      kfree(prev_skb);
+    }
 
     update_thread(current_thread, THREAD_WAITING);
     schedule();
@@ -204,8 +210,7 @@ void net_switch()
 {
   if (list_empty(&lrx_skb))
     return;
-  if (net_thread != current_thread)
-    update_thread(net_thread, THREAD_READY);
+  update_thread(net_thread, THREAD_READY);
 }
 
 void net_init()

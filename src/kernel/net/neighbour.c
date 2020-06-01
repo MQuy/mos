@@ -25,7 +25,7 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   if (maddr)
     return maddr;
 
-  uint32_t sockfd = sys_socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ARP));
+  uint32_t sockfd = sys_socket(PF_PACKET, SOCK_DGRAM, ETH_P_ARP);
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
 
@@ -33,8 +33,9 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
     return NULL;
 
   struct sockaddr_ll addr_remote;
-  addr_remote.sll_protocol = htons(ETH_P_ARP);
+  addr_remote.sll_protocol = ETH_P_ARP;
   addr_remote.sll_pkttype = PACKET_BROADCAST;
+  memcpy(addr_remote.sll_addr, dev->broadcast_addr, 6);
   sock->ops->connect(sock, (struct sockaddr *)&addr_remote, sizeof(struct sockaddr_ll));
 
   struct arp_packet *sarp = arp_create_packet(dev->dev_addr, dev->local_ip, dev->broadcast_addr, ip, ARP_REQUEST);
@@ -44,7 +45,7 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   while (true)
   {
     sock->ops->recvmsg(sock, rarp, sizeof(struct arp_packet));
-    if (rarp->oper == ARP_REPLY && rarp->spa == ip)
+    if (rarp->oper == htons(ARP_REPLY) && rarp->spa == htonl(ip))
       break;
   }
   struct neighbour *nb = kcalloc(1, sizeof(struct neighbour));
@@ -52,7 +53,7 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   nb->nud_state = NUD_REACHABLE;
   nb->ip = rarp->spa;
   memcpy(nb->ha, rarp->sha, 6);
-  list_add_tail(&lneighbour, &nb->sibling);
+  list_add_tail(&nb->sibling, &lneighbour);
   return nb->ha;
 }
 

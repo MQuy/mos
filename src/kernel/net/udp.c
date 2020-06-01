@@ -34,11 +34,9 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t 
 
 void udp_build_header(struct udp_packet *udp, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_ip, uint16_t dest_port)
 {
-  uint16_t msg_len = packet_len - sizeof(struct udp_packet);
-
   udp->source_port = htons(source_port);
   udp->dest_port = htons(dest_port);
-  udp->length = htons(msg_len);
+  udp->length = htons(packet_len);
   udp->checksum = 0;
 
   udp_set_checksum(udp, packet_len, source_ip, dest_ip);
@@ -64,6 +62,7 @@ int udp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
   struct inet_sock *isk = inet_sk(sock->sk);
   struct sk_buff *skb = alloc_skb(MAX_UDP_HEADER, msg_len);
   skb->sk = sock->sk;
+  skb->dev = isk->sk.dev;
 
   // increase tail -> copy msg into data-tail space
   skb_put(skb, msg_len);
@@ -92,11 +91,14 @@ int udp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   {
     skb = list_first_entry_or_null(&sk->rx_queue, struct sk_buff, sibling);
     if (!skb)
+    {
       update_thread(sk->owner_thread, THREAD_WAITING);
+      schedule();
+    }
   }
 
   list_del(&skb->sibling);
-  memcpy(msg, skb->h.udph + sizeof(struct udp_packet), msg_len);
+  memcpy(msg, (uint32_t)skb->h.udph + sizeof(struct udp_packet), msg_len);
   return 0;
 }
 

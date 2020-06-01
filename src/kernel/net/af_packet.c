@@ -20,6 +20,7 @@ int packet_sendmsg(struct socket *sock, void *msg, size_t msg_len)
   struct packet_sock *psk = pkt_sk(sock->sk);
   struct sk_buff *skb = alloc_skb(sizeof(struct ethernet_packet), msg_len);
   skb->sk = sock->sk;
+  skb->dev = psk->sk.dev;
 
   // increase tail -> copy msg into data-tail
   skb_put(skb, msg_len);
@@ -42,20 +43,23 @@ int packet_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
   struct sock *sk = sock->sk;
-  struct sk_buff *skb;
+  struct sk_buff *skb = NULL;
 
   while (!skb)
   {
     skb = list_first_entry_or_null(&sk->rx_queue, struct sk_buff, sibling);
     if (!skb)
+    {
       update_thread(sk->owner_thread, THREAD_WAITING);
+      schedule();
+    }
   }
 
   list_del(&skb->sibling);
   if (sock->type == SOCK_RAW)
     memcpy(msg, skb->mac.eh, msg_len);
   else
-    memcpy(msg, skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
+    memcpy(msg, (uint32_t)skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
   return 0;
 }
 
@@ -64,19 +68,12 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
   struct sock *sk = sock->sk;
   struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
 
-  if (eh->type != sock->protocol)
+  if (eh->type != htons(sock->protocol))
     return -EPROTO;
 
   skb->mac.eh = eh;
-  if (sock->type != SOCK_RAW)
-  {
-    if (sock->protocol == htons(ETH_P_ARP))
-    {
-      skb_push(skb, sizeof(struct arp_packet));
-      skb->nh.arph = (struct arp_packet *)skb->data;
-    }
-  }
 
+  // TODO: MQ 2020-06-02 Clone skb net frame and adjust head, data, tail, end pointers
   struct sk_buff *clone_skb = kcalloc(1, sizeof(struct sk_buff));
   memcpy(clone_skb, skb, sizeof(struct sk_buff));
 

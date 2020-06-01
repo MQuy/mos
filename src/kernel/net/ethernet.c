@@ -15,7 +15,7 @@ void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, ui
 
 void ethernet_sendmsg(struct sk_buff *skb)
 {
-  rtl8139_send_packet(skb->data, skb->len);
+  rtl8139_send_packet(skb->mac.eh, skb->len);
 }
 
 int32_t ethernet_rcv(struct sk_buff *skb)

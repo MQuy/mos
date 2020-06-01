@@ -45,16 +45,17 @@ int32_t arp_rcv(struct sk_buff *skb)
 
 int32_t arp_send(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t type)
 {
-  uint32_t sockfd = sys_socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_ARP));
+  uint32_t sockfd = sys_socket(PF_PACKET, SOCK_DGRAM, ETH_P_ARP);
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
 
-  if ((dev->state & (NETDEV_STATE_CONNECTED | NETDEV_STATE_CONNECTING)) == 0)
+  if (dev->state & NETDEV_STATE_OFF)
     return -EBUSY;
 
   struct sockaddr_ll addr_remote;
-  addr_remote.sll_protocol = htons(ETH_P_ARP);
+  addr_remote.sll_protocol = ETH_P_ARP;
   addr_remote.sll_pkttype = PACKET_BROADCAST;
+  memcpy(addr_remote.sll_addr, dest_mac, 6);
   sock->ops->connect(sock, (struct sockaddr *)&addr_remote, sizeof(struct sockaddr_ll));
 
   struct arp_packet *sarp = arp_create_packet(source_mac, source_ip, dest_mac, dest_ip, type);

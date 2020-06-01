@@ -124,8 +124,6 @@ void rtl8139_init()
   outportb(ioaddr + RTL8139_ChipCmd, RTL8139_CmdRxEnb | RTL8139_CmdTxEnb); // Sets the RE and TE bits high
 
   int8_t interrupt_line = pci_get_interrupt_line(dev->address);
-  register_interrupt_handler(32 + interrupt_line, rtl8139_irq_handler);
-  pic_clear_mask(interrupt_line);
 
   rtl_netdev = kcalloc(1, sizeof(struct net_device));
   rtl_netdev->state = NETDEV_STATE_UP;
@@ -134,7 +132,10 @@ void rtl8139_init()
   memcpy(rtl_netdev->name, "rtl8139", 7);
   memcpy(rtl_netdev->dev_addr, mac_addr, 6);
   memcpy(rtl_netdev->broadcast_addr, broadcast_mac_addr, 6);
-  memset(rtl_netdev, 0, 6);
+  memset(rtl_netdev->zero_addr, 0, 6);
 
   register_net_device(rtl_netdev);
+
+  register_interrupt_handler(32 + interrupt_line, rtl8139_irq_handler);
+  pic_clear_mask(interrupt_line);
 }

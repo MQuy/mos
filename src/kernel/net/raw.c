@@ -43,11 +43,14 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   {
     skb = list_first_entry_or_null(&sk->rx_queue, struct sk_buff, sibling);
     if (!skb)
+    {
       update_thread(sk->owner_thread, THREAD_WAITING);
+      schedule();
+    }
   }
 
   list_del(&skb->sibling);
-  memcpy(msg, skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
+  memcpy(msg, (uint32_t)skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
   return 0;
 }
 
