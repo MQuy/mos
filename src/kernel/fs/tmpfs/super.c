@@ -41,18 +41,8 @@ struct vfs_inode *tmpfs_alloc_inode(struct vfs_superblock *sb)
   return inode;
 }
 
-void tmpfs_read_inode(struct vfs_inode *i)
-{
-}
-
-void tmpfs_write_inode(struct vfs_inode *i)
-{
-}
-
 struct vfs_super_operations tmpfs_super_operations = {
     .alloc_inode = tmpfs_alloc_inode,
-    .read_inode = tmpfs_read_inode,
-    .write_inode = tmpfs_write_inode,
 };
 
 int tmpfs_fill_super(struct vfs_superblock *sb)
@@ -73,7 +63,6 @@ int tmpfs_fill_super(struct vfs_superblock *sb)
 struct vfs_mount *tmpfs_mount(struct vfs_file_system_type *fs_type,
                               char *dev_name, char *dir_name)
 {
-  struct vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
   struct vfs_superblock *sb = kcalloc(1, sizeof(struct vfs_superblock));
   sb->s_blocksize = PMM_FRAME_SIZE;
   sb->mnt_devname = dev_name;
@@ -87,8 +76,9 @@ struct vfs_mount *tmpfs_mount(struct vfs_file_system_type *fs_type,
 
   sb->s_root = d_root;
 
+  struct vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
   mnt->mnt_sb = sb;
-  mnt->mnt_mountpoint = sb->s_root;
+  mnt->mnt_mountpoint = mnt->mnt_root = sb->s_root;
   mnt->mnt_devname = dev_name;
 
   return mnt;

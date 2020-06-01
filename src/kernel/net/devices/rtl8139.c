@@ -127,7 +127,7 @@ void rtl8139_init()
   register_interrupt_handler(32 + interrupt_line, rtl8139_irq_handler);
   pic_clear_mask(interrupt_line);
 
-  struct net_device *rtl_netdev = kcalloc(1, sizeof(struct net_device));
+  rtl_netdev = kcalloc(1, sizeof(struct net_device));
   rtl_netdev->state = NETDEV_STATE_UP;
   rtl_netdev->base_addr = ioaddr;
   rtl_netdev->irq = interrupt_line;

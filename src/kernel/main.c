@@ -68,6 +68,7 @@ void kernel_init()
   console_setup();
 
   net_init();
+  rtl8139_init();
   dhcp_setup();
 
   // init ipc message queue

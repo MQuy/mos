@@ -92,8 +92,8 @@ struct vfs_file_system_type
 
 struct vfs_mount
 {
-  struct vfs_dentry *mnt_mountpoint;
   struct vfs_dentry *mnt_root;
+  struct vfs_dentry *mnt_mountpoint;
   struct vfs_superblock *mnt_sb;
   char *mnt_devname;
   struct list_head sibling;

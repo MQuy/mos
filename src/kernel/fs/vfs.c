@@ -6,6 +6,7 @@
 #include "dev.h"
 #include "ext2/ext2.h"
 #include "tmpfs/tmpfs.h"
+#include "sockfs/sockfs.h"
 
 static struct vfs_file_system_type *file_systems;
 struct list_head vfsmntlist;
@@ -97,6 +98,7 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
   struct vfs_mount *mnt = fs->mount(fs, fstype, name);
   struct nameidata *nd = path_walk(dir);
 
+  mnt->mnt_mountpoint->d_parent = nd->dentry;
   list_add_tail(&mnt->mnt_mountpoint->d_sibling, &nd->dentry->d_subdirs);
   list_add_tail(&mnt->sibling, &vfsmntlist);
 
@@ -122,5 +124,7 @@ void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
   init_rootfs(fs, dev_name);
 
   init_tmpfs();
+  init_sockfs();
+
   chrdev_init();
 }

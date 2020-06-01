@@ -17,7 +17,7 @@ int tmpfs_setsize(struct vfs_inode *inode, loff_t new_size)
         for (uint32_t i = 0; i < extended_frames; ++i)
         {
             struct page *p = kcalloc(1, sizeof(struct page));
-            p->frame = pmm_alloc_block();
+            p->frame = (uint32_t)pmm_alloc_block();
             list_add_tail(&p->sibling, &inode->i_data.pages);
         }
     }
@@ -46,11 +46,6 @@ struct vfs_inode *tmpfs_create_inode(struct vfs_inode *dir, char *filename, mode
     return tmpfs_get_inode(dir->i_sb, mode | S_IFREG);
 }
 
-int tmpfs_mkdir(struct vfs_inode *dir, char *name, int mode)
-{
-    return tmpfs_mknod(dir, name, mode | S_IFDIR, 0);
-}
-
 int tmpfs_setattr(struct vfs_dentry *d, struct iattr *attrs)
 {
     struct vfs_inode *i = d->d_inode;
@@ -65,5 +60,4 @@ struct vfs_inode_operations tmpfs_file_inode_operations = {
 struct vfs_inode_operations tmpfs_dir_inode_operations = {
     .create = tmpfs_create_inode,
     .mknod = tmpfs_mknod,
-    .mkdir = tmpfs_mkdir,
 };
