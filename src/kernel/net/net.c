@@ -1,4 +1,5 @@
 #include <include/if_ether.h>
+#include <include/errno.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/neighbour.h>
 #include <kernel/net/icmp.h>
@@ -18,10 +19,14 @@ struct list_head lrx_skb;
 struct list_head lsocket;
 struct net_device *current_netdev;
 
+// NOTE: MQ 2020-06-04
+// network card DMA might add padding at the each packet to make it word align
+// -> size might be bigger than its actual size
 void push_rx_queue(uint8_t *data, uint32_t size)
 {
   struct sk_buff *skb = alloc_skb(0, size);
 
+  skb_put(skb, size);
   memcpy(skb->data, data, size);
   list_add_tail(&skb->sibling, &lrx_skb);
 }
@@ -61,6 +66,13 @@ void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struc
 
   list_add_tail(&sock->sibling, &lsocket);
   sock_setup(sock, family);
+}
+
+int socket_shutdown(struct socket *sock)
+{
+  sock->state = SS_DISCONNECTED;
+  list_del(&sock->sibling);
+  return 0;
 }
 
 struct socket *sockfd_lookup(uint32_t sockfd)
@@ -153,7 +165,15 @@ int32_t net_default_rx_handler(struct sk_buff *skb)
 
       if (skb->h.icmph->code == ICMP_ECHO && skb->h.icmph->type == ICMP_REQUEST &&
           skb->nh.iph->dest_ip == htonl(current_netdev->local_ip))
-        icmp_reply(skb->nh.iph->source_ip, ntohl(skb->h.icmph->rest_of_header));
+      {
+        uint32_t payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet) - sizeof(struct icmp_packet);
+        icmp_reply(
+            current_netdev->local_ip,
+            skb->mac.eh->source_mac, ntohl(skb->nh.iph->source_ip),
+            ntohl(skb->nh.iph->identification),
+            ntohl(skb->h.icmph->rest_of_header),
+            skb->h.icmph->payload, payload_len);
+      }
     }
   }
   else if (skb->mac.eh->type == ntohs(ETH_P_ARP))

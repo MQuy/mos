@@ -7,35 +7,52 @@
 #include <kernel/net/neighbour.h>
 #include "raw.h"
 
+#define RAW_HEADER_SIZE (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet))
+
+int raw_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
+{
+  struct inet_sock *isk = inet_sk(sock->sk);
+  memcpy(&isk->ssin, myaddr, sockaddr_len);
+  return 0;
+}
+
 int raw_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
   struct inet_sock *isk = inet_sk(sock->sk);
   memcpy(&isk->dsin, vaddr, sockaddr_len);
+
+  sock->state = SS_CONNECTED;
   return 0;
 }
 
 int raw_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct inet_sock *isk = inet_sk(sock->sk);
-  struct sk_buff *skb = alloc_skb(sizeof(struct ethernet_packet), msg_len);
+  struct sk_buff *skb = alloc_skb(RAW_HEADER_SIZE, msg_len);
   skb->sk = sock->sk;
   skb->dev = isk->sk.dev;
 
   // increase tail -> copy msg into data-tail space
   skb_put(skb, msg_len);
-  skb->nh.iph = (struct ip4_packet *)skb->data;
   memcpy(skb->data, msg, msg_len);
 
-  // decrease data -> copy ethernet header into newdata-olddata
-  skb_push(skb, sizeof(struct ethernet_packet));
-  skb->mac.eh = (struct ethernet_packet *)skb->data;
-  uint8_t *dest_mac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
-  ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, dest_mac);
+  // decase data -> copy ip4 header into newdata-olddata
+  skb_push(skb, sizeof(struct ip4_packet));
+  skb->nh.iph = (struct ip4_packet *)skb->data;
+  ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_ICMP, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
+
+  ip4_sendmsg(sock, skb);
   return 0;
 }
 
 int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct sock *sk = sock->sk;
   struct sk_buff *skb;
 
@@ -56,6 +73,9 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 
 int raw_handler(struct socket *sock, struct sk_buff *skb)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct inet_sock *isk = inet_sk(sock->sk);
   struct net_device *dev = sock->sk->dev;
   struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
@@ -82,8 +102,10 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
 
 struct proto_ops raw_proto_ops = {
     .family = PF_INET,
+    .bind = raw_bind,
     .connect = raw_connect,
     .sendmsg = raw_sendmsg,
     .recvmsg = raw_recvmsg,
+    .shutdown = socket_shutdown,
     .handler = raw_handler,
 };

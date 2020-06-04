@@ -17,6 +17,9 @@ int packet_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len
 
 int packet_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct packet_sock *psk = pkt_sk(sock->sk);
   struct sk_buff *skb = alloc_skb(sizeof(struct ethernet_packet), msg_len);
   skb->sk = sock->sk;
@@ -42,6 +45,9 @@ int packet_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 
 int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct sock *sk = sock->sk;
   struct sk_buff *skb = NULL;
 
@@ -65,6 +71,9 @@ int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 
 int packet_handler(struct socket *sock, struct sk_buff *skb)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct sock *sk = sock->sk;
   struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
 
@@ -87,5 +96,6 @@ struct proto_ops packet_proto_ops = {
     .connect = packet_connect,
     .sendmsg = packet_sendmsg,
     .recvmsg = packet_recvmsg,
+    .shutdown = socket_shutdown,
     .handler = packet_handler,
 };

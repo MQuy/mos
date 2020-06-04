@@ -18,8 +18,11 @@ struct __attribute__((packed)) icmp_packet
   uint8_t payload[];
 };
 
-struct icmp_packet *icmp_create_packet(uint8_t type, uint32_t rest_of_header);
-void icmp_reply(uint32_t dest_ip, uint32_t rest_of_header);
+void icmp_reply(uint32_t source_ip,
+                uint8_t *dest_mac, uint32_t dest_ip,
+                uint32_t identification,
+                uint32_t rest_of_header,
+                uint8_t *payload, uint32_t payload_len);
 int32_t icmp_rcv(struct sk_buff *skb);
 
 #endif

@@ -60,5 +60,6 @@ int32_t arp_send(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uin
 
   struct arp_packet *sarp = arp_create_packet(source_mac, source_ip, dest_mac, dest_ip, type);
   sock->ops->sendmsg(sock, sarp, sizeof(struct arp_packet));
+  sock->ops->shutdown(sock);
   return 0;
 }

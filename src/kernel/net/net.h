@@ -64,11 +64,11 @@ struct sockaddr_ll
 
 enum socket_state
 {
-  SS_FREE = 0,     /* not allocated		*/
-  SS_UNCONNECTED,  /* unconnected to any socket	*/
-  SS_CONNECTING,   /* in process of connecting	*/
-  SS_CONNECTED,    /* connected to socket		*/
-  SS_DISCONNECTING /* in process of disconnecting	*/
+  SS_UNCONNECTED = 1,   /* unconnected to any socket	*/
+  SS_CONNECTING = 2,    /* in process of connecting	*/
+  SS_CONNECTED = 3,     /* connected to socket		*/
+  SS_DISCONNECTING = 4, /* in process of disconnecting	*/
+  SS_DISCONNECTED = 5,
 } socket_state;
 
 enum socket_type
@@ -139,7 +139,7 @@ struct proto_ops
                  struct sockaddr *addr,
                  int *sockaddr_len, int peer);
   int (*listen)(struct socket *sock, int len);
-  int (*shutdown)(struct socket *sock, int flags);
+  int (*shutdown)(struct socket *sock);
   int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
   // TODO: MQ 2020-05-27
   // At the beging CONNECTED -> READY
@@ -170,8 +170,7 @@ enum netdev_state
 {
   NETDEV_STATE_OFF = 1,
   NETDEV_STATE_UP = 1 << 1,
-  NETDEV_STATE_CONNECTING = 1 << 2, // lack of mac address
-  NETDEV_STATE_CONNECTED = 1 << 3,  // interface connects and gets config (dhcp -> ip) from router
+  NETDEV_STATE_CONNECTED = 1 << 2, // interface connects and gets config (dhcp -> ip) from router
 };
 
 struct net_device
@@ -253,6 +252,7 @@ void net_rx_loop();
 void net_switch();
 void push_rx_queue(uint8_t *data, uint32_t size);
 void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struct vfs_file *file);
+int socket_shutdown(struct socket *sock);
 struct socket *sockfd_lookup(uint32_t fd);
 struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size);
 uint16_t singular_checksum(void *packet, uint16_t size);

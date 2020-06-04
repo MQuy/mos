@@ -54,11 +54,16 @@ int udp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
   struct inet_sock *isk = inet_sk(sock->sk);
   memcpy(&isk->dsin, vaddr, sockaddr_len);
+
+  sock->state = SS_CONNECTED;
   return 0;
 }
 
 int udp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct inet_sock *isk = inet_sk(sock->sk);
   struct sk_buff *skb = alloc_skb(MAX_UDP_HEADER, msg_len);
   skb->sk = sock->sk;
@@ -76,7 +81,7 @@ int udp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
   // decrease data -> copy ip4 header into new expending newdata-olddata
   skb_push(skb, sizeof(struct ip4_packet));
   skb->nh.iph = (struct ip4_packet *)skb->data;
-  ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_UDP, isk->ssin.sin_addr, isk->dsin.sin_addr);
+  ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_UDP, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
 
   ip4_sendmsg(sock, skb);
   return 0;
@@ -84,6 +89,9 @@ int udp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 
 int udp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct sock *sk = sock->sk;
   struct sk_buff *skb;
 
@@ -104,6 +112,9 @@ int udp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 
 int udp_handler(struct socket *sock, struct sk_buff *skb)
 {
+  if (sock->state == SS_DISCONNECTED)
+    return -ESHUTDOWN;
+
   struct inet_sock *isk = inet_sk(sock->sk);
   int32_t ret = ethernet_rcv(skb);
   if (ret < 0)
@@ -139,5 +150,6 @@ struct proto_ops udp_proto_ops = {
     .connect = udp_connect,
     .sendmsg = udp_sendmsg,
     .recvmsg = udp_recvmsg,
+    .shutdown = socket_shutdown,
     .handler = udp_handler,
 };

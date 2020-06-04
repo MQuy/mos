@@ -25,13 +25,13 @@ int32_t ip4_validate_header(struct ip4_packet *ip, uint8_t protocal)
   return ret;
 }
 
-struct ip4_packet *ip4_build_header(struct ip4_packet *packet, uint16_t packet_size, uint8_t protocal, uint32_t source_ip, uint32_t dest_ip)
+struct ip4_packet *ip4_build_header(struct ip4_packet *packet, uint16_t packet_size, uint8_t protocal, uint32_t source_ip, uint32_t dest_ip, uint32_t identification)
 {
   packet->version = 4;
   packet->ihl = 5;
   packet->type_of_service = 0;
   packet->total_length = htons(packet_size);
-  packet->identification = htons(0);
+  packet->identification = htonl(identification);
   packet->flags = 0;
   packet->fragment_offset = 0;
   packet->time_to_live = IP4_TTL;
@@ -53,7 +53,6 @@ void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
   skb->mac.eh = (struct ethernet_packet *)skb->data;
   uint8_t *dest_mac = lookup_mac_addr_for_ethernet(skb->dev, isk->dsin.sin_addr);
   ethernet_build_header(skb->mac.eh, ETH_P_IP, skb->dev->dev_addr, dest_mac);
-
   ethernet_sendmsg(skb);
 }
 

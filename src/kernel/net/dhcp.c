@@ -47,7 +47,7 @@ struct sk_buff *dhcp_create_skbuff(uint8_t op, uint32_t source_ip, uint32_t dest
   skb_push(skb, sizeof(struct ip4_packet));
   skb->nh.iph = (struct ip4_packet *)skb->data;
   uint16_t ip4_packet_size = sizeof(struct ip4_packet) + udp_packet_size;
-  ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, source_ip, dest_ip);
+  ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, source_ip, dest_ip, 0);
 
   skb_push(skb, sizeof(struct ethernet_packet));
   skb->mac.eh = (struct ethernet_packet *)skb->data;
@@ -272,6 +272,7 @@ int32_t dhcp_setup()
 
   memset(recv_eh, 0, DHCP_SIZE(MAX_OPTION_LEN));
   sock->ops->recvmsg(sock, recv_eh, DHCP_SIZE(MAX_OPTION_LEN));
+  sock->ops->shutdown(sock);
 
   // DHCP Ack
   struct dhcp_packet *dhcp_ack;
