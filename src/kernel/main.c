@@ -20,6 +20,7 @@
 #include "devices/ata.h"
 #include "net/net.h"
 #include "net/dhcp.h"
+#include "net/devices/rtl8139.h"
 #include "fs/vfs.h"
 #include "fs/ext2/ext2.h"
 #include "devices/char/memory.h"

@@ -62,10 +62,20 @@ int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   }
 
   list_del(&skb->sibling);
-  if (sock->type == SOCK_RAW)
-    memcpy(msg, skb->mac.eh, msg_len);
+
+  uint32_t min_len;
+  uint8_t *buff;
+  if (sock->type != SOCK_RAW)
+  {
+    skb_pull(skb, sizeof(struct ethernet_packet));
+    buff = (uint8_t *)skb->mac.eh + sizeof(struct ethernet_packet);
+  }
   else
-    memcpy(msg, (uint32_t)skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
+    buff = (uint8_t *)skb->mac.eh;
+  min_len = min(msg_len, skb->len);
+  memcpy(msg, buff, min_len);
+
+  // TODO: MQ 2020-06-04 Free skb
   return 0;
 }
 

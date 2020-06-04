@@ -9,7 +9,7 @@
 #include <kernel/system/sysapi.h>
 #include "dhcp.h"
 
-#define MAX_OPTION_LEN 60
+#define MAX_PACKET_LEN 576
 #define DHCP_SIZE(option_len) (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + (option_len))
 
 void dhcp_build_header(struct dhcp_packet *dhp, uint8_t op, uint16_t size)
@@ -47,7 +47,7 @@ struct sk_buff *dhcp_create_skbuff(uint8_t op, uint32_t source_ip, uint32_t dest
   skb_push(skb, sizeof(struct ip4_packet));
   skb->nh.iph = (struct ip4_packet *)skb->data;
   uint16_t ip4_packet_size = sizeof(struct ip4_packet) + udp_packet_size;
-  ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, source_ip, dest_ip, 0);
+  ip4_build_header(skb->nh.iph, ip4_packet_size, IP4_PROTOCAL_UDP, source_ip, dest_ip, rand());
 
   skb_push(skb, sizeof(struct ethernet_packet));
   skb->mac.eh = (struct ethernet_packet *)skb->data;
@@ -56,78 +56,76 @@ struct sk_buff *dhcp_create_skbuff(uint8_t op, uint32_t source_ip, uint32_t dest
   return skb;
 }
 
-uint8_t *dhcp_create_discovery_options(uint32_t len)
+uint8_t *set_option_value(uint8_t *options, uint8_t code, uint8_t len, void *value)
 {
-  uint8_t *options = kcalloc(1, len);
+  options[0] = code;
+  options[1] = len;
+  memcpy(options + 2, value, len);
 
-  // DHCP Message Type
-  options[0] = 0x35;
-  options[1] = 0x01;
-  options[2] = 0x01;
-  // DHCP Parameter Request List
-  options[3] = 0x37;
-  options[4] = 0x07;
-  options[5] = 0x01;
-  options[6] = 0x02;
-  options[7] = 0x03;
-  options[8] = 0x06;
-  options[9] = 0x0F;
-  options[10] = 0x0c;
-  options[11] = 0x1c;
-  // DHCP Host name
-  options[12] = 0x0C;
-  options[13] = 0x03;
-  options[14] = 'm';
-  options[15] = 'O';
-  options[16] = 'S';
-  // DHCP Options end
-  options[17] = 0xFF;
-
-  return options;
+  return options + 2 + len;
 }
 
-uint8_t *dhcp_create_request_options(uint32_t len, uint32_t requested_ip, uint32_t server_ip)
+void dhcp_option_adjust_len(uint32_t *len)
 {
-  uint8_t *options = kcalloc(1, len);
+  // NOTE: MQ 2020-06-04
+  // to make frame message's length is either 342 or 576 (word align)
+  // option's length is either
+  if (*len <= 60)
+    *len = 60;
+  else
+    *len = 294;
+}
+
+void dhcp_create_discovery_options(uint8_t **options, uint32_t *len)
+{
+  struct net_device *dev = get_current_net_device();
+  *options = kcalloc(1, MAX_PACKET_LEN);
+  uint8_t *iter_opt = *options;
 
   // DHCP Message Type
-  options[0] = 0x35;
-  options[1] = 0x01;
-  options[2] = 0x03;
-  // DHCP Requested IP
-  options[3] = 50;
-  options[4] = 0x04;
-  options[5] = (requested_ip >> 24) & 0xFF;
-  options[6] = (requested_ip >> 16) & 0xFF;
-  options[7] = (requested_ip >> 8) & 0xFF;
-  options[8] = requested_ip & 0xFF;
-  // DHCP Server
-  options[9] = 54;
-  options[10] = 0x04;
-  options[11] = (server_ip >> 24) & 0xFF;
-  options[12] = (server_ip >> 16) & 0xFF;
-  options[13] = (server_ip >> 8) & 0xFF;
-  options[14] = server_ip & 0xFF;
-  // DHCP Host name
-  options[15] = 0x0C;
-  options[16] = 0x03;
-  options[17] = 'm';
-  options[18] = 'O';
-  options[19] = 'S';
+  iter_opt = set_option_value(iter_opt, 53, 1, &(uint8_t[]){1});
   // DHCP Parameter Request List
-  options[20] = 0x37;
-  options[21] = 0x07;
-  options[22] = 0x01;
-  options[23] = 0x02;
-  options[24] = 0x03;
-  options[25] = 0x06;
-  options[26] = 0x0F;
-  options[27] = 0x0c;
-  options[28] = 0x1c;
+  iter_opt = set_option_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 44, 46, 95, 119, 121, 252});
+  // DHCP Maximum Message Size
+  iter_opt = set_option_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
+  // DHCP Client Identifier
+  iter_opt = set_option_value(iter_opt, 61, 7, &(uint8_t[]){1, dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]});
+  // DHCP IP Lease Time
+  iter_opt = set_option_value(iter_opt, 51, 4, &(uint8_t[]){0, 0x76, 0xa7, 0});
+  // DHCP Host name
+  iter_opt = set_option_value(iter_opt, 12, 3, &(uint8_t[]){'m', 'O', 'S'});
   // DHCP Options end
-  options[29] = 0xFF;
+  iter_opt[0] = 0xFF;
 
-  return options;
+  *len = iter_opt + 1 - *options;
+  dhcp_option_adjust_len(len);
+}
+
+void dhcp_create_request_options(uint8_t **options, uint32_t *len, uint32_t requested_ip, uint32_t server_ip)
+{
+  struct net_device *dev = get_current_net_device();
+  *options = kcalloc(1, MAX_PACKET_LEN);
+  uint8_t *iter_opt = *options;
+
+  // DHCP Message Type
+  iter_opt = set_option_value(iter_opt, 53, 1, &(uint8_t[]){3});
+  // DHCP Parameter Request List
+  iter_opt = set_option_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 44, 46, 95, 119, 121, 252});
+  // DHCP Maximum Message Size
+  iter_opt = set_option_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
+  // DHCP Client Identifier
+  iter_opt = set_option_value(iter_opt, 61, 7, &(uint8_t[]){1, dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]});
+  // DHCP Requested IP
+  iter_opt = set_option_value(iter_opt, 50, 4, &(uint8_t[]){(requested_ip >> 24) & 0xFF, (requested_ip >> 16) & 0xFF, (requested_ip >> 8) & 0xFF, requested_ip & 0xFF});
+  // DHCP Server
+  iter_opt = set_option_value(iter_opt, 54, 4, &(uint8_t[]){(server_ip >> 24) & 0xFF, (server_ip >> 16) & 0xFF, (server_ip >> 8) & 0xFF, server_ip & 0xFF});
+  // DHCP Host name
+  iter_opt = set_option_value(iter_opt, 12, 3, &(uint8_t[]){'m', 'O', 'S'});
+  // DHCP Options end
+  iter_opt[0] = 0xFF;
+
+  *len = iter_opt + 1 - *options;
+  dhcp_option_adjust_len(len);
 }
 
 int32_t dhcp_validate_header(struct dhcp_packet *dhcp)
@@ -239,7 +237,7 @@ int32_t dhcp_setup()
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
   struct sk_buff *skb;
-  struct ethernet_packet *recv_eh = kcalloc(1, DHCP_SIZE(MAX_OPTION_LEN));
+  struct ethernet_packet *recv_eh = kcalloc(1, MAX_PACKET_LEN);
   uint8_t *options;
   uint32_t router_ip, subnet_mask, lease_time, server_ip, local_ip;
   uint32_t dhcp_xip = rand();
@@ -249,37 +247,49 @@ int32_t dhcp_setup()
     return -EBUSY;
 
   // DHCP Discovery
-  options = dhcp_create_discovery_options(18);
-  skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, 18);
-  sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(18));
-
-  memset(recv_eh, 0, DHCP_SIZE(MAX_OPTION_LEN));
-  sock->ops->recvmsg(sock, recv_eh, DHCP_SIZE(MAX_OPTION_LEN));
+  uint32_t dhcp_discovery_option_len;
+  dhcp_create_discovery_options(&options, &dhcp_discovery_option_len);
+  skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_discovery_option_len);
+  kfree(options);
+  sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(dhcp_discovery_option_len));
 
   // DHCP Offer
   struct dhcp_packet *dhcp_offer;
-  ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_offer);
-  if (ret < 0)
-    return ret;
-  ret = parse_dhcp_offer_options(dhcp_offer->options, &server_ip);
-  if (ret < 0)
-    return ret;
+  while (true)
+  {
+    memset(recv_eh, 0, MAX_PACKET_LEN);
+    sock->ops->recvmsg(sock, recv_eh, MAX_PACKET_LEN);
+
+    ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_offer);
+    if (ret < 0)
+      continue;
+    ret = parse_dhcp_offer_options(dhcp_offer->options, &server_ip);
+    if (ret >= 0)
+      break;
+  }
 
   // DHCP Request
-  options = dhcp_create_request_options(30, ntohl(dhcp_offer->yiaddr), server_ip);
-  skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, 30);
-  sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(30));
-
-  memset(recv_eh, 0, DHCP_SIZE(MAX_OPTION_LEN));
-  sock->ops->recvmsg(sock, recv_eh, DHCP_SIZE(MAX_OPTION_LEN));
-  sock->ops->shutdown(sock);
+  uint32_t dhcp_request_option_len;
+  dhcp_create_request_options(&options, &dhcp_request_option_len, ntohl(dhcp_offer->yiaddr), server_ip);
+  skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_request_option_len);
+  sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(dhcp_request_option_len));
+  kfree(options);
 
   // DHCP Ack
   struct dhcp_packet *dhcp_ack;
-  ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_ack);
-  if (ret < 0)
-    return ret;
-  parse_dhcp_ack_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &server_ip);
+  while (true)
+  {
+    memset(recv_eh, 0, MAX_PACKET_LEN);
+    sock->ops->recvmsg(sock, recv_eh, MAX_PACKET_LEN);
+    sock->ops->shutdown(sock);
+
+    ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_ack);
+    if (ret < 0)
+      continue;
+    ret = parse_dhcp_ack_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &server_ip);
+    if (ret >= 0)
+      break;
+  }
   local_ip = ntohl(dhcp_ack->yiaddr);
   subnet_mask = ntohl(subnet_mask);
   router_ip = ntohl(router_ip);

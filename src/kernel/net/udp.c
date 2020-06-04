@@ -106,7 +106,11 @@ int udp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   }
 
   list_del(&skb->sibling);
-  memcpy(msg, (uint32_t)skb->h.udph + sizeof(struct udp_packet), msg_len);
+
+  uint32_t udp_payload_len = skb->h.udph->length - sizeof(struct udp_packet);
+  memcpy(msg, (uint8_t *)skb->h.udph + sizeof(struct udp_packet), min(msg_len, udp_payload_len));
+
+  // TODO: MQ 2020-06-04 Free skb
   return 0;
 }
 

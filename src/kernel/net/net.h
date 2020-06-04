@@ -7,6 +7,8 @@
 #include <kernel/net/ip.h>
 #include <kernel/net/arp.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/udp.h>
+#include <kernel/net/icmp.h>
 
 #define AF_INET 2 /* Internet IP Protocol 	*/
 #define PF_INET AF_INET

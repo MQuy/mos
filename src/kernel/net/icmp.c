@@ -40,8 +40,7 @@ void icmp_reply(uint32_t source_ip,
   struct ip4_packet *iph = (struct ip4_packet *)buff;
   ip4_build_header(iph, total_len, IP4_PROTOCAL_ICMP, source_ip, dest_ip, identification);
 
-  uint16_t icmp_packet_size = sizeof(struct icmp_packet) + payload_len;
-  struct icmp_packet *icmp_packet = buff + sizeof(struct ip4_packet);
+  struct icmp_packet *icmp_packet = (struct icmp_packet *)(buff + sizeof(struct ip4_packet));
   icmp_create_packet(icmp_packet, ICMP_REPLY, rest_of_header, payload, payload_len);
 
   sock->ops->sendmsg(sock, iph, total_len);

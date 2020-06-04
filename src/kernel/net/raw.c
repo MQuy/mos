@@ -42,7 +42,7 @@ int raw_sendmsg(struct socket *sock, void *msg, size_t msg_len)
   // decase data -> copy ip4 header into newdata-olddata
   skb_push(skb, sizeof(struct ip4_packet));
   skb->nh.iph = (struct ip4_packet *)skb->data;
-  ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_ICMP, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
+  ip4_build_header(skb->nh.iph, skb->len, sock->protocol, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
 
   ip4_sendmsg(sock, skb);
   return 0;
@@ -67,7 +67,16 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   }
 
   list_del(&skb->sibling);
-  memcpy(msg, (uint32_t)skb->mac.eh + sizeof(struct ethernet_packet), msg_len);
+
+  skb->mac.eh = (struct ethernet_packet *)skb->data;
+
+  skb_pull(skb, sizeof(struct ethernet_packet));
+  skb->nh.iph = (struct ip4_packet *)skb->data;
+
+  uint32_t ip4_payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet);
+  memcpy(msg, skb->nh.iph, min(msg_len, ip4_payload_len));
+
+  // TODO: MQ 2020-06-04 Free skb
   return 0;
 }
 
