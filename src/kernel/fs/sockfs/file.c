@@ -17,9 +17,15 @@ ssize_t sockfs_write_file(struct vfs_file *file, const char *buf, size_t count, 
 {
 }
 
+// TODO: MQ 2020-06-06 Cleanup socket, sock
+int sockfs_release_file(struct vfs_node *inode, struct vfs_file *file)
+{
+}
+
 struct vfs_file_operations sockfs_file_operations = {
     .read = sockfs_read_file,
     .write = sockfs_write_file,
+    .release = sockfs_release_file,
 };
 
 struct vfs_file_operations sockfs_dir_operations = {};

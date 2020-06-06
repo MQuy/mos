@@ -33,7 +33,7 @@ int raw_sendmsg(struct socket *sock, void *msg, size_t msg_len)
     return -ESHUTDOWN;
 
   struct inet_sock *isk = inet_sk(sock->sk);
-  struct sk_buff *skb = alloc_skb(RAW_HEADER_SIZE, msg_len);
+  struct sk_buff *skb = skb_alloc(RAW_HEADER_SIZE, msg_len);
   skb->sk = sock->sk;
   skb->dev = isk->sk.dev;
 
@@ -78,7 +78,7 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   uint32_t ip4_payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet);
   memcpy(msg, skb->nh.iph, min(msg_len, ip4_payload_len));
 
-  // TODO: MQ 2020-06-04 Free skb
+  skb_free(skb);
   return 0;
 }
 
@@ -102,10 +102,9 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
   {
     skb->nh.iph = iph;
 
-    struct sk_buff *clone_skb = kcalloc(1, sizeof(struct sk_buff));
-    memcpy(clone_skb, skb, sizeof(struct sk_buff));
+    struct sk_buff *skb_new = skb_clone(skb);
 
-    list_add_tail(&clone_skb->sibling, &sock->sk->rx_queue);
+    list_add_tail(&skb_new->sibling, &sock->sk->rx_queue);
     update_thread(sock->sk->owner_thread, THREAD_READY);
   }
   return 0;

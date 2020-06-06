@@ -5,6 +5,8 @@
 
 #define BLOCK_MAGIC 0x464E
 
+extern uint32_t heap_current;
+
 struct block_meta
 {
   size_t size;
@@ -17,8 +19,10 @@ static struct block_meta *kblocklist = NULL;
 
 void validate_kblock(struct block_meta *block)
 {
-  if (block->magic != BLOCK_MAGIC)
+  // NOTE: MQ 2020-06-06 if a block's size > 32 MiB -> might be an corrupted block
+  if (block->magic != BLOCK_MAGIC || block->size > 0x2000000)
   {
+    __asm__ __volatile("int $0x0E");
   }
 }
 

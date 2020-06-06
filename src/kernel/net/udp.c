@@ -18,7 +18,7 @@ int32_t udp_validate_header(struct udp_packet *udp)
 
 void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t source_ip, uint32_t dest_ip)
 {
-  struct ip4_pseudo_header *ip4_pseudo_header = kcalloc(1, sizeof(ip4_pseudo_header));
+  struct ip4_pseudo_header *ip4_pseudo_header = kcalloc(1, sizeof(struct ip4_pseudo_header));
   ip4_pseudo_header->source_ip = htonl(source_ip);
   ip4_pseudo_header->dest_ip = htonl(dest_ip);
   ip4_pseudo_header->zeros = 0;
@@ -33,6 +33,7 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t 
     checksum = (checksum & CHECKSUM_MASK) + (checksum >> 16);
 
   udp_packet->checksum = ~checksum & CHECKSUM_MASK;
+  kfree(ip4_pseudo_header);
 }
 
 void udp_build_header(struct udp_packet *udp, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_ip, uint16_t dest_port)
@@ -68,7 +69,7 @@ int udp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
     return -ESHUTDOWN;
 
   struct inet_sock *isk = inet_sk(sock->sk);
-  struct sk_buff *skb = alloc_skb(MAX_UDP_HEADER, msg_len);
+  struct sk_buff *skb = skb_alloc(MAX_UDP_HEADER, msg_len);
   skb->sk = sock->sk;
   skb->dev = isk->sk.dev;
 
@@ -113,7 +114,7 @@ int udp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   uint32_t udp_payload_len = skb->h.udph->length - sizeof(struct udp_packet);
   memcpy(msg, (uint8_t *)skb->h.udph + sizeof(struct udp_packet), min(msg_len, udp_payload_len));
 
-  // TODO: MQ 2020-06-04 Free skb
+  skb_free(skb);
   return 0;
 }
 
@@ -142,10 +143,9 @@ int udp_handler(struct socket *sock, struct sk_buff *skb)
     skb->h.udph = udp;
     skb_pull(skb, sizeof(struct udp_packet));
 
-    struct sk_buff *clone_skb = kcalloc(1, sizeof(struct sk_buff));
-    memcpy(clone_skb, skb, sizeof(struct sk_buff));
+    struct sk_buff *skb_new = skb_clone(skb);
 
-    list_add_tail(&clone_skb->sibling, &sock->sk->rx_queue);
+    list_add_tail(&skb_new->sibling, &sock->sk->rx_queue);
     update_thread(sock->sk->owner_thread, THREAD_READY);
   }
   return 0;

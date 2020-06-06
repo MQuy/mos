@@ -22,7 +22,7 @@ int packet_sendmsg(struct socket *sock, void *msg, size_t msg_len)
     return -ESHUTDOWN;
 
   struct packet_sock *psk = pkt_sk(sock->sk);
-  struct sk_buff *skb = alloc_skb(sizeof(struct ethernet_packet), msg_len);
+  struct sk_buff *skb = skb_alloc(sizeof(struct ethernet_packet), msg_len);
   skb->sk = sock->sk;
   skb->dev = psk->sk.dev;
 
@@ -76,7 +76,7 @@ int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
   min_len = min(msg_len, skb->len);
   memcpy(msg, buff, min_len);
 
-  // TODO: MQ 2020-06-04 Free skb
+  skb_free(skb);
   return 0;
 }
 
@@ -93,11 +93,9 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
 
   skb->mac.eh = eh;
 
-  // TODO: MQ 2020-06-02 Clone skb net frame and adjust head, data, tail, end pointers
-  struct sk_buff *clone_skb = kcalloc(1, sizeof(struct sk_buff));
-  memcpy(clone_skb, skb, sizeof(struct sk_buff));
+  struct sk_buff *skb_new = skb_clone(skb);
 
-  list_add_tail(&clone_skb->sibling, &sk->rx_queue);
+  list_add_tail(&skb_new->sibling, &sk->rx_queue);
   update_thread(sk->owner_thread, THREAD_READY);
   return 0;
 }

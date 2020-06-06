@@ -102,7 +102,7 @@ void reg_device(uint8_t bus, uint8_t device, uint8_t function)
 
     if (classCode != PCI_CLASS_CODE_BRIDGE_DEVICE)
     {
-      struct pci_device *dev = kmalloc(sizeof(struct pci_device));
+      struct pci_device *dev = kcalloc(1, sizeof(struct pci_device));
       dev->address = address;
       dev->vendorID = vendorID;
       dev->deviceID = deviceID;

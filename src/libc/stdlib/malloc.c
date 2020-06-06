@@ -22,6 +22,7 @@ void validate_block(struct block_meta *block)
 {
   if (block->magic != BLOCK_MAGIC)
   {
+    __asm__ __volatile("int $0x0E");
   }
 }
 

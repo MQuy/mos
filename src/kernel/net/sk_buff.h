@@ -64,7 +64,8 @@ static inline void skb_pull(struct sk_buff *skb, uint32_t len)
   skb->len -= len;
 }
 
-struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size);
-struct sk_buff *clone_skb(struct sk_buff *skb);
+struct sk_buff *skb_alloc(uint32_t header_size, uint32_t payload_size);
+struct sk_buff *skb_clone(struct sk_buff *skb);
+void skb_free(struct sk_buff *skb);
 
 #endif

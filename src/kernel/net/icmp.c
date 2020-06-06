@@ -47,6 +47,8 @@ void icmp_reply(uint32_t source_ip,
 
   sock->ops->sendmsg(sock, iph, total_len);
   sock->ops->shutdown(sock);
+
+  kfree(buff);
 }
 
 // Check icmp header valid, adjust skb *data

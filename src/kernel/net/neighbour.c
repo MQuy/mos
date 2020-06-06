@@ -55,6 +55,8 @@ uint8_t *lookup_mac_addr_from_ip(uint32_t ip)
   nb->ip = rarp->spa;
   memcpy(nb->ha, rarp->sha, 6);
   list_add_tail(&nb->sibling, &lneighbour);
+
+  kfree(rarp);
   return nb->ha;
 }
 

@@ -2,7 +2,7 @@
 #include <kernel/net/net.h>
 #include "sk_buff.h"
 
-struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size)
+struct sk_buff *skb_alloc(uint32_t header_size, uint32_t payload_size)
 {
   struct sk_buff *skb = kcalloc(1, sizeof(struct sk_buff));
 
@@ -17,7 +17,7 @@ struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size)
   return skb;
 }
 
-struct sk_buff *clone_skb(struct sk_buff *skb)
+struct sk_buff *skb_clone(struct sk_buff *skb)
 {
   struct sk_buff *skb_new = kcalloc(1, sizeof(struct sk_buff));
   memcpy(skb_new, skb, sizeof(struct sk_buff));
@@ -30,4 +30,12 @@ struct sk_buff *clone_skb(struct sk_buff *skb)
   skb_new->data = packet + (skb->data - skb->head);
   skb_new->tail = packet + (skb->tail - skb->head);
   skb_new->end = packet + packet_size;
+
+  return skb_new;
+}
+
+void skb_free(struct sk_buff *skb)
+{
+  kfree(skb->head);
+  kfree(skb);
 }

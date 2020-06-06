@@ -16,7 +16,7 @@ int32_t arp_validate_packet(struct arp_packet *ap)
 
 struct arp_packet *arp_create_packet(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t op)
 {
-  struct arp_packet *ap = kmalloc(sizeof(struct arp_packet));
+  struct arp_packet *ap = kcalloc(1, sizeof(struct arp_packet));
   ap->htype = htons(ARP_ETHERNET);
   ap->ptype = htons(ETH_P_IP);
   ap->hlen = 6;

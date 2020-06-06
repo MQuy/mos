@@ -49,6 +49,7 @@ void rtl8139_receive_packet()
 
       memcpy(payload, buf, rx_header->size);
       push_rx_queue(payload, rx_header->size);
+      kfree(payload);
     }
     outportw(rtl_netdev->base_addr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
   }

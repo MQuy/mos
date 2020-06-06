@@ -28,7 +28,7 @@ struct net_device *current_netdev;
 // -> size might be bigger than its actual size
 void push_rx_queue(uint8_t *data, uint32_t size)
 {
-  struct sk_buff *skb = alloc_skb(0, size);
+  struct sk_buff *skb = skb_alloc(0, size);
 
   skb_put(skb, size);
   memcpy(skb->data, data, size);
@@ -191,7 +191,7 @@ void net_rx_loop()
       if (prev_skb)
       {
         list_del(&prev_skb->sibling);
-        kfree(prev_skb);
+        skb_free(prev_skb);
       }
 
       struct socket *sock;
@@ -207,7 +207,7 @@ void net_rx_loop()
     if (prev_skb)
     {
       list_del(&prev_skb->sibling);
-      kfree(prev_skb);
+      skb_free(prev_skb);
     }
 
     update_thread(current_thread, THREAD_WAITING);
