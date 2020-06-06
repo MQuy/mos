@@ -233,7 +233,7 @@ int32_t parse_dhcp_ack_options(uint8_t *options, uint32_t *subnet_mask, uint32_t
 // 7. Get router ip, router mac address and assign them to net dev
 int32_t dhcp_setup()
 {
-  int32_t sockfd = sys_socket(PF_PACKET, SOCK_RAW, ETH_P_IP);
+  int32_t sockfd = sys_socket(PF_PACKET, SOCK_RAW, ETH_P_ALL);
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
   struct sk_buff *skb;
@@ -255,17 +255,33 @@ int32_t dhcp_setup()
 
   // DHCP Offer
   struct dhcp_packet *dhcp_offer;
+  uint8_t attempt_discovery = 0;
   while (true)
   {
+    attempt_discovery++;
     memset(recv_eh, 0, MAX_PACKET_LEN);
     sock->ops->recvmsg(sock, recv_eh, MAX_PACKET_LEN);
 
     ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_offer);
-    if (ret < 0)
-      continue;
-    ret = parse_dhcp_offer_options(dhcp_offer->options, &server_ip);
     if (ret >= 0)
-      break;
+    {
+      ret = parse_dhcp_offer_options(dhcp_offer->options, &server_ip);
+      if (ret >= 0)
+        break;
+    }
+
+    // NOTE: MQ 2020-06-06
+    // DHCP Server might not accept dhcp discovery in the first few times (why?)
+    // after discovering, we do it again in every 5th received packet until we get dhcp offer
+    // we will use the separated process (via command line) with share memory and pthread
+    if (attempt_discovery % 5 == 0)
+    {
+      uint32_t dhcp_discovery_option_len;
+      dhcp_create_discovery_options(&options, &dhcp_discovery_option_len);
+      skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_discovery_option_len);
+      kfree(options);
+      sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(dhcp_discovery_option_len));
+    }
   }
 
   // DHCP Request
@@ -281,7 +297,6 @@ int32_t dhcp_setup()
   {
     memset(recv_eh, 0, MAX_PACKET_LEN);
     sock->ops->recvmsg(sock, recv_eh, MAX_PACKET_LEN);
-    sock->ops->shutdown(sock);
 
     ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_ack);
     if (ret < 0)
@@ -290,6 +305,7 @@ int32_t dhcp_setup()
     if (ret >= 0)
       break;
   }
+  sock->ops->shutdown(sock);
   local_ip = ntohl(dhcp_ack->yiaddr);
   subnet_mask = ntohl(subnet_mask);
   router_ip = ntohl(router_ip);

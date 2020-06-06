@@ -87,7 +87,7 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
   struct sock *sk = sock->sk;
   struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
 
-  if (eh->type != htons(sock->protocol))
+  if (eh->type != htons(sock->protocol) && sock->protocol != ETH_P_ALL)
     return -EPROTO;
 
   skb->mac.eh = eh;

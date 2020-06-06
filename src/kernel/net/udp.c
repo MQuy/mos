@@ -8,6 +8,7 @@
 
 #define CHECKSUM_MASK 0xFFFF
 
+// Validate checksum
 int32_t udp_validate_header(struct udp_packet *udp)
 {
   return 0;
