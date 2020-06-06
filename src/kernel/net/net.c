@@ -134,9 +134,9 @@ bool is_broadcast_mac_address(uint8_t *maddr)
 // 1. Check icmp request to local ip -> send ICMP reply
 // 2. Check arp probe asking our mac address -> send arp reply
 // 3. Check arp annoucement -> update neighbour arp
-int32_t net_default_rx_handler(struct sk_buff *skb)
+int net_default_rx_handler(struct sk_buff *skb)
 {
-  int32_t ret = ethernet_rcv(skb);
+  int ret = ethernet_rcv(skb);
   if (ret < 0)
     return ret;
 

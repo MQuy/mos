@@ -23,6 +23,6 @@ void icmp_reply(uint32_t source_ip,
                 uint32_t identification,
                 uint32_t rest_of_header,
                 uint8_t *payload, uint32_t payload_len);
-int32_t icmp_rcv(struct sk_buff *skb);
+int icmp_rcv(struct sk_buff *skb);
 
 #endif

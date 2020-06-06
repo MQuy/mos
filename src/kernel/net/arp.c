@@ -6,7 +6,7 @@
 #include <kernel/system/sysapi.h>
 #include "arp.h"
 
-int32_t arp_validate_packet(struct arp_packet *ap)
+int arp_validate_packet(struct arp_packet *ap)
 {
   if (ap->htype != htons(ARP_ETHERNET) || ap->ptype != htons(ETH_P_IP) || ap->hlen != 6 || ap->plen != 4)
     return -EPROTO;
@@ -30,7 +30,7 @@ struct arp_packet *arp_create_packet(uint8_t *source_mac, uint32_t source_ip, ui
   return ap;
 }
 
-int32_t arp_rcv(struct sk_buff *skb)
+int arp_rcv(struct sk_buff *skb)
 {
   int32_t ret;
 
@@ -44,7 +44,7 @@ int32_t arp_rcv(struct sk_buff *skb)
   return 0;
 }
 
-int32_t arp_send(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t type)
+int arp_send(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t type)
 {
   uint32_t sockfd = sys_socket(PF_PACKET, SOCK_DGRAM, ETH_P_ARP);
   struct socket *sock = sockfd_lookup(sockfd);

@@ -148,12 +148,15 @@ void dhcp_create_request_options(uint8_t **options, uint32_t *len, uint32_t requ
   dhcp_option_adjust_len(len);
 }
 
-int32_t dhcp_validate_header(struct dhcp_packet *dhcp)
+int dhcp_validate_header(struct dhcp_packet *dhcp)
 {
+  if (dhcp->htype != 0x01 || dhcp->hlen != 0x06 || dhcp->magic != htonl(DHCP_MAGIC))
+    return -EPROTO;
+
   return 0;
 }
 
-int32_t dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet **dhcp)
+int dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet **dhcp)
 {
   struct ip4_packet *ip = (struct ip4_packet *)((uint32_t)eh + sizeof(struct ethernet_packet));
 
@@ -162,7 +165,7 @@ int32_t dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet
     return ret;
 
   struct udp_packet *udp = (struct udp_packet *)((uint32_t)ip + sizeof(struct ip4_packet));
-  ret = udp_validate_header(udp);
+  ret = udp_validate_header(udp, ntohl(ip->source_ip), ntohl(ip->dest_ip));
   if (ret < 0)
     return ret;
 
@@ -175,7 +178,7 @@ int32_t dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet
   return 0;
 }
 
-int32_t dhcp_offer_parse_options(uint8_t *options, uint32_t *server_ip)
+int dhcp_offer_parse_options(uint8_t *options, uint32_t *server_ip)
 {
   uint32_t opt_server_ip;
   uint8_t opt_message_type;
@@ -197,7 +200,7 @@ int32_t dhcp_offer_parse_options(uint8_t *options, uint32_t *server_ip)
   return 0;
 }
 
-int32_t dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *router_ip, uint32_t *lease_time, uint32_t *server_ip)
+int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *router_ip, uint32_t *lease_time, uint32_t *server_ip)
 {
   uint32_t opt_subnet_mask, opt_router_ip, opt_lease_time, opt_server_ip;
   uint8_t opt_message_type;
@@ -235,7 +238,7 @@ int32_t dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t
 // 5. Get server_ip, yiaddr and xip -> send dhcp request
 // 6. In recvmsg -> dhcp ack -> valid IP/UDP headers
 // 7. Get router ip, router mac address and assign them to net dev
-int32_t dhcp_setup()
+int dhcp_setup()
 {
   int32_t sockfd = sys_socket(PF_PACKET, SOCK_RAW, ETH_P_ALL);
   struct socket *sock = sockfd_lookup(sockfd);

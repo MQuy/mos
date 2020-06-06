@@ -11,9 +11,9 @@
 
 #define IP4_TTL 0x80
 
-int32_t ip4_validate_header(struct ip4_packet *ip, uint8_t protocal)
+int ip4_validate_header(struct ip4_packet *ip, uint8_t protocal)
 {
-  uint32_t ret = 0;
+  int ret = 0;
   uint16_t received_checksum = ip->header_checksum;
 
   ip->header_checksum = 0;
@@ -58,7 +58,7 @@ void ip4_sendmsg(struct socket *sock, struct sk_buff *skb)
 }
 
 // Check ip header valid, adjust skb *data
-int32_t ip4_rcv(struct sk_buff *skb)
+int ip4_rcv(struct sk_buff *skb)
 {
   if (htons(skb->mac.eh->type) != ETH_P_IP)
     return -EPROTO;

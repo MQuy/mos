@@ -77,7 +77,7 @@ void vmm_init()
   vmm_init_and_map(va_dir, 0xC0000000, 0x00000000);
 
   // NOTE: MQ 2019-11-21 Preallocate ptable for higher half kernel
-  for (uint32_t i = 769; i < 1024; ++i)
+  for (int i = 769; i < 1024; ++i)
     vmm_alloc_ptable(va_dir, i);
 
   // NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging (map last entry to directory)

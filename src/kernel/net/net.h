@@ -173,7 +173,7 @@ enum netdev_state
 struct net_device
 {
   uint32_t base_addr;
-  uint32_t irq;
+  uint8_t irq;
 
   char name[16];
   uint8_t state;

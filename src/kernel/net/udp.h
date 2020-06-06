@@ -22,6 +22,6 @@ struct ip4_pseudo_header
 };
 
 void udp_build_header(struct udp_packet *udp, uint16_t msg_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_ip, uint16_t dest_port);
-int32_t udp_validate_header(struct udp_packet *udp);
+int udp_validate_header(struct udp_packet *udp, uint32_t source_ip, uint32_t dest_ip);
 
 #endif

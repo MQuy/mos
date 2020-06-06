@@ -6,7 +6,7 @@
 #include <kernel/system/sysapi.h>
 #include "icmp.h"
 
-int32_t icmp_validate_packet(struct icmp_packet *icmp)
+int icmp_validate_packet(struct icmp_packet *icmp)
 {
   return 0;
 }
@@ -52,7 +52,7 @@ void icmp_reply(uint32_t source_ip,
 }
 
 // Check icmp header valid, adjust skb *data
-int32_t icmp_rcv(struct sk_buff *skb)
+int icmp_rcv(struct sk_buff *skb)
 {
   if (skb->nh.iph->protocal != IP4_PROTOCAL_ICMP)
     return -EPROTO;

@@ -10,13 +10,7 @@
 #define CHECKSUM_MASK 0xFFFF
 #define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
 
-// Validate checksum
-int32_t udp_validate_header(struct udp_packet *udp)
-{
-  return 0;
-}
-
-void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t source_ip, uint32_t dest_ip)
+uint16_t udp_calculate_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t source_ip, uint32_t dest_ip)
 {
   struct ip4_pseudo_header *ip4_pseudo_header = kcalloc(1, sizeof(struct ip4_pseudo_header));
   ip4_pseudo_header->source_ip = htonl(source_ip);
@@ -25,6 +19,7 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t 
   ip4_pseudo_header->protocal = IP4_PROTOCAL_UDP;
   ip4_pseudo_header->udp_length = htons(udp_len);
 
+  udp_packet->checksum = 0;
   uint32_t ip4_checksum_start = packet_checksum_start(ip4_pseudo_header, sizeof(struct ip4_pseudo_header));
   uint32_t udp_checksum_start = packet_checksum_start(udp_packet, udp_len);
   uint32_t checksum = ip4_checksum_start + udp_checksum_start;
@@ -32,8 +27,23 @@ void udp_set_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t 
   while (checksum > CHECKSUM_MASK)
     checksum = (checksum & CHECKSUM_MASK) + (checksum >> 16);
 
-  udp_packet->checksum = ~checksum & CHECKSUM_MASK;
   kfree(ip4_pseudo_header);
+  return ~checksum & CHECKSUM_MASK;
+}
+
+int udp_validate_header(struct udp_packet *udp, uint32_t source_ip, uint32_t dest_ip)
+{
+  uint16_t received_checksum = udp->checksum;
+  if (!received_checksum)
+    return 0;
+
+  int ret = 0;
+  uint16_t packet_checksum = udp_calculate_checksum(udp, ntohs(udp->length), source_ip, dest_ip);
+  if (packet_checksum != received_checksum)
+    ret = -EPROTO;
+
+  udp->checksum = received_checksum;
+  return ret;
 }
 
 void udp_build_header(struct udp_packet *udp, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_ip, uint16_t dest_port)
@@ -41,9 +51,7 @@ void udp_build_header(struct udp_packet *udp, uint16_t packet_len, uint32_t sour
   udp->source_port = htons(source_port);
   udp->dest_port = htons(dest_port);
   udp->length = htons(packet_len);
-  udp->checksum = 0;
-
-  udp_set_checksum(udp, packet_len, source_ip, dest_ip);
+  udp->checksum = udp_calculate_checksum(udp, packet_len, source_ip, dest_ip);
 }
 
 int udp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
@@ -136,6 +144,9 @@ int udp_handler(struct socket *sock, struct sk_buff *skb)
     return -EPROTO;
 
   struct udp_packet *udp = (struct udp_packet *)skb->data;
+  ret = udp_validate_header(udp, ntohl(skb->nh.iph->source_ip), ntohl(skb->nh.iph->dest_ip));
+  if (ret < 0)
+    return ret;
 
   if (skb->nh.iph->dest_ip == isk->ssin.sin_addr && udp->dest_port == isk->ssin.sin_port &&
       skb->nh.iph->source_ip == isk->dsin.sin_addr && udp->source_port == isk->dsin.sin_port)

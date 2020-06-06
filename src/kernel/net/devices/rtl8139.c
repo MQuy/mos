@@ -124,7 +124,7 @@ void rtl8139_init()
   // Enable Receive and Transmitter
   outportb(ioaddr + RTL8139_ChipCmd, RTL8139_CmdRxEnb | RTL8139_CmdTxEnb); // Sets the RE and TE bits high
 
-  int8_t interrupt_line = pci_get_interrupt_line(dev->address);
+  uint8_t interrupt_line = pci_get_interrupt_line(dev->address);
 
   rtl_netdev = kcalloc(1, sizeof(struct net_device));
   rtl_netdev->state = NETDEV_STATE_UP;
