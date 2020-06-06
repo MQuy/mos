@@ -2,15 +2,19 @@
 #include <include/errno.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/net.h>
+#include <kernel/net/ip.h>
 #include <kernel/net/udp.h>
 #include <kernel/net/arp.h>
+#include <kernel/net/ethernet.h>
 #include <kernel/net/neighbour.h>
+#include <kernel/net/sk_buff.h>
 #include <kernel/utils/math.h>
 #include <kernel/system/sysapi.h>
 #include "dhcp.h"
 
 #define MAX_PACKET_LEN 576
-#define DHCP_SIZE(option_len) (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet) + sizeof(struct dhcp_packet) + (option_len))
+#define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
+#define DHCP_SIZE(option_len) (MAX_UDP_HEADER + sizeof(struct dhcp_packet) + (option_len))
 
 void dhcp_build_header(struct dhcp_packet *dhp, uint8_t op, uint16_t size)
 {

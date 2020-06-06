@@ -4,6 +4,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/net/net.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/sk_buff.h>
 #include "af_packet.h"
 
 extern struct thread *current_thread;

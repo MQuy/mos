@@ -3,6 +3,10 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/net/neighbour.h>
 #include <kernel/net/icmp.h>
+#include <kernel/net/sk_buff.h>
+#include <kernel/net/arp.h>
+#include <kernel/net/ip.h>
+#include <kernel/net/ethernet.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/proc/task.h>
@@ -79,21 +83,6 @@ struct socket *sockfd_lookup(uint32_t sockfd)
 {
   struct vfs_file *file = current_process->files->fd[sockfd];
   return SOCKET_I(file->f_dentry->d_inode);
-}
-
-struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size)
-{
-  struct sk_buff *skb = kcalloc(1, sizeof(struct sk_buff));
-
-  // NOTE: MQ 2020-05-20 padding starting header (udp, tcp or raw headers) by word
-  uint32_t packet_size = header_size + payload_size + WORD_SIZE;
-  skb->true_size = packet_size + sizeof(struct sk_buff);
-
-  uint8_t *data = kcalloc(1, packet_size);
-  skb->head = data;
-  skb->data = skb->tail = (uint8_t *)WORD_ALIGN((uint32_t)data + header_size);
-  skb->end = data + packet_size;
-  return skb;
 }
 
 uint32_t packet_checksum_start(void *packet, uint16_t size)

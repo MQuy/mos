@@ -4,11 +4,6 @@
 #include <include/list.h>
 #include <include/if_ether.h>
 #include <kernel/fs/vfs.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/arp.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/udp.h>
-#include <kernel/net/icmp.h>
 
 #define AF_INET 2 /* Internet IP Protocol 	*/
 #define PF_INET AF_INET
@@ -19,7 +14,7 @@
 #define WORD_MASK (~(WORD_SIZE - 1))
 #define WORD_ALIGN(addr) (((addr) + WORD_SIZE - 1) & WORD_MASK)
 
-#define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
+struct sk_buff;
 
 /* Standard well-defined IP protocols.  */
 enum
@@ -195,60 +190,6 @@ struct net_device
   uint32_t lease_time;
 };
 
-struct sk_buff
-{
-  struct sock *sk;
-  struct net_device *dev;
-  struct list_head sibling;
-  uint32_t len, true_size;
-
-  union {
-    struct udp_packet *udph;
-    struct icmp_packet *icmph;
-    uint8_t *raw;
-  } h;
-
-  union {
-    struct ip4_packet *iph;
-    struct arp_packet *arph;
-    uint8_t *raw;
-  } nh;
-
-  union {
-    struct ethernet_packet *eh;
-    uint8_t *raw;
-  } mac;
-
-  uint8_t *head;
-  uint8_t *data;
-  uint8_t *tail;
-  uint8_t *end;
-};
-
-static inline void skb_reserve(struct sk_buff *skb, uint32_t len)
-{
-  skb->data += len;
-  skb->tail += len;
-}
-
-static inline void skb_put(struct sk_buff *skb, uint32_t len)
-{
-  skb->tail += len;
-  skb->len += len;
-};
-
-static inline void skb_push(struct sk_buff *skb, uint32_t len)
-{
-  skb->data -= len;
-  skb->len += len;
-}
-
-static inline void skb_pull(struct sk_buff *skb, uint32_t len)
-{
-  skb->data += len;
-  skb->len -= len;
-}
-
 void net_init();
 void net_rx_loop();
 void net_switch();
@@ -256,7 +197,6 @@ void push_rx_queue(uint8_t *data, uint32_t size);
 void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struct vfs_file *file);
 int socket_shutdown(struct socket *sock);
 struct socket *sockfd_lookup(uint32_t fd);
-struct sk_buff *alloc_skb(uint32_t header_size, uint32_t payload_size);
 uint16_t singular_checksum(void *packet, uint16_t size);
 uint32_t packet_checksum_start(void *packet, uint16_t size);
 

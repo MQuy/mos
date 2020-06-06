@@ -4,6 +4,7 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/utils/math.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/sk_buff.h>
 #include <kernel/net/net.h>
 #include <kernel/net/neighbour.h>
 #include "ip.h"

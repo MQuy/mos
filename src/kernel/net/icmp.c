@@ -1,6 +1,8 @@
 #include <include/errno.h>
-#include <kernel/net/net.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/net/net.h>
+#include <kernel/net/sk_buff.h>
+#include <kernel/net/ip.h>
 #include <kernel/system/sysapi.h>
 #include "icmp.h"
 

@@ -3,10 +3,12 @@
 #include <kernel/proc/task.h>
 #include <kernel/net/net.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/sk_buff.h>
 #include <kernel/net/ip.h>
 #include "udp.h"
 
 #define CHECKSUM_MASK 0xFFFF
+#define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
 
 // Validate checksum
 int32_t udp_validate_header(struct udp_packet *udp)

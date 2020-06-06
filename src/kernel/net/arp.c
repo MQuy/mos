@@ -2,6 +2,7 @@
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/net.h>
+#include <kernel/net/sk_buff.h>
 #include <kernel/system/sysapi.h>
 #include "arp.h"
 
