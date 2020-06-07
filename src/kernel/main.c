@@ -15,6 +15,7 @@
 #include "devices/kybrd.h"
 #include "devices/mouse.h"
 #include "devices/pci.h"
+#include "devices/serial.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
 #include "devices/ata.h"
@@ -27,6 +28,7 @@
 #include "system/uiserver.h"
 #include "ipc/message_queue.h"
 #include "system/console.h"
+#include "utils/printf.h"
 #include "multiboot2.h"
 
 extern struct thread *current_thread;
@@ -128,6 +130,7 @@ int kernel_main(unsigned long addr, unsigned long magic)
 
   // register irq and handlers
   idt_init();
+  serial_init();
 
   // physical memory and paging
   pmm_init(multiboot_meminfo, multiboot_mmap);

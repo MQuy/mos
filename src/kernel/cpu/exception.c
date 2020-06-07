@@ -154,14 +154,7 @@ We are sorry for the inconvenience this might have caused.\n\n\
 Please report the following information and restart your computer.\n\
 The system has been halted.\n\n";
 
-	DebugClrScr(0x1f);
-	DebugGotoXY(0, 0);
-	DebugSetColor(0x1f);
-	DebugPuts(sickpc);
-	DebugPuts(disclamer);
-
-	DebugPrintf("*** STOP: ");
-	DebugPrintf(fmt, args);
+	debug_print(DEBUG_ERROR, fmt, args);
 
 	for (;;)
 		;

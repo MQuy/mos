@@ -48,7 +48,7 @@ void i86_default_handler(struct interrupt_registers *regs)
 
   uint8_t int_no = regs->int_no & 0xff;
 
-  DebugPrintf("\n*** [i86 Hal]: unhandled exception %d", int_no);
+  debug_print(DEBUG_ERROR, "\n*** [i86 Hal]: unhandled exception %d", int_no);
 
   halt();
 }
@@ -148,7 +148,7 @@ void handle_interrupt(struct interrupt_registers *regs)
   }
   else
   {
-    DebugPrintf("\nunhandled interrupt %d", int_no);
+    debug_print(DEBUG_ERROR, "\nunhandled interrupt %d", int_no);
   }
 }
 

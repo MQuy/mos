@@ -66,7 +66,7 @@ then
 else
   if [ "$2" == "iso" ]
   then
-    sudo qemu-system-i386 -s -S -boot c -cdrom mos.iso -hda hdd.img -netdev tap,id=mynet0,ifname=tap0,script=./tapup.sh,downscript=./tapdown.sh -device rtl8139,netdev=mynet0,mac=52:55:00:d1:55:01
+    sudo qemu-system-i386 -s -S -boot c -cdrom mos.iso -hda hdd.img -netdev tap,id=mynet0,ifname=tap0,script=./tapup.sh,downscript=./tapdown.sh -device rtl8139,netdev=mynet0,mac=52:55:00:d1:55:01 -serial file:serial.log
   else
     qemu-system-i386 -s -drive format=raw,file=mos.img,index=0,media=disk -d guest_errors,int
   fi
