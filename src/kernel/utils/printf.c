@@ -1,6 +1,7 @@
+#include "printf.h"
+
 #include <kernel/devices/serial.h>
 #include <kernel/utils/string.h>
-#include "printf.h"
 
 size_t vsprintf(char *buffer, const char *fmt, va_list args)
 {
@@ -20,7 +21,6 @@ size_t vsprintf(char *buffer, const char *fmt, va_list args)
 
 		switch (*++fmt_iter)
 		{
-
 		case 'c':
 		{
 			*buffer_iter++ = (char)va_arg(args, int);
@@ -73,10 +73,10 @@ size_t vsprintf(char *buffer, const char *fmt, va_list args)
 // LOG
 static char log_buffer[1024];
 static char tag_opening[][24] = {
-		[DEBUG_TRACE] = "\\\\033[38;5;14m",
-		[DEBUG_WARNING] = "\\\\033[38;5;11m",
-		[DEBUG_ERROR] = "\\\\033[38;5;9m",
-		[DEBUG_FATAL] = "\\\\033[48;5;9m",
+	[DEBUG_TRACE] = "\\\\033[38;5;14m",
+	[DEBUG_WARNING] = "\\\\033[38;5;11m",
+	[DEBUG_ERROR] = "\\\\033[38;5;9m",
+	[DEBUG_FATAL] = "\\\\033[48;5;9m",
 };
 static char tag_closing[] = "\\\\033[m";
 

@@ -1,6 +1,7 @@
+#include "string.h"
+
 #include <include/ctype.h>
 #include <kernel/memory/vmm.h>
-#include "string.h"
 
 //! copies count bytes from src to dest
 void *memcpy(void *dest, const void *src, size_t len)
@@ -139,11 +140,11 @@ size_t strlen(const char *str)
 
 char *strdup(const char *src)
 {
-	char *dst = kcalloc(strlen(src) + 1, sizeof(char)); // Space for length plus nul
+	char *dst = kcalloc(strlen(src) + 1, sizeof(char));	 // Space for length plus nul
 	if (dst == NULL)
-		return NULL;		// No memory
-	strcpy(dst, src); // Copy the characters
-	return dst;				// Return the new string
+		return NULL;   // No memory
+	strcpy(dst, src);  // Copy the characters
+	return dst;		   // Return the new string
 }
 
 char *strchr(const char *s, int c)

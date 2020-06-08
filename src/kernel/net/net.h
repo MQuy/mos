@@ -1,8 +1,8 @@
 #ifndef NET_H
 #define NET_H
 
-#include <include/list.h>
 #include <include/if_ether.h>
+#include <include/list.h>
 #include <kernel/fs/vfs.h>
 
 #define AF_INET 2 /* Internet IP Protocol 	*/
@@ -19,175 +19,175 @@ struct sk_buff;
 /* Standard well-defined IP protocols.  */
 enum
 {
-  IPPROTO_IP = 0,    /* Dummy protocol for TCP		*/
-  IPPROTO_ICMP = 1,  /* Internet Control Message Protocol	*/
-  IPPROTO_TCP = 6,   /* Transmission Control Protocol	*/
-  IPPROTO_UDP = 17,  /* User Datagram Protocol		*/
-  IPPROTO_RAW = 255, /* Raw IP packets			*/
-  IPPROTO_MAX
+	IPPROTO_IP = 0,	   /* Dummy protocol for TCP		*/
+	IPPROTO_ICMP = 1,  /* Internet Control Message Protocol	*/
+	IPPROTO_TCP = 6,   /* Transmission Control Protocol	*/
+	IPPROTO_UDP = 17,  /* User Datagram Protocol		*/
+	IPPROTO_RAW = 255, /* Raw IP packets			*/
+	IPPROTO_MAX
 };
 
 typedef unsigned short sa_family_t;
 
 struct sockaddr
 {
-  sa_family_t sa_family; /* address family, AF_xxx	*/
-  char sa_data[14];      /* 14 bytes of protocol address	*/
+	sa_family_t sa_family; /* address family, AF_xxx	*/
+	char sa_data[14];	   /* 14 bytes of protocol address	*/
 };
 
 struct sockaddr_in
 {
-  uint16_t sin_port; /* port in network byte order */
-  uint32_t sin_addr; /* address in network byte order */
+	uint16_t sin_port; /* port in network byte order */
+	uint32_t sin_addr; /* address in network byte order */
 };
 
-#define PACKET_HOST 0      /* To us		*/
+#define PACKET_HOST 0	   /* To us		*/
 #define PACKET_BROADCAST 1 /* To all		*/
 #define PACKET_MULTICAST 2 /* To group		*/
 #define PACKET_OTHERHOST 3 /* To someone else 	*/
 #define PACKET_OUTGOING 4  /* Outgoing of any type */
 #define PACKET_LOOPBACK 5  /* MC/BRD frame looped back */
-#define PACKET_USER 6      /* To user space	*/
-#define PACKET_KERNEL 7    /* To kernel space	*/
+#define PACKET_USER 6	   /* To user space	*/
+#define PACKET_KERNEL 7	   /* To kernel space	*/
 /* Unused, PACKET_FASTROUTE and PACKET_LOOPBACK are invisible to user space */
 #define PACKET_FASTROUTE 6 /* Fastrouted frame	*/
 
 struct sockaddr_ll
 {
-  uint16_t sll_protocol; /* Physical-layer protocol */
-  uint8_t sll_pkttype;   /* Packet type */
-  uint8_t sll_addr[6];   /* Physical-layer address */
+	uint16_t sll_protocol; /* Physical-layer protocol */
+	uint8_t sll_pkttype;   /* Packet type */
+	uint8_t sll_addr[6];   /* Physical-layer address */
 };
 
 enum socket_state
 {
-  SS_UNCONNECTED = 1,   /* unconnected to any socket	*/
-  SS_CONNECTING = 2,    /* in process of connecting	*/
-  SS_CONNECTED = 3,     /* connected to socket		*/
-  SS_DISCONNECTING = 4, /* in process of disconnecting	*/
-  SS_DISCONNECTED = 5,
+	SS_UNCONNECTED = 1,	  /* unconnected to any socket	*/
+	SS_CONNECTING = 2,	  /* in process of connecting	*/
+	SS_CONNECTED = 3,	  /* connected to socket		*/
+	SS_DISCONNECTING = 4, /* in process of disconnecting	*/
+	SS_DISCONNECTED = 5,
 } socket_state;
 
 enum socket_type
 {
-  SOCK_STREAM = 1,
-  SOCK_DGRAM = 2,
-  SOCK_RAW = 3,
+	SOCK_STREAM = 1,
+	SOCK_DGRAM = 2,
+	SOCK_RAW = 3,
 };
 
 struct socket
 {
-  uint16_t protocol;
-  enum socket_type type;
-  enum socket_state state;
-  unsigned long flags;
+	uint16_t protocol;
+	enum socket_type type;
+	enum socket_state state;
+	unsigned long flags;
 
-  struct vfs_file *file;
-  struct sock *sk;
-  struct proto_ops *ops;
+	struct vfs_file *file;
+	struct sock *sk;
+	struct proto_ops *ops;
 
-  struct list_head sibling;
+	struct list_head sibling;
 };
 
 struct sock
 {
-  struct socket *sock;
-  struct net_device *dev;
-  struct thread *owner_thread;
-  struct list_head rx_queue;
+	struct socket *sock;
+	struct net_device *dev;
+	struct thread *owner_thread;
+	struct list_head rx_queue;
 };
 
 struct inet_sock
 {
-  struct sock sk;
-  struct sockaddr_in ssin;
-  struct sockaddr_in dsin;
+	struct sock sk;
+	struct sockaddr_in ssin;
+	struct sockaddr_in dsin;
 };
 
 struct packet_sock
 {
-  struct sock sk;
-  struct sockaddr_ll sll;
+	struct sock sk;
+	struct sockaddr_ll sll;
 };
 
 static inline struct packet_sock *pkt_sk(struct sock *sk)
 {
-  return (struct packet_sock *)sk;
+	return (struct packet_sock *)sk;
 }
 
 static inline struct inet_sock *inet_sk(struct sock *sk)
 {
-  return (struct inet_sock *)sk;
+	return (struct inet_sock *)sk;
 }
 
 struct proto_ops
 {
-  int family;
-  int (*release)(struct socket *sock);
-  int (*bind)(struct socket *sock,
-              struct sockaddr *myaddr,
-              int sockaddr_len);
-  int (*connect)(struct socket *sock,
-                 struct sockaddr *vaddr,
-                 int sockaddr_len);
-  int (*accept)(struct socket *sock,
-                struct socket *newsock);
-  int (*getname)(struct socket *sock,
-                 struct sockaddr *addr,
-                 int *sockaddr_len, int peer);
-  int (*listen)(struct socket *sock, int len);
-  int (*shutdown)(struct socket *sock);
-  int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
-  // TODO: MQ 2020-05-27
-  // At the beging CONNECTED -> READY
-  // At the end READ -> CONNECTED
-  // To make sure each called recvmsg -> only one message
-  int (*recvmsg)(struct socket *sock, void *msg, size_t msg_len);
-  // NOTE: MQ 2020-05-24 Handling incoming messages to match and process further
-  int (*handler)(struct socket *sock, struct sk_buff *skb);
+	int family;
+	int (*release)(struct socket *sock);
+	int (*bind)(struct socket *sock,
+				struct sockaddr *myaddr,
+				int sockaddr_len);
+	int (*connect)(struct socket *sock,
+				   struct sockaddr *vaddr,
+				   int sockaddr_len);
+	int (*accept)(struct socket *sock,
+				  struct socket *newsock);
+	int (*getname)(struct socket *sock,
+				   struct sockaddr *addr,
+				   int *sockaddr_len, int peer);
+	int (*listen)(struct socket *sock, int len);
+	int (*shutdown)(struct socket *sock);
+	int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
+	// TODO: MQ 2020-05-27
+	// At the beging CONNECTED -> READY
+	// At the end READ -> CONNECTED
+	// To make sure each called recvmsg -> only one message
+	int (*recvmsg)(struct socket *sock, void *msg, size_t msg_len);
+	// NOTE: MQ 2020-05-24 Handling incoming messages to match and process further
+	int (*handler)(struct socket *sock, struct sk_buff *skb);
 };
 
 struct socket_alloc
 {
-  struct socket socket;
-  struct vfs_inode inode;
+	struct socket socket;
+	struct vfs_inode inode;
 };
 
 static inline struct socket *SOCKET_I(struct vfs_inode *inode)
 {
-  return &container_of(inode, struct socket_alloc, inode)->socket;
+	return &container_of(inode, struct socket_alloc, inode)->socket;
 }
 
 static inline struct vfs_inode *SOCK_INODE(struct socket *socket)
 {
-  return &container_of(socket, struct socket_alloc, socket)->inode;
+	return &container_of(socket, struct socket_alloc, socket)->inode;
 }
 
 enum netdev_state
 {
-  NETDEV_STATE_OFF = 1,
-  NETDEV_STATE_UP = 1 << 1,
-  NETDEV_STATE_CONNECTED = 1 << 2, // interface connects and gets config (dhcp -> ip) from router
+	NETDEV_STATE_OFF = 1,
+	NETDEV_STATE_UP = 1 << 1,
+	NETDEV_STATE_CONNECTED = 1 << 2,  // interface connects and gets config (dhcp -> ip) from router
 };
 
 struct net_device
 {
-  uint32_t base_addr;
-  uint8_t irq;
+	uint32_t base_addr;
+	uint8_t irq;
 
-  char name[16];
-  uint8_t state;
-  struct list_head sibling;
+	char name[16];
+	uint8_t state;
+	struct list_head sibling;
 
-  // ip & mac address
-  uint8_t dev_addr[6];
-  uint8_t broadcast_addr[6];
-  uint8_t zero_addr[6];
-  uint8_t router_addr[6];
-  uint32_t router_ip;
-  uint32_t local_ip;
-  uint32_t subnet_mask;
-  uint32_t lease_time;
+	// ip & mac address
+	uint8_t dev_addr[6];
+	uint8_t broadcast_addr[6];
+	uint8_t zero_addr[6];
+	uint8_t router_addr[6];
+	uint32_t router_ip;
+	uint32_t local_ip;
+	uint32_t subnet_mask;
+	uint32_t lease_time;
 };
 
 void net_init();

@@ -1,8 +1,8 @@
 #ifndef NET_NEIGHBOUR_H
 #define NET_NEIGHBOUR_H
 
-#include <stdint.h>
 #include <include/list.h>
+#include <stdint.h>
 
 #define NUD_INCOMPLETE 0x01
 #define NUD_REACHABLE 0x02
@@ -13,11 +13,11 @@
 
 struct neighbour
 {
-  uint8_t ha[6];
-  uint32_t ip;
-  uint8_t nud_state;
-  struct net_device *dev;
-  struct list_head sibling;
+	uint8_t ha[6];
+	uint32_t ip;
+	uint8_t nud_state;
+	struct net_device *dev;
+	struct list_head sibling;
 };
 
 void neighbour_init();

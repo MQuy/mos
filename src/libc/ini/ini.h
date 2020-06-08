@@ -29,15 +29,15 @@ extern "C"
 
 /* Typedef for prototype of handler function. */
 #if INI_HANDLER_LINENO
-   typedef int (*ini_handler)(void *user, const char *section,
-                              const char *name, const char *value,
-                              int lineno);
+	typedef int (*ini_handler)(void *user, const char *section,
+							   const char *name, const char *value,
+							   int lineno);
 #else
 typedef int (*ini_handler)(void *user, const char *section,
-                           const char *name, const char *value);
+						   const char *name, const char *value);
 #endif
 
-   /* Parse given INI-style file. May have [section]s, name=value pairs
+	/* Parse given INI-style file. May have [section]s, name=value pairs
    (whitespace stripped), and comments starting with ';' (semicolon). Section
    is "" if name=value pair parsed before any section heading. name:value
    pairs are also supported as a concession to Python's configparser.
@@ -50,22 +50,22 @@ typedef int (*ini_handler)(void *user, const char *section,
    stop on first error), -1 on file open error, or -2 on memory allocation
    error (only when INI_USE_STACK is zero).
 */
-   int ini_parse(const char *filename, ini_handler handler, void *user);
+	int ini_parse(const char *filename, ini_handler handler, void *user);
 
-   /* Same as ini_parse(), but takes a FILE* instead of filename. This doesn't
+	/* Same as ini_parse(), but takes a FILE* instead of filename. This doesn't
    close the file when it's finished -- the caller must do that. */
-   int ini_parse_file(int32_t fd, ini_handler handler, void *user);
+	int ini_parse_file(int32_t fd, ini_handler handler, void *user);
 
-   /* Same as ini_parse(), but takes an ini_reader function pointer instead of
+	/* Same as ini_parse(), but takes an ini_reader function pointer instead of
    filename. Used for implementing custom or string-based I/O (see also
    ini_parse_string). */
-   int ini_parse_stream(char *buf, ini_handler handler,
-                        void *user);
+	int ini_parse_stream(char *buf, ini_handler handler,
+						 void *user);
 
-   /* Same as ini_parse(), but takes a zero-terminated string with the INI data
+	/* Same as ini_parse(), but takes a zero-terminated string with the INI data
 instead of a file. Useful for parsing INI data from a network socket or
 already in memory. */
-   int ini_parse_string(char *string, ini_handler handler, void *user);
+	int ini_parse_string(char *string, ini_handler handler, void *user);
 
 /* Nonzero to allow multi-line value parsing, in the style of Python's
    configparser. If allowed, ini_parse() will call the handler with the same

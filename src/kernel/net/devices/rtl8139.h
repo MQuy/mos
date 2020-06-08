@@ -7,9 +7,9 @@
 #define RTL8139_DEVICE_ID 0x8139
 
 #define RTL8139_MAC0 0
-#define RTL8139_MAR0 8         /* Multicast filter. */
+#define RTL8139_MAR0 8		   /* Multicast filter. */
 #define RTL8139_TxStatus0 0x10 /* Transmit status (Four 32bit registers). C mode only */
-                               /* Dump Tally Conter control register(64bit). C+ mode only */
+							   /* Dump Tally Conter control register(64bit). C+ mode only */
 #define RTL8139_TxAddr0 0x20   /* Tx descriptors (also four 32bit). */
 #define RTL8139_RxBuf 0x30
 #define RTL8139_ChipCmd 0x37
@@ -19,7 +19,7 @@
 #define RTL8139_IntrStatus 0x3E
 #define RTL8139_TxConfig 0x40
 #define RTL8139_RxConfig 0x44
-#define RTL8139_Timer 0x48    /* A general-purpose counter. */
+#define RTL8139_Timer 0x48	  /* A general-purpose counter. */
 #define RTL8139_RxMissed 0x4C /* 24 bits valid, write clears. */
 #define RTL8139_Cfg9346 0x50
 #define RTL8139_Config0 0x51
@@ -40,55 +40,55 @@
 
 enum RTL8139_ChipCmdBits
 {
-  RTL8139_CmdReset = 0x10,
-  RTL8139_CmdRxEnb = 0x08,
-  RTL8139_CmdTxEnb = 0x04,
-  RTL8139_RxBufEmpty = 0x01,
+	RTL8139_CmdReset = 0x10,
+	RTL8139_CmdRxEnb = 0x08,
+	RTL8139_CmdTxEnb = 0x04,
+	RTL8139_RxBufEmpty = 0x01,
 };
 
 enum RTL8139_IntrStatusBits
 {
-  RTL8139_PCIErr = 0x8000,
-  RTL8139_PCSTimeout = 0x4000,
-  RTL8139_RxFIFOOver = 0x40,
-  RTL8139_RxUnderrun = 0x20, /* Packet Underrun / Link Change */
-  RTL8139_RxOverflow = 0x10,
-  RTL8139_TxErr = 0x08,
-  RTL8139_TxOK = 0x04,
-  RTL8139_RxErr = 0x02,
-  RTL8139_RxOK = 0x01,
+	RTL8139_PCIErr = 0x8000,
+	RTL8139_PCSTimeout = 0x4000,
+	RTL8139_RxFIFOOver = 0x40,
+	RTL8139_RxUnderrun = 0x20, /* Packet Underrun / Link Change */
+	RTL8139_RxOverflow = 0x10,
+	RTL8139_TxErr = 0x08,
+	RTL8139_TxOK = 0x04,
+	RTL8139_RxErr = 0x02,
+	RTL8139_RxOK = 0x01,
 
-  RTL8139_RxAckBits = RTL8139_RxFIFOOver | RTL8139_RxOverflow | RTL8139_RxOK,
+	RTL8139_RxAckBits = RTL8139_RxFIFOOver | RTL8139_RxOverflow | RTL8139_RxOK,
 };
 
 enum RTL8139_rx_mode_bits
 {
-  RTL8139_AcceptErr = 0x20,
-  RTL8139_AcceptRunt = 0x10,
-  RTL8139_AcceptBroadcast = 0x08,
-  RTL8139_AcceptMulticast = 0x04,
-  RTL8139_AcceptMyPhys = 0x02,
-  RTL8139_AcceptAllPhys = 0x01,
+	RTL8139_AcceptErr = 0x20,
+	RTL8139_AcceptRunt = 0x10,
+	RTL8139_AcceptBroadcast = 0x08,
+	RTL8139_AcceptMulticast = 0x04,
+	RTL8139_AcceptMyPhys = 0x02,
+	RTL8139_AcceptAllPhys = 0x01,
 };
 
 enum RTL8139_RxConfigBits
 {
-  /* rx fifo threshold */
-  RTL8139_RxCfgFIFOShift = 13,
-  RTL8139_RxCfgFIFONone = (7 << RTL8139_RxCfgFIFOShift),
+	/* rx fifo threshold */
+	RTL8139_RxCfgFIFOShift = 13,
+	RTL8139_RxCfgFIFONone = (7 << RTL8139_RxCfgFIFOShift),
 
-  /* Max DMA burst */
-  RTL8139_RxCfgDMAShift = 8,
-  RTL8139_RxCfgDMAUnlimited = (7 << RTL8139_RxCfgDMAShift),
+	/* Max DMA burst */
+	RTL8139_RxCfgDMAShift = 8,
+	RTL8139_RxCfgDMAUnlimited = (7 << RTL8139_RxCfgDMAShift),
 
-  /* rx ring buffer length */
-  RTL8139_RxCfgRcv8K = 0,
-  RTL8139_RxCfgRcv16K = (1 << 11),
-  RTL8139_RxCfgRcv32K = (1 << 12),
-  RTL8139_RxCfgRcv64K = (1 << 11) | (1 << 12),
+	/* rx ring buffer length */
+	RTL8139_RxCfgRcv8K = 0,
+	RTL8139_RxCfgRcv16K = (1 << 11),
+	RTL8139_RxCfgRcv32K = (1 << 12),
+	RTL8139_RxCfgRcv64K = (1 << 11) | (1 << 12),
 
-  /* Disable packet wrap at end of Rx buffer. (not possible with 64k) */
-  RTL8139_RxNoWrap = (1 << 7),
+	/* Disable packet wrap at end of Rx buffer. (not possible with 64k) */
+	RTL8139_RxNoWrap = (1 << 7),
 };
 
 #define ROK 0x01
@@ -110,8 +110,8 @@ enum RTL8139_RxConfigBits
 
 struct __attribute__((packed)) rtl8139_rx_header
 {
-  uint16_t status;
-  uint16_t size;
+	uint16_t status;
+	uint16_t size;
 };
 
 void rtl8139_init();

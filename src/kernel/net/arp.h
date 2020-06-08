@@ -8,16 +8,18 @@
 #define ARP_REQUEST 0x0001
 #define ARP_REPLY 0x0002
 
+struct sk_buff;
+
 struct __attribute__((packed)) arp_packet
 {
-    uint16_t htype;
-    uint16_t ptype;
-    uint8_t hlen, plen;
-    uint16_t oper;
-    uint8_t sha[6];
-    uint32_t spa;
-    uint8_t tha[6];
-    uint32_t tpa;
+	uint16_t htype;
+	uint16_t ptype;
+	uint8_t hlen, plen;
+	uint16_t oper;
+	uint8_t sha[6];
+	uint32_t spa;
+	uint8_t tha[6];
+	uint32_t tpa;
 };
 
 struct arp_packet *arp_create_packet(uint8_t *source_mac, uint32_t source_ip, uint8_t *dest_mac, uint32_t dest_ip, uint16_t op);

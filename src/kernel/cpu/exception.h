@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 
+struct interrupt_registers;
+
 //! exception handlers
 int32_t divide_by_zero_fault(struct interrupt_registers *regs);
 int32_t single_step_trap(struct interrupt_registers *regs);

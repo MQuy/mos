@@ -1,8 +1,9 @@
+#include "exception.h"
+
 #include <include/cdefs.h>
-#include <kernel/utils/printf.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
-#include "exception.h"
+#include <kernel/utils/printf.h>
 
 int32_t divide_by_zero_fault(struct interrupt_registers *regs)
 {

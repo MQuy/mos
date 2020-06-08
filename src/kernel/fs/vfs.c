@@ -1,13 +1,15 @@
+#include "vfs.h"
+
 #include <include/errno.h>
-#include <kernel/utils/string.h>
-#include <kernel/utils/printf.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
-#include "vfs.h"
+#include <kernel/utils/printf.h>
+#include <kernel/utils/string.h>
+
 #include "dev.h"
 #include "ext2/ext2.h"
-#include "tmpfs/tmpfs.h"
 #include "sockfs/sockfs.h"
+#include "tmpfs/tmpfs.h"
 
 static struct vfs_file_system_type *file_systems;
 struct list_head vfsmntlist;
@@ -16,124 +18,124 @@ extern struct process *current_process;
 
 struct vfs_file_system_type **find_filesystem(const char *name)
 {
-  struct vfs_file_system_type **p;
-  for (p = &file_systems; *p; p = &(*p)->next)
-  {
-    if (strcmp((*p)->name, name) == 0)
-      break;
-  }
-  return p;
+	struct vfs_file_system_type **p;
+	for (p = &file_systems; *p; p = &(*p)->next)
+	{
+		if (strcmp((*p)->name, name) == 0)
+			break;
+	}
+	return p;
 }
 
 int register_filesystem(struct vfs_file_system_type *fs)
 {
-  struct vfs_file_system_type **p = find_filesystem(fs->name);
+	struct vfs_file_system_type **p = find_filesystem(fs->name);
 
-  if (*p)
-    return -EBUSY;
-  else
-    *p = fs;
+	if (*p)
+		return -EBUSY;
+	else
+		*p = fs;
 
-  return 0;
+	return 0;
 }
 
 int unregister_filesystem(struct vfs_file_system_type *fs)
 {
-  struct vfs_file_system_type **p;
-  for (p = &file_systems; *p; p = &(*p)->next)
-    if (strcmp((*p)->name, fs->name) == 0)
-    {
-      *p = (*p)->next;
-      return 0;
-    }
-  return -EINVAL;
+	struct vfs_file_system_type **p;
+	for (p = &file_systems; *p; p = &(*p)->next)
+		if (strcmp((*p)->name, fs->name) == 0)
+		{
+			*p = (*p)->next;
+			return 0;
+		}
+	return -EINVAL;
 }
 
 int find_unused_fd_slot()
 {
-  for (int i = 0; i < 256; ++i)
-    if (!current_process->files->fd[i])
-      return i;
+	for (int i = 0; i < 256; ++i)
+		if (!current_process->files->fd[i])
+			return i;
 
-  return -EINVAL;
+	return -EINVAL;
 }
 
 struct vfs_inode *init_inode()
 {
-  struct vfs_inode *i = kcalloc(1, sizeof(struct vfs_inode));
-  i->i_blocks = 0;
-  i->i_size = 0;
-  sema_init(&i->i_sem, 1);
+	struct vfs_inode *i = kcalloc(1, sizeof(struct vfs_inode));
+	i->i_blocks = 0;
+	i->i_size = 0;
+	sema_init(&i->i_sem, 1);
 
-  return i;
+	return i;
 }
 
 void init_special_inode(struct vfs_inode *inode, umode_t mode, dev_t dev)
 {
-  inode->i_mode = mode;
-  if (S_ISCHR(mode))
-  {
-    inode->i_fop = &def_chr_fops;
-    inode->i_rdev = dev;
-  }
+	inode->i_mode = mode;
+	if (S_ISCHR(mode))
+	{
+		inode->i_fop = &def_chr_fops;
+		inode->i_rdev = dev;
+	}
 }
 
 struct vfs_mount *lookup_mnt(struct vfs_dentry *d)
 {
-  struct vfs_mount *iter;
-  list_for_each_entry(iter, &vfsmntlist, sibling)
-  {
-    if (iter->mnt_mountpoint == d)
-      return iter;
-  }
+	struct vfs_mount *iter;
+	list_for_each_entry(iter, &vfsmntlist, sibling)
+	{
+		if (iter->mnt_mountpoint == d)
+			return iter;
+	}
 
-  return NULL;
+	return NULL;
 }
 
 struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
 {
-  char *dir, *name;
-  strlsplat(path, strliof(path, "/"), &dir, &name);
+	char *dir, *name;
+	strlsplat(path, strliof(path, "/"), &dir, &name);
 
-  struct vfs_file_system_type *fs = *find_filesystem(fstype);
-  struct vfs_mount *mnt = fs->mount(fs, fstype, name);
-  struct nameidata *nd = path_walk(dir);
+	struct vfs_file_system_type *fs = *find_filesystem(fstype);
+	struct vfs_mount *mnt = fs->mount(fs, fstype, name);
+	struct nameidata *nd = path_walk(dir);
 
-  mnt->mnt_mountpoint->d_parent = nd->dentry;
-  list_add_tail(&mnt->mnt_mountpoint->d_sibling, &nd->dentry->d_subdirs);
-  list_add_tail(&mnt->sibling, &vfsmntlist);
+	mnt->mnt_mountpoint->d_parent = nd->dentry;
+	list_add_tail(&mnt->mnt_mountpoint->d_sibling, &nd->dentry->d_subdirs);
+	list_add_tail(&mnt->sibling, &vfsmntlist);
 
-  return mnt;
+	return mnt;
 }
 
 void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
 {
-  struct vfs_mount *mnt = fs_type->mount(fs_type, dev_name, "/");
-  list_add_tail(&mnt->sibling, &vfsmntlist);
+	struct vfs_mount *mnt = fs_type->mount(fs_type, dev_name, "/");
+	list_add_tail(&mnt->sibling, &vfsmntlist);
 
-  current_process->fs->d_root = mnt->mnt_root;
-  current_process->fs->mnt_root = mnt;
+	current_process->fs->d_root = mnt->mnt_root;
+	current_process->fs->mnt_root = mnt;
 }
 
 // NOTE: MQ 2019-07-24
 // we use device mounted name as identifier https://en.wikibooks.org/wiki/Guide_to_Unix/Explanations/Filesystems_and_Swap#Disk_Partitioning
 void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 {
-  debug_println(DEBUG_INFO, "[vfs] - Initializing");
+	debug_println(DEBUG_INFO, "[vfs] - Initializing");
 
-  INIT_LIST_HEAD(&vfsmntlist);
+	INIT_LIST_HEAD(&vfsmntlist);
 
-  debug_println(DEBUG_INFO, "\tMount ext2");
-  init_ext2_fs();
-  init_rootfs(fs, dev_name);
+	debug_println(DEBUG_INFO, "\tMount ext2");
+	init_ext2_fs();
+	init_rootfs(fs, dev_name);
 
-  debug_println(DEBUG_INFO, "\tMount tmpfs");
-  init_tmpfs();
-  debug_println(DEBUG_INFO, "\tMount sockfs");
-  init_sockfs();
+	debug_println(DEBUG_INFO, "\tMount tmpfs");
+	init_tmpfs();
+	debug_println(DEBUG_INFO, "\tMount sockfs");
+	init_sockfs();
 
-  debug_println(DEBUG_INFO, "\tMount chrdev");
-  chrdev_init();
+	debug_println(DEBUG_INFO, "\tMount chrdev");
+	chrdev_init();
 
-  debug_println(DEBUG_INFO, "[vfs] - Done");
+	debug_println(DEBUG_INFO, "[vfs] - Done");
 }

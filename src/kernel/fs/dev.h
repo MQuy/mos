@@ -13,10 +13,10 @@
 
 struct char_device
 {
-  const char *name;
-  uint32_t major;
-  struct list_head sibling;
-  struct vfs_file_operations *f_ops;
+	const char *name;
+	uint32_t major;
+	struct list_head sibling;
+	struct vfs_file_operations *f_ops;
 };
 
 int register_chrdev(struct char_device *dev);

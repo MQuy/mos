@@ -5,10 +5,10 @@
 
 struct tmpfs_sb_info
 {
-  unsigned long max_blocks;  /* How many blocks are allowed */
-  unsigned long free_blocks; /* How many are left for allocation */
-  unsigned long max_inodes;  /* How many inodes are allowed */
-  unsigned long free_inodes; /* How many are left for allocation */
+	unsigned long max_blocks;  /* How many blocks are allowed */
+	unsigned long free_blocks; /* How many are left for allocation */
+	unsigned long max_inodes;  /* How many inodes are allowed */
+	unsigned long free_inodes; /* How many are left for allocation */
 };
 
 // super.c

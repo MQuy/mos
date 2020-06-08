@@ -26,9 +26,9 @@
 #include "plist.h"
 
 #define plist_check_head(h) \
-  do                        \
-  {                         \
-  } while (0)
+	do                      \
+	{                       \
+	} while (0)
 
 /**
  * plist_add - add @node to @head
@@ -38,35 +38,35 @@
  */
 void plist_add(struct plist_node *node, struct plist_head *head)
 {
-  struct plist_node *first, *iter, *prev = NULL;
-  struct list_head *node_next = &head->node_list;
+	struct plist_node *first, *iter, *prev = NULL;
+	struct list_head *node_next = &head->node_list;
 
-  plist_check_head(head);
+	plist_check_head(head);
 
-  if (plist_head_empty(head))
-    goto ins_node;
+	if (plist_head_empty(head))
+		goto ins_node;
 
-  first = iter = plist_first(head);
+	first = iter = plist_first(head);
 
-  do
-  {
-    if (node->prio < iter->prio)
-    {
-      node_next = &iter->node_list;
-      break;
-    }
+	do
+	{
+		if (node->prio < iter->prio)
+		{
+			node_next = &iter->node_list;
+			break;
+		}
 
-    prev = iter;
-    iter = list_entry(iter->prio_list.next,
-                      struct plist_node, prio_list);
-  } while (iter != first);
+		prev = iter;
+		iter = list_entry(iter->prio_list.next,
+						  struct plist_node, prio_list);
+	} while (iter != first);
 
-  if (!prev || prev->prio != node->prio)
-    list_add_tail(&node->prio_list, &iter->prio_list);
+	if (!prev || prev->prio != node->prio)
+		list_add_tail(&node->prio_list, &iter->prio_list);
 ins_node:
-  list_add_tail(&node->node_list, node_next);
+	list_add_tail(&node->node_list, node_next);
 
-  plist_check_head(head);
+	plist_check_head(head);
 }
 
 /**
@@ -77,27 +77,27 @@ ins_node:
  */
 void plist_del(struct plist_node *node, struct plist_head *head)
 {
-  plist_check_head(head);
+	plist_check_head(head);
 
-  if (!list_empty(&node->prio_list))
-  {
-    if (node->node_list.next != &head->node_list)
-    {
-      struct plist_node *next;
+	if (!list_empty(&node->prio_list))
+	{
+		if (node->node_list.next != &head->node_list)
+		{
+			struct plist_node *next;
 
-      next = list_entry(node->node_list.next,
-                        struct plist_node, node_list);
+			next = list_entry(node->node_list.next,
+							  struct plist_node, node_list);
 
-      /* add the next plist_node into prio_list */
-      if (list_empty(&next->prio_list))
-        list_add(&next->prio_list, &node->prio_list);
-    }
-    list_del_init(&node->prio_list);
-  }
+			/* add the next plist_node into prio_list */
+			if (list_empty(&next->prio_list))
+				list_add(&next->prio_list, &node->prio_list);
+		}
+		list_del_init(&node->prio_list);
+	}
 
-  list_del_init(&node->node_list);
+	list_del_init(&node->node_list);
 
-  plist_check_head(head);
+	plist_check_head(head);
 }
 
 /**
@@ -112,30 +112,30 @@ void plist_del(struct plist_node *node, struct plist_head *head)
  */
 void plist_requeue(struct plist_node *node, struct plist_head *head)
 {
-  struct plist_node *iter;
-  struct list_head *node_next = &head->node_list;
+	struct plist_node *iter;
+	struct list_head *node_next = &head->node_list;
 
-  plist_check_head(head);
+	plist_check_head(head);
 
-  if (node == plist_last(head))
-    return;
+	if (node == plist_last(head))
+		return;
 
-  iter = plist_next(node);
+	iter = plist_next(node);
 
-  if (node->prio != iter->prio)
-    return;
+	if (node->prio != iter->prio)
+		return;
 
-  plist_del(node, head);
+	plist_del(node, head);
 
-  plist_for_each_continue(iter, head)
-  {
-    if (node->prio != iter->prio)
-    {
-      node_next = &iter->node_list;
-      break;
-    }
-  }
-  list_add_tail(&node->node_list, node_next);
+	plist_for_each_continue(iter, head)
+	{
+		if (node->prio != iter->prio)
+		{
+			node_next = &iter->node_list;
+			break;
+		}
+	}
+	list_add_tail(&node->node_list, node_next);
 
-  plist_check_head(head);
+	plist_check_head(head);
 }

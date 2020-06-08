@@ -1,123 +1,124 @@
+#include "raw.h"
+
 #include <include/errno.h>
 #include <include/if_ether.h>
 #include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/net/net.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/sk_buff.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/net/ip.h>
 #include <kernel/net/neighbour.h>
+#include <kernel/net/net.h>
+#include <kernel/net/sk_buff.h>
+#include <kernel/proc/task.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
-#include "raw.h"
 
 #define RAW_HEADER_SIZE (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet))
 
 int raw_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
 {
-  struct inet_sock *isk = inet_sk(sock->sk);
-  memcpy(&isk->ssin, myaddr, sockaddr_len);
-  return 0;
+	struct inet_sock *isk = inet_sk(sock->sk);
+	memcpy(&isk->ssin, myaddr, sockaddr_len);
+	return 0;
 }
 
 int raw_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
-  struct inet_sock *isk = inet_sk(sock->sk);
-  memcpy(&isk->dsin, vaddr, sockaddr_len);
+	struct inet_sock *isk = inet_sk(sock->sk);
+	memcpy(&isk->dsin, vaddr, sockaddr_len);
 
-  sock->state = SS_CONNECTED;
-  return 0;
+	sock->state = SS_CONNECTED;
+	return 0;
 }
 
 int raw_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
-  if (sock->state == SS_DISCONNECTED)
-    return -ESHUTDOWN;
+	if (sock->state == SS_DISCONNECTED)
+		return -ESHUTDOWN;
 
-  struct inet_sock *isk = inet_sk(sock->sk);
-  struct sk_buff *skb = skb_alloc(RAW_HEADER_SIZE, msg_len);
-  skb->sk = sock->sk;
-  skb->dev = isk->sk.dev;
+	struct inet_sock *isk = inet_sk(sock->sk);
+	struct sk_buff *skb = skb_alloc(RAW_HEADER_SIZE, msg_len);
+	skb->sk = sock->sk;
+	skb->dev = isk->sk.dev;
 
-  // increase tail -> copy msg into data-tail space
-  skb_put(skb, msg_len);
-  memcpy(skb->data, msg, msg_len);
+	// increase tail -> copy msg into data-tail space
+	skb_put(skb, msg_len);
+	memcpy(skb->data, msg, msg_len);
 
-  // decase data -> copy ip4 header into newdata-olddata
-  skb_push(skb, sizeof(struct ip4_packet));
-  skb->nh.iph = (struct ip4_packet *)skb->data;
-  ip4_build_header(skb->nh.iph, skb->len, sock->protocol, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
+	// decase data -> copy ip4 header into newdata-olddata
+	skb_push(skb, sizeof(struct ip4_packet));
+	skb->nh.iph = (struct ip4_packet *)skb->data;
+	ip4_build_header(skb->nh.iph, skb->len, sock->protocol, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
 
-  ip4_sendmsg(sock, skb);
-  return 0;
+	ip4_sendmsg(sock, skb);
+	return 0;
 }
 
 int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 {
-  if (sock->state == SS_DISCONNECTED)
-    return -ESHUTDOWN;
+	if (sock->state == SS_DISCONNECTED)
+		return -ESHUTDOWN;
 
-  struct sock *sk = sock->sk;
-  struct sk_buff *skb;
+	struct sock *sk = sock->sk;
+	struct sk_buff *skb;
 
-  while (!skb)
-  {
-    skb = list_first_entry_or_null(&sk->rx_queue, struct sk_buff, sibling);
-    if (!skb)
-    {
-      update_thread(sk->owner_thread, THREAD_WAITING);
-      schedule();
-    }
-  }
+	while (!skb)
+	{
+		skb = list_first_entry_or_null(&sk->rx_queue, struct sk_buff, sibling);
+		if (!skb)
+		{
+			update_thread(sk->owner_thread, THREAD_WAITING);
+			schedule();
+		}
+	}
 
-  list_del(&skb->sibling);
+	list_del(&skb->sibling);
 
-  skb->mac.eh = (struct ethernet_packet *)skb->data;
+	skb->mac.eh = (struct ethernet_packet *)skb->data;
 
-  skb_pull(skb, sizeof(struct ethernet_packet));
-  skb->nh.iph = (struct ip4_packet *)skb->data;
+	skb_pull(skb, sizeof(struct ethernet_packet));
+	skb->nh.iph = (struct ip4_packet *)skb->data;
 
-  uint32_t ip4_payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet);
-  memcpy(msg, skb->nh.iph, min(msg_len, ip4_payload_len));
+	uint32_t ip4_payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet);
+	memcpy(msg, skb->nh.iph, min(msg_len, ip4_payload_len));
 
-  skb_free(skb);
-  return 0;
+	skb_free(skb);
+	return 0;
 }
 
 int raw_handler(struct socket *sock, struct sk_buff *skb)
 {
-  if (sock->state == SS_DISCONNECTED)
-    return -ESHUTDOWN;
+	if (sock->state == SS_DISCONNECTED)
+		return -ESHUTDOWN;
 
-  struct inet_sock *isk = inet_sk(sock->sk);
-  struct net_device *dev = sock->sk->dev;
-  struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
+	struct inet_sock *isk = inet_sk(sock->sk);
+	struct net_device *dev = sock->sk->dev;
+	struct ethernet_packet *eh = (struct ethernet_packet *)skb->data;
 
-  if (htons(eh->type) != ETH_P_IP)
-    return -EPROTO;
+	if (htons(eh->type) != ETH_P_IP)
+		return -EPROTO;
 
-  skb->mac.eh = eh;
-  skb_pull(skb, sizeof(struct ethernet_packet));
+	skb->mac.eh = eh;
+	skb_pull(skb, sizeof(struct ethernet_packet));
 
-  struct ip4_packet *iph = (struct ip4_packet *)skb->data;
-  if (iph->source_ip == isk->dsin.sin_addr && iph->dest_ip == dev->local_ip)
-  {
-    skb->nh.iph = iph;
+	struct ip4_packet *iph = (struct ip4_packet *)skb->data;
+	if (iph->source_ip == isk->dsin.sin_addr && iph->dest_ip == dev->local_ip)
+	{
+		skb->nh.iph = iph;
 
-    struct sk_buff *skb_new = skb_clone(skb);
+		struct sk_buff *skb_new = skb_clone(skb);
 
-    list_add_tail(&skb_new->sibling, &sock->sk->rx_queue);
-    update_thread(sock->sk->owner_thread, THREAD_READY);
-  }
-  return 0;
+		list_add_tail(&skb_new->sibling, &sock->sk->rx_queue);
+		update_thread(sock->sk->owner_thread, THREAD_READY);
+	}
+	return 0;
 }
 
 struct proto_ops raw_proto_ops = {
-    .family = PF_INET,
-    .bind = raw_bind,
-    .connect = raw_connect,
-    .sendmsg = raw_sendmsg,
-    .recvmsg = raw_recvmsg,
-    .shutdown = socket_shutdown,
-    .handler = raw_handler,
+	.family = PF_INET,
+	.bind = raw_bind,
+	.connect = raw_connect,
+	.sendmsg = raw_sendmsg,
+	.recvmsg = raw_recvmsg,
+	.shutdown = socket_shutdown,
+	.handler = raw_handler,
 };

@@ -1,10 +1,11 @@
 #ifndef MEMORY_PMM_H
 #define MEMORY_PMM_H
 
-#include <stdint.h>
+#include <kernel/multiboot2.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <kernel/multiboot2.h>
+#include <stdint.h>
+
 #include "kernel_info.h"
 
 #define PMM_FRAMES_PER_BYTE 8

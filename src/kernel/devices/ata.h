@@ -31,12 +31,12 @@
 
 struct ata_device
 {
-  uint16_t io_base;
-  uint16_t associated_io_base;
-  uint8_t irq;
-  char *dev_name;
-  bool is_master;
-  bool is_harddisk;
+	uint16_t io_base;
+	uint16_t associated_io_base;
+	uint8_t irq;
+	char *dev_name;
+	bool is_master;
+	bool is_harddisk;
 };
 
 uint8_t ata_init();

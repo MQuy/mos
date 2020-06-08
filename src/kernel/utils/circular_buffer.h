@@ -2,8 +2,8 @@
 #define CIRCULAR_BUFFER_H_
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /// Opaque circular buffer structure
 struct circular_buf_t;
@@ -60,4 +60,4 @@ size_t circular_buf_size(struct circular_buf_t *cbuf);
 //TODO: int circular_buf_get_range(struct circular_buf_t cbuf, char *data, size_t len);
 //TODO: int circular_buf_put_range(struct circular_buf_t cbuf, char * data, size_t len);
 
-#endif //CIRCULAR_BUFFER_H_
+#endif	//CIRCULAR_BUFFER_H_
