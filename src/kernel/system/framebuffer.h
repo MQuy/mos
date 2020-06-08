@@ -1,5 +1,5 @@
-#ifndef SYSTEM_CONSOLE_H
-#define SYSTEM_CONSOLE_H
+#ifndef SYSTEM_FRAMEBUFFER_H
+#define SYSTEM_FRAMEBUFFER_H
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -14,9 +14,7 @@ struct framebuffer
   uint8_t bpp;
 };
 
-void console_init(struct multiboot_tag_framebuffer *);
-void console_setup();
+void framebuffer_init(struct multiboot_tag_framebuffer *);
 struct framebuffer *get_framebuffer();
-int printf(const char *fmt, ...);
 
 #endif

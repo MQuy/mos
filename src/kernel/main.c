@@ -27,7 +27,7 @@
 #include "devices/char/memory.h"
 #include "system/uiserver.h"
 #include "ipc/message_queue.h"
-#include "system/console.h"
+#include "system/framebuffer.h"
 #include "utils/printf.h"
 #include "multiboot2.h"
 
@@ -67,8 +67,6 @@ void kernel_init()
 
   vfs_init(&ext2_fs_type, "/dev/hda");
   chrdev_memory_init();
-
-  console_setup();
 
   net_init();
   rtl8139_init();
@@ -124,13 +122,15 @@ int kernel_main(unsigned long addr, unsigned long magic)
     }
   }
 
+  // setup serial ports
+  serial_init();
+
   // gdt including kernel, user and tss
   gdt_init();
   install_tss(5, 0x10, 0);
 
   // register irq and handlers
   idt_init();
-  serial_init();
 
   // physical memory and paging
   pmm_init(multiboot_meminfo, multiboot_mmap);
@@ -143,7 +143,7 @@ int kernel_main(unsigned long addr, unsigned long magic)
   kkybrd_install();
   mouse_init();
 
-  console_init(multiboot_framebuffer);
+  framebuffer_init(multiboot_framebuffer);
 
   // enable interrupts to start irqs (timer, keyboard)
   enable_interrupts();

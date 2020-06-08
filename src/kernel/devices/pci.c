@@ -1,6 +1,5 @@
 #include <kernel/cpu/hal.h>
 #include <kernel/utils/printf.h>
-#include <kernel/system/console.h>
 #include <kernel/memory/vmm.h>
 #include "pci.h"
 #include "ata.h"

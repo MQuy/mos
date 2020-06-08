@@ -4,7 +4,6 @@
 #include <kernel/cpu/pic.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
-#include <kernel/system/console.h>
 #include <kernel/utils/printf.h>
 #include <kernel/net/net.h>
 #include "rtl8139.h"
