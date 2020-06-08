@@ -31,5 +31,5 @@ cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"
 hdiutil detach $DISK_NAME
 
 DISK_NAME="$(hdiutil attach -nomount hdd.img)"
-$(brew --prefix e2fsprogs)/sbin/dumpe2fs /dev/disk2
+$(brew --prefix e2fsprogs)/sbin/dumpe2fs $DISK_NAME
 hdiutil detach $DISK_NAME

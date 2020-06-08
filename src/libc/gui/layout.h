@@ -1,6 +1,7 @@
 #ifndef LIBC_GUI_LAYOUT_H
 #define LIBC_GUI_LAYOUT_H
 
+#include <include/cdefs.h>
 #include <include/list.h>
 #include <include/msgui.h>
 #include <libc/hashtable/hashmap.h>
@@ -83,9 +84,7 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
 void init_fonts();
 void enter_event_loop(struct window *win);
 
-#define _inline inline __attribute__((always_inline))
-
-static _inline void set_pixel(char *pixel_dest, uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha_raw)
+static __inline void set_pixel(char *pixel_dest, uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha_raw)
 {
 	uint8_t red_dest = pixel_dest[0];
 	uint8_t green_dest = pixel_dest[1];
