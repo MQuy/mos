@@ -10,7 +10,7 @@ mOS is the hobby operating system which is developed from scratch
 - [x] Program loading
 - [x] UI (window server <-> userspace apps)
 - [ ] Terminal
-- [ ] Networking
+- [x] Networking
 - [ ] Sound
 - [ ] POSIX
 - [ ] Port GCC (the GNU Compiler Collection)
@@ -25,10 +25,22 @@ mOS is the hobby operating system which is developed from scratch
 
 ```
 $ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
-$ cd src && ./build.sh
+$ cd src && ./create_image.sh && ./build.sh qemu iso
 ```
 
-✍🏻If you get this error `hdiutil: attach failed - no mountable file systems`, installing might help [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/)
+✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing might help [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/)
+
+**Debuging**
+
+in `build.sh`, adding `-s -S` right after `qemu` to switch to debug mode. Currently, I use vscode + [native debuge](https://marketplace.visualstudio.com/items?itemName=webfreak.debug) -> click Run -> choose "Attach to QEMU"
+
+**Monitoring**
+
+```
+tail -f serial.log | while read line ; do echo $line ; done
+```
+
+✍🏻 Using `tail` in pipe way to color the output (like above) causes a delay -> have to manually saving in ide to get latest changes
 
 ### References
 

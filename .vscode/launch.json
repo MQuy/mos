@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "gdb",
+      "request": "attach",
+      "name": "Attach to QEMU",
+      "executable": "${workspaceFolder}/src/isodir/boot/mos.bin",
+      "target": "localhost:1234",
+      "remote": true,
+      "cwd": "${workspaceRoot}",
+      "gdbpath": "/usr/local/bin/gdb"
+    }
+  ]
+}
