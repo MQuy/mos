@@ -3,6 +3,7 @@
 #include <kernel/net/net.h>
 #include <kernel/net/arp.h>
 #include <kernel/system/sysapi.h>
+#include <kernel/utils/string.h>
 #include "neighbour.h"
 
 struct list_head lneighbour;

@@ -1,3 +1,6 @@
+#include <kernel/utils/math.h>
+#include <kernel/utils/string.h>
+#include <kernel/utils/printf.h>
 #include "pmm.h"
 
 static uint32_t *memory_bitmap = 0;
@@ -77,6 +80,7 @@ int memory_bitmap_first_frees(size_t size)
 
 void pmm_init(struct multiboot_tag_basic_meminfo *multiboot_meminfo, struct multiboot_tag_mmap *multiboot_mmap)
 {
+  debug_println(DEBUG_INFO, "[pmm] - Initializing");
   memory_size = (multiboot_meminfo->mem_lower + multiboot_meminfo->mem_upper) * 1024;
   memory_bitmap = (uint32_t *)KERNEL_END;
   used_frames = max_frames = div_ceil(memory_size, PMM_FRAME_SIZE);
@@ -88,6 +92,7 @@ void pmm_init(struct multiboot_tag_basic_meminfo *multiboot_meminfo, struct mult
 
   pmm_deinit_region(0x0, KERNEL_BOOT);
   pmm_deinit_region(KERNEL_BOOT, KERNEL_END - KERNEL_START + memory_bitmap_size);
+  debug_println(DEBUG_INFO, "[pmm] - Done");
 }
 
 void pmm_regions(struct multiboot_tag_mmap *multiboot_mmap)

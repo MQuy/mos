@@ -1,5 +1,6 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/net/net.h>
+#include <kernel/utils/string.h>
 #include "sk_buff.h"
 
 struct sk_buff *skb_alloc(uint32_t header_size, uint32_t payload_size)

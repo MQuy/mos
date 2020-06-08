@@ -1,5 +1,6 @@
 #include <include/list.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/utils/printf.h>
 #include "idt.h"
 #include "pic.h"
 #include "pit.h"
@@ -24,6 +25,8 @@ uint32_t get_milliseconds_from_boot()
 
 void pit_init()
 {
+  debug_println(DEBUG_INFO, "[pit] - Initializing");
+
   int divisor = 1193181 / TICKS_PER_SECOND;
 
   outportb(PIT_REG_COMMAND, 0x34);
@@ -31,4 +34,6 @@ void pit_init()
   outportb(PIT_REG_COUNTER, (divisor >> 8) & 0xff);
 
   register_interrupt_handler(IRQ0, pit_interrupt_handler);
+
+  debug_println(DEBUG_INFO, "[pit] - Done");
 }

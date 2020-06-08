@@ -9,6 +9,8 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/system/time.h>
 #include <kernel/utils/hashmap.h>
+#include <kernel/utils/printf.h>
+#include <kernel/utils/string.h>
 #include "task.h"
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
@@ -155,19 +157,24 @@ struct process *create_kernel_process(const char *pname, void *func, int32_t pri
 
 void task_init(void *func)
 {
+  debug_println(DEBUG_INFO, "[task] - Initializing");
+
   hashmap_init(&mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
   sched_init();
   // register_interrupt_handler(IRQ0, irq_schedule_handler);
   register_interrupt_handler(14, thread_page_fault);
 
+  debug_println(DEBUG_INFO, "\tSetup swapper process");
   setup_swapper_process();
 
+  debug_println(DEBUG_INFO, "\tSetup init process");
   struct process *init = create_process(current_process, "init", current_process->pdir);
   struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 0);
 
   init->active_thread = nt;
   update_thread(current_thread, THREAD_TERMINATED);
   update_thread(nt, THREAD_READY);
+  debug_println(DEBUG_INFO, "[task] - Done");
   schedule();
 }
 

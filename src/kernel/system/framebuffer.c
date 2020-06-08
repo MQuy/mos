@@ -3,6 +3,7 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/task.h>
+#include <kernel/utils/math.h>
 #include "psf.h"
 #include "framebuffer.h"
 

@@ -137,7 +137,7 @@ void kernel_panic(const char *fmt, ...)
 	va_start(args, fmt);
 	va_end(args);
 
-	debug_print(DEBUG_FATAL, fmt, args);
+	debug_println(DEBUG_FATAL, fmt, args);
 
 	for (;;)
 		;
@@ -145,6 +145,8 @@ void kernel_panic(const char *fmt, ...)
 
 void exception_init()
 {
+	debug_println(DEBUG_INFO, "[exception] - Initializing");
+
 	register_interrupt_handler(0, (I86_IRQ_HANDLER)divide_by_zero_fault);
 	register_interrupt_handler(1, (I86_IRQ_HANDLER)single_step_trap);
 	register_interrupt_handler(2, (I86_IRQ_HANDLER)nmi_trap);
@@ -163,4 +165,6 @@ void exception_init()
 	register_interrupt_handler(17, (I86_IRQ_HANDLER)alignment_check_fault);
 	register_interrupt_handler(18, (I86_IRQ_HANDLER)machine_check_abort);
 	register_interrupt_handler(19, (I86_IRQ_HANDLER)simd_fpu_fault);
+
+	debug_println(DEBUG_INFO, "[exception] - Done");
 }

@@ -4,6 +4,7 @@
 #include <kernel/system/time.h>
 #include <kernel/proc/task.h>
 #include <kernel/net/net.h>
+#include <kernel/utils/string.h>
 #include "sockfs.h"
 
 #define SOCKFS_MAGIC 0x534F434B

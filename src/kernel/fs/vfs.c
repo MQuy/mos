@@ -1,5 +1,6 @@
 #include <include/errno.h>
 #include <kernel/utils/string.h>
+#include <kernel/utils/printf.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include "vfs.h"
@@ -118,13 +119,21 @@ void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
 // we use device mounted name as identifier https://en.wikibooks.org/wiki/Guide_to_Unix/Explanations/Filesystems_and_Swap#Disk_Partitioning
 void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 {
+  debug_println(DEBUG_INFO, "[vfs] - Initializing");
+
   INIT_LIST_HEAD(&vfsmntlist);
 
+  debug_println(DEBUG_INFO, "\tMount ext2");
   init_ext2_fs();
   init_rootfs(fs, dev_name);
 
+  debug_println(DEBUG_INFO, "\tMount tmpfs");
   init_tmpfs();
+  debug_println(DEBUG_INFO, "\tMount sockfs");
   init_sockfs();
 
+  debug_println(DEBUG_INFO, "\tMount chrdev");
   chrdev_init();
+
+  debug_println(DEBUG_INFO, "[vfs] - Done");
 }

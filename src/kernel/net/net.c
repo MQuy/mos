@@ -10,6 +10,8 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/proc/task.h>
+#include <kernel/utils/printf.h>
+#include <kernel/utils/string.h>
 #include "net.h"
 
 #define CHECKSUM_MASK 0xFFFF
@@ -227,8 +229,10 @@ void net_init()
   INIT_LIST_HEAD(&lsocket);
   INIT_LIST_HEAD(&lrx_skb);
 
+  debug_println(DEBUG_INFO, "[net] - Setup neighbour");
   neighbour_init();
 
+  debug_println(DEBUG_INFO, "[net] - Setup net process");
   net_process = create_kernel_process("net", net_rx_loop, 0);
   net_thread = net_process->active_thread;
 }

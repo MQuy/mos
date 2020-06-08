@@ -2,7 +2,7 @@
 #include <kernel/utils/string.h>
 #include "printf.h"
 
-size_t vasprintf(char *buffer, const char *fmt, va_list args)
+size_t vsprintf(char *buffer, const char *fmt, va_list args)
 {
 	if (!fmt)
 		return 0;
@@ -80,26 +80,42 @@ static char tag_opening[][24] = {
 };
 static char tag_closing[] = "\\\\033[m";
 
-void debug_print_raw(const char *str)
+void debug_write(const char *str)
 {
 	for (char *ch = str; *ch; ++ch)
 		serial_write(*ch);
 }
 
-void debug_print(enum debug_level level, const char *fmt, ...)
+void debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
+{
+	vsprintf(log_buffer, fmt, args);
+	if (level != DEBUG_INFO)
+	{
+		debug_write(tag_opening[level]);
+		debug_write(log_buffer);
+		debug_write(tag_closing);
+	}
+	else
+		debug_write(log_buffer);
+}
+
+void debug_printf(enum debug_level level, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 
-	vasprintf(log_buffer, fmt, args);
-	if (level != DEBUG_INFO)
-	{
-		debug_print_raw(tag_opening[level]);
-		debug_print_raw(log_buffer);
-		debug_print_raw(tag_closing);
-	}
-	else
-		debug_print_raw(log_buffer);
+	debug_vsprintf(level, fmt, args);
+
+	va_end(args);
+}
+
+void debug_println(enum debug_level level, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	debug_vsprintf(level, fmt, args);
+	debug_write("\n");
 
 	va_end(args);
 }

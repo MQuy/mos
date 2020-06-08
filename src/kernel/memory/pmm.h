@@ -3,9 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/utils/math.h>
+#include <stddef.h>
 #include <kernel/multiboot2.h>
-#include <kernel/utils/string.h>
 #include "kernel_info.h"
 
 #define PMM_FRAMES_PER_BYTE 8
@@ -16,8 +15,8 @@
 
 void pmm_init(struct multiboot_tag_basic_meminfo *, struct multiboot_tag_mmap *);
 void *pmm_alloc_block();
-void *pmm_alloc_blocks(size_t);
-void pmm_free_block(void *);
+void *pmm_alloc_blocks(size_t num);
+void pmm_free_block(void *block);
 void pmm_mark_used_addr(uint32_t paddr);
 uint32_t get_total_frames();
 

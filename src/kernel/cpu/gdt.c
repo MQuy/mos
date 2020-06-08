@@ -1,4 +1,5 @@
 #include <kernel/utils/string.h>
+#include <kernel/utils/printf.h>
 #include "gdt.h"
 
 extern void gdt_flush(uint32_t);
@@ -28,6 +29,8 @@ void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t acces
 
 void gdt_init()
 {
+  debug_println(DEBUG_INFO, "[gdt] - Initializing");
+
   _gdtr.limit = (sizeof(struct gdt_descriptor) * MAX_DESCRIPTORS) - 1;
   _gdtr.base = (uint32_t)&_gdt[0];
 
@@ -57,4 +60,6 @@ void gdt_init()
                      I86_GDT_GRAND_4K | I86_GDT_GRAND_32BIT | I86_GDT_GRAND_LIMITHI_MASK);
 
   gdt_flush((uint32_t)&_gdtr);
+
+  debug_println(DEBUG_INFO, "[gdt] - Done");
 }

@@ -1,5 +1,6 @@
 #include <include/errno.h>
 #include <kernel/utils/string.h>
+#include <kernel/utils/printf.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/memory/vmm.h>
@@ -37,6 +38,8 @@ int32_t ata_wait_irq()
 
 uint8_t ata_init()
 {
+  debug_println(DEBUG_INFO, "[ata] - Initializing");
+
   register_interrupt_handler(IRQ14, ata_irq);
   register_interrupt_handler(IRQ15, ata_irq);
 
@@ -44,6 +47,8 @@ uint8_t ata_init()
   ata_detect(ATA0_IO_ADDR1, ATA0_IO_ADDR2, ATA0_IRQ, false, "/dev/hdb");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
   ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
+
+  debug_println(DEBUG_INFO, "[ata] - DONE");
   return 0;
 }
 

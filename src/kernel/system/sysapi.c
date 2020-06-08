@@ -10,6 +10,7 @@
 #include <kernel/fs/pipefs/pipe.h>
 #include <kernel/ipc/message_queue.h>
 #include <kernel/net/net.h>
+#include <kernel/utils/string.h>
 #include "sysapi.h"
 
 extern struct thread *current_thread;

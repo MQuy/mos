@@ -4,6 +4,7 @@
 #include <kernel/net/net.h>
 #include <kernel/net/sk_buff.h>
 #include <kernel/system/sysapi.h>
+#include <kernel/utils/string.h>
 #include "arp.h"
 
 int arp_validate_packet(struct arp_packet *ap)

@@ -4,6 +4,7 @@
 #include <kernel/net/sk_buff.h>
 #include <kernel/net/ip.h>
 #include <kernel/system/sysapi.h>
+#include <kernel/utils/string.h>
 #include "icmp.h"
 
 int icmp_validate_packet(struct icmp_packet *icmp)

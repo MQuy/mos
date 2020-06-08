@@ -684,7 +684,7 @@ bool kkybrd_self_test()
 //! prepares driver for use
 void kkybrd_install()
 {
-
+	debug_println(DEBUG_INFO, "[keyboard] - Initializing");
 	//! Install our interrupt handler (irq 1 uses interrupt 33)
 	register_interrupt_handler(IRQ1, i86_kybrd_irq);
 
@@ -698,6 +698,8 @@ void kkybrd_install()
 
 	//! shift, ctrl, and alt keys
 	_shift = _alt = _ctrl = false;
+
+	debug_println(DEBUG_INFO, "[keyboard] - Done");
 }
 
 //============================================================================

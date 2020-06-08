@@ -163,7 +163,7 @@ struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename, mode_
 
         uint32_t size = 0, new_rec_len = 0;
         struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
-        while (size < dir->i_sb->s_blocksize && entry < block_buf + dir->i_sb->s_blocksize)
+        while (size < dir->i_sb->s_blocksize && (char *)entry < block_buf + dir->i_sb->s_blocksize)
         {
             if (!entry->ino)
             {

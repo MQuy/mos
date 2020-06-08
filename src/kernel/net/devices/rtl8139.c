@@ -4,6 +4,7 @@
 #include <kernel/cpu/pic.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
+#include <kernel/utils/string.h>
 #include <kernel/utils/printf.h>
 #include <kernel/net/net.h>
 #include "rtl8139.h"
@@ -39,7 +40,7 @@ void rtl8139_receive_packet()
 
     if (rx_header->status & (RX_PACKET_HEADER_FAE | RX_PACKET_HEADER_CRC | RX_PACKET_HEADER_RUNT | RX_PACKET_HEADER_LONG))
     {
-      debug_print(DEBUG_ERROR, "rtl8139 rx packet header error %x0x", rx_header->status);
+      debug_println(DEBUG_ERROR, "rtl8139 rx packet header error %x0x", rx_header->status);
     }
     else
     {
@@ -76,6 +77,8 @@ int32_t rtl8139_irq_handler(struct interrupt_registers *regs)
 
 void rtl8139_init()
 {
+  debug_println(DEBUG_INFO, "[rtl8139] - Initializing");
+
   struct pci_device *dev = get_pci_device(RTL8139_VENDOR_ID, RTL8139_DEVICE_ID);
   uint32_t ioaddr = dev->bar0 & 0xFFFFFFFC;
   memset(rx_buffer, 0, RX_PADDING_BUFFER_SIZE);
@@ -138,4 +141,5 @@ void rtl8139_init()
 
   register_interrupt_handler(32 + interrupt_line, rtl8139_irq_handler);
   pic_clear_mask(interrupt_line);
+  debug_println(DEBUG_INFO, "[rtl8139] - Done");
 }

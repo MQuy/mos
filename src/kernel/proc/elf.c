@@ -2,6 +2,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
+#include <kernel/utils/string.h>
 #include "elf.h"
 
 #define NO_ERROR 0

@@ -7,6 +7,8 @@
 #include <kernel/net/sk_buff.h>
 #include <kernel/net/ethernet.h>
 #include <kernel/net/neighbour.h>
+#include <kernel/utils/printf.h>
+#include <kernel/utils/string.h>
 #include "raw.h"
 
 #define RAW_HEADER_SIZE (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet))

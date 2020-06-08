@@ -1,10 +1,11 @@
+#include <include/msgui.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/pic.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/system/uiserver.h>
-#include <include/msgui.h>
+#include <kernel/utils/printf.h>
 #include "mouse.h"
 
 #define MOUSE_PORT 0x60
@@ -137,6 +138,7 @@ uint8_t mouse_read(void)
 
 void mouse_init()
 {
+  debug_println(DEBUG_INFO, "[mouse] - Initializing");
   // empty input buffer
   while ((inportb(MOUSE_STATUS) & 0x01))
   {
@@ -174,4 +176,5 @@ void mouse_init()
 
   register_interrupt_handler(IRQ12, mouse_handler);
   pic_clear_mask(12);
+  debug_println(DEBUG_INFO, "[mouse] - Done");
 }

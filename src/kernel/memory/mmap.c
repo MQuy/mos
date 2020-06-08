@@ -1,6 +1,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/proc/task.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/utils/string.h>
 #include "vmm.h"
 
 extern struct process *current_process;

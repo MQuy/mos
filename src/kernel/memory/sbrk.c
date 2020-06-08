@@ -1,4 +1,6 @@
 #include <include/errno.h>
+#include <kernel/utils/string.h>
+#include <kernel/utils/math.h>
 #include "vmm.h"
 
 uint32_t heap_current = KERNEL_HEAP_BOTTOM;

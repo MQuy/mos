@@ -5,6 +5,7 @@
 #include <kernel/net/devices/rtl8139.h>
 #include <kernel/net/net.h>
 #include <kernel/net/sk_buff.h>
+#include <kernel/utils/string.h>
 #include "ethernet.h"
 
 void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, uint8_t *source_mac, uint8_t *dest_mac)

@@ -3,6 +3,7 @@
 #include <include/msgui.h>
 #include <kernel/ipc/message_queue.h>
 #include <kernel/utils/queue.h>
+#include <kernel/utils/string.h>
 #include "uiserver.h"
 
 extern struct thread *current_thread;

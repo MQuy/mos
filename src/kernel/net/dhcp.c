@@ -9,6 +9,8 @@
 #include <kernel/net/neighbour.h>
 #include <kernel/net/sk_buff.h>
 #include <kernel/utils/math.h>
+#include <kernel/utils/printf.h>
+#include <kernel/utils/string.h>
 #include <kernel/system/sysapi.h>
 #include "dhcp.h"
 
@@ -240,6 +242,8 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 // 7. Get router ip, router mac address and assign them to net dev
 int dhcp_setup()
 {
+  debug_println(DEBUG_INFO, "[dhcp] - Initializing");
+
   int32_t sockfd = sys_socket(PF_PACKET, SOCK_RAW, ETH_P_ALL);
   struct socket *sock = sockfd_lookup(sockfd);
   struct net_device *dev = sock->sk->dev;
@@ -254,6 +258,7 @@ int dhcp_setup()
     return -EBUSY;
 
   // DHCP Discovery
+  debug_println(DEBUG_INFO, "\tDiscovery");
   uint32_t dhcp_discovery_option_len;
   dhcp_create_discovery_options(&options, &dhcp_discovery_option_len);
   skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_discovery_option_len);
@@ -283,6 +288,7 @@ int dhcp_setup()
     // we will use the separated process (via command line) with share memory and pthread
     if (attempt_discovery % 5 == 0)
     {
+      debug_println(DEBUG_INFO, "\tDiscovery");
       uint32_t dhcp_discovery_option_len;
       dhcp_create_discovery_options(&options, &dhcp_discovery_option_len);
       skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_discovery_option_len);
@@ -290,8 +296,10 @@ int dhcp_setup()
       sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(dhcp_discovery_option_len));
     }
   }
+  debug_println(DEBUG_INFO, "\tOffer");
 
   // DHCP Request
+  debug_println(DEBUG_INFO, "\tRequest");
   uint32_t dhcp_request_option_len;
   dhcp_create_request_options(&options, &dhcp_request_option_len, ntohl(dhcp_offer->yiaddr), server_ip);
   skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_request_option_len);
@@ -312,6 +320,7 @@ int dhcp_setup()
     if (ret >= 0)
       break;
   }
+  debug_println(DEBUG_INFO, "\tAck");
   sock->ops->shutdown(sock);
   local_ip = ntohl(dhcp_ack->yiaddr);
   subnet_mask = ntohl(subnet_mask);
@@ -319,6 +328,7 @@ int dhcp_setup()
   lease_time = ntohl(lease_time);
 
   // ARP Announcement
+  debug_println(DEBUG_INFO, "\tARP Announcement");
   arp_send(dev->dev_addr, local_ip, dev->zero_addr, local_ip, ARP_REQUEST);
 
   dev->local_ip = local_ip;
@@ -329,6 +339,7 @@ int dhcp_setup()
   memcpy(dev->router_addr, recv_eh->source_mac, 6);
 
   kfree(recv_eh);
+  debug_println(DEBUG_INFO, "[dhcp] - Done");
 
   return ret;
 }

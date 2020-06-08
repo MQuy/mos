@@ -28,7 +28,9 @@
 #include "system/uiserver.h"
 #include "ipc/message_queue.h"
 #include "system/framebuffer.h"
+#include "utils/math.h"
 #include "utils/printf.h"
+#include "utils/string.h"
 #include "multiboot2.h"
 
 extern struct thread *current_thread;

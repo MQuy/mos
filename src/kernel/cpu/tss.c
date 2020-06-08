@@ -1,5 +1,6 @@
-#include <kernel/utils/string.h>
 #include <kernel/cpu/gdt.h>
+#include <kernel/utils/string.h>
+#include <kernel/utils/printf.h>
 #include "tss.h"
 
 extern void tss_flush();
@@ -15,6 +16,7 @@ void tss_set_stack(uint32_t kernelSS, uint32_t kernelESP)
 
 void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 {
+	debug_println(DEBUG_INFO, "[tss] - Initializing");
 
 	//! install TSS descriptor
 	uint32_t base = (uint32_t)&TSS;
@@ -39,4 +41,6 @@ void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 	TSS.iomap = sizeof(struct tss_entry);
 
 	tss_flush();
+
+	debug_println(DEBUG_INFO, "[tss] - Done");
 }

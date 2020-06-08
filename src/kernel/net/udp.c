@@ -3,6 +3,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/net/net.h>
 #include <kernel/net/ethernet.h>
+#include <kernel/utils/string.h>
 #include <kernel/net/sk_buff.h>
 #include <kernel/net/ip.h>
 #include "udp.h"

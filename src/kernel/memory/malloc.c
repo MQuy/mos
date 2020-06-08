@@ -1,5 +1,7 @@
 #include <include/errno.h>
 #include <kernel/utils/string.h>
+#include <kernel/utils/math.h>
+#include <kernel/utils/printf.h>
 #include <stdbool.h>
 #include "vmm.h"
 

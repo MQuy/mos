@@ -3,6 +3,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
+#include <kernel/utils/string.h>
 #include "tmpfs.h"
 
 extern struct process *current_process;
@@ -40,7 +41,7 @@ ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t p
     uint32_t pend = ((ppos + count) < (p + sb->s_blocksize)) ? (p + sb->s_blocksize - ppos - count) : 0;
 
     kmap(iter_page);
-    memcpy(iter_buf, iter_page->virtual + pstart, sb->s_blocksize - pstart - pend);
+    memcpy(iter_buf, (char *)iter_page->virtual + pstart, sb->s_blocksize - pstart - pend);
     kunmap(iter_page);
     p += sb->s_blocksize;
     iter_buf += sb->s_blocksize;
@@ -71,7 +72,7 @@ ssize_t tmpfs_write_file(struct vfs_file *file, const char *buf, size_t count, l
     uint32_t pend = ((ppos + count) < (p + sb->s_blocksize)) ? (p + sb->s_blocksize - ppos - count) : 0;
 
     kmap(iter_page);
-    memcpy(iter_page->virtual + pstart, iter_buf, sb->s_blocksize - pstart - pend);
+    memcpy((char *)iter_page->virtual + pstart, iter_buf, sb->s_blocksize - pstart - pend);
     kunmap(iter_page);
     p += sb->s_blocksize;
     iter_buf += sb->s_blocksize;
