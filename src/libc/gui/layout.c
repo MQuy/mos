@@ -49,7 +49,7 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 
 	struct msgui *msgui_sender = calloc(1, sizeof(struct msgui));
 	msgui_sender->type = MSGUI_WINDOW;
-	struct msgui_window *msgwin = msgui_sender->data;
+	struct msgui_window *msgwin = (struct msgui_window *)msgui_sender->data;
 	msgwin->x = x;
 	msgwin->y = y;
 	msgwin->width = width;
@@ -57,7 +57,7 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 	if (parent)
 		memcpy(msgwin->parent, parent->name, WINDOW_NAME_LENGTH);
 	memcpy(msgwin->sender, pid, WINDOW_NAME_LENGTH);
-	msgsnd(WINDOW_SERVER_SHM, msgui_sender, 0, sizeof(struct msgui));
+	msgsnd(WINDOW_SERVER_SHM, (char *)msgui_sender, 0, sizeof(struct msgui));
 
 	win->graphic.x = x;
 	win->graphic.y = y;
@@ -76,7 +76,7 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 
 	uint32_t buf_size = width * height * 4;
 	int32_t fd = shm_open(win->name, O_RDWR | O_CREAT, 0);
-	win->graphic.buf = mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd);
+	win->graphic.buf = (char *)mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd);
 }
 
 void gui_label_set_text(struct ui_label *label, char *text)
@@ -118,15 +118,15 @@ void enter_event_loop(struct window *win)
 {
 	struct msgui *msgui = calloc(1, sizeof(struct msgui));
 	msgui->type = MSGUI_FOCUS;
-	struct msgui_focus *msgfocus = msgui->data;
+	struct msgui_focus *msgfocus = (struct msgui_focus *)msgui->data;
 	memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
-	msgsnd(WINDOW_SERVER_SHM, msgui, 0, sizeof(struct msgui));
+	msgsnd(WINDOW_SERVER_SHM, (char *)msgui, 0, sizeof(struct msgui));
 
 	struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
 	while (true)
 	{
 		memset(ui_event, 0, sizeof(struct ui_event));
-		msgrcv(win->name, ui_event, 0, sizeof(struct ui_event));
+		msgrcv(win->name, (char *)ui_event, 0, sizeof(struct ui_event));
 
 		if (ui_event->event_type == MOUSE_CLICK)
 		{

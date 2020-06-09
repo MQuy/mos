@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
 
 dd if=/dev/zero of=hdd.img count=20480 bs=512
 VOLUME_NAME=hdd
