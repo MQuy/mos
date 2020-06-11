@@ -14,6 +14,7 @@ enum debug_level
 	DEBUG_FATAL = 4,
 };
 
+size_t sprintf(char *buffer, const char *fmt, ...);
 size_t vsprintf(char *buffer, const char *fmt, va_list args);
 void debug_printf(enum debug_level level, const char *fmt, ...);
 void debug_println(enum debug_level level, const char *fmt, ...);

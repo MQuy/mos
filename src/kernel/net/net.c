@@ -134,6 +134,17 @@ bool is_broadcast_mac_address(uint8_t *maddr)
 		return false;
 }
 
+char *inet_ntop(uint32_t src, char *dst, uint16_t len)
+{
+	static const char fmt[] = "%u.%u.%u.%u";
+	char tmp[sizeof "255.255.255.255"];
+	uint8_t *sp = (uint8_t *)&src;
+	if (sprintf(tmp, fmt, sp[0], sp[1], sp[2], sp[3]) >= len)
+		return NULL;
+
+	return strcpy(dst, tmp);
+}
+
 // 1. Check icmp request to local ip -> send ICMP reply
 // 2. Check arp probe asking our mac address -> send arp reply
 // 3. Check arp annoucement -> update neighbour arp
@@ -163,7 +174,7 @@ int net_default_rx_handler(struct sk_buff *skb)
 					current_netdev->local_ip,
 					skb->mac.eh->source_mac, ntohl(skb->nh.iph->source_ip),
 					ntohl(skb->nh.iph->identification),
-					ntohl(skb->h.icmph->rest_of_header),
+					ntohl(skb->h.icmph->un.rest_of_header),
 					skb->h.icmph->payload, payload_len);
 			}
 		}
@@ -202,7 +213,7 @@ void net_rx_loop()
 			{
 				sock->ops->handler(sock, skb);
 			}
-			if ((current_netdev->state & NETDEV_STATE_CONNECTED) != 0)
+			if (current_netdev->state & NETDEV_STATE_CONNECTED)
 				net_default_rx_handler(skb);
 
 			prev_skb = skb;

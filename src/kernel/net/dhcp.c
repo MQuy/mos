@@ -249,7 +249,7 @@ int dhcp_setup()
 	struct socket *sock = sockfd_lookup(sockfd);
 	struct net_device *dev = sock->sk->dev;
 	struct sk_buff *skb;
-	struct ethernet_packet *recv_eh = kcalloc(1, MAX_PACKET_LEN);
+	struct ethernet_packet *received_eh = kcalloc(1, MAX_PACKET_LEN);
 	uint8_t *options;
 	uint32_t router_ip, subnet_mask, lease_time, server_ip, local_ip;
 	uint32_t dhcp_xip = rand();
@@ -272,10 +272,10 @@ int dhcp_setup()
 	while (true)
 	{
 		attempt_discovery++;
-		memset(recv_eh, 0, MAX_PACKET_LEN);
-		sock->ops->recvmsg(sock, recv_eh, MAX_PACKET_LEN);
+		memset(received_eh, 0, MAX_PACKET_LEN);
+		sock->ops->recvmsg(sock, received_eh, MAX_PACKET_LEN);
 
-		ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_offer);
+		ret = dhcp_parse_from_eh_packet(received_eh, &dhcp_offer);
 		if (ret >= 0)
 		{
 			ret = dhcp_offer_parse_options(dhcp_offer->options, &server_ip);
@@ -311,10 +311,10 @@ int dhcp_setup()
 	struct dhcp_packet *dhcp_ack;
 	while (true)
 	{
-		memset(recv_eh, 0, MAX_PACKET_LEN);
-		sock->ops->recvmsg(sock, recv_eh, MAX_PACKET_LEN);
+		memset(received_eh, 0, MAX_PACKET_LEN);
+		sock->ops->recvmsg(sock, received_eh, MAX_PACKET_LEN);
 
-		ret = dhcp_parse_from_eh_packet(recv_eh, &dhcp_ack);
+		ret = dhcp_parse_from_eh_packet(received_eh, &dhcp_ack);
 		if (ret < 0)
 			continue;
 		ret = dhcp_ack_parse_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &server_ip);
@@ -336,10 +336,15 @@ int dhcp_setup()
 	dev->subnet_mask = subnet_mask;
 	dev->router_ip = router_ip;
 	dev->lease_time = lease_time;
-	dev->state = NETDEV_STATE_CONNECTED;
-	memcpy(dev->router_addr, recv_eh->source_mac, 6);
 
-	kfree(recv_eh);
+	// ARP Probe
+	debug_println(DEBUG_INFO, "\tARP for router");
+	uint8_t *router_mac = lookup_mac_addr_from_ip(router_ip);
+
+	memcpy(dev->router_addr, router_mac, 6);
+	dev->state = NETDEV_STATE_CONNECTED;
+
+	kfree(received_eh);
 	debug_println(DEBUG_INFO, "[dhcp] - Done");
 
 	return ret;

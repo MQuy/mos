@@ -79,7 +79,7 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 	skb->nh.iph = (struct ip4_packet *)skb->data;
 
 	uint32_t ip4_payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet);
-	memcpy(msg, skb->nh.iph, min(msg_len, ip4_payload_len));
+	memcpy(msg, (char *)skb->nh.iph + sizeof(struct ip4_packet), min(msg_len, ip4_payload_len));
 
 	skb_free(skb);
 	return 0;
@@ -101,7 +101,7 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
 	skb_pull(skb, sizeof(struct ethernet_packet));
 
 	struct ip4_packet *iph = (struct ip4_packet *)skb->data;
-	if (iph->source_ip == isk->dsin.sin_addr && iph->dest_ip == dev->local_ip)
+	if (htonl(iph->source_ip) == isk->dsin.sin_addr && htonl(iph->dest_ip) == dev->local_ip && iph->protocal == sock->protocol)
 	{
 		skb->nh.iph = iph;
 

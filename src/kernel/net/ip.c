@@ -20,6 +20,7 @@ int ip4_validate_header(struct ip4_packet *ip, uint8_t protocal)
 	ip->header_checksum = 0;
 	uint16_t packet_checksum = singular_checksum(ip, sizeof(struct ip4_packet));
 
+	// TODO: MQ 2020-06-10 Support 5 < ihl <=15 (max)
 	if (ip->version != 4 || ip->ihl != 5 || ip->protocal != protocal || received_checksum != packet_checksum)
 		ret = -EPROTO;
 

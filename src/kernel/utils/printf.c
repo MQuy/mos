@@ -47,6 +47,16 @@ size_t vsprintf(char *buffer, const char *fmt, va_list args)
 			break;
 		}
 
+		case 'u':
+		{
+			unsigned int n = va_arg(args, unsigned int);
+			itoa_s(n, 10, number_buf);
+
+			for (char *c = number_buf; *c; c++)
+				*buffer_iter++ = *c;
+			break;
+		}
+
 		case 'X':
 		case 'x':
 		{
@@ -70,9 +80,21 @@ size_t vsprintf(char *buffer, const char *fmt, va_list args)
 	return buffer_iter - buffer;
 }
 
+size_t sprintf(char *buffer, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	size_t size = vsprintf(buffer, fmt, args);
+
+	va_end(args);
+
+	return size;
+}
+
 // LOG
 static char log_buffer[1024];
-static char tag_opening[][24] = {
+static char *tag_opening[] = {
 	[DEBUG_TRACE] = "\\\\033[38;5;14m",
 	[DEBUG_WARNING] = "\\\\033[38;5;11m",
 	[DEBUG_ERROR] = "\\\\033[38;5;9m",

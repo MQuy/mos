@@ -176,7 +176,7 @@ struct net_device
 	uint8_t irq;
 
 	char name[16];
-	uint8_t state;
+	enum netdev_state state;
 	struct list_head sibling;
 
 	// ip & mac address
@@ -199,6 +199,7 @@ int socket_shutdown(struct socket *sock);
 struct socket *sockfd_lookup(uint32_t fd);
 uint16_t singular_checksum(void *packet, uint16_t size);
 uint32_t packet_checksum_start(void *packet, uint16_t size);
+char *inet_ntop(uint32_t src, char *dst, uint16_t len);
 
 void register_net_device(struct net_device *);
 struct net_device *get_current_net_device();

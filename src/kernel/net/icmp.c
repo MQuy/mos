@@ -18,7 +18,7 @@ struct icmp_packet *icmp_create_packet(struct icmp_packet *icmp, uint8_t type, u
 	uint16_t icmp_packet_size = sizeof(struct icmp_packet) + payload_len;
 	icmp->type = type;
 	icmp->code = 0;
-	icmp->rest_of_header = htonl(rest_of_header);
+	icmp->un.rest_of_header = htonl(rest_of_header);
 	if (payload_len > 0 && payload)
 		memcpy(icmp->payload, payload, payload_len);
 	icmp->checksum = singular_checksum(icmp, icmp_packet_size);

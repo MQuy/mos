@@ -150,8 +150,8 @@ int udp_handler(struct socket *sock, struct sk_buff *skb)
 	if (ret < 0)
 		return ret;
 
-	if (skb->nh.iph->dest_ip == isk->ssin.sin_addr && udp->dest_port == isk->ssin.sin_port &&
-		skb->nh.iph->source_ip == isk->dsin.sin_addr && udp->source_port == isk->dsin.sin_port)
+	if (htonl(skb->nh.iph->dest_ip) == isk->ssin.sin_addr && htons(udp->dest_port) == isk->ssin.sin_port &&
+		htonl(skb->nh.iph->source_ip) == isk->dsin.sin_addr && htons(udp->source_port) == isk->dsin.sin_port)
 	{
 		skb->h.udph = udp;
 		skb_pull(skb, sizeof(struct udp_packet));
