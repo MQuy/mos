@@ -24,6 +24,7 @@
 #include "multiboot2.h"
 #include "net/devices/rtl8139.h"
 #include "net/dhcp.h"
+#include "net/dns.h"
 #include "net/icmp.h"
 #include "net/net.h"
 #include "proc/task.h"
@@ -75,7 +76,9 @@ void kernel_init()
 	net_init();
 	rtl8139_init();
 	dhcp_setup();
-	ping(0xd83ad38e);
+	// ping(0xd83ad38e);
+	uint32_t ip;
+	getaddrinfo("github.com", &ip);
 
 	// init ipc message queue
 	mq_init();

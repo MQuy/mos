@@ -121,7 +121,7 @@ int udp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 
 	list_del(&skb->sibling);
 
-	uint32_t udp_payload_len = skb->h.udph->length - sizeof(struct udp_packet);
+	uint32_t udp_payload_len = htons(skb->h.udph->length) - sizeof(struct udp_packet);
 	memcpy(msg, (uint8_t *)skb->h.udph + sizeof(struct udp_packet), min(msg_len, udp_payload_len));
 
 	skb_free(skb);
@@ -156,9 +156,7 @@ int udp_handler(struct socket *sock, struct sk_buff *skb)
 		skb->h.udph = udp;
 		skb_pull(skb, sizeof(struct udp_packet));
 
-		struct sk_buff *skb_new = skb_clone(skb);
-
-		list_add_tail(&skb_new->sibling, &sock->sk->rx_queue);
+		list_add_tail(&skb->sibling, &sock->sk->rx_queue);
 		update_thread(sock->sk->owner_thread, THREAD_READY);
 	}
 	return 0;

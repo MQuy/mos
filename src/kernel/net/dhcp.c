@@ -181,9 +181,9 @@ int dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet **d
 	return 0;
 }
 
-int dhcp_offer_parse_options(uint8_t *options, uint32_t *server_ip)
+int dhcp_offer_parse_options(uint8_t *options, uint32_t *dhcp_server_ip)
 {
-	uint32_t opt_server_ip;
+	uint32_t opt_dhcp_server_ip;
 	uint8_t opt_message_type;
 
 	for (uint32_t i = 0; options[i] != 0xFF;)
@@ -191,7 +191,7 @@ int dhcp_offer_parse_options(uint8_t *options, uint32_t *server_ip)
 		if (options[i] == 53)
 			dhcp_option_get_value(&options[i + 2], (uint32_t *)&opt_message_type, 1);
 		else if (options[i] == 54)
-			dhcp_option_get_value(&options[i + 2], &opt_server_ip, 4);
+			dhcp_option_get_value(&options[i + 2], &opt_dhcp_server_ip, 4);
 
 		i += 2 + options[i + 1];
 	}
@@ -199,13 +199,13 @@ int dhcp_offer_parse_options(uint8_t *options, uint32_t *server_ip)
 	if (opt_message_type != 0x02)
 		return -EPROTO;
 
-	*server_ip = opt_server_ip;
+	*dhcp_server_ip = ntohl(opt_dhcp_server_ip);
 	return 0;
 }
 
-int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *router_ip, uint32_t *lease_time, uint32_t *server_ip)
+int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *router_ip, uint32_t *lease_time, uint32_t *dhcp_server_ip, uint32_t *dns_server_ip)
 {
-	uint32_t opt_subnet_mask, opt_router_ip, opt_lease_time, opt_server_ip;
+	uint32_t opt_subnet_mask, opt_router_ip, opt_lease_time, opt_dhcp_server_ip, opt_dns_server_ip;
 	uint8_t opt_message_type;
 
 	for (uint32_t i = 0; options[i] != 0xFF;)
@@ -214,12 +214,14 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 			dhcp_option_get_value(&options[i + 2], &opt_subnet_mask, 4);
 		else if (options[i] == 3)
 			dhcp_option_get_value(&options[i + 2], &opt_router_ip, 4);
+		else if (options[i] == 6)
+			dhcp_option_get_value(&options[i + 2], &opt_dns_server_ip, 4);
 		else if (options[i] == 51)
 			dhcp_option_get_value(&options[i + 2], &opt_lease_time, 4);
 		else if (options[i] == 53)
 			dhcp_option_get_value(&options[i + 2], (uint32_t *)&opt_message_type, 1);
 		else if (options[i] == 54)
-			dhcp_option_get_value(&options[i + 2], &opt_server_ip, 4);
+			dhcp_option_get_value(&options[i + 2], &opt_dhcp_server_ip, 4);
 
 		i += 2 + options[i + 1];
 	}
@@ -227,10 +229,11 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 	if (opt_message_type != 5 && opt_message_type != 6)
 		return -EPROTO;
 
-	*subnet_mask = opt_subnet_mask;
-	*router_ip = opt_router_ip;
-	*lease_time = opt_lease_time;
-	*server_ip = opt_server_ip;
+	*subnet_mask = htonl(opt_subnet_mask);
+	*router_ip = htonl(opt_router_ip);
+	*lease_time = htonl(opt_lease_time);
+	*dhcp_server_ip = htonl(opt_dhcp_server_ip);
+	*dns_server_ip = htonl(opt_dns_server_ip);
 	return 0;
 }
 
@@ -251,7 +254,7 @@ int dhcp_setup()
 	struct sk_buff *skb;
 	struct ethernet_packet *received_eh = kcalloc(1, MAX_PACKET_LEN);
 	uint8_t *options;
-	uint32_t router_ip, subnet_mask, lease_time, server_ip, local_ip;
+	uint32_t router_ip, subnet_mask, lease_time, dhcp_server_ip, local_ip, dns_server_ip;
 	uint32_t dhcp_xip = rand();
 	int32_t ret;
 
@@ -278,7 +281,7 @@ int dhcp_setup()
 		ret = dhcp_parse_from_eh_packet(received_eh, &dhcp_offer);
 		if (ret >= 0)
 		{
-			ret = dhcp_offer_parse_options(dhcp_offer->options, &server_ip);
+			ret = dhcp_offer_parse_options(dhcp_offer->options, &dhcp_server_ip);
 			if (ret >= 0)
 				break;
 		}
@@ -302,7 +305,7 @@ int dhcp_setup()
 	// DHCP Request
 	debug_println(DEBUG_INFO, "\tRequest");
 	uint32_t dhcp_request_option_len;
-	dhcp_create_request_options(&options, &dhcp_request_option_len, ntohl(dhcp_offer->yiaddr), server_ip);
+	dhcp_create_request_options(&options, &dhcp_request_option_len, ntohl(dhcp_offer->yiaddr), ntohl(dhcp_offer->siaddr));
 	skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_request_option_len);
 	sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(dhcp_request_option_len));
 	kfree(options);
@@ -317,16 +320,13 @@ int dhcp_setup()
 		ret = dhcp_parse_from_eh_packet(received_eh, &dhcp_ack);
 		if (ret < 0)
 			continue;
-		ret = dhcp_ack_parse_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &server_ip);
+		ret = dhcp_ack_parse_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &dhcp_server_ip, &dns_server_ip);
 		if (ret >= 0)
 			break;
 	}
 	debug_println(DEBUG_INFO, "\tAck");
 	sock->ops->shutdown(sock);
 	local_ip = ntohl(dhcp_ack->yiaddr);
-	subnet_mask = ntohl(subnet_mask);
-	router_ip = ntohl(router_ip);
-	lease_time = ntohl(lease_time);
 
 	// ARP Announcement
 	debug_println(DEBUG_INFO, "\tARP Announcement");
@@ -336,6 +336,8 @@ int dhcp_setup()
 	dev->subnet_mask = subnet_mask;
 	dev->router_ip = router_ip;
 	dev->lease_time = lease_time;
+	dev->dhcp_server_ip = dhcp_server_ip;
+	dev->dns_server_ip = dns_server_ip;
 
 	// ARP Probe
 	debug_println(DEBUG_INFO, "\tARP for router");

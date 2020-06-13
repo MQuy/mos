@@ -95,9 +95,7 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
 
 	skb->mac.eh = eh;
 
-	struct sk_buff *skb_new = skb_clone(skb);
-
-	list_add_tail(&skb_new->sibling, &sk->rx_queue);
+	list_add_tail(&skb->sibling, &sk->rx_queue);
 	update_thread(sk->owner_thread, THREAD_READY);
 	return 0;
 }

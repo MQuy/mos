@@ -105,9 +105,7 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
 	{
 		skb->nh.iph = iph;
 
-		struct sk_buff *skb_new = skb_clone(skb);
-
-		list_add_tail(&skb_new->sibling, &sock->sk->rx_queue);
+		list_add_tail(&skb->sibling, &sock->sk->rx_queue);
 		update_thread(sock->sk->owner_thread, THREAD_READY);
 	}
 	return 0;
