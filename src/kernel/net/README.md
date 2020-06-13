@@ -24,6 +24,23 @@ Byte (8 bits) is used as the computer primiary unit, but how to group 8 bits? th
   IFG (inter-frame gap) the silient between two frames synchronize between sender/receiver clock
   The reason we divide into frames is prevent any errors happned like receiver to misread, out of sync ...
 
+✍ Network standard uses the most significant byte (big endian) and bit first (which is also used to demonstrate in diagram)
+
+The diagram below is the part ip header
+-> `Version + IHL`. According to the standard when **reading diagram**, `Version` is more significant than `IHL` -> in memory `IHL | Version`.
+
+```c
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Version|  IHL  |Type of Service|          Total Length         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Identification        |Flags|      Fragment Offset    |
+```
+
+-> In x86, why we don't need convert least to most significant bit for each byte. The reason is ethernet nic converts the bit transmission -> upper layers don't need to worry about bit order but only byte order
+![nic](https://i.imgur.com/qZ60nP7.jpg)
+
 ### Network
 
 OSI model is based on the encapsulation -> above layers are built based on lower layers. In this case, network protocal is located in ethernet frame's payload
