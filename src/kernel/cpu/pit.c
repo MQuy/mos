@@ -26,7 +26,7 @@ uint32_t get_milliseconds_from_boot()
 
 void pit_init()
 {
-	debug_println(DEBUG_INFO, "[pit] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[pit] - Initializing");
 
 	int divisor = 1193181 / 19886;
 
@@ -36,5 +36,5 @@ void pit_init()
 
 	register_interrupt_handler(IRQ0, pit_interrupt_handler);
 
-	debug_println(DEBUG_INFO, "[pit] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "[pit] - Done");
 }

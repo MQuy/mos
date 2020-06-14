@@ -71,25 +71,25 @@ void vmm_flush_tlb_entry(uint32_t addr)
 void vmm_init()
 {
 	// initialize page table directory
-	debug_println(DEBUG_INFO, "[vmm] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[vmm] - Initializing");
 
 	uint32_t pa_dir = (uint32_t)pmm_alloc_block();
 	struct pdirectory *va_dir = (struct pdirectory *)(pa_dir + KERNEL_HIGHER_HALF);
 	memset(va_dir, 0, sizeof(struct pdirectory));
 
-	debug_println(DEBUG_INFO, "\tSetup higher half kernel");
+	DEBUG &&debug_println(DEBUG_INFO, "\tSetup higher half kernel");
 	vmm_init_and_map(va_dir, 0xC0000000, 0x00000000);
 
 	// NOTE: MQ 2019-11-21 Preallocate ptable for higher half kernel
 	for (int i = 769; i < 1024; ++i)
 		vmm_alloc_ptable(va_dir, i);
 
-	debug_println(DEBUG_INFO, "\tSetup recursive page directory");
+	DEBUG &&debug_println(DEBUG_INFO, "\tSetup recursive page directory");
 	// NOTE: MQ 2019-05-08 Using the recursive page directory trick when paging (map last entry to directory)
 	va_dir->m_entries[1023] = (pa_dir & 0xFFFFF000) | I86_PTE_PRESENT | I86_PTE_WRITABLE;
 
 	vmm_paging(va_dir, pa_dir);
-	debug_println(DEBUG_INFO, "[vmm] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "[vmm] - Done");
 }
 
 void vmm_alloc_ptable(struct pdirectory *va_dir, uint32_t index)

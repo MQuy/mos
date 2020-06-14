@@ -33,7 +33,7 @@ void dns_build_questions(struct dns_packet *dns, const char *domain, int *dns_le
 	char *question = (char *)dns + sizeof(struct dns_packet);
 	uint8_t domain_part_len;
 
-	while (domain_part = strsep(&iter, "."))
+	while ((domain_part = strsep(&iter, ".")))
 	{
 		domain_part_len = strlen(domain_part);
 		*question++ = domain_part_len;
@@ -129,5 +129,5 @@ void getaddrinfo(const char *domain, uint32_t *ip)
 	memset(dns, 0, MAX_DNS_LEN);
 	sock->ops->recvmsg(sock, dns, MAX_DNS_LEN);
 	dns_parse_answers(dns, ip);
-	debug_println(DEBUG_INFO, "[dns]: %s - %d.%d.%d.%d", domain, *ip >> 24, (*ip >> 16) & 0xff, (*ip >> 8) & 0xff, *ip & 0xff);
+	DEBUG &&debug_println(DEBUG_INFO, "[dns]: %s - %d.%d.%d.%d", domain, *ip >> 24, (*ip >> 16) & 0xff, (*ip >> 8) & 0xff, *ip & 0xff);
 }

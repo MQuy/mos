@@ -102,9 +102,9 @@ void chrdev_memory_init()
 {
 	register_chrdev(&chrdev_memory);
 
-	debug_println(DEBUG_INFO, "[dev] - Mount null");
+	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount null");
 	vfs_mknod("/dev/null", S_IFCHR, MKDEV(MEMORY_MAJOR, NULL_DEVICE));
 
-	debug_println(DEBUG_INFO, "[dev] - Mount random");
+	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount random");
 	vfs_mknod("/dev/random", S_IFCHR, MKDEV(MEMORY_MAJOR, RANDOM_DEVICE));
 }

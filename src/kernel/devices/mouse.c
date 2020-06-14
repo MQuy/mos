@@ -139,7 +139,7 @@ uint8_t mouse_read(void)
 
 void mouse_init()
 {
-	debug_println(DEBUG_INFO, "[mouse] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[mouse] - Initializing");
 	// empty input buffer
 	while ((inportb(MOUSE_STATUS) & 0x01))
 	{
@@ -177,5 +177,5 @@ void mouse_init()
 
 	register_interrupt_handler(IRQ12, mouse_handler);
 	pic_clear_mask(12);
-	debug_println(DEBUG_INFO, "[mouse] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "[mouse] - Done");
 }

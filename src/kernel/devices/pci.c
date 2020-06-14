@@ -186,10 +186,10 @@ struct pci_device *get_pci_device(int32_t vendorID, int32_t deviceID)
 
 void pci_init()
 {
-	debug_println(DEBUG_INFO, "[pci] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[pci] - Initializing");
 
 	INIT_LIST_HEAD(&ldevs);
 	pci_scan_buses();
 
-	debug_println(DEBUG_INFO, "[pci] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "[pci] - Done");
 }

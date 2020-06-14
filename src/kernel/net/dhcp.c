@@ -246,7 +246,7 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 // 7. Get router ip, router mac address and assign them to net dev
 int dhcp_setup()
 {
-	debug_println(DEBUG_INFO, "[dhcp] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[dhcp] - Initializing");
 
 	int32_t sockfd = sys_socket(PF_PACKET, SOCK_RAW, ETH_P_ALL);
 	struct socket *sock = sockfd_lookup(sockfd);
@@ -262,7 +262,7 @@ int dhcp_setup()
 		return -EBUSY;
 
 	// DHCP Discovery
-	debug_println(DEBUG_INFO, "\tDiscovery");
+	DEBUG &&debug_println(DEBUG_INFO, "\tDiscovery");
 	uint32_t dhcp_discovery_option_len;
 	dhcp_create_discovery_options(&options, &dhcp_discovery_option_len);
 	skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_discovery_option_len);
@@ -292,7 +292,7 @@ int dhcp_setup()
 		// we will use the separated process (via command line) with share memory and pthread
 		if (attempt_discovery % 5 == 0)
 		{
-			debug_println(DEBUG_INFO, "\tDiscovery");
+			DEBUG &&debug_println(DEBUG_INFO, "\tDiscovery");
 			uint32_t dhcp_discovery_option_len;
 			dhcp_create_discovery_options(&options, &dhcp_discovery_option_len);
 			skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_discovery_option_len);
@@ -300,10 +300,10 @@ int dhcp_setup()
 			sock->ops->sendmsg(sock, skb->mac.eh, DHCP_SIZE(dhcp_discovery_option_len));
 		}
 	}
-	debug_println(DEBUG_INFO, "\tOffer");
+	DEBUG &&debug_println(DEBUG_INFO, "\tOffer");
 
 	// DHCP Request
-	debug_println(DEBUG_INFO, "\tRequest");
+	DEBUG &&debug_println(DEBUG_INFO, "\tRequest");
 	uint32_t dhcp_request_option_len;
 	dhcp_create_request_options(&options, &dhcp_request_option_len, ntohl(dhcp_offer->yiaddr), ntohl(dhcp_offer->siaddr));
 	skb = dhcp_create_skbuff(DHCP_REQUEST, 0, 0xffffffff, dhcp_xip, 0, options, dhcp_request_option_len);
@@ -324,12 +324,12 @@ int dhcp_setup()
 		if (ret >= 0)
 			break;
 	}
-	debug_println(DEBUG_INFO, "\tAck");
+	DEBUG &&debug_println(DEBUG_INFO, "\tAck");
 	sock->ops->shutdown(sock);
 	local_ip = ntohl(dhcp_ack->yiaddr);
 
 	// ARP Announcement
-	debug_println(DEBUG_INFO, "\tARP Announcement");
+	DEBUG &&debug_println(DEBUG_INFO, "\tARP Announcement");
 	arp_send(dev->dev_addr, local_ip, dev->zero_addr, local_ip, ARP_REQUEST);
 
 	dev->local_ip = local_ip;
@@ -340,14 +340,14 @@ int dhcp_setup()
 	dev->dns_server_ip = dns_server_ip;
 
 	// ARP Probe
-	debug_println(DEBUG_INFO, "\tARP for router");
+	DEBUG &&debug_println(DEBUG_INFO, "\tARP for router");
 	uint8_t *router_mac = lookup_mac_addr_from_ip(router_ip);
 
 	memcpy(dev->router_addr, router_mac, 6);
 	dev->state = NETDEV_STATE_CONNECTED;
 
 	kfree(received_eh);
-	debug_println(DEBUG_INFO, "[dhcp] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "[dhcp] - Done");
 
 	return ret;
 }

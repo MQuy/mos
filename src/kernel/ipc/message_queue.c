@@ -14,12 +14,12 @@ struct hashmap mq_map;
 
 void mq_init()
 {
-	debug_println(DEBUG_INFO, "[mq] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Initializing");
 
 	sema_init(&mq_locking, 1);
 	hashmap_init(&mq_map, hashmap_hash_string, hashmap_compare_string, 0);
 
-	debug_println(DEBUG_INFO, "[mq] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Done");
 }
 
 int32_t mq_open(const char *name, int32_t flags)

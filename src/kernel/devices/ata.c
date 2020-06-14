@@ -39,7 +39,7 @@ int32_t ata_wait_irq()
 
 uint8_t ata_init()
 {
-	debug_println(DEBUG_INFO, "[ata] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "[ata] - Initializing");
 
 	register_interrupt_handler(IRQ14, ata_irq);
 	register_interrupt_handler(IRQ15, ata_irq);
@@ -49,7 +49,7 @@ uint8_t ata_init()
 	ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
 	ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
 
-	debug_println(DEBUG_INFO, "[ata] - DONE");
+	DEBUG &&debug_println(DEBUG_INFO, "[ata] - DONE");
 	return 0;
 }
 

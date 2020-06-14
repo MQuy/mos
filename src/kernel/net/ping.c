@@ -107,7 +107,7 @@ void ping(uint32_t dest_ip)
 		struct sk_buff *skb = ping_create_sk_buff(dev->local_ip, dest_ip, ICMP_REQUEST, 0, identifier, ntransmitted);
 		uint32_t sent_time = get_milliseconds_from_boot();
 		if (!ntransmitted)
-			debug_println(DEBUG_INFO, "PING %s: %d data bytes", dest_ip_text, htons(skb->nh.iph->total_length) - skb->nh.iph->ihl);
+			DEBUG &&debug_println(DEBUG_INFO, "PING %s: %d data bytes", dest_ip_text, htons(skb->nh.iph->total_length) - skb->nh.iph->ihl);
 		sock->ops->sendmsg(sock, skb->nh.iph, skb->len);
 		skb_free(skb);
 
@@ -123,20 +123,20 @@ void ping(uint32_t dest_ip)
 		uint32_t received_time = get_milliseconds_from_boot();
 		uint32_t received_bytes = htons(received_ip->total_length) - received_ip->ihl;
 		if (icmp->type != ICMP_REPLY)
-			debug_println(DEBUG_INFO,
-						  "%d bytes from %s: icmp_type=%d (%s) icmp_code=%d",
-						  received_bytes,
-						  dest_ip_text,
-						  icmp->type,
-						  ttab[icmp->type], icmp->code);
+			DEBUG &&debug_println(DEBUG_INFO,
+								  "%d bytes from %s: icmp_type=%d (%s) icmp_code=%d",
+								  received_bytes,
+								  dest_ip_text,
+								  icmp->type,
+								  ttab[icmp->type], icmp->code);
 		else
-			debug_println(DEBUG_INFO,
-						  "%d bytes from %s: icmp_seq=%d ttl=%d time=%d",
-						  received_bytes,
-						  dest_ip_text,
-						  htons(icmp->un.echo.sequence),
-						  received_ip->time_to_live,
-						  received_time - sent_time);
+			DEBUG &&debug_println(DEBUG_INFO,
+								  "%d bytes from %s: icmp_seq=%d ttl=%d time=%d",
+								  received_bytes,
+								  dest_ip_text,
+								  htons(icmp->un.echo.sequence),
+								  received_ip->time_to_live,
+								  received_time - sent_time);
 	}
 	kfree(received_ip);
 }

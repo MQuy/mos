@@ -105,9 +105,9 @@ void debug_write(const char *str)
 		serial_write(*ch);
 }
 
-void debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
+int debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
 {
-	vsprintf(log_buffer, fmt, args);
+	int out = vsprintf(log_buffer, fmt, args);
 	if (level != DEBUG_INFO)
 	{
 		debug_write(tag_opening[level]);
@@ -116,25 +116,30 @@ void debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
 	}
 	else
 		debug_write(log_buffer);
+	return out;
 }
 
-void debug_printf(enum debug_level level, const char *fmt, ...)
+int debug_printf(enum debug_level level, const char *fmt, ...)
 {
+	int out;
 	va_list args;
 	va_start(args, fmt);
 
-	debug_vsprintf(level, fmt, args);
+	out = debug_vsprintf(level, fmt, args);
 
 	va_end(args);
+	return out;
 }
 
-void debug_println(enum debug_level level, const char *fmt, ...)
+int debug_println(enum debug_level level, const char *fmt, ...)
 {
+	int out;
 	va_list args;
 	va_start(args, fmt);
 
-	debug_vsprintf(level, fmt, args);
+	out = debug_vsprintf(level, fmt, args);
 	debug_write("\n");
 
 	va_end(args);
+	return out + 1;
 }
