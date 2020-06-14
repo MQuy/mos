@@ -21,18 +21,15 @@
 struct __attribute__((packed)) idt_descriptor
 {
 	uint16_t baseLo;
-
 	uint16_t sel;
 	uint8_t reserved;
 	uint8_t flags;
-
 	uint16_t baseHi;
 };
 
 struct __attribute__((packed)) idtr
 {
 	uint16_t limit;
-
 	uint32_t base;
 };
 
@@ -125,6 +122,7 @@ extern void irq15();
 #define IRQ14 46
 #define IRQ15 47
 
+void irq_ack(uint32_t irq_number);
 void isr_handler(struct interrupt_registers *);
 void irq_handler(struct interrupt_registers *);
 

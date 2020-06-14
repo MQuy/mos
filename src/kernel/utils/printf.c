@@ -63,9 +63,6 @@ size_t vsprintf(char *buffer, const char *fmt, va_list args)
 			unsigned int n = va_arg(args, unsigned int);
 			itoa_s(n, 16, number_buf);
 
-			memcpy(buffer_iter, "0x", 2);
-			buffer_iter += 2;
-
 			for (char *c = number_buf; *c; c++)
 				*buffer_iter++ = *c;
 			break;

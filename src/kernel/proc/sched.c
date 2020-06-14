@@ -131,22 +131,25 @@ void switch_thread(struct thread *nt)
 
 void schedule()
 {
-	lock_scheduler();
-
 	if (current_thread->state == THREAD_RUNNING)
 		return;
 
+	lock_scheduler();
 	struct thread *nt = pick_next_thread_to_run();
 
 	if (!nt)
 	{
-		// update_thread(current_thread, THREAD_RUNNING);
 		do
 		{
 			enable_interrupts();
 			halt();
 			disable_interrupts();
 			nt = pick_next_thread_to_run();
+			// NOTE: MQ 2020-06-14
+			// Normally, current_thread shouldn't be running because we update state before calling schedule
+			// If current thread is running and no next thread -> interrupt changes current thread state
+			if (!nt && current_thread->state == THREAD_RUNNING)
+				nt = current_thread;
 		} while (!nt);
 	}
 

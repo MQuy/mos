@@ -20,6 +20,7 @@
 extern struct process *current_process;
 extern struct thread *current_thread;
 
+struct thread *backup_thread;
 struct process *net_process;
 struct thread *net_thread;
 struct list_head lrx_skb;
@@ -226,7 +227,9 @@ void net_rx_loop()
 			skb_free(prev_skb);
 		}
 
-		update_thread(current_thread, THREAD_WAITING);
+		if (backup_thread)
+			update_thread(backup_thread, THREAD_READY);
+		update_thread(net_thread, THREAD_WAITING);
 		schedule();
 	}
 }
@@ -235,7 +238,23 @@ void net_switch()
 {
 	if (list_empty(&lrx_skb))
 		return;
-	update_thread(net_thread, THREAD_READY);
+	if (net_thread != current_thread)
+	{
+		if (current_thread->state == THREAD_RUNNING)
+		{
+			backup_thread = current_thread;
+			update_thread(current_thread, THREAD_WAITING);
+		}
+		else
+			backup_thread = NULL;
+		update_thread(net_thread, THREAD_READY);
+		schedule();
+	}
+	else
+	{
+		backup_thread = NULL;
+		update_thread(net_thread, THREAD_READY);
+	}
 }
 
 void net_init()

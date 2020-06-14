@@ -29,7 +29,7 @@ void rtl8139_send_packet(void *payload, uint32_t size)
 	tx_counter = tx_counter >= 3 ? 0 : tx_counter + 1;
 }
 
-void rtl8139_receive_packet()
+void rtl8139_receive_packet(struct interrupt_registers *regs)
 {
 	while ((inportb(rtl_netdev->base_addr + RTL8139_ChipCmd) & RTL8139_RxBufEmpty) == 0)
 	{
@@ -41,7 +41,7 @@ void rtl8139_receive_packet()
 
 		if (rx_header->status & (RX_PACKET_HEADER_FAE | RX_PACKET_HEADER_CRC | RX_PACKET_HEADER_RUNT | RX_PACKET_HEADER_LONG))
 		{
-			debug_println(DEBUG_ERROR, "rtl8139 rx packet header error %x0x", rx_header->status);
+			debug_println(DEBUG_ERROR, "rtl8139 rx packet header error 0x%x", rx_header->status);
 		}
 		else
 		{
@@ -55,6 +55,7 @@ void rtl8139_receive_packet()
 		outportw(rtl_netdev->base_addr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
 	}
 
+	irq_ack(regs->int_no);
 	net_switch();
 }
 
@@ -71,7 +72,7 @@ int32_t rtl8139_irq_handler(struct interrupt_registers *regs)
 	{
 	}
 	if (status & ROK)
-		rtl8139_receive_packet();
+		rtl8139_receive_packet(regs);
 
 	return IRQ_HANDLER_CONTINUE;
 }

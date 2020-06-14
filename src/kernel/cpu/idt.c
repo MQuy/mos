@@ -166,11 +166,17 @@ void isr_handler(struct interrupt_registers *reg)
 	handle_interrupt(reg);
 }
 
+void irq_ack(uint32_t irq_number)
+{
+	if (irq_number >= 40)
+		outportb(PIC2_COMMAND, PIC_EOI);
+	outportb(PIC1_COMMAND, PIC_EOI);
+}
+
 void irq_handler(struct interrupt_registers *reg)
 {
 	handle_interrupt(reg);
 
-	if (reg->int_no >= 40)
-		outportb(PIC2_COMMAND, PIC_EOI);
-	outportb(PIC1_COMMAND, PIC_EOI);
+	// TODO: MQ 2020-06-14 Better to ack in each handler when it can decide when to yield
+	irq_ack(reg->int_no);
 }
