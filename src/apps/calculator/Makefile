@@ -12,7 +12,7 @@ LD = /usr/local/bin/i386-elf-ld
 GDB = /usr/local/bin/i386-elf-gdb
 
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -std=gnu99 -ffreestanding -Wall -Wextra -Wno-sequence-point -Wno-discarded-qualifiers -I$(INCLUDE)
+CFLAGS = -g -std=gnu18 -ffreestanding -Wall -Wextra -Wno-unused-parameter -Wno-discarded-qualifiers -Wno-comment -Wno-multichar -Wno-sequence-point -Wno-unused-function -Wno-unused-value -I$(INCLUDE)
 
 calculator: ${OBJ}
 	${CC} -o $@ -T linker.ld $^ -ffreestanding -nostdlib -lgcc -g

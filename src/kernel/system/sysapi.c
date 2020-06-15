@@ -16,8 +16,6 @@
 extern struct thread *current_thread;
 extern struct process *current_process;
 
-typedef uint32_t (*SYSTEM_FUNC)(unsigned int, ...);
-
 void sys_exit(int32_t code)
 {
 	current_thread->exit_code = code;
@@ -229,7 +227,7 @@ int32_t syscall_dispatcher(struct interrupt_registers *regs)
 {
 	int idx = regs->eax;
 
-	SYSTEM_FUNC func = (SYSTEM_FUNC)syscalls[idx];
+	uint32_t (*func)(unsigned int, ...) = syscalls[idx];
 
 	if (!func)
 		return IRQ_HANDLER_STOP;
