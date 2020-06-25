@@ -18,6 +18,7 @@
 #define MAX_PACKET_LEN 576
 #define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
 #define DHCP_SIZE(option_len) (MAX_UDP_HEADER + sizeof(struct dhcp_packet) + (option_len))
+#define DEFAULT_MTU 1500
 
 void dhcp_build_header(struct dhcp_packet *dhp, uint8_t op, uint16_t size)
 {
@@ -108,7 +109,7 @@ void dhcp_create_discovery_options(uint8_t **options, uint32_t *len)
 	// DHCP Message Type
 	iter_opt = dhcp_option_set_value(iter_opt, 53, 1, &(uint8_t[]){1});
 	// DHCP Parameter Request List
-	iter_opt = dhcp_option_set_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 44, 46, 95, 119, 121, 252});
+	iter_opt = dhcp_option_set_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 26, 44, 46, 95, 119, 121, 252});
 	// DHCP Maximum Message Size
 	iter_opt = dhcp_option_set_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
 	// DHCP Client Identifier
@@ -133,7 +134,7 @@ void dhcp_create_request_options(uint8_t **options, uint32_t *len, uint32_t requ
 	// DHCP Message Type
 	iter_opt = dhcp_option_set_value(iter_opt, 53, 1, &(uint8_t[]){3});
 	// DHCP Parameter Request List
-	iter_opt = dhcp_option_set_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 44, 46, 95, 119, 121, 252});
+	iter_opt = dhcp_option_set_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 26, 44, 46, 95, 119, 121, 252});
 	// DHCP Maximum Message Size
 	iter_opt = dhcp_option_set_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
 	// DHCP Client Identifier
@@ -183,8 +184,8 @@ int dhcp_parse_from_eh_packet(struct ethernet_packet *eh, struct dhcp_packet **d
 
 int dhcp_offer_parse_options(uint8_t *options, uint32_t *dhcp_server_ip)
 {
-	uint32_t opt_dhcp_server_ip;
-	uint8_t opt_message_type;
+	uint32_t opt_dhcp_server_ip = 0;
+	uint8_t opt_message_type = 0;
 
 	for (uint32_t i = 0; options[i] != 0xFF;)
 	{
@@ -203,10 +204,11 @@ int dhcp_offer_parse_options(uint8_t *options, uint32_t *dhcp_server_ip)
 	return 0;
 }
 
-int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *router_ip, uint32_t *lease_time, uint32_t *dhcp_server_ip, uint32_t *dns_server_ip)
+int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *router_ip, uint32_t *lease_time, uint32_t *dhcp_server_ip, uint32_t *dns_server_ip, uint16_t *mtu)
 {
-	uint32_t opt_subnet_mask, opt_router_ip, opt_lease_time, opt_dhcp_server_ip, opt_dns_server_ip;
-	uint8_t opt_message_type;
+	uint32_t opt_subnet_mask = 0, opt_router_ip = 0, opt_lease_time = 0, opt_dhcp_server_ip = 0, opt_dns_server_ip = 0;
+	uint16_t opt_mtu = ntohs(DEFAULT_MTU);
+	uint8_t opt_message_type = 0;
 
 	for (uint32_t i = 0; options[i] != 0xFF;)
 	{
@@ -216,6 +218,8 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 			dhcp_option_get_value(&options[i + 2], &opt_router_ip, 4);
 		else if (options[i] == 6)
 			dhcp_option_get_value(&options[i + 2], &opt_dns_server_ip, 4);
+		else if (options[i] == 26)
+			dhcp_option_get_value(&options[i + 2], &opt_mtu, 2);
 		else if (options[i] == 51)
 			dhcp_option_get_value(&options[i + 2], &opt_lease_time, 4);
 		else if (options[i] == 53)
@@ -234,6 +238,7 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 	*lease_time = htonl(opt_lease_time);
 	*dhcp_server_ip = htonl(opt_dhcp_server_ip);
 	*dns_server_ip = htonl(opt_dns_server_ip);
+	*mtu = htons(opt_mtu);
 	return 0;
 }
 
@@ -255,6 +260,7 @@ int dhcp_setup()
 	struct ethernet_packet *received_eh = kcalloc(1, MAX_PACKET_LEN);
 	uint8_t *options;
 	uint32_t router_ip, subnet_mask, lease_time, dhcp_server_ip, local_ip, dns_server_ip;
+	uint16_t mtu;
 	uint32_t dhcp_xip = rand();
 	int32_t ret;
 
@@ -320,7 +326,7 @@ int dhcp_setup()
 		ret = dhcp_parse_from_eh_packet(received_eh, &dhcp_ack);
 		if (ret < 0)
 			continue;
-		ret = dhcp_ack_parse_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &dhcp_server_ip, &dns_server_ip);
+		ret = dhcp_ack_parse_options(dhcp_ack->options, &subnet_mask, &router_ip, &lease_time, &dhcp_server_ip, &dns_server_ip, &mtu);
 		if (ret >= 0)
 			break;
 	}
@@ -338,6 +344,7 @@ int dhcp_setup()
 	dev->lease_time = lease_time;
 	dev->dhcp_server_ip = dhcp_server_ip;
 	dev->dns_server_ip = dns_server_ip;
+	dev->mtu = mtu;
 
 	// ARP Probe
 	DEBUG &&debug_println(DEBUG_INFO, "\tARP for router");

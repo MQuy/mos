@@ -184,6 +184,7 @@ struct net_device
 	uint8_t broadcast_addr[6];
 	uint8_t zero_addr[6];
 	uint8_t router_addr[6];
+	uint16_t mtu;
 	uint32_t dns_server_ip;
 	uint32_t dhcp_server_ip;
 	uint32_t router_ip;
