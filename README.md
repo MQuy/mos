@@ -9,8 +9,9 @@ mOS is the hobby operating system which is developed from scratch
 - [x] Filesystem
 - [x] Program loading
 - [x] UI (window server <-> userspace apps)
-- [ ] Terminal
+- [x] Log
 - [x] Networking
+- [ ] Terminal
 - [ ] Sound
 - [ ] POSIX
 - [ ] Port GCC (the GNU Compiler Collection)

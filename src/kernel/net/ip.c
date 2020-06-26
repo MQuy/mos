@@ -71,3 +71,8 @@ int ip4_rcv(struct sk_buff *skb)
 
 	return 0;
 }
+
+// TODO: MQ 2020-06-18
+// IP Fragmentation
+// -> Send: split payload into fragments if it doesn't fit into single ip packet
+// -> Receive: reassembly multi ip payloads if they have the same id and Flags-MF bit is enabled (except the last part)
