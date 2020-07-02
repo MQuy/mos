@@ -22,16 +22,16 @@ static inline unsigned short xchg_8(void *ptr, unsigned char x)
 	return x;
 }
 
-#define BUSY 1
-typedef unsigned char spinlock_t;
+#define SPINLOCK_UNLOCKED 0
+#define SPINLOCK_LOCK 1
 
-#define SPINLOCK_INITIALIZER 0
+typedef unsigned char spinlock_t;
 
 static inline void spin_lock(spinlock_t *lock)
 {
 	while (1)
 	{
-		if (!xchg_8(lock, BUSY))
+		if (!xchg_8(lock, SPINLOCK_LOCK))
 			return;
 
 		while (*lock)
@@ -47,7 +47,7 @@ static inline void spin_unlock(spinlock_t *lock)
 
 static inline int spin_trylock(spinlock_t *lock)
 {
-	return xchg_8(lock, BUSY);
+	return xchg_8(lock, SPINLOCK_LOCK);
 }
 
 #endif

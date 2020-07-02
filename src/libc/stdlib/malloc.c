@@ -18,12 +18,10 @@ struct block_meta
 
 static struct block_meta *blocklist = NULL;
 
-void validate_block(struct block_meta *block)
+void assert_block_valid(struct block_meta *block)
 {
 	if (block->magic != BLOCK_MAGIC)
-	{
 		__asm__ __volatile("int $0x0E");
-	}
 }
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size)
@@ -33,11 +31,11 @@ struct block_meta *find_free_block(struct block_meta **last, size_t size)
 	while (current && !(current->free && current->size >= size))
 	{
 		bcount++;
-		validate_block(current);
+		assert_block_valid(current);
 		*last = current;
 		current = current->next;
 		if (current)
-			validate_block(current);
+			assert_block_valid(current);
 	}
 	return current;
 }
@@ -113,7 +111,7 @@ void *malloc(size_t size)
 		blocklist = block;
 	}
 
-	validate_block(block);
+	assert_block_valid(block);
 
 	if (block)
 		return block + 1;
@@ -140,7 +138,7 @@ void free(void *ptr)
 		return;
 
 	struct block_meta *block = get_block_ptr(ptr);
-	validate_block(block);
+	assert_block_valid(block);
 	block->free = true;
 }
 

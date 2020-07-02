@@ -20,13 +20,11 @@ struct block_meta
 
 static struct block_meta *kblocklist = NULL;
 
-void validate_kblock(struct block_meta *block)
+void assert_kblock_valid(struct block_meta *block)
 {
 	// NOTE: MQ 2020-06-06 if a block's size > 32 MiB -> might be an corrupted block
 	if (block->magic != BLOCK_MAGIC || block->size > 0x2000000)
-	{
 		__asm__ __volatile("int $0x0E");
-	}
 }
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size)
@@ -34,11 +32,11 @@ struct block_meta *find_free_block(struct block_meta **last, size_t size)
 	struct block_meta *current = (struct block_meta *)kblocklist;
 	while (current && !(current->free && current->size >= size))
 	{
-		validate_kblock(current);
+		assert_kblock_valid(current);
 		*last = current;
 		current = current->next;
 		if (current)
-			validate_kblock(current);
+			assert_kblock_valid(current);
 	}
 	return current;
 }
@@ -97,7 +95,7 @@ void *kmalloc(size_t size)
 		kblocklist = block;
 	}
 
-	validate_kblock(block);
+	assert_kblock_valid(block);
 
 	if (block)
 		return block + 1;
@@ -124,7 +122,7 @@ void kfree(void *ptr)
 		return;
 
 	struct block_meta *block = get_block_ptr(ptr);
-	validate_kblock(block);
+	assert_kblock_valid(block);
 	block->free = true;
 }
 

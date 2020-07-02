@@ -10,18 +10,18 @@
 #define PIT_REG_COUNTER 0x40
 #define PIT_REG_COMMAND 0x43
 
-volatile uint32_t pit_ticks = 0;
+volatile unsigned long jiffies = 0;
 
 int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 {
-	pit_ticks++;
+	jiffies++;
 
 	return IRQ_HANDLER_CONTINUE;
 }
 
 uint32_t get_milliseconds_from_boot()
 {
-	return pit_ticks;
+	return jiffies;
 }
 
 void pit_init()

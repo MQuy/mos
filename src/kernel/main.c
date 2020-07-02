@@ -31,6 +31,7 @@
 #include "system/framebuffer.h"
 #include "system/sysapi.h"
 #include "system/time.h"
+#include "system/timer.h"
 #include "system/uiserver.h"
 #include "utils/math.h"
 #include "utils/printf.h"
@@ -63,6 +64,8 @@ void setup_window_server(struct Elf32_Layout *elf_layout)
 
 void kernel_init()
 {
+	timer_init();
+
 	// setup random's seed
 	srand(get_seconds(NULL));
 
@@ -76,9 +79,6 @@ void kernel_init()
 	net_init();
 	rtl8139_init();
 	dhcp_setup();
-	// ping(0xd83ad38e);
-	uint32_t ip;
-	getaddrinfo("github.com", &ip);
 
 	// init ipc message queue
 	mq_init();
