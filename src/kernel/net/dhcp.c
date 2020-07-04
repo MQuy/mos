@@ -219,7 +219,7 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 		else if (options[i] == 6)
 			dhcp_option_get_value(&options[i + 2], &opt_dns_server_ip, 4);
 		else if (options[i] == 26)
-			dhcp_option_get_value(&options[i + 2], &opt_mtu, 2);
+			dhcp_option_get_value(&options[i + 2], (uint32_t *)&opt_mtu, 2);
 		else if (options[i] == 51)
 			dhcp_option_get_value(&options[i + 2], &opt_lease_time, 4);
 		else if (options[i] == 53)

@@ -27,6 +27,7 @@
 #include "net/dns.h"
 #include "net/icmp.h"
 #include "net/net.h"
+#include "net/tcp.h"
 #include "proc/task.h"
 #include "system/framebuffer.h"
 #include "system/sysapi.h"
@@ -62,6 +63,23 @@ void setup_window_server(struct Elf32_Layout *elf_layout)
 	ws_fb->addr = area->vm_start;
 }
 
+void client_demo()
+{
+	int fd = sys_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	struct socket *sock = sockfd_lookup(fd);
+	struct net_device *dev = get_current_net_device();
+
+	struct sockaddr_in *sin = kcalloc(1, sizeof(struct sockaddr_in));
+	sin->sin_addr = dev->local_ip;
+	sin->sin_port = 10000;
+	sock->ops->bind(sock, (struct sockaddr *)sin, sizeof(struct sockaddr_in));
+
+	struct sockaddr_in *din = kcalloc(1, sizeof(struct sockaddr_in));
+	din->sin_addr = 0;
+	din->sin_port = 80;
+	sock->ops->connect(sock, (struct sockaddr *)din, sizeof(struct sockaddr_in));
+}
+
 void kernel_init()
 {
 	timer_init();
@@ -79,6 +97,8 @@ void kernel_init()
 	net_init();
 	rtl8139_init();
 	dhcp_setup();
+
+	client_demo();
 
 	// init ipc message queue
 	mq_init();

@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 struct udp_packet;
+struct tcp_packet;
 struct icmp_packet;
 struct ip4_packet;
 struct arp_packet;
@@ -17,22 +18,28 @@ struct sk_buff
 	struct list_head sibling;
 	uint32_t len, true_size;
 
-	union {
+	union
+	{
 		struct udp_packet *udph;
+		struct tcp_packet *tcph;
 		struct icmp_packet *icmph;
 		uint8_t *raw;
 	} h;
 
-	union {
+	union
+	{
 		struct ip4_packet *iph;
 		struct arp_packet *arph;
 		uint8_t *raw;
 	} nh;
 
-	union {
+	union
+	{
 		struct ethernet_packet *eh;
 		uint8_t *raw;
 	} mac;
+
+	char cb[40];
 
 	uint8_t *head;
 	uint8_t *data;

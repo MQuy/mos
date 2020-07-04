@@ -113,6 +113,7 @@ int raw_handler(struct socket *sock, struct sk_buff *skb)
 
 struct proto_ops raw_proto_ops = {
 	.family = PF_INET,
+	.obj_size = sizeof(struct inet_sock),
 	.bind = raw_bind,
 	.connect = raw_connect,
 	.sendmsg = raw_sendmsg,

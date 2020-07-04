@@ -4,10 +4,20 @@
 #include <stdint.h>
 
 #define IP4_PROTOCAL_ICMP 1
+#define IP4_PROTOCAL_TCP 6
 #define IP4_PROTOCAL_UDP 17
 
 struct socket;
 struct sk_buff;
+
+struct __attribute__((packed)) ip4_pseudo_header
+{
+	uint32_t source_ip;
+	uint32_t dest_ip;
+	uint8_t zeros;
+	uint8_t protocal;
+	uint16_t transport_length;
+};
 
 struct __attribute__((packed)) ip4_packet
 {

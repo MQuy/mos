@@ -31,19 +31,21 @@ int32_t strlsplat(const char *s1, uint32_t pos, char **sf, char **sl);
 
 static __inline void *memcpy(void *restrict dest, const void *restrict src, size_t n)
 {
-	asm volatile("cld; rep movsb"
-				 : "=c"((int){0})
-				 : "D"(dest), "S"(src), "c"(n)
-				 : "flags", "memory");
+	if (n > 0)
+		asm volatile("cld; rep movsb"
+					 : "=c"((int){0})
+					 : "D"(dest), "S"(src), "c"(n)
+					 : "flags", "memory");
 	return dest;
 }
 
 static __inline void *memset(void *dest, int c, size_t n)
 {
-	asm volatile("cld; rep stosb"
-				 : "=c"((int){0})
-				 : "D"(dest), "a"(c), "c"(n)
-				 : "flags", "memory");
+	if (n > 0)
+		asm volatile("cld; rep stosb"
+					 : "=c"((int){0})
+					 : "D"(dest), "a"(c), "c"(n)
+					 : "flags", "memory");
 	return dest;
 }
 

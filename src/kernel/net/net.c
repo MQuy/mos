@@ -15,8 +15,6 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-#define CHECKSUM_MASK 0xFFFF
-
 extern struct process *current_process;
 extern struct thread *current_thread;
 
@@ -42,14 +40,11 @@ void push_rx_queue(uint8_t *data, uint32_t size)
 void sock_setup(struct socket *sock, int32_t family)
 {
 	struct sock *sk = sock->sk;
-	if (family == PF_INET)
-		sk = kcalloc(1, sizeof(struct inet_sock));
-	else if (family == PF_PACKET)
-		sk = kcalloc(1, sizeof(struct packet_sock));
-
+	sk = kcalloc(1, sock->ops->obj_size);
 	sk->dev = get_current_net_device();
 	sk->owner_thread = current_thread;
 	INIT_LIST_HEAD(&sk->rx_queue);
+	INIT_LIST_HEAD(&sk->tx_queue);
 
 	sock->sk = sk;
 }
@@ -64,7 +59,9 @@ void socket_setup(int32_t family, enum socket_type type, int32_t protocal, struc
 
 	if (family == PF_INET)
 	{
-		if (type == SOCK_DGRAM)
+		if (type == SOCK_STREAM)
+			sock->ops = &tcp_proto_ops;
+		else if (type == SOCK_DGRAM)
 			sock->ops = &udp_proto_ops;
 		else if (type == SOCK_RAW)
 			sock->ops = &raw_proto_ops;
@@ -114,6 +111,26 @@ uint32_t packet_checksum_start(void *packet, uint16_t size)
 uint16_t singular_checksum(void *packet, uint16_t size)
 {
 	uint32_t checksum = packet_checksum_start(packet, size);
+	return ~checksum & CHECKSUM_MASK;
+}
+
+uint16_t transport_calculate_checksum(void *segment, uint16_t segment_len, uint8_t protocal, uint32_t source_ip, uint32_t dest_ip)
+{
+	struct ip4_pseudo_header *ip4_pseudo_header = kcalloc(1, sizeof(struct ip4_pseudo_header));
+	ip4_pseudo_header->source_ip = htonl(source_ip);
+	ip4_pseudo_header->dest_ip = htonl(dest_ip);
+	ip4_pseudo_header->zeros = 0;
+	ip4_pseudo_header->protocal = protocal;
+	ip4_pseudo_header->transport_length = htons(segment_len);
+
+	uint32_t ip4_checksum_start = packet_checksum_start(ip4_pseudo_header, sizeof(struct ip4_pseudo_header));
+	uint32_t udp_checksum_start = packet_checksum_start(segment, segment_len);
+	uint32_t checksum = ip4_checksum_start + udp_checksum_start;
+
+	while (checksum > CHECKSUM_MASK)
+		checksum = (checksum & CHECKSUM_MASK) + (checksum >> 16);
+
+	kfree(ip4_pseudo_header);
 	return ~checksum & CHECKSUM_MASK;
 }
 

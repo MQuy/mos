@@ -14,6 +14,8 @@
 #define WORD_MASK (~(WORD_SIZE - 1))
 #define WORD_ALIGN(addr) (((addr) + WORD_SIZE - 1) & WORD_MASK)
 
+#define CHECKSUM_MASK 0xFFFF
+
 struct sk_buff;
 
 /* Standard well-defined IP protocols.  */
@@ -95,6 +97,8 @@ struct sock
 	struct net_device *dev;
 	struct thread *owner_thread;
 	struct list_head rx_queue;
+	struct list_head tx_queue;
+	struct list_head *send_head;
 };
 
 struct inet_sock
@@ -123,18 +127,10 @@ static inline struct inet_sock *inet_sk(struct sock *sk)
 struct proto_ops
 {
 	int family;
-	int (*release)(struct socket *sock);
-	int (*bind)(struct socket *sock,
-				struct sockaddr *myaddr,
-				int sockaddr_len);
-	int (*connect)(struct socket *sock,
-				   struct sockaddr *vaddr,
-				   int sockaddr_len);
-	int (*accept)(struct socket *sock,
-				  struct socket *newsock);
-	int (*getname)(struct socket *sock,
-				   struct sockaddr *addr,
-				   int *sockaddr_len, int peer);
+	int obj_size;
+	int (*bind)(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len);
+	int (*connect)(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len);
+	int (*accept)(struct socket *sock, struct socket *newsock);
 	int (*listen)(struct socket *sock, int len);
 	int (*shutdown)(struct socket *sock);
 	int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
@@ -202,10 +198,14 @@ int socket_shutdown(struct socket *sock);
 struct socket *sockfd_lookup(uint32_t fd);
 uint16_t singular_checksum(void *packet, uint16_t size);
 uint32_t packet_checksum_start(void *packet, uint16_t size);
+uint16_t transport_calculate_checksum(void *segment, uint16_t segment_len, uint8_t protocal, uint32_t source_ip, uint32_t dest_ip);
 char *inet_ntop(uint32_t src, char *dst, uint16_t len);
 
 void register_net_device(struct net_device *);
 struct net_device *get_current_net_device();
+
+// tcp.c
+extern struct proto_ops tcp_proto_ops;
 
 // udp.c
 extern struct proto_ops udp_proto_ops;

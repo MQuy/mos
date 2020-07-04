@@ -19,6 +19,11 @@ int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 	return IRQ_HANDLER_CONTINUE;
 }
 
+unsigned long get_current_tick()
+{
+	return jiffies;
+}
+
 uint32_t get_milliseconds_from_boot()
 {
 	return jiffies;

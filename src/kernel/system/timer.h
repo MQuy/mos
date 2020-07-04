@@ -25,6 +25,9 @@ struct timer_list
 		.magic = TIMER_MAGIC                   \
 	}
 
+#define from_timer(var, callback_timer, timer_fieldname) \
+	container_of(callback_timer, typeof(*var), timer_fieldname)
+
 void add_timer(struct timer_list *timer);
 void del_timer(struct timer_list *timer);
 void mod_timer(struct timer_list *timer, unsigned long expires);

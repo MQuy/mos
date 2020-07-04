@@ -7,30 +7,15 @@
 #include <kernel/net/net.h>
 #include <kernel/net/sk_buff.h>
 #include <kernel/proc/task.h>
+#include <kernel/utils/math.h>
 #include <kernel/utils/string.h>
 
-#define CHECKSUM_MASK 0xFFFF
 #define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
 
-uint16_t udp_calculate_checksum(struct udp_packet *udp_packet, uint16_t udp_len, uint32_t source_ip, uint32_t dest_ip)
+uint16_t udp_calculate_checksum(struct udp_packet *udp, uint16_t packet_len, uint32_t source_ip, uint32_t dest_ip)
 {
-	struct ip4_pseudo_header *ip4_pseudo_header = kcalloc(1, sizeof(struct ip4_pseudo_header));
-	ip4_pseudo_header->source_ip = htonl(source_ip);
-	ip4_pseudo_header->dest_ip = htonl(dest_ip);
-	ip4_pseudo_header->zeros = 0;
-	ip4_pseudo_header->protocal = IP4_PROTOCAL_UDP;
-	ip4_pseudo_header->udp_length = htons(udp_len);
-
-	udp_packet->checksum = 0;
-	uint32_t ip4_checksum_start = packet_checksum_start(ip4_pseudo_header, sizeof(struct ip4_pseudo_header));
-	uint32_t udp_checksum_start = packet_checksum_start(udp_packet, udp_len);
-	uint32_t checksum = ip4_checksum_start + udp_checksum_start;
-
-	while (checksum > CHECKSUM_MASK)
-		checksum = (checksum & CHECKSUM_MASK) + (checksum >> 16);
-
-	kfree(ip4_pseudo_header);
-	return ~checksum & CHECKSUM_MASK;
+	udp->checksum = 0;
+	return transport_calculate_checksum(udp, packet_len, IP4_PROTOCAL_UDP, source_ip, dest_ip);
 }
 
 int udp_validate_header(struct udp_packet *udp, uint32_t source_ip, uint32_t dest_ip)
@@ -39,13 +24,10 @@ int udp_validate_header(struct udp_packet *udp, uint32_t source_ip, uint32_t des
 	if (!received_checksum)
 		return 0;
 
-	int ret = 0;
 	uint16_t packet_checksum = udp_calculate_checksum(udp, ntohs(udp->length), source_ip, dest_ip);
-	if (packet_checksum != received_checksum)
-		ret = -EPROTO;
-
 	udp->checksum = received_checksum;
-	return ret;
+
+	return packet_checksum != received_checksum ? -EPROTO : 0;
 }
 
 void udp_build_header(struct udp_packet *udp, uint16_t packet_len, uint32_t source_ip, uint16_t source_port, uint32_t dest_ip, uint16_t dest_port)
@@ -95,7 +77,7 @@ int udp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 	// decrease data -> copy ip4 header into new expending newdata-olddata
 	skb_push(skb, sizeof(struct ip4_packet));
 	skb->nh.iph = (struct ip4_packet *)skb->data;
-	ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_UDP, isk->ssin.sin_addr, isk->dsin.sin_addr, 0);
+	ip4_build_header(skb->nh.iph, skb->len, IP4_PROTOCAL_UDP, isk->ssin.sin_addr, isk->dsin.sin_addr, rand());
 
 	ip4_sendmsg(sock, skb);
 	return 0;
@@ -154,7 +136,6 @@ int udp_handler(struct socket *sock, struct sk_buff *skb)
 		htonl(skb->nh.iph->source_ip) == isk->dsin.sin_addr && htons(udp->source_port) == isk->dsin.sin_port)
 	{
 		skb->h.udph = udp;
-		skb_pull(skb, sizeof(struct udp_packet));
 
 		list_add_tail(&skb->sibling, &sock->sk->rx_queue);
 		update_thread(sock->sk->owner_thread, THREAD_READY);
@@ -164,6 +145,7 @@ int udp_handler(struct socket *sock, struct sk_buff *skb)
 
 struct proto_ops udp_proto_ops = {
 	.family = PF_INET,
+	.obj_size = sizeof(struct inet_sock),
 	.bind = udp_bind,
 	.connect = udp_connect,
 	.sendmsg = udp_sendmsg,

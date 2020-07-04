@@ -14,7 +14,7 @@ void assert_timer_valid(struct timer_list *timer)
 
 void add_timer(struct timer_list *timer)
 {
-	struct timer_list *iter, *node;
+	struct timer_list *iter, *node = NULL;
 	list_for_each_entry(iter, &list_of_timer, sibling)
 	{
 		assert_timer_valid(iter);
@@ -24,9 +24,9 @@ void add_timer(struct timer_list *timer)
 	}
 
 	if (node)
-		list_add(timer, node);
+		list_add(&timer->sibling, &node->sibling);
 	else
-		list_add_tail(&list_of_timer, timer);
+		list_add_tail(&timer->sibling, &list_of_timer);
 }
 
 void del_timer(struct timer_list *timer)
