@@ -75,7 +75,8 @@ void client_demo()
 	sock->ops->bind(sock, (struct sockaddr *)sin, sizeof(struct sockaddr_in));
 
 	struct sockaddr_in *din = kcalloc(1, sizeof(struct sockaddr_in));
-	din->sin_addr = 0;
+	// http://apache.org
+	din->sin_addr = 0x284F4E01;
 	din->sin_port = 80;
 	sock->ops->connect(sock, (struct sockaddr *)din, sizeof(struct sockaddr_in));
 }

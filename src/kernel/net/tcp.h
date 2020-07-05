@@ -1,9 +1,16 @@
 #ifndef NET_TCP_H
 #define NET_TCP_H
 
+#include <kernel/net/ethernet.h>
+#include <kernel/net/ip.h>
 #include <kernel/net/net.h>
+#include <kernel/net/sk_buff.h>
 #include <kernel/system/timer.h>
+#include <kernel/utils/printf.h>
 #include <stdint.h>
+
+#define MAX_OPTION_LEN 40
+#define MAX_TCP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct tcp_packet))
 
 #define TCPCB_FLAG_FIN 0x01
 #define TCPCB_FLAG_SYN 0x02
@@ -43,12 +50,14 @@ struct tcp_sock
 	enum tcp_state state;
 
 	// sender sequence variables
+	uint16_t snd_mss;
 	uint32_t snd_iss;
 	uint32_t snd_una;
 	uint32_t snd_nxt;
 	uint32_t snd_wnd;
 
 	// receiver sequence variables
+	uint16_t rcv_mss;
 	uint32_t rcv_irs;
 	uint32_t rcv_nxt;
 	uint32_t rcv_wnd;
@@ -93,6 +102,19 @@ struct __attribute__((packed)) tcp_packet
 static inline struct tcp_sock *tcp_sk(struct sock *sk)
 {
 	return (struct tcp_sock *)sk;
+}
+
+static inline uint16_t tcp_option_length(struct sk_buff *skb)
+{
+	assert(skb->h.tcph);
+	return skb->h.tcph->data_offset * 4 - sizeof(struct tcp_packet);
+}
+
+static inline uint16_t tcp_payload_lenth(struct sk_buff *skb)
+{
+	assert(skb->nh.iph);
+	assert(skb->h.tcph);
+	return ntohs(skb->nh.iph->total_length) - (skb->nh.iph->ihl + skb->h.tcph->data_offset) * 4;
 }
 
 void tcp_build_header(struct tcp_packet *tcp,

@@ -2,11 +2,8 @@
 
 #include <include/errno.h>
 #include <kernel/cpu/pit.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/sk_buff.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
 uint16_t tcp_calculate_checksum(struct tcp_packet *tcp, uint16_t tcp_len, uint32_t source_ip, uint32_t dest_ip)
@@ -22,6 +19,26 @@ int tcp_validate_header(struct tcp_packet *tcp, uint16_t tcp_len, uint32_t sourc
 	tcp->checksum = received_checksum;
 
 	return packet_checksum != received_checksum ? -EPROTO : 0;
+}
+
+uint8_t *tcp_option_set_value(uint8_t *options, uint8_t code, uint8_t len, void *value)
+{
+	options[0] = code;
+	options[1] = len + 2;
+	memcpy(options + 2, value, len);
+
+	return options + 2 + len;
+}
+
+void tcp_options_for_syn(struct socket *sock, uint8_t **options, uint32_t *len)
+{
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	*options = kcalloc(1, MAX_OPTION_LEN);
+	uint8_t *iter = *options;
+
+	iter = tcp_option_set_value(iter, 2, 2, &(uint16_t[]){htons(tsk->snd_mss)});
+
+	*len = WORD_ALIGN(iter - *options);
 }
 
 void tcp_build_header(struct tcp_packet *tcp,
@@ -57,16 +74,19 @@ void tcp_sock_init(struct tcp_sock *tsk, uint32_t sequence_number)
 {
 	tsk->state = TCP_CLOSE;
 
+	// The liberal or optimistic position
+	tsk->snd_mss = round(ETH_DATA_LEN - (sizeof(struct ip4_packet) + sizeof(struct tcp_packet)), 4);
 	tsk->snd_iss = sequence_number;
 	tsk->snd_una = tsk->snd_iss;
 	tsk->snd_nxt = tsk->snd_una + 1;
-	tsk->snd_wnd = ETH_DATA_LEN;
+	tsk->snd_wnd = ETH_MAX_MTU;
+	tsk->rcv_mss = tsk->snd_mss;
 	tsk->rcv_irs = 0;
 	tsk->rcv_nxt = 0;
-	tsk->rcv_wnd = ETH_DATA_LEN;
+	tsk->rcv_wnd = ETH_MAX_MTU;
 
 	tsk->ssthresh = ETH_MAX_MTU;
-	tsk->cwnd = ETH_DATA_LEN;
+	tsk->cwnd = tsk->snd_mss;
 
 	tsk->rto = 1 * TICKS_PER_SECOND;
 	tsk->retransmit_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
@@ -117,11 +137,21 @@ int tcp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 	uint32_t sequence_number = rand();
 	tcp_sock_init(tsk, sequence_number);
 
-	struct sk_buff *skb = tcp_create_skb(sock, sequence_number, 0, TCPCB_FLAG_SYN, NULL, 0, NULL, 0);
-	tcp_transmit_skb(sock, skb);
+	uint8_t *options;
+	uint32_t option_len;
+	tcp_options_for_syn(sock, &options, &option_len);
+	struct sk_buff *skb = tcp_create_skb(sock, sequence_number, 0, TCPCB_FLAG_SYN, options, option_len, NULL, 0);
+	kfree(options);
 
+	tcp_transmit_skb(sock, skb);
 	sock->state = SS_CONNECTED;
 	return 0;
+}
+
+int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
+{
+	if (sock->state == SS_DISCONNECTED)
+		return -ESHUTDOWN;
 }
 
 int tcp_handler(struct socket *sock, struct sk_buff *skb)
@@ -171,7 +201,7 @@ struct proto_ops tcp_proto_ops = {
 	.obj_size = sizeof(struct tcp_sock),
 	.bind = tcp_bind,
 	.connect = tcp_connect,
-	// .sendmsg = tcp_sendmsg,
+	.sendmsg = tcp_sendmsg,
 	// .recvmsg = tcp_recvmsg,
 	// .shutdown = tcp_shutdown,
 	.handler = tcp_handler,

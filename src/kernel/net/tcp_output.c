@@ -1,16 +1,10 @@
 #include <kernel/cpu/pit.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/ip.h>
 #include <kernel/net/neighbour.h>
-#include <kernel/net/sk_buff.h>
 #include <kernel/proc/task.h>
 #include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
 #include "tcp.h"
-
-#define MAX_TCP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct tcp_packet))
 
 extern volatile struct thread *current_thread;
 
@@ -57,7 +51,7 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb)
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
 
 	tsk->snd_nxt = cb->end_seq + 1;
-	tsk->snd_wnd -= skb->len;
+	tsk->snd_wnd -= tcp_payload_lenth(skb);
 
 	cb->when = get_current_tick() + tsk->rto;
 	tcp_state_transition(sock, cb->flags);
