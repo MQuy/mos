@@ -40,7 +40,7 @@ struct tcp_skb_cb
 {
 	uint32_t seq;
 	uint32_t end_seq;
-	uint8_t flags;
+	uint16_t flags;
 	unsigned long when;
 };
 
@@ -55,16 +55,19 @@ struct tcp_sock
 	uint32_t snd_una;
 	uint32_t snd_nxt;
 	uint32_t snd_wnd;
+	uint32_t snd_wl1;
+	uint32_t snd_wl2;
+	uint8_t snd_wds;  // window scale, only support incomming
 
 	// receiver sequence variables
 	uint16_t rcv_mss;
 	uint32_t rcv_irs;
 	uint32_t rcv_nxt;
-	uint32_t rcv_wnd;
+	uint16_t rcv_wnd;
 
 	// congestion
-	uint32_t ssthresh;
-	uint32_t cwnd;
+	uint16_t ssthresh;
+	uint16_t cwnd;
 
 	// timer
 	uint32_t rto;
@@ -110,11 +113,25 @@ static inline uint16_t tcp_option_length(struct sk_buff *skb)
 	return skb->h.tcph->data_offset * 4 - sizeof(struct tcp_packet);
 }
 
+static inline uint8_t *tcp_payload(struct sk_buff *skb)
+{
+	assert(skb->h.tcph);
+	return skb->h.tcph->payload + tcp_option_length(skb);
+}
+
 static inline uint16_t tcp_payload_lenth(struct sk_buff *skb)
 {
 	assert(skb->nh.iph);
 	assert(skb->h.tcph);
-	return ntohs(skb->nh.iph->total_length) - (skb->nh.iph->ihl + skb->h.tcph->data_offset) * 4;
+
+	int payload_len = ntohs(skb->nh.iph->total_length) - (skb->nh.iph->ihl + skb->h.tcph->data_offset) * 4;
+	assert(payload_len >= 0);
+	return (uint16_t)payload_len;
+}
+
+static inline uint16_t tcp_sender_available_window(struct tcp_sock *tsk)
+{
+	return tsk->snd_una + tsk->snd_wnd - tsk->snd_nxt;
 }
 
 void tcp_build_header(struct tcp_packet *tcp,
@@ -123,18 +140,24 @@ void tcp_build_header(struct tcp_packet *tcp,
 					  uint32_t seq_number, uint32_t ack_number,
 					  uint16_t flags,
 					  uint16_t window,
-					  uint8_t *options, uint32_t option_len, uint32_t packet_len);
+					  void *options, uint32_t option_len,
+					  uint32_t packet_len);
 struct sk_buff *tcp_create_skb(struct socket *sock,
 							   uint32_t sequence_number, uint32_t ack_number,
-							   uint8_t flags,
-							   uint8_t *options, uint32_t option_len,
-							   uint8_t *payload, uint32_t payload_len);
+							   uint16_t flags,
+							   void *options, uint16_t option_len,
+							   void *payload, uint16_t payload_len);
 void tcp_transmit(struct socket *sock);
 void tcp_transmit_skb(struct socket *sock, struct sk_buff *skb);
-void tcp_handler_sync_sent(struct socket *sock, struct sk_buff *skb);
+void tcp_tx_queue_add_skb(struct socket *sock, struct sk_buff *skb);
+void tcp_send_skb(struct socket *sock, struct sk_buff *skb);
+void tcp_handler_sync(struct socket *sock, struct sk_buff *skb);
+void tcp_handler_established(struct socket *sock, struct sk_buff *skb);
 void tcp_retransmit_timer(struct timer_list *timer);
 void tcp_probe_timer(struct timer_list *timer);
 void tcp_enter_close_state(struct socket *sock);
 void tcp_state_transition(struct socket *sock, uint8_t flags);
+void tcp_flush_tx(struct socket *sock);
+void tcp_flush_rx(struct socket *sock);
 
 #endif

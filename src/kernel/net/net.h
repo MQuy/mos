@@ -97,6 +97,7 @@ struct sock
 	struct net_device *dev;
 	struct thread *owner_thread;
 	struct list_head rx_queue;
+	uint32_t rx_length;
 	struct list_head tx_queue;
 	struct list_head *send_head;
 };

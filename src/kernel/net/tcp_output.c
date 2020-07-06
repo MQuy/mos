@@ -8,12 +8,17 @@
 
 extern volatile struct thread *current_thread;
 
-struct sk_buff *tcp_create_skb(struct socket *sock, uint32_t sequence_number, uint32_t ack_number, uint8_t flags, uint8_t *options, uint32_t option_len, uint8_t *payload, uint32_t payload_len)
+struct sk_buff *tcp_create_skb(struct socket *sock,
+							   uint32_t sequence_number, uint32_t ack_number,
+							   uint16_t flags,
+							   void *options, uint16_t option_len,
+							   void *payload, uint16_t payload_len)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	struct sk_buff *skb = skb_alloc(MAX_TCP_HEADER + option_len, payload_len);
 	skb->dev = tsk->inet.sk.dev;
 
+	skb_put(skb, payload_len);
 	memcpy(skb->data, payload, payload_len);
 
 	skb_push(skb, sizeof(struct tcp_packet) + option_len);
@@ -24,7 +29,7 @@ struct sk_buff *tcp_create_skb(struct socket *sock, uint32_t sequence_number, ui
 					 sequence_number,
 					 ack_number,
 					 flags,
-					 tsk->snd_wnd,
+					 tsk->rcv_wnd,
 					 options, option_len,
 					 skb->len);
 
@@ -39,7 +44,7 @@ struct sk_buff *tcp_create_skb(struct socket *sock, uint32_t sequence_number, ui
 
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
 	cb->seq = sequence_number;
-	cb->end_seq = sequence_number + payload_len;
+	cb->end_seq = sequence_number + max(0, (int)payload_len - 1);
 	cb->flags = flags;
 
 	return skb;
@@ -50,8 +55,9 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
 
-	tsk->snd_nxt = cb->end_seq + 1;
-	tsk->snd_wnd -= tcp_payload_lenth(skb);
+	// we increase snd nxt only if data segment and syn segment (ghost segment)
+	if (tcp_payload_lenth(skb) > 0 || skb->h.tcph->syn)
+		tsk->snd_nxt = cb->end_seq + 1;
 
 	cb->when = get_current_tick() + tsk->rto;
 	tcp_state_transition(sock, cb->flags);
@@ -68,7 +74,7 @@ void tcp_transmit(struct socket *sock)
 
 	while (sock->sk->send_head)
 	{
-		while (tsk->snd_wnd > 0 && tsk->rcv_wnd > 0 && sock->sk->send_head)
+		while (tcp_sender_available_window(tsk) > 0 && sock->sk->send_head)
 		{
 			struct sk_buff *skb = list_entry(sock->sk->send_head, struct sk_buff, sibling);
 			tcp_send_skb(sock, skb);
@@ -77,19 +83,20 @@ void tcp_transmit(struct socket *sock)
 			if (sock->sk->send_head == &sock->sk->tx_queue)
 				sock->sk->send_head = NULL;
 		}
-		if (tsk->rcv_wnd == 0)
-		{
-			// TODO: MQ 2020-07-04 schedule probe timer
-		}
 		update_thread(current_thread, THREAD_WAITING);
 		schedule();
 	}
 };
 
-void tcp_transmit_skb(struct socket *sock, struct sk_buff *skb)
+void tcp_tx_queue_add_skb(struct socket *sock, struct sk_buff *skb)
 {
 	if (!sock->sk->send_head)
 		sock->sk->send_head = &skb->sibling;
 	list_add_tail(&skb->sibling, &sock->sk->tx_queue);
+}
+
+void tcp_transmit_skb(struct socket *sock, struct sk_buff *skb)
+{
+	tcp_tx_queue_add_skb(sock, skb);
 	tcp_transmit(sock);
 }

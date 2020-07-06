@@ -266,8 +266,9 @@ void net_rx_loop()
 			list_for_each_entry(sock, &lsocket, sibling)
 			{
 				struct sk_buff *skb_new = skb_clone(skb);
-				sock->ops->handler(sock, skb_new);
-				skb_free(skb_new);
+				int ret = sock->ops->handler(sock, skb_new);
+				if (ret < 0)
+					skb_free(skb_new);
 			}
 			if (current_netdev->state & NETDEV_STATE_CONNECTED)
 				net_default_rx_handler(skb);

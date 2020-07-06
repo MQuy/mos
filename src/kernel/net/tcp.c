@@ -3,8 +3,11 @@
 #include <include/errno.h>
 #include <kernel/cpu/pit.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/proc/task.h>
 #include <kernel/utils/math.h>
 #include <kernel/utils/string.h>
+
+extern volatile struct thread *current_thread;
 
 uint16_t tcp_calculate_checksum(struct tcp_packet *tcp, uint16_t tcp_len, uint32_t source_ip, uint32_t dest_ip)
 {
@@ -21,22 +24,24 @@ int tcp_validate_header(struct tcp_packet *tcp, uint16_t tcp_len, uint32_t sourc
 	return packet_checksum != received_checksum ? -EPROTO : 0;
 }
 
-uint8_t *tcp_option_set_value(uint8_t *options, uint8_t code, uint8_t len, void *value)
+uint8_t *tcp_set_option_value(uint8_t *options, uint8_t code, uint8_t len, void *value)
 {
 	options[0] = code;
+	// According to RFC793, tcp option length includes option-kind and option-length
 	options[1] = len + 2;
 	memcpy(options + 2, value, len);
 
 	return options + 2 + len;
 }
 
-void tcp_options_for_syn(struct socket *sock, uint8_t **options, uint32_t *len)
+void tcp_build_syn_options(struct socket *sock, uint8_t **options, uint32_t *len)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	*options = kcalloc(1, MAX_OPTION_LEN);
 	uint8_t *iter = *options;
 
-	iter = tcp_option_set_value(iter, 2, 2, &(uint16_t[]){htons(tsk->snd_mss)});
+	iter = tcp_set_option_value(iter, 2, 2, &(uint16_t[]){htons(tsk->snd_mss)});
+	iter = tcp_set_option_value(iter, 3, 1, &(uint8_t[]){0});
 
 	*len = WORD_ALIGN(iter - *options);
 }
@@ -47,7 +52,7 @@ void tcp_build_header(struct tcp_packet *tcp,
 					  uint32_t seq_number, uint32_t ack_number,
 					  uint16_t flags,
 					  uint16_t window,
-					  uint8_t *options, uint32_t option_len, uint32_t packet_len)
+					  void *options, uint32_t option_len, uint32_t packet_len)
 {
 	assert(option_len % 4 == 0);
 
@@ -79,7 +84,10 @@ void tcp_sock_init(struct tcp_sock *tsk, uint32_t sequence_number)
 	tsk->snd_iss = sequence_number;
 	tsk->snd_una = tsk->snd_iss;
 	tsk->snd_nxt = tsk->snd_una + 1;
+	tsk->snd_wl1 = 0;
+	tsk->snd_wl2 = 0;
 	tsk->snd_wnd = ETH_MAX_MTU;
+	tsk->snd_wds = 0;
 	tsk->rcv_mss = tsk->snd_mss;
 	tsk->rcv_irs = 0;
 	tsk->rcv_nxt = 0;
@@ -98,8 +106,29 @@ void tcp_enter_close_state(struct socket *sock)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 
 	tsk->state = TCP_CLOSE;
-	mod_timer(&tsk->retransmit_timer, UINT32_MAX);
-	mod_timer(&tsk->probe_timer, UINT32_MAX);
+	del_timer(&tsk->retransmit_timer);
+	del_timer(&tsk->retransmit_timer);
+}
+
+void tcp_flush_tx(struct socket *sock)
+{
+	struct sk_buff *iter, *next;
+	list_for_each_entry_safe(iter, next, &sock->sk->tx_queue, sibling)
+	{
+		list_del(&iter->sibling);
+		skb_free(iter);
+	}
+	sock->sk->send_head = NULL;
+}
+
+void tcp_flush_rx(struct socket *sock)
+{
+	struct sk_buff *iter, *next;
+	list_for_each_entry_safe(iter, next, &sock->sk->rx_queue, sibling)
+	{
+		list_del(&iter->sibling);
+		skb_free(iter);
+	}
 }
 
 void tcp_state_transition(struct socket *sock, uint8_t flags)
@@ -139,7 +168,7 @@ int tcp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 
 	uint8_t *options;
 	uint32_t option_len;
-	tcp_options_for_syn(sock, &options, &option_len);
+	tcp_build_syn_options(sock, &options, &option_len);
 	struct sk_buff *skb = tcp_create_skb(sock, sequence_number, 0, TCPCB_FLAG_SYN, options, option_len, NULL, 0);
 	kfree(options);
 
@@ -152,6 +181,89 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 {
 	if (sock->state == SS_DISCONNECTED)
 		return -ESHUTDOWN;
+
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	uint16_t mmss = min(tsk->snd_mss, tsk->rcv_mss);
+	for (size_t msg_sent_len = 0; msg_sent_len < msg_len;)
+	{
+		uint16_t mwnd;
+		// receiving window = 0, sleep till get the signal from probe timer to contine (wnd > 0)
+		while (true)
+		{
+			mwnd = min_t(uint16_t, min(tsk->cwnd, tcp_sender_available_window(tsk)), msg_len);
+			if (mwnd > 0)
+				break;
+			update_thread(current_thread, THREAD_WAITING);
+			schedule();
+		}
+		for (uint16_t ibatch = 0; ibatch < mwnd;)
+		{
+			uint32_t accumulated_sent_len = msg_sent_len + ibatch;
+			uint16_t advertised_window = min_t(uint16_t, min(mmss, mwnd), msg_len - accumulated_sent_len);
+			uint16_t flags = accumulated_sent_len + advertised_window == msg_len ? TCPCB_FLAG_PSH : 0;
+			assert(accumulated_sent_len + advertised_window <= msg_len);
+			struct sk_buff *skb = tcp_create_skb(sock,
+												 tsk->snd_nxt + accumulated_sent_len, tsk->rcv_nxt,
+												 TCPCB_FLAG_ACK | flags,
+												 NULL, 0,
+												 (uint8_t *)msg + accumulated_sent_len, advertised_window);
+			tcp_tx_queue_add_skb(sock, skb);
+			ibatch += advertised_window;
+		}
+
+		msg_sent_len += mwnd;
+		tcp_transmit(sock);
+	}
+
+	return 0;
+}
+
+int tcp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
+{
+	if (sock->state == SS_DISCONNECTED)
+		return -ESHUTDOWN;
+
+	struct sk_buff *last_skb = NULL;
+	sock->sk->rx_length = msg_len;
+
+	while (true)
+	{
+		uint16_t received_len = 0;
+		struct sk_buff *iter;
+		list_for_each_entry(iter, &sock->sk->rx_queue, sibling)
+		{
+			received_len += tcp_payload_lenth(iter);
+			assert(received_len <= msg_len);
+
+			if (msg_len == received_len || iter->h.tcph->push)
+			{
+				last_skb = iter;
+				break;
+			}
+		}
+		if (last_skb)
+			break;
+
+		update_thread(current_thread, THREAD_WAITING);
+		schedule();
+	}
+
+	uint32_t received_len = 0;
+	struct sk_buff *iter, *next;
+	list_for_each_entry_safe(iter, next, &sock->sk->rx_queue, sibling)
+	{
+		list_del(&iter->sibling);
+
+		uint16_t payload_len = tcp_payload_lenth(iter);
+		memcpy(msg + received_len, tcp_payload(iter), payload_len);
+		received_len += payload_len;
+
+		if (iter == last_skb)
+			break;
+	}
+
+	sock->sk->rx_length = 0;
+	return received_len;
 }
 
 int tcp_handler(struct socket *sock, struct sk_buff *skb)
@@ -182,14 +294,16 @@ int tcp_handler(struct socket *sock, struct sk_buff *skb)
 	{
 		skb->h.tcph = (struct tcp_packet *)skb->data;
 
-		if (!tsk->rcv_wnd && ntohs(skb->h.tcph->window))
-			mod_timer(&tsk->probe_timer, UINT32_MAX);
-
 		// switch branch for state
 		switch (tsk->state)
 		{
 		case TCP_SYN_SENT:
-			tcp_handler_sync_sent(sock, skb);
+			tcp_handler_sync(sock, skb);
+			break;
+		case TCP_ESTABLISHED:
+			if (tsk->snd_wnd && !skb->h.tcph->window)
+				mod_timer(&tsk->probe_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
+			tcp_handler_established(sock, skb);
 			break;
 		}
 	}
@@ -202,7 +316,7 @@ struct proto_ops tcp_proto_ops = {
 	.bind = tcp_bind,
 	.connect = tcp_connect,
 	.sendmsg = tcp_sendmsg,
-	// .recvmsg = tcp_recvmsg,
+	.recvmsg = tcp_recvmsg,
 	// .shutdown = tcp_shutdown,
 	.handler = tcp_handler,
 };

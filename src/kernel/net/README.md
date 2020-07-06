@@ -563,7 +563,7 @@ timer is reset/calculated when receving an ack
 #### Send data
 
 1. `sendmsg` break data into MSS segments -> add to `sk_write_queue`
-2. run `tcp_transmit_skb`
+2. run `tcp_transmit`
    - starting from `sk_send_head` (should only contains segments from breaking data above)
    - win = min(cwnd, rwnd) -> send copied segments fit into that window -> sleep
    - is waked up -> if `sk_write_queue` is empty -> exit

@@ -66,7 +66,7 @@ int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 
 	list_del(&skb->sibling);
 
-	uint32_t min_len;
+	uint32_t payload_len;
 	uint8_t *buff;
 	if (sock->type != SOCK_RAW)
 	{
@@ -75,11 +75,11 @@ int packet_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 	}
 	else
 		buff = (uint8_t *)skb->mac.eh;
-	min_len = min(msg_len, skb->len);
-	memcpy(msg, buff, min_len);
+	payload_len = min(msg_len, skb->len);
+	memcpy(msg, buff, payload_len);
 
 	skb_free(skb);
-	return 0;
+	return payload_len;
 }
 
 int packet_handler(struct socket *sock, struct sk_buff *skb)

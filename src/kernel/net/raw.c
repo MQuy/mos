@@ -78,11 +78,12 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 	skb_pull(skb, sizeof(struct ethernet_packet));
 	skb->nh.iph = (struct ip4_packet *)skb->data;
 
-	uint32_t ip4_payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet);
-	memcpy(msg, (char *)skb->nh.iph + sizeof(struct ip4_packet), min(msg_len, ip4_payload_len));
+	uint32_t payload_len = min(msg_len, ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet));
+	memcpy(msg, (char *)skb->nh.iph + sizeof(struct ip4_packet), payload_len);
 
 	skb_free(skb);
-	return 0;
+	return payload_len;
+	;
 }
 
 int raw_handler(struct socket *sock, struct sk_buff *skb)

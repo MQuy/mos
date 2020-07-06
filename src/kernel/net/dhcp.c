@@ -64,7 +64,7 @@ struct sk_buff *dhcp_create_skbuff(uint8_t op, uint32_t source_ip, uint32_t dest
 	return skb;
 }
 
-uint8_t *dhcp_option_set_value(uint8_t *options, uint8_t code, uint8_t len, void *value)
+uint8_t *dhcp_set_option_value(uint8_t *options, uint8_t code, uint8_t len, void *value)
 {
 	options[0] = code;
 	options[1] = len;
@@ -73,16 +73,14 @@ uint8_t *dhcp_option_set_value(uint8_t *options, uint8_t code, uint8_t len, void
 	return options + 2 + len;
 }
 
-uint32_t dhcp_option_get_value(uint8_t *options, uint32_t *value, uint8_t len)
+uint32_t dhcp_get_option_value(uint8_t *options, void *value, uint8_t len)
 {
 	if (len == 1)
-		*value = options[0];
+		*(uint8_t *)value = options[0];
 	else if (len == 2)
-		*value = options[0] + (options[1] << 8);
-	else if (len == 3)
-		*value = options[0] + (options[1] << 8) + (options[2] << 16);
+		*(uint16_t *)value = options[0] + (options[1] << 8);
 	else if (len == 4)
-		*value = options[0] + (options[1] << 8) + (options[2] << 16) + (options[3] << 24);
+		*(uint32_t *)value = options[0] + (options[1] << 8) + (options[2] << 16) + (options[3] << 24);
 	else
 		return -ERANGE;
 
@@ -107,17 +105,17 @@ void dhcp_create_discovery_options(uint8_t **options, uint32_t *len)
 	uint8_t *iter_opt = *options;
 
 	// DHCP Message Type
-	iter_opt = dhcp_option_set_value(iter_opt, 53, 1, &(uint8_t[]){1});
+	iter_opt = dhcp_set_option_value(iter_opt, 53, 1, &(uint8_t[]){1});
 	// DHCP Parameter Request List
-	iter_opt = dhcp_option_set_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 26, 44, 46, 95, 119, 121, 252});
+	iter_opt = dhcp_set_option_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 26, 44, 46, 95, 119, 121, 252});
 	// DHCP Maximum Message Size
-	iter_opt = dhcp_option_set_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
+	iter_opt = dhcp_set_option_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
 	// DHCP Client Identifier
-	iter_opt = dhcp_option_set_value(iter_opt, 61, 7, &(uint8_t[]){1, dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]});
+	iter_opt = dhcp_set_option_value(iter_opt, 61, 7, &(uint8_t[]){1, dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]});
 	// DHCP IP Lease Time
-	iter_opt = dhcp_option_set_value(iter_opt, 51, 4, &(uint8_t[]){0, 0x76, 0xa7, 0});
+	iter_opt = dhcp_set_option_value(iter_opt, 51, 4, &(uint8_t[]){0, 0x76, 0xa7, 0});
 	// DHCP Host name
-	iter_opt = dhcp_option_set_value(iter_opt, 12, 3, &(uint8_t[]){'m', 'O', 'S'});
+	iter_opt = dhcp_set_option_value(iter_opt, 12, 3, &(uint8_t[]){'m', 'O', 'S'});
 	// DHCP Options end
 	iter_opt[0] = 0xFF;
 
@@ -132,19 +130,19 @@ void dhcp_create_request_options(uint8_t **options, uint32_t *len, uint32_t requ
 	uint8_t *iter_opt = *options;
 
 	// DHCP Message Type
-	iter_opt = dhcp_option_set_value(iter_opt, 53, 1, &(uint8_t[]){3});
+	iter_opt = dhcp_set_option_value(iter_opt, 53, 1, &(uint8_t[]){3});
 	// DHCP Parameter Request List
-	iter_opt = dhcp_option_set_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 26, 44, 46, 95, 119, 121, 252});
+	iter_opt = dhcp_set_option_value(iter_opt, 55, 10, &(uint8_t[]){1, 3, 6, 15, 26, 44, 46, 95, 119, 121, 252});
 	// DHCP Maximum Message Size
-	iter_opt = dhcp_option_set_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
+	iter_opt = dhcp_set_option_value(iter_opt, 57, 2, &(uint8_t[]){0x05, 0xdc});
 	// DHCP Client Identifier
-	iter_opt = dhcp_option_set_value(iter_opt, 61, 7, &(uint8_t[]){1, dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]});
+	iter_opt = dhcp_set_option_value(iter_opt, 61, 7, &(uint8_t[]){1, dev->dev_addr[0], dev->dev_addr[1], dev->dev_addr[2], dev->dev_addr[3], dev->dev_addr[4], dev->dev_addr[5]});
 	// DHCP Requested IP
-	iter_opt = dhcp_option_set_value(iter_opt, 50, 4, &(uint8_t[]){(requested_ip >> 24) & 0xFF, (requested_ip >> 16) & 0xFF, (requested_ip >> 8) & 0xFF, requested_ip & 0xFF});
+	iter_opt = dhcp_set_option_value(iter_opt, 50, 4, &(uint8_t[]){(requested_ip >> 24) & 0xFF, (requested_ip >> 16) & 0xFF, (requested_ip >> 8) & 0xFF, requested_ip & 0xFF});
 	// DHCP Server
-	iter_opt = dhcp_option_set_value(iter_opt, 54, 4, &(uint8_t[]){(server_ip >> 24) & 0xFF, (server_ip >> 16) & 0xFF, (server_ip >> 8) & 0xFF, server_ip & 0xFF});
+	iter_opt = dhcp_set_option_value(iter_opt, 54, 4, &(uint8_t[]){(server_ip >> 24) & 0xFF, (server_ip >> 16) & 0xFF, (server_ip >> 8) & 0xFF, server_ip & 0xFF});
 	// DHCP Host name
-	iter_opt = dhcp_option_set_value(iter_opt, 12, 3, &(uint8_t[]){'m', 'O', 'S'});
+	iter_opt = dhcp_set_option_value(iter_opt, 12, 3, &(uint8_t[]){'m', 'O', 'S'});
 	// DHCP Options end
 	iter_opt[0] = 0xFF;
 
@@ -190,9 +188,9 @@ int dhcp_offer_parse_options(uint8_t *options, uint32_t *dhcp_server_ip)
 	for (uint32_t i = 0; options[i] != 0xFF;)
 	{
 		if (options[i] == 53)
-			dhcp_option_get_value(&options[i + 2], (uint32_t *)&opt_message_type, 1);
+			dhcp_get_option_value(&options[i + 2], &opt_message_type, 1);
 		else if (options[i] == 54)
-			dhcp_option_get_value(&options[i + 2], &opt_dhcp_server_ip, 4);
+			dhcp_get_option_value(&options[i + 2], &opt_dhcp_server_ip, 4);
 
 		i += 2 + options[i + 1];
 	}
@@ -213,19 +211,19 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 	for (uint32_t i = 0; options[i] != 0xFF;)
 	{
 		if (options[i] == 1)
-			dhcp_option_get_value(&options[i + 2], &opt_subnet_mask, 4);
+			dhcp_get_option_value(&options[i + 2], &opt_subnet_mask, 4);
 		else if (options[i] == 3)
-			dhcp_option_get_value(&options[i + 2], &opt_router_ip, 4);
+			dhcp_get_option_value(&options[i + 2], &opt_router_ip, 4);
 		else if (options[i] == 6)
-			dhcp_option_get_value(&options[i + 2], &opt_dns_server_ip, 4);
+			dhcp_get_option_value(&options[i + 2], &opt_dns_server_ip, 4);
 		else if (options[i] == 26)
-			dhcp_option_get_value(&options[i + 2], (uint32_t *)&opt_mtu, 2);
+			dhcp_get_option_value(&options[i + 2], &opt_mtu, 2);
 		else if (options[i] == 51)
-			dhcp_option_get_value(&options[i + 2], &opt_lease_time, 4);
+			dhcp_get_option_value(&options[i + 2], &opt_lease_time, 4);
 		else if (options[i] == 53)
-			dhcp_option_get_value(&options[i + 2], (uint32_t *)&opt_message_type, 1);
+			dhcp_get_option_value(&options[i + 2], &opt_message_type, 1);
 		else if (options[i] == 54)
-			dhcp_option_get_value(&options[i + 2], &opt_dhcp_server_ip, 4);
+			dhcp_get_option_value(&options[i + 2], &opt_dhcp_server_ip, 4);
 
 		i += 2 + options[i + 1];
 	}
