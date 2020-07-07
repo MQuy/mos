@@ -282,7 +282,10 @@ void net_rx_loop()
 		}
 
 		if (backup_thread)
+		{
 			update_thread(backup_thread, THREAD_READY);
+			backup_thread = NULL;
+		}
 		update_thread(net_thread, THREAD_WAITING);
 		schedule();
 	}
@@ -305,10 +308,7 @@ void net_switch()
 		schedule();
 	}
 	else
-	{
-		backup_thread = NULL;
 		update_thread(net_thread, THREAD_READY);
-	}
 }
 
 void net_init()

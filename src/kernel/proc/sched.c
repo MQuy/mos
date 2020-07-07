@@ -102,6 +102,9 @@ void remove_thread(struct thread *t)
 
 void update_thread(struct thread *thread, uint8_t state)
 {
+	if (thread->state == state)
+		return;
+
 	lock_scheduler();
 
 	remove_thread(thread);

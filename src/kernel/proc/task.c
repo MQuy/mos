@@ -68,6 +68,19 @@ void kernel_thread_entry(struct thread *t, void *flow())
 	schedule();
 }
 
+void thread_sleep_timer(struct timer_list *timer)
+{
+	struct thread *t = from_timer(t, timer, sleep_timer);
+	list_del(&timer->sibling);
+	update_thread(t, THREAD_READY);
+}
+
+void thread_sleep(uint32_t ms)
+{
+	mod_timer(&current_thread->sleep_timer, get_current_tick() + ms);
+	update_thread(current_thread, THREAD_WAITING);
+}
+
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority)
 {
 	disable_interrupts();
@@ -79,6 +92,7 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 	t->state = state;
 	t->esp = t->kernel_stack - sizeof(struct trap_frame);
 	plist_node_init(&t->sched_sibling, priority);
+	t->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
 
 	struct trap_frame *frame = (struct trap_frame *)t->esp;
 	memset(frame, 0, sizeof(struct trap_frame));
@@ -208,6 +222,7 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 	t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
 	t->esp = t->kernel_stack - sizeof(struct trap_frame);
 	plist_node_init(&t->sched_sibling, priority);
+	t->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
 
 	struct trap_frame *frame = (struct trap_frame *)t->esp;
 	memset(frame, 0, sizeof(struct trap_frame));
@@ -300,9 +315,4 @@ struct process *process_fork(struct process *parent)
 	enable_interrupts();
 
 	return p;
-}
-
-struct process *get_process(pid_t pid)
-{
-	return hashmap_get(&mprocess, &pid);
 }

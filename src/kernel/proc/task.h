@@ -7,6 +7,7 @@
 #include <kernel/locking/semaphore.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/elf.h>
+#include <kernel/system/timer.h>
 #include <kernel/utils/plist.h>
 #include <stdint.h>
 
@@ -99,6 +100,7 @@ struct thread
 	struct interrupt_registers uregs;
 	struct list_head sibling;
 	struct plist_node sched_sibling;
+	struct timer_list sleep_timer;
 };
 
 struct process
@@ -132,6 +134,6 @@ void switch_thread(struct thread *nt);
 void schedule();
 struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy);
 int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
-struct process *get_process(pid_t pid);
+void thread_sleep(uint32_t ms);
 
 #endif
