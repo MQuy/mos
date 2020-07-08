@@ -75,13 +75,13 @@ void tcp_build_header(struct tcp_packet *tcp,
 	tcp->checksum = tcp_calculate_checksum(tcp, packet_len, source_ip, dest_ip);
 }
 
-void tcp_sock_init(struct tcp_sock *tsk, uint32_t sequence_number)
+void tcp_sock_init(struct tcp_sock *tsk)
 {
 	tsk->state = TCP_CLOSE;
 
 	// The liberal or optimistic position
 	tsk->snd_mss = round(ETH_DATA_LEN - (sizeof(struct ip4_packet) + sizeof(struct tcp_packet)), 4);
-	tsk->snd_iss = sequence_number;
+	tsk->snd_iss = 0;
 	tsk->snd_una = tsk->snd_iss;
 	tsk->snd_nxt = tsk->snd_una + 1;
 	tsk->snd_wl1 = 0;
@@ -146,6 +146,8 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 			tsk->state = TCP_SYN_RECV;
 		else if (flags == TCPCB_FLAG_ACK)
 			tsk->state = TCP_ESTABLISHED;
+		else if (flags == TCPCB_FLAG_RST)
+			tsk->state = TCP_CLOSE;
 	}
 }
 
@@ -153,6 +155,8 @@ int tcp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	memcpy(&tsk->inet.ssin, myaddr, sockaddr_len);
+
+	tcp_sock_init(tsk);
 	return 0;
 }
 
@@ -164,7 +168,7 @@ int tcp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 	memcpy(&tsk->inet.dsin, vaddr, sockaddr_len);
 
 	uint32_t sequence_number = rand();
-	tcp_sock_init(tsk, sequence_number);
+	tsk->snd_iss = sequence_number;
 
 	uint8_t *options;
 	uint32_t option_len;
@@ -174,7 +178,7 @@ int tcp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 
 	tcp_transmit_skb(sock, skb);
 	sock->state = SS_CONNECTED;
-	return 0;
+	return tsk->state == TCP_ESTABLISHED ? 0 : -1;
 }
 
 int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)

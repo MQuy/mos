@@ -78,7 +78,8 @@ void client_demo()
 	// http://apache.org
 	din->sin_addr = 0x284F4E01;
 	din->sin_port = 80;
-	sock->ops->connect(sock, (struct sockaddr *)din, sizeof(struct sockaddr_in));
+	while (sock->ops->connect(sock, (struct sockaddr *)din, sizeof(struct sockaddr_in)) < 0)
+		;
 
 	char message[] = "GET / HTTP/1.1\r\nHost: 40.79.78.1\r\nConnection: keep-alive\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36\r\nAccept: text/html\r\nAccept-Language: en-US\r\n\r\n";
 	sock->ops->sendmsg(sock, message, sizeof(message));

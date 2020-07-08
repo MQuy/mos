@@ -69,6 +69,8 @@ void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 			{
 				struct sk_buff *skb = tcp_create_skb(sock, ack_number, 0, TCPCB_FLAG_RST, NULL, 0, NULL, 0);
 				tcp_send_skb(sock, skb);
+
+				update_thread(sock->sk->owner_thread, THREAD_READY);
 			}
 			return;
 		}
@@ -109,7 +111,6 @@ void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 		{
 			struct sk_buff *skb = tcp_create_skb(sock, tsk->snd_iss, tsk->rcv_nxt, TCPCB_FLAG_ACK | TCPCB_FLAG_SYN, NULL, 0, NULL, 0);
 			tcp_send_skb(sock, skb);
-			// TODO: MQ 2020-07-06 Redo the syn flow
 		}
 	}
 }

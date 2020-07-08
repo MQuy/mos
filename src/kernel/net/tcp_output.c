@@ -62,7 +62,7 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb)
 	cb->when = get_current_tick() + tsk->rto;
 	tcp_state_transition(sock, cb->flags);
 
-	if (cb->when < tsk->retransmit_timer.expires)
+	if (skb->h.tcph->syn)
 		mod_timer(&tsk->retransmit_timer, cb->when);
 
 	ethernet_sendmsg(skb);
