@@ -17,5 +17,5 @@ void tcp_probe_timer(struct timer_list *timer)
 
 	// TODO: MQ 2020-07-07 Send probe segment
 
-	mod_timer(&tsk->probe_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
+	del_timer(&tsk->probe_timer);
 }

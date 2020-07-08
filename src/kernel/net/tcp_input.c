@@ -41,18 +41,32 @@ void tcp_parse_syn_options(uint8_t *options, uint32_t len, uint16_t *rmms, uint8
 	*window_scale = opt_window_scale;
 }
 
-void tcp_retransmision_queue_acked(struct socket *sock, uint32_t ack_number)
+void tcp_retransmision_queue_acked(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	struct sk_buff *iter, *next;
 	list_for_each_entry_safe(iter, next, &sock->sk->tx_queue, sibling)
 	{
-		if (TCP_SKB_CB(iter)->end_seq < ack_number)
+		if (TCP_SKB_CB(iter)->end_seq < ack_number || is_acked_all)
 			list_del(&iter->sibling);
 	}
 
-	struct sk_buff *skb = list_first_entry(&sock->sk->tx_queue, struct sk_buff, sibling);
-	mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->when + tsk->rto);
+	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
+	if (skb)
+		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->when + tsk->rto);
+	else
+		del_timer(&tsk->retransmit_timer);
+}
+
+bool tcp_is_fin_acked(struct socket *sock)
+{
+	struct sk_buff *iter;
+	list_for_each_entry(iter, &sock->sk->tx_queue, sibling)
+	{
+		if (iter->h.tcph->fin)
+			return false;
+	}
+	return true;
 }
 
 void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
@@ -95,7 +109,7 @@ void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 		tsk->snd_nxt = ack_number;
 		// According to RFC1323, the window field in SYN (<SYN> or <SYN, ACK>) segment itself is never scaled
 		tsk->snd_wnd = ntohs(skb->h.tcph->window);
-		tcp_retransmision_queue_acked(sock, ack_number);
+		tcp_retransmision_queue_acked(sock, ack_number, false);
 
 		if (tsk->snd_una > tsk->snd_iss)
 		{
@@ -123,6 +137,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 	uint16_t payload_len = tcp_payload_lenth(skb);
 	bool acceptable_segment;
 
+	// step one
 	if (tsk->rcv_wnd)
 	{
 		if (payload_len > 0)
@@ -147,51 +162,170 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
 			tcp_send_skb(sock, snd_skb);
 		}
+		update_thread(sock->sk->owner_thread, THREAD_READY);
 		return;
 	}
 
-	if (skb->h.tcph->rst || skb->h.tcph->syn)
+	// step two
+	if (skb->h.tcph->rst)
 	{
+		if (tsk->state == TCP_SYN_RECV)
+		{
+			// NOTE: MQ 2020-07-08
+			// According to RFC793, we have to handle passive and active OPEN
+			// -> to simplify we assume that all cases are active OPEN
+			tcp_retransmision_queue_acked(sock, 0, true);
+			tcp_enter_close_state(sock);
+			update_thread(sock->sk->owner_thread, THREAD_READY);
+			return;
+		}
+		else if (tsk->state == TCP_ESTABLISHED || tsk->state == TCP_FIN_WAIT1 || tsk->state == TCP_FIN_WAIT2)
+		{
+			tcp_flush_tx(sock);
+			tcp_flush_rx(sock);
+			tcp_enter_close_state(sock);
+			update_thread(sock->sk->owner_thread, THREAD_READY);
+			return;
+		}
+		else if (tsk->state == TCP_CLOSING || tsk->state == TCP_LAST_ACK || tsk->state == TCP_TIME_WAIT)
+		{
+			tcp_enter_close_state(sock);
+			update_thread(sock->sk->owner_thread, THREAD_READY);
+			return;
+		}
+	}
+
+	// step fourth
+	if (skb->h.tcph->syn &&
+		tsk->state == TCP_SYN_RECV && tsk->state == TCP_ESTABLISHED &&
+		tsk->state == TCP_FIN_WAIT1 && tsk->state == TCP_FIN_WAIT2 &&
+		tsk->state == TCP_CLOSE_WAIT && tsk->state == TCP_CLOSING &&
+		tsk->state == TCP_LAST_ACK && tsk->state == TCP_TIME_WAIT)
+	{
+		struct sk_buff *snd_skb = tcp_create_skb(sock, seg_ack, tsk->rcv_nxt, TCPCB_FLAG_RST, NULL, 0, NULL, 0);
+		tcp_send_skb(sock, snd_skb);
+
 		tcp_flush_tx(sock);
 		tcp_flush_rx(sock);
 		tcp_enter_close_state(sock);
+		update_thread(sock->sk->owner_thread, THREAD_READY);
 		return;
 	}
 
+	// step fifth
 	if (!skb->h.tcph->ack)
 		return;
 
-	if (tsk->snd_una < seg_ack && seg_ack <= tsk->snd_nxt)
+	if (tsk->state == TCP_SYN_RECV)
 	{
-		tsk->snd_una = seg_ack;
-		tcp_retransmision_queue_acked(sock, seg_ack);
-
-		if (tsk->snd_wl1 < seg_seq || (tsk->snd_wl1 == seg_seq && tsk->snd_wl2 <= seg_ack))
+		if (tsk->snd_una < seg_ack && seg_ack <= tsk->snd_nxt)
+			tsk->state = TCP_ESTABLISHED;
+		else if (!acceptable_segment)
 		{
-			tsk->snd_wnd = ntohs(skb->h.tcph->window) << tsk->snd_wds;
-			tsk->snd_wl1 = seg_seq;
-			tsk->snd_wl2 = seg_ack;
+			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_RST, NULL, 0, NULL, 0);
+			tcp_send_skb(sock, snd_skb);
 		}
 	}
-	else if (seg_ack > tsk->snd_nxt)
+	else if (tsk->state == TCP_ESTABLISHED || tsk->state == TCP_CLOSE_WAIT ||
+			 tsk->state == TCP_FIN_WAIT1 || tsk->state == TCP_FIN_WAIT2 ||
+			 tsk->state == TCP_CLOSING)
+	{
+		if (tsk->snd_una < seg_ack && seg_ack <= tsk->snd_nxt)
+		{
+			tsk->snd_una = seg_ack;
+			tcp_retransmision_queue_acked(sock, seg_ack, false);
+
+			if (tsk->snd_wl1 < seg_seq || (tsk->snd_wl1 == seg_seq && tsk->snd_wl2 <= seg_ack))
+			{
+				tsk->snd_wnd = ntohs(skb->h.tcph->window) << tsk->snd_wds;
+				tsk->snd_wl1 = seg_seq;
+				tsk->snd_wl2 = seg_ack;
+			}
+		}
+		else if (seg_ack > tsk->snd_nxt)
+		{
+			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
+			tcp_send_skb(sock, snd_skb);
+			return;
+		}
+	}
+	if (tsk->state == TCP_FIN_WAIT1)
+	{
+		if (tcp_is_fin_acked(sock))
+			tsk->state = TCP_FIN_WAIT2;
+	}
+	else if (tsk->state == TCP_CLOSING)
+	{
+		if (tcp_is_fin_acked(sock))
+			tsk->state = TCP_TIME_WAIT;
+	}
+	else if (tsk->state == TCP_LAST_ACK)
+	{
+		if (tcp_is_fin_acked(sock))
+		{
+			tcp_enter_close_state(sock);
+			update_thread(sock->sk->owner_thread, THREAD_READY);
+			return;
+		}
+	}
+	else if (tsk->state == TCP_TIME_WAIT)
 	{
 		struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
 		tcp_send_skb(sock, snd_skb);
-		return;
 	}
 
-	// process the text segment, schedule owner thread ready if expected rx length or push is met
-	list_add_tail(&skb->sibling, &sock->sk->rx_queue);
-	if (payload_len > 0)
+	// step seventh
+	bool is_sent_ack = false;
+	if (tsk->state == TCP_ESTABLISHED || tsk->state == TCP_FIN_WAIT1 || tsk->state == TCP_FIN_WAIT2)
 	{
-		tsk->rcv_nxt += payload_len;
-		// TODO: MQ 2020-07-06 congestion and timer
-		struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
-		tcp_send_skb(sock, snd_skb);
+		if (payload_len > 0 || skb->h.tcph->push)
+			list_add_tail(&skb->sibling, &sock->sk->rx_queue);
+
+		if (payload_len > 0)
+		{
+			tsk->rcv_nxt += payload_len;
+			// TODO: MQ 2020-07-06 congestion and timer
+			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
+			tcp_send_skb(sock, snd_skb);
+			is_sent_ack = true;
+		}
 	}
 
+	// step eighth
 	if (skb->h.tcph->fin)
-		tsk->state = TCP_CLOSE_WAIT;
+	{
+		if (tsk->state == TCP_CLOSE || tsk->state == TCP_LISTEN || tsk->state == TCP_SYN_SENT)
+			return;
+
+		if (!is_sent_ack)
+		{
+			tsk->rcv_nxt += 1;
+			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
+			tcp_send_skb(sock, snd_skb);
+		}
+
+		if (tsk->state == TCP_SYN_RECV || tsk->state == TCP_ESTABLISHED)
+			tsk->state = TCP_CLOSE_WAIT;
+		else if (tsk->state == TCP_FIN_WAIT1)
+		{
+			if (tcp_is_fin_acked(sock))
+			{
+				tsk->state = TCP_TIME_WAIT;
+				// TODO: MQ 2020-07-07 start time-wait timer
+			}
+		}
+		else if (tsk->state == TCP_FIN_WAIT2)
+		{
+			tsk->state = TCP_TIME_WAIT;
+			// TODO: MQ 2020-07-07 start time-wait timer
+			tsk->state = TCP_CLOSE;
+		}
+		else if (tsk->state == TCP_TIME_WAIT)
+		{
+			// TODO: MQ 2020-07-08 start time-wait timer
+			tsk->state = TCP_CLOSE;
+		}
+	}
 
 	update_thread(sock->sk->owner_thread, THREAD_READY);
 }

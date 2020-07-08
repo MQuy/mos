@@ -55,8 +55,8 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
 
-	// we increase snd nxt only if data segment and syn segment (ghost segment)
-	if (tcp_payload_lenth(skb) > 0 || skb->h.tcph->syn)
+	// we increase snd nxt only if data, syn or fin segment (ghost segment)
+	if (tcp_payload_lenth(skb) > 0 || skb->h.tcph->syn || skb->h.tcph->fin)
 		tsk->snd_nxt = cb->end_seq + 1;
 
 	cb->when = get_current_tick() + tsk->rto;

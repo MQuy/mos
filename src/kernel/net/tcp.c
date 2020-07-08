@@ -148,6 +148,30 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 			tsk->state = TCP_ESTABLISHED;
 		else if (flags == TCPCB_FLAG_RST)
 			tsk->state = TCP_CLOSE;
+		break;
+	case TCP_ESTABLISHED:
+		if (flags & TCPCB_FLAG_FIN)
+			tsk->state = TCP_FIN_WAIT1;
+		break;
+	case TCP_FIN_WAIT2:
+		if (flags & TCPCB_FLAG_ACK)
+			tsk->state = TCP_TIME_WAIT;
+		break;
+	}
+}
+
+int tcp_return_code(struct socket *sock, int success_code)
+{
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+
+	switch (tsk->state)
+	{
+	case TCP_ESTABLISHED:
+	case TCP_FIN_WAIT1:
+		return success_code;
+
+	default:
+		return -1;
 	}
 }
 
@@ -178,7 +202,7 @@ int tcp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 
 	tcp_transmit_skb(sock, skb);
 	sock->state = SS_CONNECTED;
-	return tsk->state == TCP_ESTABLISHED ? 0 : -1;
+	return tcp_return_code(sock, 0);
 }
 
 int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
@@ -188,7 +212,8 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	uint16_t mmss = min(tsk->snd_mss, tsk->rcv_mss);
-	for (size_t msg_sent_len = 0; msg_sent_len < msg_len;)
+	size_t msg_sent_len = 0;
+	for (; msg_sent_len < msg_len && tsk->state == TCP_ESTABLISHED;)
 	{
 		uint16_t mwnd;
 		// receiving window = 0, sleep till get the signal from probe timer to contine (wnd > 0)
@@ -219,7 +244,7 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 		tcp_transmit(sock);
 	}
 
-	return 0;
+	return tcp_return_code(sock, msg_sent_len);
 }
 
 int tcp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
@@ -227,10 +252,11 @@ int tcp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 	if (sock->state == SS_DISCONNECTED)
 		return -ESHUTDOWN;
 
-	struct sk_buff *last_skb = NULL;
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	sock->sk->rx_length = msg_len;
 
-	while (true)
+	struct sk_buff *last_skb = NULL;
+	while (tsk->state == TCP_ESTABLISHED || tsk->state == TCP_FIN_WAIT1)
 	{
 		uint16_t received_len = 0;
 		struct sk_buff *iter;
@@ -267,7 +293,29 @@ int tcp_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 	}
 
 	sock->sk->rx_length = 0;
-	return received_len;
+	return tcp_return_code(sock, received_len);
+}
+
+int tcp_shutdown(struct socket *sock)
+{
+	if (sock->state == SS_DISCONNECTED)
+		return -ESHUTDOWN;
+
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	struct sk_buff *skb = tcp_create_skb(sock,
+										 tsk->snd_nxt, tsk->rcv_nxt,
+										 TCPCB_FLAG_ACK | TCPCB_FLAG_FIN,
+										 NULL, 0,
+										 NULL, 0);
+	tcp_transmit_skb(sock, skb);
+
+	while (tsk->state != TCP_CLOSE)
+	{
+		update_thread(current_thread, THREAD_WAITING);
+		schedule();
+	}
+
+	return 0;
 }
 
 int tcp_handler(struct socket *sock, struct sk_buff *skb)
@@ -304,6 +352,13 @@ int tcp_handler(struct socket *sock, struct sk_buff *skb)
 		case TCP_SYN_SENT:
 			tcp_handler_sync(sock, skb);
 			break;
+		case TCP_SYN_RECV:
+		case TCP_FIN_WAIT1:
+		case TCP_FIN_WAIT2:
+		case TCP_CLOSE_WAIT:
+		case TCP_CLOSING:
+		case TCP_LAST_ACK:
+		case TCP_TIME_WAIT:
 		case TCP_ESTABLISHED:
 			if (tsk->snd_wnd && !skb->h.tcph->window)
 				mod_timer(&tsk->probe_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
@@ -321,6 +376,6 @@ struct proto_ops tcp_proto_ops = {
 	.connect = tcp_connect,
 	.sendmsg = tcp_sendmsg,
 	.recvmsg = tcp_recvmsg,
-	// .shutdown = tcp_shutdown,
+	.shutdown = tcp_shutdown,
 	.handler = tcp_handler,
 };
