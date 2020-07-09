@@ -103,9 +103,10 @@ void tcp_create_tcb(struct tcp_sock *tsk)
 	// make sure in correct state -> clear connections in those
 	list_del(&tsk->retransmit_timer.sibling);
 	list_del(&tsk->persist_timer.sibling);
+	tsk->retransmit_backoff = 1;
 	tsk->retransmit_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
 	tsk->persist_backoff = 1;
-	tsk->persist_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
+	tsk->persist_timer = (struct timer_list)TIMER_INITIALIZER(tcp_persist_timer, UINT32_MAX);
 }
 
 void tcp_delete_tcb(struct socket *sock)

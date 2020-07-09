@@ -5,13 +5,24 @@
 void tcp_retransmit_timer(struct timer_list *timer)
 {
 	struct tcp_sock *tsk = from_timer(tsk, timer, retransmit_timer);
+	struct socket *sock = tsk->inet.sk.sock;
 
-	// TODO: MQ 2020-07-07 Send timeout segment
+	struct sk_buff *iter;
+	list_for_each_entry(iter, &sock->sk->tx_queue, sibling)
+	{
+		struct tcp_skb_cb *cb = TCP_SKB_CB(iter);
+		if (cb->when > get_current_tick() ||
+			cb->end_seq >= tsk->snd_nxt ||
+			(cb->end_seq - cb->seq + 1) > tcp_sender_available_window(tsk))
+			break;
+		tcp_send_skb(sock, iter);
+	}
 
-	mod_timer(&tsk->retransmit_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
+	tsk->retransmit_backoff *= 2;
+	mod_timer(&tsk->retransmit_timer, get_current_tick() + tsk->retransmit_backoff * TICKS_PER_SECOND);
 }
 
-void tcp_probe_timer(struct timer_list *timer)
+void tcp_persist_timer(struct timer_list *timer)
 {
 	struct tcp_sock *tsk = from_timer(tsk, timer, persist_timer);
 	struct socket *sock = tsk->inet.sk.sock;

@@ -158,7 +158,7 @@ void tcp_handler_close(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_sync(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_established(struct socket *sock, struct sk_buff *skb);
 void tcp_retransmit_timer(struct timer_list *timer);
-void tcp_probe_timer(struct timer_list *timer);
+void tcp_persist_timer(struct timer_list *timer);
 void tcp_enter_close_state(struct socket *sock);
 void tcp_delete_tcb(struct socket *sock);
 void tcp_state_transition(struct socket *sock, uint8_t flags);

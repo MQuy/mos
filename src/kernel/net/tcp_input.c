@@ -52,6 +52,7 @@ void tcp_retransmision_queue_acked(struct socket *sock, uint32_t ack_number, boo
 	}
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
+	tsk->retransmit_backoff = 1;
 	if (skb)
 		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->when + tsk->rto);
 	else
