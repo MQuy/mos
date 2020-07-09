@@ -11,15 +11,23 @@ void tcp_retransmit_timer(struct timer_list *timer)
 	list_for_each_entry(iter, &sock->sk->tx_queue, sibling)
 	{
 		struct tcp_skb_cb *cb = TCP_SKB_CB(iter);
-		if (cb->when > get_current_tick() ||
+		if (cb->expires > get_current_tick() ||
 			cb->end_seq >= tsk->snd_nxt ||
 			(cb->end_seq - cb->seq + 1) > tcp_sender_available_window(tsk))
 			break;
 		tcp_send_skb(sock, iter);
+
+		// count retried syn to re-initialize rto=3
+		if (iter->h.tcph->syn)
+			tsk->syn_retries++;
+
+		// according to Karn's algorthim, retransmitted segment is not included in RTT measurement
+		if (cb->end_seq == tsk->rtt_end_seq && !tsk->rtt_time)
+			tsk->rtt_time = 0;
 	}
 
-	tsk->retransmit_backoff *= 2;
-	mod_timer(&tsk->retransmit_timer, get_current_tick() + tsk->retransmit_backoff * TICKS_PER_SECOND);
+	tsk->rto *= 2;
+	mod_timer(&tsk->retransmit_timer, get_current_tick() + tsk->rto);
 }
 
 void tcp_persist_timer(struct timer_list *timer)

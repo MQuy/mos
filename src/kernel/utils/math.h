@@ -11,6 +11,7 @@
 // -> 60 - 0 / 10 + 60 - 0 % 10 > 10
 #define div_ceil(x, y) ({__auto_type _x = (x); __auto_type _y = (y); _x / _y + (_x % _y > 0); })
 #define round(x, y) ({__auto_type _x = (x); __auto_type _y = (y); (_x / _y) * _y ; })
+#define abs(x) ({__auto_type _x = (x); _x >=0 ? _x : -_x; })
 
 uint32_t rand();
 uint32_t srand(uint32_t seed);

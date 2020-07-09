@@ -61,11 +61,12 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb)
 	if ((tcp_payload_lenth(skb) > 0 && tsk->snd_wnd > 0) || skb->h.tcph->syn || skb->h.tcph->fin)
 		tsk->snd_nxt = cb->end_seq + 1;
 
-	cb->when = get_current_tick() + tsk->rto;
+	cb->when = get_current_tick();
+	cb->expires = cb->when + tsk->rto;
 	tcp_state_transition(sock, cb->flags);
 
 	if (skb->h.tcph->syn)
-		mod_timer(&tsk->retransmit_timer, cb->when);
+		mod_timer(&tsk->retransmit_timer, cb->expires);
 
 	ethernet_sendmsg(skb);
 }
@@ -80,6 +81,14 @@ void tcp_transmit(struct socket *sock)
 		{
 			struct sk_buff *skb = list_entry(sock->sk->send_head, struct sk_buff, sibling);
 			tcp_send_skb(sock, skb);
+
+			// according to rfc6298, kick off only one RTT measurement at the time
+			if (!tsk->rtt_time)
+			{
+				struct tcp_skb_cb *cb = TCP_SKB_CB(skb);
+				tsk->rtt_end_seq = cb->end_seq;
+				tsk->rtt_time = cb->when;
+			}
 
 			sock->sk->send_head = sock->sk->send_head->next;
 			if (sock->sk->send_head == &sock->sk->tx_queue)

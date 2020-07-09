@@ -96,17 +96,19 @@ void tcp_create_tcb(struct tcp_sock *tsk)
 	tsk->ssthresh = ETH_MAX_MTU;
 	tsk->cwnd = tsk->snd_mss;
 
-	tsk->rto = 1 * TICKS_PER_SECOND;
-
 	// NOTE: MQ 2020-07-9
 	// retransmit and probe timers are embedded (not pointers)
 	// make sure in correct state -> clear connections in those
 	list_del(&tsk->retransmit_timer.sibling);
 	list_del(&tsk->persist_timer.sibling);
-	tsk->retransmit_backoff = 1;
+	tsk->rto = 1 * TICKS_PER_SECOND;
 	tsk->retransmit_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
-	tsk->persist_backoff = 1;
+	tsk->persist_backoff = 1 * TICKS_PER_SECOND;
 	tsk->persist_timer = (struct timer_list)TIMER_INITIALIZER(tcp_persist_timer, UINT32_MAX);
+
+	tsk->rtt_end_seq = 0;
+	tsk->rtt_time = 0;
+	tsk->syn_retries = 0;
 }
 
 void tcp_delete_tcb(struct socket *sock)
@@ -148,8 +150,9 @@ void tcp_flush_rx(struct socket *sock)
 void tcp_state_transition(struct socket *sock, uint8_t flags)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	enum tcp_state prev_state = tsk->state;
 
-	switch (tsk->state)
+	switch (prev_state)
 	{
 	case TCP_CLOSE:
 		if (flags == TCPCB_FLAG_SYN)
@@ -176,6 +179,10 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 			tsk->state = TCP_TIME_WAIT;
 		break;
 	}
+
+	// after three-way handshake if there is a retransmited syn -> rto=3
+	if (prev_state != tsk->state && tsk->state == TCP_ESTABLISHED && tsk->syn_retries > 0)
+		tsk->rto = 3;
 }
 
 int tcp_return_code(struct socket *sock, int success_code)
@@ -191,6 +198,28 @@ int tcp_return_code(struct socket *sock, int success_code)
 	default:
 		return -1;
 	}
+}
+
+void tcp_calculate_rto(struct socket *sock, uint32_t rtt)
+{
+#define K 4
+#define G 100
+#define beta 0.25
+#define alpha 0.125
+
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+
+	if (!tsk->srtt)
+	{
+		tsk->srtt = rtt;
+		tsk->rttvar = rtt / 2;
+	}
+	else
+	{
+		tsk->rttvar = (1 - beta) * tsk->rttvar + beta * abs((long)tsk->srtt - (long)rtt);
+		tsk->srtt = (1 - alpha) * tsk->srtt + alpha * rtt;
+	}
+	tsk->rto = max_t(uint32_t, tsk->srtt + max_t(uint32_t, G, K * tsk->rttvar), 1000);
 }
 
 int tcp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)

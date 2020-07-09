@@ -1,4 +1,5 @@
 #include <include/errno.h>
+#include <kernel/cpu/pit.h>
 #include <kernel/proc/task.h>
 
 #include "tcp.h"
@@ -52,11 +53,17 @@ void tcp_retransmision_queue_acked(struct socket *sock, uint32_t ack_number, boo
 	}
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
-	tsk->retransmit_backoff = 1;
 	if (skb)
-		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->when + tsk->rto);
+		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->expires + tsk->rto);
 	else
 		del_timer(&tsk->retransmit_timer);
+
+	if (tsk->rtt_time && tsk->rtt_end_seq < ack_number)
+	{
+		uint32_t rtt = get_current_tick() - tsk->rtt_time;
+		tcp_calculate_rto(sock, rtt);
+		tsk->rtt_time = 0;
+	}
 }
 
 bool tcp_is_fin_acked(struct socket *sock)

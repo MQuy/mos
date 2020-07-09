@@ -41,6 +41,7 @@ struct tcp_skb_cb
 	uint32_t seq;
 	uint32_t end_seq;
 	uint16_t flags;
+	unsigned long expires;
 	unsigned long when;
 };
 
@@ -71,13 +72,17 @@ struct tcp_sock
 
 	// timer
 	uint32_t rto;
+	struct timer_list retransmit_timer;
 	uint32_t srtt;
 	uint32_t rttvar;
 
-	struct timer_list retransmit_timer;
-	uint16_t retransmit_backoff;
 	struct timer_list persist_timer;
 	uint16_t persist_backoff;
+
+	// rtt
+	uint32_t rtt_end_seq;
+	uint32_t rtt_time;
+	uint8_t syn_retries;
 };
 
 struct __attribute__((packed)) tcp_packet
@@ -164,5 +169,6 @@ void tcp_delete_tcb(struct socket *sock);
 void tcp_state_transition(struct socket *sock, uint8_t flags);
 void tcp_flush_tx(struct socket *sock);
 void tcp_flush_rx(struct socket *sock);
+void tcp_calculate_rto(struct socket *sock, uint32_t rtt);
 
 #endif
