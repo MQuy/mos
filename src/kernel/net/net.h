@@ -131,8 +131,8 @@ struct proto_ops
 	int obj_size;
 	int (*bind)(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len);
 	int (*connect)(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len);
-	int (*accept)(struct socket *sock, struct socket *newsock);
-	int (*listen)(struct socket *sock, int len);
+	int (*accept)(struct socket *sock, struct sockaddr *addr, int sockaddr_len);
+	int (*listen)(struct socket *sock, int backlog);
 	int (*shutdown)(struct socket *sock);
 	int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
 	// TODO: MQ 2020-05-27

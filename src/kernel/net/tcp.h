@@ -73,8 +73,11 @@ struct tcp_sock
 	uint32_t rto;
 	uint32_t srtt;
 	uint32_t rttvar;
+
 	struct timer_list retransmit_timer;
-	struct timer_list probe_timer;
+	uint16_t retransmit_backoff;
+	struct timer_list persist_timer;
+	uint16_t persist_backoff;
 };
 
 struct __attribute__((packed)) tcp_packet
@@ -151,11 +154,13 @@ void tcp_transmit(struct socket *sock);
 void tcp_transmit_skb(struct socket *sock, struct sk_buff *skb);
 void tcp_tx_queue_add_skb(struct socket *sock, struct sk_buff *skb);
 void tcp_send_skb(struct socket *sock, struct sk_buff *skb);
+void tcp_handler_close(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_sync(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_established(struct socket *sock, struct sk_buff *skb);
 void tcp_retransmit_timer(struct timer_list *timer);
 void tcp_probe_timer(struct timer_list *timer);
 void tcp_enter_close_state(struct socket *sock);
+void tcp_delete_tcb(struct socket *sock);
 void tcp_state_transition(struct socket *sock, uint8_t flags);
 void tcp_flush_tx(struct socket *sock);
 void tcp_flush_rx(struct socket *sock);

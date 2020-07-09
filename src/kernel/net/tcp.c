@@ -75,7 +75,7 @@ void tcp_build_header(struct tcp_packet *tcp,
 	tcp->checksum = tcp_calculate_checksum(tcp, packet_len, source_ip, dest_ip);
 }
 
-void tcp_sock_init(struct tcp_sock *tsk)
+void tcp_create_tcb(struct tcp_sock *tsk)
 {
 	tsk->state = TCP_CLOSE;
 
@@ -97,8 +97,21 @@ void tcp_sock_init(struct tcp_sock *tsk)
 	tsk->cwnd = tsk->snd_mss;
 
 	tsk->rto = 1 * TICKS_PER_SECOND;
+
+	// NOTE: MQ 2020-07-9
+	// retransmit and probe timers are embedded (not pointers)
+	// make sure in correct state -> clear connections in those
+	list_del(&tsk->retransmit_timer.sibling);
+	list_del(&tsk->persist_timer.sibling);
 	tsk->retransmit_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
-	tsk->probe_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
+	tsk->persist_backoff = 1;
+	tsk->persist_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
+}
+
+void tcp_delete_tcb(struct socket *sock)
+{
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	memset((uint8_t *)tsk + sizeof(struct inet_sock), 0, sizeof(struct tcp_sock) - sizeof(struct inet_sock));
 }
 
 void tcp_enter_close_state(struct socket *sock)
@@ -141,6 +154,10 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 		if (flags == TCPCB_FLAG_SYN)
 			tsk->state = TCP_SYN_SENT;
 		break;
+	case TCP_LISTEN:
+		if (flags == TCPCB_FLAG_SYN)
+			tsk->state = TCP_SYN_SENT;
+		break;
 	case TCP_SYN_SENT:
 		if (flags == (TCPCB_FLAG_ACK | TCPCB_FLAG_SYN))
 			tsk->state = TCP_SYN_RECV;
@@ -180,7 +197,23 @@ int tcp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	memcpy(&tsk->inet.ssin, myaddr, sockaddr_len);
 
-	tcp_sock_init(tsk);
+	return 0;
+}
+
+int tcp_listen(struct socket *sock, int backlog)
+{
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	tcp_create_tcb(tsk);
+
+	// TODO: MQ 2020-07-09
+
+	tsk->state = TCP_LISTEN;
+	return 0;
+}
+
+int tcp_accept(struct socket *sock, struct sockaddr *addr, int sockaddr_len)
+{
+	// TODO: MQ 2020-07-09
 	return 0;
 }
 
@@ -191,6 +224,7 @@ int tcp_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	memcpy(&tsk->inet.dsin, vaddr, sockaddr_len);
 
+	tcp_create_tcb(tsk);
 	uint32_t sequence_number = rand();
 	tsk->snd_iss = sequence_number;
 
@@ -349,6 +383,9 @@ int tcp_handler(struct socket *sock, struct sk_buff *skb)
 		// switch branch for state
 		switch (tsk->state)
 		{
+		case TCP_CLOSE:
+			tcp_handler_close(sock, skb);
+			break;
 		case TCP_SYN_SENT:
 			tcp_handler_sync(sock, skb);
 			break;
@@ -361,7 +398,7 @@ int tcp_handler(struct socket *sock, struct sk_buff *skb)
 		case TCP_TIME_WAIT:
 		case TCP_ESTABLISHED:
 			if (tsk->snd_wnd && !skb->h.tcph->window)
-				mod_timer(&tsk->probe_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
+				mod_timer(&tsk->persist_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
 			tcp_handler_established(sock, skb);
 			break;
 		}
@@ -373,6 +410,8 @@ struct proto_ops tcp_proto_ops = {
 	.family = PF_INET,
 	.obj_size = sizeof(struct tcp_sock),
 	.bind = tcp_bind,
+	.listen = tcp_listen,
+	.accept = tcp_accept,
 	.connect = tcp_connect,
 	.sendmsg = tcp_sendmsg,
 	.recvmsg = tcp_recvmsg,

@@ -69,6 +69,32 @@ bool tcp_is_fin_acked(struct socket *sock)
 	return true;
 }
 
+void tcp_handler_close(struct socket *sock, struct sk_buff *skb)
+{
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+	uint32_t seg_seq = ntohl(skb->h.tcph->sequence_number);
+	uint32_t seg_ack = ntohl(skb->h.tcph->ack_number);
+	uint16_t payload_len = tcp_payload_lenth(skb);
+
+	if (skb->h.tcph->rst)
+		return;
+
+	struct sk_buff *sent_skb;
+	if (!skb->h.tcph->ack)
+		sent_skb = tcp_create_skb(sock,
+								  0, seg_seq + payload_len,
+								  TCPCB_FLAG_ACK | TCPCB_FLAG_RST,
+								  NULL, 0,
+								  NULL, 0);
+	else
+		sent_skb = tcp_create_skb(sock,
+								  seg_ack, tsk->rcv_nxt,
+								  TCPCB_FLAG_RST,
+								  NULL, 0,
+								  NULL, 0);
+	tcp_send_skb(sock, sent_skb);
+}
+
 void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
@@ -93,7 +119,10 @@ void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 	if (skb->h.tcph->rst)
 	{
 		if (acceptable_ack)
+		{
 			tcp_enter_close_state(sock);
+			tcp_delete_tcb(sock);
+		}
 		return;
 	}
 	if (skb->h.tcph->syn && acceptable_ack)
@@ -324,6 +353,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		{
 			// TODO: MQ 2020-07-08 start time-wait timer
 			tsk->state = TCP_CLOSE;
+			tcp_delete_tcb(sock);
 		}
 	}
 
