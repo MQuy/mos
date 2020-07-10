@@ -348,20 +348,23 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			if (tcp_is_fin_acked(sock))
 			{
 				tsk->state = TCP_TIME_WAIT;
-				// TODO: MQ 2020-07-07 start time-wait timer
+				mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
+				del_timer(&tsk->retransmit_timer);
+				del_timer(&tsk->persist_timer);
 			}
+			else
+				tsk->state = TCP_CLOSING;
 		}
 		else if (tsk->state == TCP_FIN_WAIT2)
 		{
 			tsk->state = TCP_TIME_WAIT;
-			// TODO: MQ 2020-07-07 start time-wait timer
-			tsk->state = TCP_CLOSE;
+			mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
+			del_timer(&tsk->retransmit_timer);
+			del_timer(&tsk->persist_timer);
 		}
 		else if (tsk->state == TCP_TIME_WAIT)
 		{
-			// TODO: MQ 2020-07-08 start time-wait timer
-			tsk->state = TCP_CLOSE;
-			tcp_delete_tcb(sock);
+			mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
 		}
 	}
 

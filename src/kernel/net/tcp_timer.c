@@ -1,4 +1,5 @@
 #include <kernel/cpu/pit.h>
+#include <kernel/proc/task.h>
 
 #include "tcp.h"
 
@@ -7,23 +8,26 @@ void tcp_retransmit_timer(struct timer_list *timer)
 	struct tcp_sock *tsk = from_timer(tsk, timer, retransmit_timer);
 	struct socket *sock = tsk->inet.sk.sock;
 
-	struct sk_buff *iter;
-	list_for_each_entry(iter, &sock->sk->tx_queue, sibling)
+	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
+	assert(skb);
+	tcp_send_skb(sock, skb);
+
+	// move send head back to begining of tx queue
+	sock->sk->send_head = &skb->sibling;
+
+	// count retried syn to re-initialize rto=3
+	if (skb->h.tcph->syn)
+		tsk->syn_retries++;
+
+	// according to Karn's algorthim, retransmitted segment is not included in RTT measurement
+	if (TCP_SKB_CB(skb)->end_seq == tsk->rtt_end_seq && !tsk->rtt_time)
+		tsk->rtt_time = 0;
+
+	// after retransmitting 8 times without success we clear srtt and rttvar
+	if (tsk->rto >= 128)
 	{
-		struct tcp_skb_cb *cb = TCP_SKB_CB(iter);
-		if (cb->expires > get_current_tick() ||
-			cb->end_seq >= tsk->snd_nxt ||
-			(cb->end_seq - cb->seq + 1) > tcp_sender_available_window(tsk))
-			break;
-		tcp_send_skb(sock, iter);
-
-		// count retried syn to re-initialize rto=3
-		if (iter->h.tcph->syn)
-			tsk->syn_retries++;
-
-		// according to Karn's algorthim, retransmitted segment is not included in RTT measurement
-		if (cb->end_seq == tsk->rtt_end_seq && !tsk->rtt_time)
-			tsk->rtt_time = 0;
+		tsk->srtt = 0;
+		tsk->rttvar = 0;
 	}
 
 	tsk->rto *= 2;
@@ -50,4 +54,19 @@ void tcp_persist_timer(struct timer_list *timer)
 	tcp_send_skb(sock, skb);
 	tsk->persist_backoff *= 2;
 	mod_timer(timer, get_current_tick() + tsk->persist_backoff * TICKS_PER_SECOND);
+}
+
+void tcp_msl_timer(struct timer_list *timer)
+{
+	struct tcp_sock *tsk = from_timer(tsk, timer, msl_timer);
+	struct socket *sock = tsk->inet.sk.sock;
+
+	del_timer(&tsk->msl_timer);
+
+	assert(tsk->state == TCP_TIME_WAIT || tsk->state == TCP_LAST_ACK);
+
+	tsk->state = TCP_CLOSE;
+	tcp_delete_tcb(sock);
+
+	update_thread(sock->sk->owner_thread, THREAD_READY);
 }

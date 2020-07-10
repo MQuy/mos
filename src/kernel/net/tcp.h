@@ -11,6 +11,7 @@
 
 #define MAX_OPTION_LEN 40
 #define MAX_TCP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct tcp_packet))
+#define MAX_SEGMENT_LIFETIME 15
 
 #define TCPCB_FLAG_FIN 0x01
 #define TCPCB_FLAG_SYN 0x02
@@ -49,6 +50,7 @@ struct tcp_sock
 {
 	struct inet_sock inet;
 	enum tcp_state state;
+	struct timer_list msl_timer;
 
 	// sender sequence variables
 	uint16_t snd_mss;
@@ -162,6 +164,7 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_close(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_sync(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_established(struct socket *sock, struct sk_buff *skb);
+void tcp_msl_timer(struct timer_list *timer);
 void tcp_retransmit_timer(struct timer_list *timer);
 void tcp_persist_timer(struct timer_list *timer);
 void tcp_enter_close_state(struct socket *sock);

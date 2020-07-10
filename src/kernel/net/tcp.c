@@ -79,6 +79,9 @@ void tcp_create_tcb(struct tcp_sock *tsk)
 {
 	tsk->state = TCP_CLOSE;
 
+	del_timer(&tsk->msl_timer);
+	tsk->msl_timer = (struct timer_list)TIMER_INITIALIZER(tcp_msl_timer, UINT32_MAX);
+
 	// The liberal or optimistic position
 	tsk->snd_mss = round(ETH_DATA_LEN - (sizeof(struct ip4_packet) + sizeof(struct tcp_packet)), 4);
 	tsk->snd_iss = 0;
@@ -114,7 +117,17 @@ void tcp_create_tcb(struct tcp_sock *tsk)
 void tcp_delete_tcb(struct socket *sock)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
-	memset((uint8_t *)tsk + sizeof(struct inet_sock), 0, sizeof(struct tcp_sock) - sizeof(struct inet_sock));
+
+	del_timer(&tsk->msl_timer);
+
+	tsk->rto = 1 * TICKS_PER_SECOND;
+	del_timer(&tsk->retransmit_timer);
+	tsk->persist_backoff = 1 * TICKS_PER_SECOND;
+	del_timer(&tsk->persist_timer);
+
+	tsk->rtt_end_seq = 0;
+	tsk->rtt_time = 0;
+	tsk->syn_retries = 0;
 }
 
 void tcp_enter_close_state(struct socket *sock)
@@ -173,10 +186,6 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 	case TCP_ESTABLISHED:
 		if (flags & TCPCB_FLAG_FIN)
 			tsk->state = TCP_FIN_WAIT1;
-		break;
-	case TCP_FIN_WAIT2:
-		if (flags & TCPCB_FLAG_ACK)
-			tsk->state = TCP_TIME_WAIT;
 		break;
 	}
 

@@ -43,6 +43,7 @@ void sock_setup(struct socket *sock, int32_t family)
 	sk = kcalloc(1, sock->ops->obj_size);
 	sk->dev = get_current_net_device();
 	sk->owner_thread = current_thread;
+	sk->sock = sock;
 	INIT_LIST_HEAD(&sk->rx_queue);
 	INIT_LIST_HEAD(&sk->tx_queue);
 

@@ -78,18 +78,22 @@ void client_demo()
 	// http://apache.org
 	din->sin_addr = 0x284F4E01;
 	din->sin_port = 80;
+	debug_println(DEBUG_INFO, "tcp connecting");
 	while (sock->ops->connect(sock, (struct sockaddr *)din, sizeof(struct sockaddr_in)) < 0)
 		;
 
-	char message[] = "GET / HTTP/1.1\r\nHost: 40.79.78.1\r\nConnection: keep-alive\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36\r\nAccept: text/html\r\nAccept-Language: en-US\r\n\r\n";
-	sock->ops->sendmsg(sock, message, sizeof(message));
+	debug_println(DEBUG_INFO, "tcp connected");
+	sock->ops->shutdown(sock);
+	debug_println(DEBUG_INFO, "tcp shutdown");
+	// char message[] = "GET / HTTP/1.1\r\nHost: 40.79.78.1\r\nConnection: keep-alive\r\nUser-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36\r\nAccept: text/html\r\nAccept-Language: en-US\r\n\r\n";
+	// sock->ops->sendmsg(sock, message, sizeof(message));
 
-	char *response = kcalloc(0x100000, sizeof(char));
-	while (sock->ops->recvmsg(sock, response, 0x100000))
-	{
-		debug_println(DEBUG_INFO, "reach ....");
-		memset(response, 0, 0x100000);
-	}
+	// char *response = kcalloc(0x100000, sizeof(char));
+	// while (sock->ops->recvmsg(sock, response, 0x100000))
+	// {
+	// 	debug_println(DEBUG_INFO, "reach ....");
+	// 	memset(response, 0, 0x100000);
+	// }
 }
 
 void kernel_init()
