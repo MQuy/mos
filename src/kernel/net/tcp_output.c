@@ -50,15 +50,17 @@ struct sk_buff *tcp_create_skb(struct socket *sock,
 	return skb;
 }
 
-void tcp_send_skb(struct socket *sock, struct sk_buff *skb)
+void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitted)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
+	uint16_t payload_len = tcp_payload_lenth(skb);
 
+	tsk->flight_size += payload_len;
 	// NOTE: MQ 2020-07-09
 	// we increase snd nxt only if data, syn or fin segment (ghost segment)
 	// the special case for one-byte ack segment is snd_wnd=0 when probing
-	if ((tcp_payload_lenth(skb) > 0 && tsk->snd_wnd > 0) || skb->h.tcph->syn || skb->h.tcph->fin)
+	if (!is_retransmitted && ((payload_len > 0 && tsk->snd_wnd > 0) || skb->h.tcph->syn || skb->h.tcph->fin))
 		tsk->snd_nxt = cb->end_seq + 1;
 
 	cb->when = get_current_tick();
@@ -80,7 +82,7 @@ void tcp_transmit(struct socket *sock)
 		while (tcp_sender_available_window(tsk) > 0 && sock->sk->send_head)
 		{
 			struct sk_buff *skb = list_entry(sock->sk->send_head, struct sk_buff, sibling);
-			tcp_send_skb(sock, skb);
+			tcp_send_skb(sock, skb, false);
 
 			// according to rfc6298, kick off only one RTT measurement at the time
 			if (!tsk->rtt_time)

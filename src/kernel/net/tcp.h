@@ -70,7 +70,12 @@ struct tcp_sock
 
 	// congestion
 	uint16_t ssthresh;
+	// NOTE: MQ 2020-07-12
+	// after a long idle period, we should use slow start to restart transmission
+	// -> cwnd = min(IW, cwnd)
 	uint16_t cwnd;
+	uint8_t number_of_dup_acks;
+	uint32_t flight_size;
 
 	// timer
 	uint32_t rto;
@@ -160,7 +165,7 @@ struct sk_buff *tcp_create_skb(struct socket *sock,
 void tcp_transmit(struct socket *sock);
 void tcp_transmit_skb(struct socket *sock, struct sk_buff *skb);
 void tcp_tx_queue_add_skb(struct socket *sock, struct sk_buff *skb);
-void tcp_send_skb(struct socket *sock, struct sk_buff *skb);
+void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitted);
 void tcp_handler_close(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_sync(struct socket *sock, struct sk_buff *skb);
 void tcp_handler_established(struct socket *sock, struct sk_buff *skb);
@@ -173,5 +178,6 @@ void tcp_state_transition(struct socket *sock, uint8_t flags);
 void tcp_flush_tx(struct socket *sock);
 void tcp_flush_rx(struct socket *sock);
 void tcp_calculate_rto(struct socket *sock, uint32_t rtt);
+void tcp_calculate_congestion(struct socket *sock, uint32_t seg_ack);
 
 #endif

@@ -98,6 +98,8 @@ void tcp_create_tcb(struct tcp_sock *tsk)
 
 	tsk->ssthresh = ETH_MAX_MTU;
 	tsk->cwnd = tsk->snd_mss;
+	tsk->flight_size = 0;
+	tsk->number_of_dup_acks = 0;
 
 	// NOTE: MQ 2020-07-9
 	// retransmit and probe timers are embedded (not pointers)
@@ -189,9 +191,12 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 		break;
 	}
 
-	// after three-way handshake if there is a retransmited syn -> rto=3
+	// after three-way handshake if there is a retransmited syn -> rto=3 and cwnd=smss
 	if (prev_state != tsk->state && tsk->state == TCP_ESTABLISHED && tsk->syn_retries > 0)
+	{
 		tsk->rto = 3;
+		tsk->cwnd = tsk->snd_mss;
+	}
 }
 
 int tcp_return_code(struct socket *sock, int success_code)
@@ -229,6 +234,16 @@ void tcp_calculate_rto(struct socket *sock, uint32_t rtt)
 		tsk->srtt = (1 - alpha) * tsk->srtt + alpha * rtt;
 	}
 	tsk->rto = max_t(uint32_t, tsk->srtt + max_t(uint32_t, G, K * tsk->rttvar), 1000);
+}
+
+void tcp_calculate_congestion(struct socket *sock, uint32_t seg_ack)
+{
+	struct tcp_sock *tsk = tcp_sk(sock->sk);
+
+	if (tsk->cwnd <= tsk->ssthresh)
+		tsk->cwnd += min_t(uint16_t, seg_ack - tsk->snd_una, tsk->snd_mss);
+	else
+		tsk->cwnd += tsk->snd_mss * tsk->snd_mss / tsk->cwnd;
 }
 
 int tcp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
