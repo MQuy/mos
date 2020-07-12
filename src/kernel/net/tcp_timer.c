@@ -55,12 +55,10 @@ void tcp_persist_timer(struct timer_list *timer)
 		return;
 	}
 
-	struct sk_buff *skb = tcp_create_skb(sock,
-										 tsk->snd_nxt, tsk->rcv_nxt,
-										 TCPCB_FLAG_ACK,
-										 NULL, 0,
-										 &(uint8_t[]){0}, 1);
+	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
+	assert(skb && tcp_payload_lenth(skb) == 1);
 	tcp_send_skb(sock, skb, true);
+
 	tsk->persist_backoff *= 2;
 	mod_timer(timer, get_current_tick() + tsk->persist_backoff * TICKS_PER_SECOND);
 }
@@ -73,7 +71,6 @@ void tcp_msl_timer(struct timer_list *timer)
 	del_timer(&tsk->msl_timer);
 
 	assert(tsk->state == TCP_TIME_WAIT || tsk->state == TCP_LAST_ACK);
-
 	tsk->state = TCP_CLOSE;
 	tcp_delete_tcb(sock);
 

@@ -42,7 +42,7 @@ void tcp_parse_syn_options(uint8_t *options, uint32_t len, uint16_t *rmms, uint8
 	*window_scale = opt_window_scale;
 }
 
-void tcp_retransmision_queue_acked(struct socket *sock, uint32_t ack_number, bool is_acked_all)
+void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 {
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	tsk->snd_una = ack_number;
@@ -152,7 +152,7 @@ void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 		tsk->snd_nxt = ack_number;
 		// according to RFC1323, the window field in SYN (<SYN> or <SYN, ACK>) segment itself is never scaled
 		tsk->snd_wnd = ntohs(skb->h.tcph->window);
-		tcp_retransmision_queue_acked(sock, ack_number, false);
+		tcp_accept_ack(sock, ack_number, false);
 
 		if (tsk->snd_una > tsk->snd_iss)
 		{
@@ -218,7 +218,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			// NOTE: MQ 2020-07-08
 			// According to RFC793, we have to handle passive and active OPEN
 			// -> to simplify we assume that all cases are active OPEN
-			tcp_retransmision_queue_acked(sock, 0, true);
+			tcp_accept_ack(sock, 0, true);
 			tcp_enter_close_state(sock);
 			update_thread(sock->sk->owner_thread, THREAD_READY);
 			return;
@@ -277,7 +277,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		if (tsk->snd_una < seg_ack && seg_ack <= tsk->snd_nxt)
 		{
 			tcp_calculate_congestion(sock, seg_ack);
-			tcp_retransmision_queue_acked(sock, seg_ack, false);
+			tcp_accept_ack(sock, seg_ack, false);
 
 			if (tsk->snd_wl1 < seg_seq || (tsk->snd_wl1 == seg_seq && tsk->snd_wl2 <= seg_ack))
 			{
@@ -286,13 +286,22 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 				tsk->snd_wl2 = seg_ack;
 			}
 		}
+		// if sequence number doesn't change -> no new data being sent
+		// if ack number doesn't change -> no new incoming data being acked
+		// different window size comparing the curent one and empty segment
+		// -> window update segment
+		else if (tsk->snd_una == seg_ack && tsk->rcv_nxt == seg_seq && tsk->snd_wnd != seg_wnd && payload_len == 0)
+		{
+			tsk->snd_wnd = seg_wnd;
+		}
 		// fast retransmit and fast recovery
 		else if (tsk->flight_size > 0 &&
 				 !skb->h.tcph->syn && !skb->h.tcph->fin &&
-				 tsk->snd_una == seg_ack)
+				 tsk->snd_una == seg_ack &&
+				 seg_wnd > 0)
 		{
 			// should be combined with above, but I am skeptical
-			if (tsk->snd_wnd != seg_wnd || payload_len != 0)
+			if (payload_len != 0 || tsk->snd_wnd != seg_wnd)
 				debug_println(DEBUG_WARNING, "fast retransmit: duplicated ack is in wrong state");
 
 			tsk->number_of_dup_acks++;

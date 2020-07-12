@@ -301,31 +301,41 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	uint16_t mmss = min(tsk->snd_mss, tsk->rcv_mss);
 	size_t msg_sent_len = 0;
-	for (; msg_sent_len < msg_len && tsk->state == TCP_ESTABLISHED;)
+	for (uint32_t starting_nxt = tsk->snd_nxt; msg_sent_len < msg_len && tsk->state == TCP_ESTABLISHED;)
 	{
-		uint16_t mwnd;
-		// receiving window = 0, sleep till get the signal from probe timer to contine (wnd > 0)
-		while (true)
+		uint16_t mwnd = min_t(uint16_t, min(tsk->cwnd, tcp_sender_available_window(tsk)), msg_len - msg_sent_len);
+		// if mwnd==0 <- cwnd canot be zero, msg_len - msg_sent_len cannot be zero
+		// -> the only case mwnd=0 is snd.wnd=0
+		if (mwnd == 0)
 		{
-			mwnd = min_t(uint16_t, min(tsk->cwnd, tcp_sender_available_window(tsk)), msg_len);
-			if (mwnd > 0)
-				break;
-			update_thread(current_thread, THREAD_WAITING);
-			schedule();
+			assert(tsk->snd_una == tsk->snd_nxt);
+			uint16_t flags = msg_sent_len + 1 == msg_len ? TCPCB_FLAG_PSH : 0;
+			struct sk_buff *skb = tcp_create_skb(sock,
+												 tsk->snd_nxt, tsk->rcv_nxt,
+												 flags | TCPCB_FLAG_ACK,
+												 NULL, 0,
+												 (uint8_t *)msg + msg_sent_len, 1);
+
+			mod_timer(&tsk->persist_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
+			tcp_transmit_skb(sock, skb);
+
+			// when probe segment is accepted
+			msg_sent_len += 1;
 		}
-		for (uint16_t ibatch = 0; ibatch < mwnd;)
+
+		for (uint16_t iwnd = 0; iwnd < mwnd;)
 		{
-			uint32_t accumulated_sent_len = msg_sent_len + ibatch;
+			uint32_t accumulated_sent_len = msg_sent_len + iwnd;
 			uint16_t advertised_window = min_t(uint16_t, min(mmss, mwnd), msg_len - accumulated_sent_len);
 			uint16_t flags = accumulated_sent_len + advertised_window == msg_len ? TCPCB_FLAG_PSH : 0;
 			assert(accumulated_sent_len + advertised_window <= msg_len);
 			struct sk_buff *skb = tcp_create_skb(sock,
-												 tsk->snd_nxt + accumulated_sent_len, tsk->rcv_nxt,
+												 starting_nxt + accumulated_sent_len, tsk->rcv_nxt,
 												 TCPCB_FLAG_ACK | flags,
 												 NULL, 0,
 												 (uint8_t *)msg + accumulated_sent_len, advertised_window);
 			tcp_tx_queue_add_skb(sock, skb);
-			ibatch += advertised_window;
+			iwnd += advertised_window;
 		}
 
 		msg_sent_len += mwnd;
@@ -451,8 +461,6 @@ int tcp_handler(struct socket *sock, struct sk_buff *skb)
 		case TCP_LAST_ACK:
 		case TCP_TIME_WAIT:
 		case TCP_ESTABLISHED:
-			if (tsk->snd_wnd && !skb->h.tcph->window)
-				mod_timer(&tsk->persist_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
 			tcp_handler_established(sock, skb);
 			break;
 		}
