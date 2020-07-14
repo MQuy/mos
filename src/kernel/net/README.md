@@ -32,6 +32,7 @@
     - [Send data](#send-data)
     - [Receive data](#receive-data)
     - [Terminate](#terminate)
+  - [Test](#test)
 
 ## OSI
 
@@ -607,3 +608,31 @@ timer is reset/calculated when receving an ack
      - resume at pausing step 2.3
 
 ✍ Ignored: IP Fragmentation, Delayed ACK, URGENT Flag
+
+### Test
+
+**Server scenarios**
+
+```bash
+# setup server
+$ sudo vi /etc/sysctl.conf
+# copy 3 lines below (remove comments)
+# net.ipv4.tcp_window_scaling = 1
+# net.ipv4.tcp_rmem = 4096 4096 4096
+# net.ipv4.tcp_wmem = 4096 4096 4096
+$ sudo sysctl -p
+
+$ cd src/kernel/net/test && gcc case1.c -o case1
+$ ./case1 40000
+
+# setup client
+$ vi main.c
+# din->sin_addr = server ip in hex
+# din->sin_port = 40000
+```
+
+1. server with normal handshake and termination (initiate by client, without data transfer)
+2. echo server
+3. client transfers data, in the middle of transmission, server returns zero window
+4. client transfers data, server doesn't ack -> retransmission
+5. client transfers data, server retursn duplicated ack

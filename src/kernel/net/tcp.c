@@ -189,6 +189,10 @@ void tcp_state_transition(struct socket *sock, uint8_t flags)
 		if (flags & TCPCB_FLAG_FIN)
 			tsk->state = TCP_FIN_WAIT1;
 		break;
+	case TCP_CLOSE_WAIT:
+		if (flags & TCPCB_FLAG_FIN)
+			tsk->state = TCP_LAST_ACK;
+		break;
 	}
 
 	// after three-way handshake if there is a retransmited syn -> rto=3 and cwnd=smss

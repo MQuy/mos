@@ -28,8 +28,9 @@ void lock_scheduler()
 void unlock_scheduler()
 {
 	scheduler_lock_counter--;
-	if (scheduler_lock_counter == 0)
-		enable_interrupts();
+	// FIXME: MQ 2020-07-14 Enable it back (scheduler_lock_counter > 0 when nested scheduling causing by net)
+	// if (scheduler_lock_counter == 0)
+	enable_interrupts();
 }
 
 struct thread *pick_next_thread_from_list(struct plist_head *list)

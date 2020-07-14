@@ -241,10 +241,10 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 
 	// step fourth
 	if (skb->h.tcph->syn &&
-		tsk->state == TCP_SYN_RECV && tsk->state == TCP_ESTABLISHED &&
-		tsk->state == TCP_FIN_WAIT1 && tsk->state == TCP_FIN_WAIT2 &&
-		tsk->state == TCP_CLOSE_WAIT && tsk->state == TCP_CLOSING &&
-		tsk->state == TCP_LAST_ACK && tsk->state == TCP_TIME_WAIT)
+		(tsk->state == TCP_SYN_RECV || tsk->state == TCP_ESTABLISHED ||
+		 tsk->state == TCP_FIN_WAIT1 || tsk->state == TCP_FIN_WAIT2 ||
+		 tsk->state == TCP_CLOSE_WAIT || tsk->state == TCP_CLOSING ||
+		 tsk->state == TCP_LAST_ACK || tsk->state == TCP_TIME_WAIT))
 	{
 		struct sk_buff *snd_skb = tcp_create_skb(sock, seg_ack, tsk->rcv_nxt, TCPCB_FLAG_RST, NULL, 0, NULL, 0);
 		tcp_send_skb(sock, snd_skb, false);
@@ -373,13 +373,6 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		if (tsk->state == TCP_CLOSE || tsk->state == TCP_LISTEN || tsk->state == TCP_SYN_SENT)
 			return;
 
-		if (!is_sent_ack)
-		{
-			tsk->rcv_nxt += 1;
-			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
-			tcp_send_skb(sock, snd_skb, false);
-		}
-
 		if (tsk->state == TCP_SYN_RECV || tsk->state == TCP_ESTABLISHED)
 			tsk->state = TCP_CLOSE_WAIT;
 		else if (tsk->state == TCP_FIN_WAIT1)
@@ -402,8 +395,20 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			del_timer(&tsk->persist_timer);
 		}
 		else if (tsk->state == TCP_TIME_WAIT)
-		{
 			mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
+
+		if (!is_sent_ack)
+		{
+			tsk->rcv_nxt += 1;
+
+			uint8_t flags = 0;
+			// assume that we don't have to handle any incoming data (wait for app close)
+			// -> send fin back right away
+			if (tsk->state == TCP_CLOSE_WAIT)
+				flags = TCPCB_FLAG_FIN;
+
+			struct sk_buff *snd_skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, flags | TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
+			tcp_send_skb(sock, snd_skb, false);
 		}
 	}
 
