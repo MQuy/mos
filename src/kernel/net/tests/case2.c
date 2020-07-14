@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h> //strlen
 #include <sys/socket.h>
 #include <arpa/inet.h> //inet_addr
@@ -9,7 +10,7 @@ int main(int argc, char *argv[])
 {
   int server_fd, client_fd, addr_size;
   struct sockaddr_in server, client;
-  char *message;
+  char message[2000];
 
   //Create socket
   server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -50,9 +51,13 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  puts("Connection accepted");
-  close(client_fd);
-  puts("Connection close");
+  while (true)
+  {
+    int len = recv(client_fd, message, sizeof(message), 0);
+    if (len <= 0)
+      break;
+    send(client_fd, message, len, 0);
+  }
 
   return 0;
 }
