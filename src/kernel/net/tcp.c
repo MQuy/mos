@@ -322,27 +322,24 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 
 			mod_timer(&tsk->persist_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
 			tcp_transmit_skb(sock, skb);
-
-			// when probe segment is accepted
-			msg_sent_len += 1;
+			del_timer(&tsk->persist_timer);
 		}
 
 		for (uint16_t iwnd = 0; iwnd < mwnd;)
 		{
-			uint32_t accumulated_sent_len = msg_sent_len + iwnd;
-			uint16_t advertised_window = min_t(uint16_t, min(mmss, mwnd), msg_len - accumulated_sent_len);
-			uint16_t flags = accumulated_sent_len + advertised_window == msg_len ? TCPCB_FLAG_PSH : 0;
-			assert(accumulated_sent_len + advertised_window <= msg_len);
+			uint16_t advertised_window = min_t(uint16_t, min(mmss, mwnd), msg_len - msg_sent_len);
+			uint16_t flags = msg_sent_len + advertised_window == msg_len ? TCPCB_FLAG_PSH : 0;
+			assert(msg_sent_len + advertised_window <= msg_len);
 			struct sk_buff *skb = tcp_create_skb(sock,
-												 starting_nxt + accumulated_sent_len, tsk->rcv_nxt,
+												 starting_nxt + msg_sent_len, tsk->rcv_nxt,
 												 TCPCB_FLAG_ACK | flags,
 												 NULL, 0,
-												 (uint8_t *)msg + accumulated_sent_len, advertised_window);
+												 (uint8_t *)msg + msg_sent_len, advertised_window);
 			tcp_tx_queue_add_skb(sock, skb);
 			iwnd += advertised_window;
+			msg_sent_len += advertised_window;
 		}
 
-		msg_sent_len += mwnd;
 		tcp_transmit(sock);
 	}
 

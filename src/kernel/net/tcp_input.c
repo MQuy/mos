@@ -292,6 +292,15 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		// -> window update segment
 		else if (tsk->snd_una == seg_ack && tsk->rcv_nxt == seg_seq && tsk->snd_wnd != seg_wnd && payload_len == 0)
 		{
+			// NOTE: MQ 2020-07-15
+			// if snd_wnd == 0 and seg_wnd != 0
+			// -> we receive window update after sending zero window probe segment
+			// -> tx queue length has to be 1
+			// ZeroWindowProbe segment is accepted and throwed away on the other side
+			// -> we flush tx queue and start from pending in sending without changing msg_sent_len
+			if (tsk->snd_wnd == 0 && seg_wnd != 0)
+				tcp_flush_tx(sock);
+
 			tsk->snd_wnd = seg_wnd;
 		}
 		// fast retransmit and fast recovery

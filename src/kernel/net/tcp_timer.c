@@ -48,7 +48,7 @@ void tcp_persist_timer(struct timer_list *timer)
 	struct tcp_sock *tsk = from_timer(tsk, timer, persist_timer);
 	struct socket *sock = tsk->inet.sk.sock;
 
-	if (!tsk->snd_wnd)
+	if (tsk->snd_wnd)
 	{
 		del_timer(timer);
 		tsk->persist_backoff = 1;
@@ -60,7 +60,7 @@ void tcp_persist_timer(struct timer_list *timer)
 	tcp_send_skb(sock, skb, true);
 
 	tsk->persist_backoff *= 2;
-	mod_timer(timer, get_current_tick() + tsk->persist_backoff * TICKS_PER_SECOND);
+	mod_timer(timer, get_current_tick() + tsk->persist_backoff);
 }
 
 void tcp_msl_timer(struct timer_list *timer)

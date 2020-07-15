@@ -621,6 +621,8 @@ $ sudo vi /etc/sysctl.conf
 # net.ipv4.tcp_rmem = 4096 4096 4096
 # net.ipv4.tcp_wmem = 4096 4096 4096
 $ sudo sysctl -p
+# linux
+$ iptables -A OUTPUT -p tcp --tcp-flags RST RST -s xxx.xxx.xxx.xxx -j DROP
 
 $ cd src/kernel/net/test && gcc case1.c -o case1
 $ ./case1 40000
