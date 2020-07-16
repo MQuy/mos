@@ -83,8 +83,10 @@ void tcp_transmit(struct socket *sock)
 			tcp_send_skb(sock, skb, false);
 
 			// according to rfc6298, kick off only one RTT measurement at the time
+			// the segment has to be the first element in tx queue
 			if (!tsk->rtt_time)
 			{
+				assert(&skb->sibling == sock->sk->tx_queue.next);
 				struct tcp_skb_cb *cb = TCP_SKB_CB(skb);
 				tsk->rtt_end_seq = cb->end_seq;
 				tsk->rtt_time = cb->when;

@@ -29,18 +29,21 @@ void tcp_retransmit_timer(struct timer_list *timer)
 		tsk->syn_retries++;
 
 	// according to Karn's algorthim, retransmitted segment is not included in RTT measurement
-	if (TCP_SKB_CB(skb)->end_seq == tsk->rtt_end_seq && !tsk->rtt_time)
+	if (tsk->rtt_time)
+	{
+		assert(TCP_SKB_CB(skb)->end_seq == tsk->rtt_end_seq);
 		tsk->rtt_time = 0;
+	}
 
 	// after retransmitting 8 times without success we clear srtt and rttvar
-	if (tsk->rto >= 128)
+	if (tsk->rto >= 128 * TICKS_PER_SECOND)
 	{
 		tsk->srtt = 0;
 		tsk->rttvar = 0;
 	}
 
 	tsk->rto *= 2;
-	mod_timer(&tsk->retransmit_timer, get_current_tick() + tsk->rto);
+	mod_timer(timer, get_current_tick() + tsk->rto);
 }
 
 void tcp_persist_timer(struct timer_list *timer)

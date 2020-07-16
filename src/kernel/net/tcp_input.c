@@ -52,6 +52,13 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	tsk->flight_size = tsk->snd_nxt - tsk->snd_una;
 	tsk->number_of_dup_acks = 0;
 
+	// if send_head == first segment && rtt_time == 0
+	// -> there is a loss segment (send_head is moved to the begining and rtt_time is reset)
+	// -> send_head will be the next unacked segment or NULL if tx_queue contains only one element
+	struct list_head *first_element = sock->sk->tx_queue.next;
+	if (sock->sk->send_head == first_element && !tsk->rtt_time)
+		sock->sk->send_head = first_element->next != &sock->sk->tx_queue ? &first_element->next : NULL;
+
 	struct sk_buff *iter, *next;
 	list_for_each_entry_safe(iter, next, &sock->sk->tx_queue, sibling)
 	{

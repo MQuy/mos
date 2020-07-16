@@ -33,7 +33,7 @@ void pit_init()
 {
 	DEBUG &&debug_println(DEBUG_INFO, "[pit] - Initializing");
 
-	int divisor = 1193181 / 19886;
+	int divisor = 1193181 / 1193.181;
 
 	outportb(PIT_REG_COMMAND, 0x34);
 	outportb(PIT_REG_COUNTER, divisor & 0xff);
