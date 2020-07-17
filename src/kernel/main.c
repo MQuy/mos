@@ -9,6 +9,7 @@
 #include "cpu/hal.h"
 #include "cpu/idt.h"
 #include "cpu/pit.h"
+#include "cpu/rtc.h"
 #include "cpu/tss.h"
 #include "devices/ata.h"
 #include "devices/char/memory.h"
@@ -177,6 +178,7 @@ int kernel_main(unsigned long addr, unsigned long magic)
 	exception_init();
 
 	// timer and keyboard
+	rtc_init();
 	pit_init();
 	kkybrd_install();
 	mouse_init();

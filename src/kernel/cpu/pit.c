@@ -17,6 +17,8 @@ int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 	jiffies++;
 	irq_ack(regs->int_no);
 
+	// adjust ticks due to overhead and latency
+
 	return IRQ_HANDLER_CONTINUE;
 }
 

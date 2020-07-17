@@ -1,71 +1,32 @@
 #include "time.h"
 
-#include <kernel/cpu/hal.h>
 #include <kernel/memory/vmm.h>
 
-#define CMOS_ADDRESS 0x70
-#define CMOS_DATA 0x71
+struct time boot_time;
+struct time current_time;
 
-uint8_t get_update_flag()
+void set_current_time(uint16_t year, uint8_t month, uint8_t day,
+					  uint8_t hour, uint8_t minute, uint8_t second)
 {
-	outportb(CMOS_ADDRESS, 0x0A);
-	return inportb(CMOS_DATA) & 0x80;
-}
-
-uint8_t get_rtc_register(uint32_t reg)
-{
-	outportb(CMOS_ADDRESS, reg);
-	return inportb(CMOS_DATA);
+	current_time.year = year;
+	current_time.month = month;
+	current_time.day = day;
+	current_time.hour = hour;
+	current_time.minute = minute;
+	current_time.second = second;
 }
 
 struct time *get_current_time()
 {
-	uint8_t second, minute, hour, day, month, year;
-	struct time *t = kcalloc(1, sizeof(struct time));
-
-	while (get_update_flag())
-		;
-	second = get_rtc_register(0x00);
-	minute = get_rtc_register(0x02);
-	hour = get_rtc_register(0x04);
-	day = get_rtc_register(0x07);
-	month = get_rtc_register(0x08);
-	year = get_rtc_register(0x09);
-
-	uint8_t registerB = get_rtc_register(0x0B);
-	// Convert BCD to binary values if necessary
-	if (!(registerB & 0x04))
-	{
-		second = (second & 0x0F) + ((second / 16) * 10);
-		minute = (minute & 0x0F) + ((minute / 16) * 10);
-		hour = ((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) | (hour & 0x80);
-		day = (day & 0x0F) + ((day / 16) * 10);
-		month = (month & 0x0F) + ((month / 16) * 10);
-		year = (year & 0x0F) + ((year / 16) * 10);
-	}
-
-	// Convert 12 hour clock to 24 hour clock if necessary
-	if (!(registerB & 0x02) && (hour & 0x80))
-	{
-		hour = ((hour & 0x7F) + 12) % 24;
-	}
-
-	t->second = second;
-	t->minute = minute;
-	t->hour = hour;
-	t->day = day;
-	t->month = month;
-	t->year = (year >= 70 ? 1900 : 2000) + year;
-
-	return t;
+	return &current_time;
 }
 
+// NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days
 struct time *get_time_from_seconds(int32_t seconds)
 {
 	struct time *t = kcalloc(1, sizeof(struct time));
 	int32_t days = seconds / (24 * 3600);
 
-	// NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days
 	days += 719468;
 	uint32_t era = (days >= 0 ? days : days - 146096) / 146097;
 	uint32_t doe = days - era * 146097;									   // [0, 146096]
