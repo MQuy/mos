@@ -1,9 +1,7 @@
-#include <kernel/cpu/pit.h>
 #include <kernel/proc/task.h>
+#include <kernel/system/time.h>
 
 #include "tcp.h"
-
-extern volatile unsigned long jiffies;
 
 void tcp_retransmit_timer(struct timer_list *timer)
 {
@@ -11,7 +9,7 @@ void tcp_retransmit_timer(struct timer_list *timer)
 	struct socket *sock = tsk->inet.sk.sock;
 
 	tsk->rto *= 2;
-	mod_timer(timer, jiffies + tsk->rto);
+	mod_timer(timer, get_milliseconds(NULL) + tsk->rto);
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
 	assert(skb);
@@ -41,7 +39,7 @@ void tcp_retransmit_timer(struct timer_list *timer)
 	}
 
 	// after retransmitting 8 times without success we clear srtt and rttvar
-	if (tsk->rto >= 128 * TICKS_PER_SECOND)
+	if (tsk->rto >= 128 * 1000)
 	{
 		tsk->srtt = 0;
 		tsk->rttvar = 0;
@@ -56,12 +54,12 @@ void tcp_persist_timer(struct timer_list *timer)
 	if (tsk->snd_wnd)
 	{
 		del_timer(timer);
-		tsk->persist_backoff = 1;
+		tsk->persist_backoff = 1000;
 		return;
 	}
 
 	tsk->persist_backoff *= 2;
-	mod_timer(timer, jiffies + tsk->persist_backoff);
+	mod_timer(timer, get_milliseconds(NULL) + tsk->persist_backoff);
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
 	assert(skb && tcp_payload_lenth(skb) == 1);

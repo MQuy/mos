@@ -2,9 +2,9 @@
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/pic.h>
-#include <kernel/cpu/pit.h>
 #include <kernel/cpu/tss.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/system/time.h>
 
 #include "task.h"
 
@@ -165,8 +165,8 @@ void sleep(uint32_t delay)
 {
 	lock_scheduler();
 
-	uint32_t time = get_milliseconds_from_boot();
-	uint32_t when = time + delay;
+	uint64_t time = get_milliseconds(NULL);
+	uint64_t when = time + delay;
 	if (when > time)
 	{
 		current_thread->expiry_when = when;
@@ -183,7 +183,7 @@ int32_t irq_schedule_handler(struct interrupt_registers *regs)
 	lock_scheduler();
 
 	bool is_schedulable = false;
-	uint32_t time = get_milliseconds_from_boot();
+	uint32_t time = get_milliseconds(NULL);
 	current_thread->time_slice++;
 
 	struct thread *t = NULL;

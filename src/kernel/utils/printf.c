@@ -57,6 +57,16 @@ size_t vsprintf(char *buffer, const char *fmt, va_list args)
 			break;
 		}
 
+		case 'l':
+		{
+			long long n = (long long)va_arg(args, long long);
+			itoa_s(n, 10, number_buf);
+
+			for (char *c = number_buf; *c; c++)
+				*buffer_iter++ = *c;
+			break;
+		}
+
 		case 'X':
 		case 'x':
 		{

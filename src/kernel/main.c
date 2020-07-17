@@ -129,7 +129,7 @@ void kernel_init()
 		;
 }
 
-int kernel_main(unsigned long addr, unsigned long magic)
+int kernel_main(uint32_t addr, uint32_t magic)
 {
 	if (magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 		return -1;

@@ -1,10 +1,8 @@
 #include <include/errno.h>
-#include <kernel/cpu/pit.h>
 #include <kernel/proc/task.h>
+#include <kernel/system/time.h>
 
 #include "tcp.h"
-
-extern volatile unsigned long jiffies;
 
 uint32_t tcp_get_option_value(uint8_t *options, void *value, uint8_t len)
 {
@@ -76,7 +74,7 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 
 	if (tsk->rtt_time && tsk->rtt_end_seq < ack_number)
 	{
-		uint32_t rtt = jiffies - tsk->rtt_time;
+		uint32_t rtt = get_milliseconds(NULL) - tsk->rtt_time;
 		tcp_calculate_rto(sock, rtt);
 		tsk->rtt_time = 0;
 	}
@@ -398,7 +396,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			if (tcp_is_fin_acked(sock))
 			{
 				tsk->state = TCP_TIME_WAIT;
-				mod_timer(&tsk->msl_timer, jiffies + MAX_SEGMENT_LIFETIME * 2);
+				mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 				del_timer(&tsk->retransmit_timer);
 				del_timer(&tsk->persist_timer);
 			}
@@ -408,12 +406,12 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		else if (tsk->state == TCP_FIN_WAIT2)
 		{
 			tsk->state = TCP_TIME_WAIT;
-			mod_timer(&tsk->msl_timer, jiffies + MAX_SEGMENT_LIFETIME * 2);
+			mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 			del_timer(&tsk->retransmit_timer);
 			del_timer(&tsk->persist_timer);
 		}
 		else if (tsk->state == TCP_TIME_WAIT)
-			mod_timer(&tsk->msl_timer, jiffies + MAX_SEGMENT_LIFETIME * 2);
+			mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 
 		if (!is_sent_ack)
 		{

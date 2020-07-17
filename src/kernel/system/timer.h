@@ -9,7 +9,7 @@
 
 struct timer_list
 {
-	unsigned long expires;
+	uint64_t expires;
 	void (*function)(struct timer_list *);
 	struct list_head sibling;
 	// TODO: MQ 2020-07-02 If there is the issue, which timer is deleted and iterated, considering using lock (better mutex)
@@ -30,7 +30,7 @@ struct timer_list
 
 void add_timer(struct timer_list *timer);
 void del_timer(struct timer_list *timer);
-void mod_timer(struct timer_list *timer, unsigned long expires);
+void mod_timer(struct timer_list *timer, uint64_t expires);
 void timer_init();
 
 #endif

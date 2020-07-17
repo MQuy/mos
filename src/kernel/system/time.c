@@ -2,8 +2,15 @@
 
 #include <kernel/memory/vmm.h>
 
-struct time boot_time;
+extern volatile uint64_t jiffies;
+
+volatile uint64_t boot_seconds, current_seconds;
 struct time current_time;
+
+void set_boot_seconds(uint64_t bs)
+{
+	boot_seconds = bs;
+}
 
 void set_current_time(uint16_t year, uint8_t month, uint8_t day,
 					  uint8_t hour, uint8_t minute, uint8_t second)
@@ -14,11 +21,7 @@ void set_current_time(uint16_t year, uint8_t month, uint8_t day,
 	current_time.hour = hour;
 	current_time.minute = minute;
 	current_time.second = second;
-}
-
-struct time *get_current_time()
-{
-	return &current_time;
+	current_seconds = get_seconds(NULL);
 }
 
 // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days
@@ -66,12 +69,20 @@ uint32_t get_days(struct time *t)
 uint32_t get_seconds(struct time *t)
 {
 	if (t == NULL)
-		t = get_current_time();
+		t = &current_time;
 
 	return get_days(t) * 24 * 3600 + t->hour * 3600 + t->minute * 60 + t->second;
 }
 
+uint64_t get_milliseconds(struct time *t)
+{
+	if (t == NULL)
+		return boot_seconds * 1000 + jiffies;
+	else
+		return get_seconds(t) * 1000 + jiffies % 1000;
+}
+
 struct time *get_time(int32_t seconds)
 {
-	return seconds == 0 ? get_current_time() : get_time_from_seconds(seconds);
+	return seconds == 0 ? &current_time : get_time_from_seconds(seconds);
 }

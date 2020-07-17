@@ -1,14 +1,13 @@
 #include "tcp.h"
 
 #include <include/errno.h>
-#include <kernel/cpu/pit.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
+#include <kernel/system/time.h>
 #include <kernel/utils/math.h>
 #include <kernel/utils/string.h>
 
 extern volatile struct thread *current_thread;
-extern volatile unsigned long jiffies;
 
 uint16_t tcp_calculate_checksum(struct tcp_packet *tcp, uint16_t tcp_len, uint32_t source_ip, uint32_t dest_ip)
 {
@@ -102,14 +101,14 @@ void tcp_create_tcb(struct tcp_sock *tsk)
 	tsk->flight_size = 0;
 	tsk->number_of_dup_acks = 0;
 
-	// NOTE: MQ 2020-07-9
+	// NOTE: MQ 2020-07-09
 	// retransmit and probe timers are embedded (not pointers)
-	// make sure in correct state -> clear connections in those
+	// clear them from timer queue to make sure in correct state for later initialization
 	list_del(&tsk->retransmit_timer.sibling);
 	list_del(&tsk->persist_timer.sibling);
-	tsk->rto = 1 * TICKS_PER_SECOND;
+	tsk->rto = 1000;
 	tsk->retransmit_timer = (struct timer_list)TIMER_INITIALIZER(tcp_retransmit_timer, UINT32_MAX);
-	tsk->persist_backoff = 1 * TICKS_PER_SECOND;
+	tsk->persist_backoff = 1000;
 	tsk->persist_timer = (struct timer_list)TIMER_INITIALIZER(tcp_persist_timer, UINT32_MAX);
 
 	tsk->rtt_end_seq = 0;
@@ -123,9 +122,9 @@ void tcp_delete_tcb(struct socket *sock)
 
 	del_timer(&tsk->msl_timer);
 
-	tsk->rto = 1 * TICKS_PER_SECOND;
+	tsk->rto = 1000;
 	del_timer(&tsk->retransmit_timer);
-	tsk->persist_backoff = 1 * TICKS_PER_SECOND;
+	tsk->persist_backoff = 1000;
 	del_timer(&tsk->persist_timer);
 
 	tsk->rtt_end_seq = 0;
@@ -238,7 +237,7 @@ void tcp_calculate_rto(struct socket *sock, uint32_t rtt)
 		tsk->rttvar = (1 - beta) * tsk->rttvar + beta * abs((long)tsk->srtt - (long)rtt);
 		tsk->srtt = (1 - alpha) * tsk->srtt + alpha * rtt;
 	}
-	tsk->rto = max_t(uint32_t, tsk->srtt + max_t(uint32_t, G, K * tsk->rttvar), TICKS_PER_SECOND);
+	tsk->rto = max_t(uint32_t, tsk->srtt + max_t(uint32_t, G, K * tsk->rttvar), 1000);
 }
 
 void tcp_calculate_congestion(struct socket *sock, uint32_t seg_ack)
@@ -321,7 +320,7 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 												 NULL, 0,
 												 (uint8_t *)msg + msg_sent_len, 1);
 
-			mod_timer(&tsk->persist_timer, jiffies + 1 * TICKS_PER_SECOND);
+			mod_timer(&tsk->persist_timer, get_milliseconds(NULL) + 1000);
 			tcp_transmit_skb(sock, skb);
 			del_timer(&tsk->persist_timer);
 		}

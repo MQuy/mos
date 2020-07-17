@@ -1,13 +1,12 @@
-#include <kernel/cpu/pit.h>
 #include <kernel/net/neighbour.h>
 #include <kernel/proc/task.h>
+#include <kernel/system/time.h>
 #include <kernel/utils/math.h>
 #include <kernel/utils/string.h>
 
 #include "tcp.h"
 
 extern volatile struct thread *current_thread;
-extern volatile unsigned long jiffies;
 
 struct sk_buff *tcp_create_skb(struct socket *sock,
 							   uint32_t sequence_number, uint32_t ack_number,
@@ -45,6 +44,7 @@ struct sk_buff *tcp_create_skb(struct socket *sock,
 
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
 	cb->seq = sequence_number;
+	// payload_len counts both lower and upper boundary
 	cb->end_seq = sequence_number + max(0, (int)payload_len - 1);
 	cb->flags = flags;
 
@@ -62,7 +62,7 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitte
 	if (!is_retransmitted && (payload_len > 0 || skb->h.tcph->syn || skb->h.tcph->fin))
 		tsk->snd_nxt = cb->end_seq + 1;
 
-	cb->when = jiffies;
+	cb->when = get_milliseconds(NULL);
 	cb->expires = cb->when + tsk->rto;
 
 	tcp_state_transition(sock, cb->flags);

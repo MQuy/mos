@@ -113,7 +113,7 @@ int32_t do_mmap(uint32_t addr,
 	return vma->vm_start;
 }
 
-int expand_area(struct vm_area_struct *vma, unsigned long address)
+int expand_area(struct vm_area_struct *vma, uint32_t address)
 {
 	address = PAGE_ALIGN(address);
 	if (address <= vma->vm_end)

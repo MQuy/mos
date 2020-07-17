@@ -82,7 +82,7 @@ struct socket
 	uint16_t protocol;
 	enum socket_type type;
 	enum socket_state state;
-	unsigned long flags;
+	uint32_t flags;
 
 	struct vfs_file *file;
 	struct sock *sk;

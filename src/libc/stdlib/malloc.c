@@ -21,7 +21,7 @@ static struct block_meta *blocklist = NULL;
 void assert_block_valid(struct block_meta *block)
 {
 	if (block->magic != BLOCK_MAGIC)
-		__asm__ __volatile("int $0x0E");
+		__asm__ __volatile("int $0x01");
 }
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size)

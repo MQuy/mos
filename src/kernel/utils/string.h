@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void itoa(unsigned i, unsigned base, char *buf);
+void itoa(long long i, unsigned base, char *buf);
 void itoa_s(long long i, unsigned base, char *buf);
 
 char *strcpy(char *s1, const char *s2);

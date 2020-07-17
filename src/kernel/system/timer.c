@@ -1,15 +1,14 @@
 #include "timer.h"
 
 #include <kernel/cpu/idt.h>
-
-extern volatile unsigned long jiffies;
+#include <kernel/system/time.h>
 
 struct list_head list_of_timer;
 
 void assert_timer_valid(struct timer_list *timer)
 {
 	if (timer->magic != TIMER_MAGIC)
-		__asm__ __volatile("int $0x0E");
+		__asm__ __volatile("int $0x01");
 }
 
 void add_timer(struct timer_list *timer)
@@ -34,7 +33,7 @@ void del_timer(struct timer_list *timer)
 	list_del(&timer->sibling);
 }
 
-void mod_timer(struct timer_list *timer, unsigned long expires)
+void mod_timer(struct timer_list *timer, uint64_t expires)
 {
 	del_timer(timer);
 	timer->expires = expires;
@@ -44,10 +43,11 @@ void mod_timer(struct timer_list *timer, unsigned long expires)
 int32_t timer_schedule_handler(struct interrupt_registers *regs)
 {
 	struct timer_list *iter, *next;
+	uint64_t cms = get_milliseconds(NULL);
 	list_for_each_entry_safe(iter, next, &list_of_timer, sibling)
 	{
 		assert_timer_valid(iter);
-		if (iter->expires <= jiffies)
+		if (iter->expires <= cms)
 			iter->function(iter);
 	}
 
@@ -57,5 +57,5 @@ int32_t timer_schedule_handler(struct interrupt_registers *regs)
 void timer_init()
 {
 	INIT_LIST_HEAD(&list_of_timer);
-	register_interrupt_handler(IRQ0, timer_schedule_handler);
+	register_interrupt_handler(IRQ8, timer_schedule_handler);
 }

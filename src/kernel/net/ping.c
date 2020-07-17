@@ -1,10 +1,10 @@
-#include <kernel/cpu/pit.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/net/ip.h>
 #include <kernel/net/neighbour.h>
 #include <kernel/net/net.h>
 #include <kernel/net/sk_buff.h>
 #include <kernel/system/sysapi.h>
+#include <kernel/system/time.h>
 #include <kernel/utils/math.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
@@ -105,7 +105,7 @@ void ping(uint32_t dest_ip)
 	for (; ntransmitted <= 20; ntransmitted++)
 	{
 		struct sk_buff *skb = ping_create_sk_buff(dev->local_ip, dest_ip, ICMP_REQUEST, 0, identifier, ntransmitted);
-		uint32_t sent_time = get_milliseconds_from_boot();
+		uint64_t sent_time = get_milliseconds(NULL);
 		if (!ntransmitted)
 			DEBUG &&debug_println(DEBUG_INFO, "PING %s: %d data bytes", dest_ip_text, htons(skb->nh.iph->total_length) - skb->nh.iph->ihl);
 		sock->ops->sendmsg(sock, skb->nh.iph, skb->len);
@@ -120,7 +120,7 @@ void ping(uint32_t dest_ip)
 				break;
 		}
 
-		uint32_t received_time = get_milliseconds_from_boot();
+		uint64_t received_time = get_milliseconds(NULL);
 		uint32_t received_bytes = htons(received_ip->total_length) - received_ip->ihl;
 		if (icmp->type != ICMP_REPLY)
 			DEBUG &&debug_println(DEBUG_INFO,

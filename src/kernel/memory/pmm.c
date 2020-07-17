@@ -98,7 +98,7 @@ void pmm_regions(struct multiboot_tag_mmap *multiboot_mmap)
 {
 	for (struct multiboot_mmap_entry *mmap = multiboot_mmap->entries;
 		 (multiboot_uint8_t *)mmap < (multiboot_uint8_t *)multiboot_mmap + multiboot_mmap->size;
-		 mmap = (struct multiboot_mmap_entry *)((unsigned long)mmap + multiboot_mmap->entry_size))
+		 mmap = (struct multiboot_mmap_entry *)((uint32_t)mmap + multiboot_mmap->entry_size))
 	{
 		if (mmap->type > 4 && mmap->addr == 0)
 			break;

@@ -42,8 +42,8 @@ struct tcp_skb_cb
 	uint32_t seq;
 	uint32_t end_seq;
 	uint16_t flags;
-	unsigned long expires;
-	unsigned long when;
+	uint64_t expires;
+	uint64_t when;
 };
 
 struct tcp_sock
@@ -78,7 +78,7 @@ struct tcp_sock
 	uint32_t flight_size;
 
 	// timer
-	uint32_t rto;  // rto calculation unit is ticks per second, **not ms*
+	uint32_t rto;  // millisecon is the calculation unit
 	struct timer_list retransmit_timer;
 	uint32_t srtt;
 	uint32_t rttvar;
@@ -88,7 +88,7 @@ struct tcp_sock
 
 	// rtt
 	uint32_t rtt_end_seq;
-	uint32_t rtt_time;
+	uint64_t rtt_time;
 	uint8_t syn_retries;
 };
 

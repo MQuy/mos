@@ -99,7 +99,7 @@ void *kalign_heap(size_t size);
 
 // mmap.c
 struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len);
-int expand_stack(struct vm_area_struct *vma, unsigned long address);
+int expand_stack(struct vm_area_struct *vma, uint32_t address);
 int32_t do_mmap(uint32_t addr,
 				size_t len, uint32_t prot,
 				uint32_t flag, int32_t fd);

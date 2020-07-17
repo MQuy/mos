@@ -2,6 +2,7 @@
 #define INCLUDE_CTYPE_H
 
 #define USHRT_MAX 65535
+#define log2(X) ((unsigned)(8 * sizeof(unsigned long long) - __builtin_clzll((X)) - 1))
 
 typedef unsigned int __kernel_dev_t;
 typedef __kernel_dev_t dev_t;

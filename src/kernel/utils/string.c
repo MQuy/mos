@@ -15,7 +15,7 @@ int memcmp(const void *vl, const void *vr, size_t n)
 static char tbuf[32];
 static char bchars[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-void itoa(unsigned i, unsigned base, char *buf)
+void itoa(long long i, unsigned base, char *buf)
 {
 	int pos = 0;
 	int opos = 0;
