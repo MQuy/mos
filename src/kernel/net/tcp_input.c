@@ -4,6 +4,8 @@
 
 #include "tcp.h"
 
+extern volatile unsigned long jiffies;
+
 uint32_t tcp_get_option_value(uint8_t *options, void *value, uint8_t len)
 {
 	if (len == 1)
@@ -57,7 +59,7 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	// -> send_head will be the next unacked segment or NULL if tx_queue contains only one element
 	struct list_head *first_element = sock->sk->tx_queue.next;
 	if (sock->sk->send_head == first_element && !tsk->rtt_time)
-		sock->sk->send_head = first_element->next != &sock->sk->tx_queue ? &first_element->next : NULL;
+		sock->sk->send_head = first_element->next != &sock->sk->tx_queue ? first_element->next : NULL;
 
 	struct sk_buff *iter, *next;
 	list_for_each_entry_safe(iter, next, &sock->sk->tx_queue, sibling)
@@ -68,13 +70,13 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
 	if (skb)
-		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->expires + tsk->rto);
+		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->expires);
 	else
 		del_timer(&tsk->retransmit_timer);
 
 	if (tsk->rtt_time && tsk->rtt_end_seq < ack_number)
 	{
-		uint32_t rtt = get_current_tick() - tsk->rtt_time;
+		uint32_t rtt = jiffies - tsk->rtt_time;
 		tcp_calculate_rto(sock, rtt);
 		tsk->rtt_time = 0;
 	}
@@ -396,7 +398,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			if (tcp_is_fin_acked(sock))
 			{
 				tsk->state = TCP_TIME_WAIT;
-				mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
+				mod_timer(&tsk->msl_timer, jiffies + MAX_SEGMENT_LIFETIME * 2);
 				del_timer(&tsk->retransmit_timer);
 				del_timer(&tsk->persist_timer);
 			}
@@ -406,12 +408,12 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		else if (tsk->state == TCP_FIN_WAIT2)
 		{
 			tsk->state = TCP_TIME_WAIT;
-			mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
+			mod_timer(&tsk->msl_timer, jiffies + MAX_SEGMENT_LIFETIME * 2);
 			del_timer(&tsk->retransmit_timer);
 			del_timer(&tsk->persist_timer);
 		}
 		else if (tsk->state == TCP_TIME_WAIT)
-			mod_timer(&tsk->msl_timer, get_current_tick() + MAX_SEGMENT_LIFETIME * 2);
+			mod_timer(&tsk->msl_timer, jiffies + MAX_SEGMENT_LIFETIME * 2);
 
 		if (!is_sent_ack)
 		{

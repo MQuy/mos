@@ -7,6 +7,7 @@
 #include "tcp.h"
 
 extern volatile struct thread *current_thread;
+extern volatile unsigned long jiffies;
 
 struct sk_buff *tcp_create_skb(struct socket *sock,
 							   uint32_t sequence_number, uint32_t ack_number,
@@ -61,8 +62,9 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitte
 	if (!is_retransmitted && (payload_len > 0 || skb->h.tcph->syn || skb->h.tcph->fin))
 		tsk->snd_nxt = cb->end_seq + 1;
 
-	cb->when = get_current_tick();
+	cb->when = jiffies;
 	cb->expires = cb->when + tsk->rto;
+
 	tcp_state_transition(sock, cb->flags);
 
 	if (skb->h.tcph->syn)

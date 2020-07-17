@@ -290,7 +290,7 @@ void kybrd_enc_send_cmd(uint8_t cmd)
 }
 
 //!	keyboard interrupt handler
-int32_t i86_kybrd_irq(struct interrupt_registers *registers)
+int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 {
 	int code = 0;
 
@@ -299,6 +299,8 @@ int32_t i86_kybrd_irq(struct interrupt_registers *registers)
 	{
 		//! read the scan code
 		code = kybrd_enc_read_buf();
+
+		irq_ack(regs->int_no);
 
 		//! is this an extended code? If so, set it and return
 		if (code != 0xE0 && code != 0xE1)
@@ -406,6 +408,8 @@ int32_t i86_kybrd_irq(struct interrupt_registers *registers)
 			break;
 		}
 	}
+	else
+		irq_ack(regs->int_no);
 
 	return IRQ_HANDLER_CONTINUE;
 }

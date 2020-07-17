@@ -18,6 +18,7 @@ extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
 extern void return_usermode(struct interrupt_registers *regs);
 extern void irq_schedule_handler(struct interrupt_registers *regs);
 extern int32_t thread_page_fault(struct interrupt_registers *regs);
+extern volatile unsigned long jiffies;
 
 volatile struct thread *current_thread;
 volatile struct process *current_process;
@@ -77,7 +78,7 @@ void thread_sleep_timer(struct timer_list *timer)
 
 void thread_sleep(uint32_t ms)
 {
-	mod_timer(&current_thread->sleep_timer, get_current_tick() + ms);
+	mod_timer(&current_thread->sleep_timer, jiffies + ms);
 	update_thread(current_thread, THREAD_WAITING);
 }
 

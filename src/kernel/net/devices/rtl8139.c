@@ -55,7 +55,6 @@ void rtl8139_receive_packet(struct interrupt_registers *regs)
 		outportw(rtl_netdev->base_addr + RTL8139_RxBufPtr, rx_buf_ptr - 0x10);
 	}
 
-	irq_ack(regs->int_no);
 	net_switch();
 }
 
@@ -68,6 +67,7 @@ int32_t rtl8139_irq_handler(struct interrupt_registers *regs)
 
 	outportw(rtl_netdev->base_addr + RTL8139_IntrStatus, status);
 
+	irq_ack(regs->int_no);
 	if (status & TOK)
 	{
 	}

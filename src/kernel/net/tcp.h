@@ -78,7 +78,7 @@ struct tcp_sock
 	uint32_t flight_size;
 
 	// timer
-	uint32_t rto;
+	uint32_t rto;  // rto calculation unit is ticks per second, **not ms*
 	struct timer_list retransmit_timer;
 	uint32_t srtt;
 	uint32_t rttvar;

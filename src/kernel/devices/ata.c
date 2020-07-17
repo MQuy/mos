@@ -21,9 +21,10 @@ void ata_400ns_delays(struct ata_device *device);
 
 volatile bool ata_irq_called;
 
-int32_t ata_irq()
+int32_t ata_irq(struct interrupt_registers *regs)
 {
 	ata_irq_called = true;
+	irq_ack(regs->int_no);
 
 	return IRQ_HANDLER_CONTINUE;
 }

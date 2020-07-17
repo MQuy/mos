@@ -8,6 +8,7 @@
 #include <kernel/utils/string.h>
 
 extern volatile struct thread *current_thread;
+extern volatile unsigned long jiffies;
 
 uint16_t tcp_calculate_checksum(struct tcp_packet *tcp, uint16_t tcp_len, uint32_t source_ip, uint32_t dest_ip)
 {
@@ -237,7 +238,7 @@ void tcp_calculate_rto(struct socket *sock, uint32_t rtt)
 		tsk->rttvar = (1 - beta) * tsk->rttvar + beta * abs((long)tsk->srtt - (long)rtt);
 		tsk->srtt = (1 - alpha) * tsk->srtt + alpha * rtt;
 	}
-	tsk->rto = max_t(uint32_t, tsk->srtt + max_t(uint32_t, G, K * tsk->rttvar), 1000);
+	tsk->rto = max_t(uint32_t, tsk->srtt + max_t(uint32_t, G, K * tsk->rttvar), TICKS_PER_SECOND);
 }
 
 void tcp_calculate_congestion(struct socket *sock, uint32_t seg_ack)
@@ -320,7 +321,7 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 												 NULL, 0,
 												 (uint8_t *)msg + msg_sent_len, 1);
 
-			mod_timer(&tsk->persist_timer, get_current_tick() + 1 * TICKS_PER_SECOND);
+			mod_timer(&tsk->persist_timer, jiffies + 1 * TICKS_PER_SECOND);
 			tcp_transmit_skb(sock, skb);
 			del_timer(&tsk->persist_timer);
 		}

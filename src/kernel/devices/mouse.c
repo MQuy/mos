@@ -72,6 +72,7 @@ int32_t mouse_handler(struct interrupt_registers *regs)
 	if ((status & MOUSE_BBIT) && (status & MOUSE_F_BIT))
 	{
 		uint8_t mouse_in = inportb(MOUSE_PORT);
+		irq_ack(regs->int_no);
 		switch (mouse_cycle)
 		{
 		case 0:
@@ -87,12 +88,13 @@ int32_t mouse_handler(struct interrupt_registers *regs)
 		case 2:
 			mouse_byte[2] = mouse_in;
 			mouse_calculate_position();
-			irq_ack(regs->int_no);
 			if (mouse_device_info.x != 0 || mouse_device_info.y != 0 || mouse_device_info.state != 0)
 				enqueue_mouse_event(&mouse_device_info);
 			break;
 		}
 	}
+	else
+		irq_ack(regs->int_no);
 
 	return IRQ_HANDLER_CONTINUE;
 }

@@ -15,25 +15,21 @@ volatile unsigned long jiffies = 0;
 int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 {
 	jiffies++;
+	irq_ack(regs->int_no);
 
 	return IRQ_HANDLER_CONTINUE;
 }
 
-unsigned long get_current_tick()
-{
-	return jiffies;
-}
-
 uint32_t get_milliseconds_from_boot()
 {
-	return jiffies;
+	return jiffies * (1000 / TICKS_PER_SECOND);
 }
 
 void pit_init()
 {
 	DEBUG &&debug_println(DEBUG_INFO, "[pit] - Initializing");
 
-	int divisor = 1193181 / 1193.181;
+	int divisor = 1193181 / TICKS_PER_SECOND;
 
 	outportb(PIT_REG_COMMAND, 0x34);
 	outportb(PIT_REG_COUNTER, divisor & 0xff);

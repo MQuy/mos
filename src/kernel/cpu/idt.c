@@ -176,7 +176,4 @@ void irq_ack(uint32_t irq_number)
 void irq_handler(struct interrupt_registers *reg)
 {
 	handle_interrupt(reg);
-
-	// TODO: MQ 2020-06-14 Better to ack in each handler when it can decide when to yield
-	irq_ack(reg->int_no);
 }

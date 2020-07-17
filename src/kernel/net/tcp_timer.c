@@ -3,10 +3,15 @@
 
 #include "tcp.h"
 
+extern volatile unsigned long jiffies;
+
 void tcp_retransmit_timer(struct timer_list *timer)
 {
 	struct tcp_sock *tsk = from_timer(tsk, timer, retransmit_timer);
 	struct socket *sock = tsk->inet.sk.sock;
+
+	tsk->rto *= 2;
+	mod_timer(timer, jiffies + tsk->rto);
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
 	assert(skb);
@@ -41,9 +46,6 @@ void tcp_retransmit_timer(struct timer_list *timer)
 		tsk->srtt = 0;
 		tsk->rttvar = 0;
 	}
-
-	tsk->rto *= 2;
-	mod_timer(timer, get_current_tick() + tsk->rto);
 }
 
 void tcp_persist_timer(struct timer_list *timer)
@@ -58,12 +60,12 @@ void tcp_persist_timer(struct timer_list *timer)
 		return;
 	}
 
+	tsk->persist_backoff *= 2;
+	mod_timer(timer, jiffies + tsk->persist_backoff);
+
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
 	assert(skb && tcp_payload_lenth(skb) == 1);
 	tcp_send_skb(sock, skb, true);
-
-	tsk->persist_backoff *= 2;
-	mod_timer(timer, get_current_tick() + tsk->persist_backoff);
 }
 
 void tcp_msl_timer(struct timer_list *timer)
