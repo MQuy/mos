@@ -17,6 +17,7 @@
 
 extern struct process *current_process;
 extern struct thread *current_thread;
+extern volatile uint32_t scheduler_lock_counter;
 
 struct thread *backup_thread;
 struct process *net_process;
@@ -250,11 +251,15 @@ int net_default_rx_handler(struct sk_buff *skb)
 
 void net_rx_loop()
 {
+	// explain in kernel_init#unlock_scheduler
+	unlock_scheduler();
+
 	while (true)
 	{
+		lock_scheduler();
+
 		struct sk_buff *skb;
 		struct sk_buff *prev_skb = NULL;
-
 		list_for_each_entry(skb, &lrx_skb, sibling)
 		{
 			if (prev_skb)
@@ -288,6 +293,7 @@ void net_rx_loop()
 			backup_thread = NULL;
 		}
 		update_thread(net_thread, THREAD_WAITING);
+		unlock_scheduler();
 		schedule();
 	}
 }

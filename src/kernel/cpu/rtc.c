@@ -90,7 +90,7 @@ int32_t rtc_irq_handler(struct interrupt_registers *regs)
 {
 	current_ticks++;
 
-	if (current_ticks % (RTC_TICKS_PER_SECOND / 2) == 0)
+	if (current_ticks % (RTC_TICKS_PER_SECOND / 4) == 0)
 	{
 		uint16_t year;
 		uint8_t second, minute, hour, day, month;

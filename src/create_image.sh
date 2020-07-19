@@ -28,6 +28,9 @@ cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
 
 mkdir "/Volumes/${VOLUME_NAME}/etc"
 cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"
+
+cp demo.txt "/Volumes/${VOLUME_NAME}"
+
 hdiutil detach $DISK_NAME
 
 DISK_NAME="$(hdiutil attach -nomount hdd.img)"

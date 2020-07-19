@@ -53,7 +53,7 @@ struct tcp_sock
 	struct timer_list msl_timer;
 
 	// sender sequence variables
-	uint16_t snd_mss;
+	uint32_t snd_mss;
 	uint32_t snd_iss;
 	uint32_t snd_una;
 	uint32_t snd_nxt;
@@ -63,17 +63,17 @@ struct tcp_sock
 	uint8_t snd_wds;  // window scale, only support incomming
 
 	// receiver sequence variables
-	uint16_t rcv_mss;
+	uint32_t rcv_mss;
 	uint32_t rcv_irs;
 	uint32_t rcv_nxt;
-	uint16_t rcv_wnd;
+	uint32_t rcv_wnd;
 
 	// congestion
-	uint16_t ssthresh;
+	uint32_t ssthresh;
 	// NOTE: MQ 2020-07-12
 	// after a long idle period, we should use slow start to restart transmission
 	// -> cwnd = min(IW, cwnd)
-	uint16_t cwnd;
+	uint32_t cwnd;
 	uint8_t number_of_dup_acks;
 	uint32_t flight_size;
 
@@ -144,7 +144,7 @@ static inline uint16_t tcp_payload_lenth(struct sk_buff *skb)
 	return (uint16_t)payload_len;
 }
 
-static inline uint16_t tcp_sender_available_window(struct tcp_sock *tsk)
+static inline uint32_t tcp_sender_available_window(struct tcp_sock *tsk)
 {
 	return tsk->snd_una + tsk->snd_wnd - tsk->snd_nxt;
 }

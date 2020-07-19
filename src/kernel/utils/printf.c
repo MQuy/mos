@@ -153,3 +153,9 @@ int debug_println(enum debug_level level, const char *fmt, ...)
 	va_end(args);
 	return out + 1;
 }
+
+void assert_log()
+{
+	debug_println(DEBUG_ERROR, "%s:%d %s", __FILE__, __LINE__, __FUNCTION__);
+	__asm__ __volatile("int $0x01");
+}

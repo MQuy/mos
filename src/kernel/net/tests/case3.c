@@ -1,13 +1,13 @@
-#include <arpa/inet.h>	//inet_addr
+#include <arpa/inet.h>
 #include <errno.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>	 //strlen
+#include <string.h>
 #include <sys/socket.h>
-#include <unistd.h>	 //write
+#include <unistd.h>
 
 #define CHECKSUM_MASK 0xFFFF
 
@@ -123,7 +123,6 @@ int main(int argc, char *argv[])
 	if (server_fd < 0)
 		perror("socket error");
 
-	//Prepare the sockaddr_in structure
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 	server_addr.sin_port = htons(source_port);

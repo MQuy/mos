@@ -82,7 +82,7 @@ void thread_sleep(uint32_t ms)
 
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority)
 {
-	disable_interrupts();
+	lock_scheduler();
 
 	struct thread *t = kcalloc(1, sizeof(struct thread));
 	t->tid = next_tid++;
@@ -112,14 +112,14 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 
 	list_add_tail(&t->sibling, &parent->threads);
 
-	enable_interrupts();
+	unlock_scheduler();
 
 	return t;
 }
 
 struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir)
 {
-	disable_interrupts();
+	lock_scheduler();
 
 	struct process *p = kcalloc(1, sizeof(struct process));
 	p->pid = next_pid++;
@@ -146,7 +146,7 @@ struct process *create_process(struct process *parent, const char *name, struct 
 
 	hashmap_put(&mprocess, &p->pid, p);
 
-	enable_interrupts();
+	unlock_scheduler();
 
 	return p;
 }
@@ -211,7 +211,7 @@ void user_thread_elf_entry(struct thread *t, const char *path, void (*setup)(str
 
 struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *))
 {
-	disable_interrupts();
+	lock_scheduler();
 
 	struct thread *t = kcalloc(1, sizeof(struct thread));
 	t->tid = next_tid++;
@@ -243,7 +243,7 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 
 	list_add_tail(&t->sibling, &parent->threads);
 
-	enable_interrupts();
+	unlock_scheduler();
 
 	return t;
 }
@@ -257,7 +257,7 @@ void process_load(const char *pname, const char *path, int priority, void (*setu
 
 struct process *process_fork(struct process *parent)
 {
-	disable_interrupts();
+	lock_scheduler();
 
 	// fork process
 	struct process *p = kcalloc(1, sizeof(struct process));
@@ -311,7 +311,7 @@ struct process *process_fork(struct process *parent)
 
 	list_add_tail(&t->sibling, &p->threads);
 
-	enable_interrupts();
+	unlock_scheduler();
 
 	return p;
 }

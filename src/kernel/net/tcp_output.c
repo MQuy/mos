@@ -73,8 +73,11 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitte
 	// - receive the ack segment which ack all outstanding segments (in one batch window)
 	// - after receiving ack from retransmittion
 	// # do not active timer if we are no the one who initiate
-	if (!is_actived_timer(&tsk->retransmit_timer))
+	if (!is_actived_timer(&tsk->retransmit_timer) && is_actived_send)
+	{
+		debug_println(DEBUG_INFO, "timer: %d %l", cb->seq, cb->expires);
 		mod_timer(&tsk->retransmit_timer, cb->expires);
+	}
 
 	ethernet_sendmsg(skb);
 }
@@ -87,25 +90,37 @@ void tcp_transmit(struct socket *sock)
 	{
 		while (tcp_sender_available_window(tsk) > 0 && sock->sk->send_head)
 		{
+			disable_interrupts();
+
 			struct sk_buff *skb = list_entry(sock->sk->send_head, struct sk_buff, sibling);
 			tcp_send_skb(sock, skb, false);
+			debug_println(DEBUG_INFO, "send: %d %d %d %l %l", htonl(skb->h.tcph->sequence_number), tsk->flight_size, tcp_sender_available_window(tsk), TCP_SKB_CB(skb)->when, TCP_SKB_CB(skb)->expires);
+
+			sock->sk->send_head = sock->sk->send_head->next;
+			if (sock->sk->send_head == &sock->sk->tx_queue)
+				sock->sk->send_head = NULL;
 
 			// according to rfc6298, kick off only one RTT measurement at the time
-			// the segment has to be the first element in tx queue
+			// the segment doesn't need to be at the start of queue
+			// for example
+			// 1. send -> tx_queue = 1 2 3 4 5 6
+			// 2. receive ack -> tx_queue = 5 6
 			if (!tsk->rtt_time)
 			{
-				assert(&skb->sibling == sock->sk->tx_queue.next);
 				struct tcp_skb_cb *cb = TCP_SKB_CB(skb);
 				tsk->rtt_end_seq = cb->end_seq;
 				tsk->rtt_time = cb->when;
 			}
 
-			sock->sk->send_head = sock->sk->send_head->next;
-			if (sock->sk->send_head == &sock->sk->tx_queue)
-				sock->sk->send_head = NULL;
+			enable_interrupts();
 		}
-		update_thread(current_thread, THREAD_WAITING);
-		schedule();
+		debug_println(DEBUG_INFO, "before from ack %d", list_empty(&sock->sk->tx_queue));
+		if (!list_empty(&sock->sk->tx_queue))
+		{
+			update_thread(current_thread, THREAD_WAITING);
+			schedule();
+		}
+		debug_println(DEBUG_INFO, "back from ack %d", list_empty(&sock->sk->tx_queue));
 	}
 };
 

@@ -9,18 +9,20 @@ void tcp_retransmit_timer(struct timer_list *timer)
 	struct socket *sock = tsk->inet.sk.sock;
 
 	tsk->rto *= 2;
+	debug_println(DEBUG_INFO, "inside timer: %l %l", get_milliseconds(NULL), timer->expires);
 	mod_timer(timer, get_milliseconds(NULL) + tsk->rto);
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
 	assert(skb);
 	tcp_send_skb(sock, skb, true);
+	debug_println(DEBUG_INFO, "inside timer: %d %d %d %l %l", htonl(skb->h.tcph->sequence_number), tsk->flight_size, tcp_sender_available_window(tsk), TCP_SKB_CB(skb)->when, TCP_SKB_CB(skb)->expires);
 
 	// when the first segment loss occurs
 	// -> `tx_queue` cannot be empty (we only clear segment from tx queue when receiving its ack)
 	// -> `send_head` cannot be at the beginning of tx queue (otherwise that segment isn't sent yet)
 	if (sock->sk->send_head != &skb->sibling)
 	{
-		tsk->ssthresh = max_t(uint16_t, tsk->flight_size / 2, 2 * tsk->snd_mss);
+		tsk->ssthresh = max_t(uint32_t, tsk->flight_size / 2, 2 * tsk->snd_mss);
 		tsk->cwnd = (tsk->snd_mss > 2190 ? 2 : (tsk->snd_mss > 1095 ? 3 : 4)) * tsk->snd_mss;
 	}
 

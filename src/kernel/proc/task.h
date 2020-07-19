@@ -136,4 +136,8 @@ struct plist_head *get_list_from_thread(enum thread_state state, enum thread_pol
 int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
 void thread_sleep(uint32_t ms);
 
+// sched.c
+void lock_scheduler();
+void unlock_scheduler();
+
 #endif

@@ -13,6 +13,7 @@ struct semaphore_waiter
 
 void acquire_semaphore(struct semaphore *sem)
 {
+	// TODO: MQ 2020-07-20 should we use lock/unlock_scheduler instead?
 	disable_interrupts();
 	spin_lock(&sem->lock);
 	if (sem->count > 0)

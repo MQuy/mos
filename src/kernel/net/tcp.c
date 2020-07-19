@@ -245,9 +245,11 @@ void tcp_calculate_congestion(struct socket *sock, uint32_t seg_ack)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 
 	if (tsk->cwnd <= tsk->ssthresh)
-		tsk->cwnd += min_t(uint16_t, seg_ack - tsk->snd_una, tsk->snd_mss);
+		tsk->cwnd += min(seg_ack - tsk->snd_una, tsk->snd_mss);
 	else
 		tsk->cwnd += tsk->snd_mss * tsk->snd_mss / tsk->cwnd;
+
+	tsk->cwnd = min(tsk->cwnd, tsk->snd_wnd);
 }
 
 int tcp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
@@ -303,11 +305,12 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 		return -ESHUTDOWN;
 
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
-	uint16_t mmss = min(tsk->snd_mss, tsk->rcv_mss);
+	uint32_t mmss = min(tsk->snd_mss, tsk->rcv_mss);
 	size_t msg_sent_len = 0;
 	for (uint32_t starting_nxt = tsk->snd_nxt; msg_sent_len < msg_len && tsk->state == TCP_ESTABLISHED;)
 	{
-		uint16_t mwnd = min_t(uint16_t, min(tsk->cwnd, tcp_sender_available_window(tsk)), msg_len - msg_sent_len);
+		uint32_t mwnd = min(min(tsk->cwnd, tcp_sender_available_window(tsk)), msg_len - msg_sent_len);
+		debug_println(DEBUG_INFO, "window %d", mwnd);
 		// if mwnd==0 <- cwnd canot be zero, msg_len - msg_sent_len cannot be zero
 		// -> the only case mwnd=0 is snd.wnd=0
 		if (mwnd == 0)
@@ -325,9 +328,9 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 			del_timer(&tsk->persist_timer);
 		}
 
-		for (uint16_t iwnd = 0; iwnd < mwnd;)
+		for (uint32_t iwnd = 0; iwnd < mwnd;)
 		{
-			uint16_t advertised_window = min_t(uint16_t, min(mmss, mwnd), msg_len - msg_sent_len);
+			uint32_t advertised_window = min(min(mmss, mwnd), msg_len - msg_sent_len);
 			uint16_t flags = msg_sent_len + advertised_window == msg_len ? TCPCB_FLAG_PSH : 0;
 			assert(msg_sent_len + advertised_window <= msg_len);
 			struct sk_buff *skb = tcp_create_skb(sock,

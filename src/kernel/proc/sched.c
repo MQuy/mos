@@ -18,7 +18,7 @@ struct thread *idle_thread;
 struct plist_head terminated_list, waiting_list;
 struct plist_head kernel_ready_list, system_ready_list, app_ready_list;
 
-static uint32_t scheduler_lock_counter = 0;
+uint32_t volatile scheduler_lock_counter = 0;
 void lock_scheduler()
 {
 	disable_interrupts();
@@ -28,9 +28,8 @@ void lock_scheduler()
 void unlock_scheduler()
 {
 	scheduler_lock_counter--;
-	// FIXME: MQ 2020-07-14 Enable it back (scheduler_lock_counter > 0 when nested scheduling causing by net)
-	// if (scheduler_lock_counter == 0)
-	enable_interrupts();
+	if (scheduler_lock_counter == 0)
+		enable_interrupts();
 }
 
 struct thread *pick_next_thread_from_list(struct plist_head *list)
@@ -151,7 +150,8 @@ void schedule()
 			nt = pick_next_thread_to_run();
 			// NOTE: MQ 2020-06-14
 			// Normally, current_thread shouldn't be running because we update state before calling schedule
-			// If current thread is running and no next thread -> interrupt changes current thread state
+			// If current thread is running and no next thread
+			// -> it get interrupted by network which switch to net_thread, in net_rx_loop we switch back
 			if (!nt && current_thread->state == THREAD_RUNNING)
 				nt = current_thread;
 		} while (!nt);

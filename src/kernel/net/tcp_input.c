@@ -18,7 +18,7 @@ uint32_t tcp_get_option_value(uint8_t *options, void *value, uint8_t len)
 	return 0;
 }
 
-void tcp_parse_syn_options(uint8_t *options, uint32_t len, uint16_t *rmms, uint8_t *window_scale)
+void tcp_parse_syn_options(uint8_t *options, uint32_t len, uint32_t *rmms, uint8_t *window_scale)
 {
 	uint32_t opt_rmms;
 	uint8_t opt_window_scale;
@@ -67,11 +67,19 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	list_for_each_entry_safe(iter, next, &sock->sk->tx_queue, sibling)
 	{
 		if (TCP_SKB_CB(iter)->end_seq < ack_number || is_acked_all)
+		{
+			assert(sock->sk->send_head != &iter->sibling);
 			list_del(&iter->sibling);
+		}
 	}
 
+	debug_println(DEBUG_INFO, "receive: %d %l %d", ack_number, get_milliseconds(NULL), list_empty(&sock->sk->tx_queue));
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
-	if (skb && !ack_from_retransmitted)
+	// skb expires = 0 -> the next segment hasn't sent yet, just delete timer
+	// for example
+	// 1. tx queue: 1 2 3 4 5 6 <- send_head at 6, not send yet
+	// 2. receive ack: 1 2 3 4 5
+	if (skb && !ack_from_retransmitted && TCP_SKB_CB(skb)->expires)
 		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->expires);
 	else
 		del_timer(&tsk->retransmit_timer);
@@ -168,7 +176,7 @@ void tcp_handler_sync(struct socket *sock, struct sk_buff *skb)
 		if (tsk->snd_una > tsk->snd_iss)
 		{
 			tsk->cwnd = (tsk->snd_mss > 2190 ? 2 : (tsk->snd_mss > 1095 ? 3 : 4)) * tsk->snd_mss;
-			tsk->ssthresh = ntohl(skb->h.tcph->window);
+			tsk->ssthresh = ntohs(skb->h.tcph->window);
 
 			struct sk_buff *skb = tcp_create_skb(sock, tsk->snd_nxt, tsk->rcv_nxt, TCPCB_FLAG_ACK, NULL, 0, NULL, 0);
 			tcp_send_skb(sock, skb, false);
@@ -328,7 +336,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 
 			if (tsk->number_of_dup_acks == 3)
 			{
-				tsk->ssthresh = max_t(uint16_t, tsk->flight_size / 2, 2 * tsk->snd_mss);
+				tsk->ssthresh = max_t(uint32_t, tsk->flight_size / 2, 2 * tsk->snd_mss);
 				tsk->cwnd = tsk->ssthresh + 3 * tsk->snd_mss;
 
 				struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
@@ -400,9 +408,9 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 			if (tcp_is_fin_acked(sock))
 			{
 				tsk->state = TCP_TIME_WAIT;
-				mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 				del_timer(&tsk->retransmit_timer);
 				del_timer(&tsk->persist_timer);
+				mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 			}
 			else
 				tsk->state = TCP_CLOSING;
@@ -410,9 +418,9 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		else if (tsk->state == TCP_FIN_WAIT2)
 		{
 			tsk->state = TCP_TIME_WAIT;
-			mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 			del_timer(&tsk->retransmit_timer);
 			del_timer(&tsk->persist_timer);
+			mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
 		}
 		else if (tsk->state == TCP_TIME_WAIT)
 			mod_timer(&tsk->msl_timer, get_milliseconds(NULL) + MAX_SEGMENT_LIFETIME * 2);
@@ -432,5 +440,6 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		}
 	}
 
+	debug_println(DEBUG_INFO, "update thread %d %d %d", sock->sk->owner_thread->tid, tsk->state, list_empty(&sock->sk->tx_queue));
 	update_thread(sock->sk->owner_thread, THREAD_READY);
 }
