@@ -137,6 +137,7 @@ int main(int argc, char *argv[])
 	int counter = 0;
 	uint32_t snd_una, snd_nxt;
 	uint32_t rcv_nxt;
+	uint16_t rcv_wnd = 4096;
 
 	while (recv(server_fd, rmsg, sizeof(rmsg), 0) >= 0)
 	{
@@ -160,7 +161,7 @@ int main(int argc, char *argv[])
 							 smsg,
 							 htonl(rip->daddr), source_port,
 							 htonl(rip->saddr), dst_port,
-							 snd_nxt, rcv_nxt, 2048, TCP_FLAG_SYN | TCP_FLAG_ACK);
+							 snd_nxt, rcv_nxt, rcv_wnd, TCP_FLAG_SYN | TCP_FLAG_ACK);
 			sendto(server_fd, smsg, sizeof(struct tcphdr), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
 			tcp_state = TCP_SYN_RECV;
 		}
@@ -174,21 +175,30 @@ int main(int argc, char *argv[])
 		{
 			counter++;
 			int payload_len = htons(rip->tot_len) - rip->ihl * 4 - rtcp->doff * 4;
-			uint16_t window = counter <= 3 ? 0 : 2048;
 			uint16_t flags = 0;
 			uint32_t seg_seq = htonl(rtcp->seq);
 			uint32_t seg_ack = htonl(rtcp->ack_seq);
 			uint32_t seg_wnd = htonl(rtcp->window);
 
-			snd_una = seg_ack;
-			if (seg_seq + payload_len > rcv_nxt && payload_len != 1)
-				rcv_nxt = seg_seq + payload_len;
+			if (2 == counter)
+				continue;
 
-			if (rtcp->fin)
+			char output[20];
+			sprintf(output, "counter: %d", counter);
+			puts(output);
+
+			snd_una = seg_ack;
+			if (rcv_nxt == seg_seq)
 			{
-				flags = TCP_FLAG_FIN;
-				tcp_state = TCP_LAST_ACK;
-				rcv_nxt += 1;
+				if (seg_seq + payload_len > rcv_nxt)
+					rcv_nxt = seg_seq + payload_len;
+
+				if (rtcp->fin)
+				{
+					flags = TCP_FLAG_FIN;
+					tcp_state = TCP_LAST_ACK;
+					rcv_nxt += 1;
+				}
 			}
 
 			build_tcp_header(server_fd,
@@ -196,7 +206,7 @@ int main(int argc, char *argv[])
 							 htonl(rip->daddr), source_port,
 							 htonl(rip->saddr), dst_port,
 							 snd_nxt, rcv_nxt,
-							 window,
+							 rcv_wnd,
 							 TCP_FLAG_ACK | flags);
 			sendto(server_fd, smsg, sizeof(struct tcphdr), 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
 		}

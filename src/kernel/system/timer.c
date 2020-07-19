@@ -11,6 +11,11 @@ void assert_timer_valid(struct timer_list *timer)
 		__asm__ __volatile("int $0x01");
 }
 
+bool is_actived_timer(struct timer_list *timer)
+{
+	return timer->sibling.prev != LIST_POISON1 && timer->sibling.next != LIST_POISON2;
+}
+
 void add_timer(struct timer_list *timer)
 {
 	struct timer_list *iter, *node = NULL;

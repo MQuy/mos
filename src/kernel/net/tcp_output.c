@@ -56,10 +56,11 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitte
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	struct tcp_skb_cb *cb = (struct tcp_skb_cb *)skb->cb;
 	uint16_t payload_len = tcp_payload_lenth(skb);
+	bool is_actived_send = !is_retransmitted && (payload_len > 0 || skb->h.tcph->syn || skb->h.tcph->fin);
 
 	tsk->flight_size += payload_len;
-	// we increase snd nxt only if data, syn or fin segment (ghost segment)
-	if (!is_retransmitted && (payload_len > 0 || skb->h.tcph->syn || skb->h.tcph->fin))
+	// we increase snd nxt only if data, syn, fin (ghost segment) and not retransmitted segment
+	if (is_actived_send)
 		tsk->snd_nxt = cb->end_seq + 1;
 
 	cb->when = get_milliseconds(NULL);
@@ -67,7 +68,12 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitte
 
 	tcp_state_transition(sock, cb->flags);
 
-	if (skb->h.tcph->syn)
+	// if retransmit timer is not actived -> there are 3 scenarios
+	// - start the connection via three way handshake
+	// - receive the ack segment which ack all outstanding segments (in one batch window)
+	// - after receiving ack from retransmittion
+	// # do not active timer if we are no the one who initiate
+	if (!is_actived_timer(&tsk->retransmit_timer))
 		mod_timer(&tsk->retransmit_timer, cb->expires);
 
 	ethernet_sendmsg(skb);

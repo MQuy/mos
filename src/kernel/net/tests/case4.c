@@ -174,14 +174,17 @@ int main(int argc, char *argv[])
 		{
 			counter++;
 			int payload_len = htons(rip->tot_len) - rip->ihl * 4 - rtcp->doff * 4;
-			uint16_t window = counter <= 3 ? 0 : 2048;
+			uint16_t window = 2048;
 			uint16_t flags = 0;
 			uint32_t seg_seq = htonl(rtcp->seq);
 			uint32_t seg_ack = htonl(rtcp->ack_seq);
 			uint32_t seg_wnd = htonl(rtcp->window);
 
+			if (2 <= counter && counter <= 4)
+				continue;
+
 			snd_una = seg_ack;
-			if (seg_seq + payload_len > rcv_nxt && payload_len != 1)
+			if (seg_seq + payload_len > rcv_nxt)
 				rcv_nxt = seg_seq + payload_len;
 
 			if (rtcp->fin)

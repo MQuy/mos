@@ -43,6 +43,7 @@ void tcp_retransmit_timer(struct timer_list *timer)
 	{
 		tsk->srtt = 0;
 		tsk->rttvar = 0;
+		// TODO: MQ 2020-07-19 what will we do with the connection after failed 8 times
 	}
 }
 
@@ -58,6 +59,7 @@ void tcp_persist_timer(struct timer_list *timer)
 		return;
 	}
 
+	assert(list_empty(&sock->sk->tx_queue));
 	tsk->persist_backoff *= 2;
 	mod_timer(timer, get_milliseconds(NULL) + tsk->persist_backoff);
 
@@ -71,7 +73,7 @@ void tcp_msl_timer(struct timer_list *timer)
 	struct tcp_sock *tsk = from_timer(tsk, timer, msl_timer);
 	struct socket *sock = tsk->inet.sk.sock;
 
-	del_timer(&tsk->msl_timer);
+	del_timer(timer);
 
 	assert(tsk->state == TCP_TIME_WAIT || tsk->state == TCP_LAST_ACK);
 	tsk->state = TCP_CLOSE;

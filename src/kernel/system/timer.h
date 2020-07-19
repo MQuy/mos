@@ -31,6 +31,7 @@ struct timer_list
 void add_timer(struct timer_list *timer);
 void del_timer(struct timer_list *timer);
 void mod_timer(struct timer_list *timer, uint64_t expires);
+bool is_actived_timer(struct timer_list *timer);
 void timer_init();
 
 #endif

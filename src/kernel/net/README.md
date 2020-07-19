@@ -635,6 +635,7 @@ $ vi main.c
 
 1. server with normal handshake and termination (initiate by client, without data transfer)
 2. echo server
-3. client transfers data, in the middle of transmission, server returns zero window
+3. client transfers data, in the middle of transmission, server returns zero window -> probe
 4. client transfers data, server doesn't ack -> retransmission
-5. client transfers data, server retursn duplicated ack
+5. client transfers data, server returns duplicated ack (lost one packet in the middle of batch)
+6. congestion

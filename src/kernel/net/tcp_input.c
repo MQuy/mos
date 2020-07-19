@@ -55,9 +55,13 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	// if send_head == first segment && rtt_time == 0
 	// -> there is a loss segment (send_head is moved to the begining and rtt_time is reset)
 	// -> send_head will be the next unacked segment or NULL if tx_queue contains only one element
+	bool ack_from_retransmitted = false;
 	struct list_head *first_element = sock->sk->tx_queue.next;
 	if (sock->sk->send_head == first_element && !tsk->rtt_time)
+	{
+		ack_from_retransmitted = true;
 		sock->sk->send_head = first_element->next != &sock->sk->tx_queue ? first_element->next : NULL;
+	}
 
 	struct sk_buff *iter, *next;
 	list_for_each_entry_safe(iter, next, &sock->sk->tx_queue, sibling)
@@ -67,7 +71,7 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	}
 
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
-	if (skb)
+	if (skb && !ack_from_retransmitted)
 		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->expires);
 	else
 		del_timer(&tsk->retransmit_timer);
