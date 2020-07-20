@@ -74,10 +74,7 @@ void tcp_send_skb(struct socket *sock, struct sk_buff *skb, bool is_retransmitte
 	// - after receiving ack from retransmittion
 	// # do not active timer if we are no the one who initiate
 	if (!is_actived_timer(&tsk->retransmit_timer) && is_actived_send)
-	{
-		debug_println(DEBUG_INFO, "timer: %d %l", cb->seq, cb->expires);
 		mod_timer(&tsk->retransmit_timer, cb->expires);
-	}
 
 	ethernet_sendmsg(skb);
 }
@@ -88,39 +85,45 @@ void tcp_transmit(struct socket *sock)
 
 	while (!list_empty(&sock->sk->tx_queue))
 	{
+		// NOTE: MQ 2020-07-20
+		// we lock scheduler (interrupt) until sending all pending packets (on queue not yet sent)
+		// -> tx_queue now only contains outstanding packets
+		// measure sending with 65535 avaliable window takes ~ 2ms (which less than average RTT for each packet)
+		// the reason is prevent interrupting the sending flow which causes unexpected behaviors
+		// for example
+		// case 1
+		// - send -> tx_queue = 1 2 3 4 5 6 (interrupt at 6)
+		// - receive ack 7 -> tx => empty
+		// case 2
+		// - send -> tx_queue = 1 2 3 4 5 6 (interrupt at 5)
+		// - receive ack 5 -> tx = 5 6
+		// case 3
+		// - send all segments but get interrutped when just out of loop and haven't updated/scheduled yet
+		// - receive ack for all segments -> back to interrupted point above
+		// -> schedule again which don't have anything to wait -> thread is waiting forever
+		lock_scheduler();
 		while (tcp_sender_available_window(tsk) > 0 && sock->sk->send_head)
 		{
-			disable_interrupts();
-
 			struct sk_buff *skb = list_entry(sock->sk->send_head, struct sk_buff, sibling);
 			tcp_send_skb(sock, skb, false);
-			debug_println(DEBUG_INFO, "send: %d %d %d %l %l", htonl(skb->h.tcph->sequence_number), tsk->flight_size, tcp_sender_available_window(tsk), TCP_SKB_CB(skb)->when, TCP_SKB_CB(skb)->expires);
 
 			sock->sk->send_head = sock->sk->send_head->next;
 			if (sock->sk->send_head == &sock->sk->tx_queue)
 				sock->sk->send_head = NULL;
 
 			// according to rfc6298, kick off only one RTT measurement at the time
-			// the segment doesn't need to be at the start of queue
-			// for example
-			// 1. send -> tx_queue = 1 2 3 4 5 6
-			// 2. receive ack -> tx_queue = 5 6
+			// the segment has to be at the beginning of tx_queue
 			if (!tsk->rtt_time)
 			{
+				assert(&skb->sibling == sock->sk->tx_queue.next);
 				struct tcp_skb_cb *cb = TCP_SKB_CB(skb);
 				tsk->rtt_end_seq = cb->end_seq;
 				tsk->rtt_time = cb->when;
 			}
-
-			enable_interrupts();
 		}
-		debug_println(DEBUG_INFO, "before from ack %d", list_empty(&sock->sk->tx_queue));
-		if (!list_empty(&sock->sk->tx_queue))
-		{
-			update_thread(current_thread, THREAD_WAITING);
-			schedule();
-		}
-		debug_println(DEBUG_INFO, "back from ack %d", list_empty(&sock->sk->tx_queue));
+		update_thread(current_thread, THREAD_WAITING);
+		unlock_scheduler();
+		schedule();
 	}
 };
 

@@ -144,9 +144,9 @@ void schedule()
 	{
 		do
 		{
-			enable_interrupts();
+			unlock_scheduler();
 			halt();
-			disable_interrupts();
+			lock_scheduler();
 			nt = pick_next_thread_to_run();
 			// NOTE: MQ 2020-06-14
 			// Normally, current_thread shouldn't be running because we update state before calling schedule

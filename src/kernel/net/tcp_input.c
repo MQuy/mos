@@ -47,8 +47,6 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	struct tcp_sock *tsk = tcp_sk(sock->sk);
 	tsk->snd_una = ack_number;
 
-	if (tsk->number_of_dup_acks > 0)
-		tsk->cwnd = tsk->ssthresh;
 	tsk->flight_size = tsk->snd_nxt - tsk->snd_una;
 	tsk->number_of_dup_acks = 0;
 
@@ -60,6 +58,7 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 	if (sock->sk->send_head == first_element && !tsk->rtt_time)
 	{
 		ack_from_retransmitted = true;
+		tsk->cwnd = tsk->ssthresh;
 		sock->sk->send_head = first_element->next != &sock->sk->tx_queue ? first_element->next : NULL;
 	}
 
@@ -73,14 +72,12 @@ void tcp_accept_ack(struct socket *sock, uint32_t ack_number, bool is_acked_all)
 		}
 	}
 
-	debug_println(DEBUG_INFO, "receive: %d %l %d", ack_number, get_milliseconds(NULL), list_empty(&sock->sk->tx_queue));
 	struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
-	// skb expires = 0 -> the next segment hasn't sent yet, just delete timer
-	// for example
-	// 1. tx queue: 1 2 3 4 5 6 <- send_head at 6, not send yet
-	// 2. receive ack: 1 2 3 4 5
-	if (skb && !ack_from_retransmitted && TCP_SKB_CB(skb)->expires)
+	if (skb && !ack_from_retransmitted)
+	{
+		assert(TCP_SKB_CB(skb)->expires);
 		mod_timer(&tsk->retransmit_timer, TCP_SKB_CB(skb)->expires);
+	}
 	else
 		del_timer(&tsk->retransmit_timer);
 
@@ -336,7 +333,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 
 			if (tsk->number_of_dup_acks == 3)
 			{
-				tsk->ssthresh = max_t(uint32_t, tsk->flight_size / 2, 2 * tsk->snd_mss);
+				tsk->ssthresh = max(tsk->flight_size / 2, 2 * tsk->snd_mss);
 				tsk->cwnd = tsk->ssthresh + 3 * tsk->snd_mss;
 
 				struct sk_buff *skb = list_first_entry_or_null(&sock->sk->tx_queue, struct sk_buff, sibling);
@@ -440,6 +437,5 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		}
 	}
 
-	debug_println(DEBUG_INFO, "update thread %d %d %d", sock->sk->owner_thread->tid, tsk->state, list_empty(&sock->sk->tx_queue));
 	update_thread(sock->sk->owner_thread, THREAD_READY);
 }

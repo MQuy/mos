@@ -249,7 +249,8 @@ void tcp_calculate_congestion(struct socket *sock, uint32_t seg_ack)
 	else
 		tsk->cwnd += tsk->snd_mss * tsk->snd_mss / tsk->cwnd;
 
-	tsk->cwnd = min(tsk->cwnd, tsk->snd_wnd);
+	// assume that cwnd never exceed maximum mtu
+	tsk->cwnd = min_t(uint32_t, tsk->cwnd, ETH_MAX_MTU);
 }
 
 int tcp_bind(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len)
@@ -310,12 +311,12 @@ int tcp_sendmsg(struct socket *sock, void *msg, size_t msg_len)
 	for (uint32_t starting_nxt = tsk->snd_nxt; msg_sent_len < msg_len && tsk->state == TCP_ESTABLISHED;)
 	{
 		uint32_t mwnd = min(min(tsk->cwnd, tcp_sender_available_window(tsk)), msg_len - msg_sent_len);
-		debug_println(DEBUG_INFO, "window %d", mwnd);
 		// if mwnd==0 <- cwnd canot be zero, msg_len - msg_sent_len cannot be zero
 		// -> the only case mwnd=0 is snd.wnd=0
 		if (mwnd == 0)
 		{
 			assert(tsk->snd_una == tsk->snd_nxt);
+			assert(!tsk->snd_wnd);
 			uint16_t flags = msg_sent_len + 1 == msg_len ? TCPCB_FLAG_PSH : 0;
 			struct sk_buff *skb = tcp_create_skb(sock,
 												 tsk->snd_nxt, tsk->rcv_nxt,
