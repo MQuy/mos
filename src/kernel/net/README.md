@@ -508,7 +508,7 @@ Beginning of a transfer, slow start is used to slowly probe the network to deter
    when good ACK received, cwnd = ssthresh
 4. if segment is lost (retransmission timeout)
    ssthresh = max(FlightSize / 2, 2 \* SMSS) (skip for two times retransmission)
-   cwnd = IW
+   cwnd = LW
 
 ## mOS Network
 
@@ -638,4 +638,4 @@ $ vi main.c
 3. client transfers data, in the middle of transmission, server returns zero window -> probe
 4. client transfers data, server doesn't ack -> retransmission
 5. client transfers data, server returns duplicated ack (lost one packet in the middle of batch)
-6. congestion
+6. congestion (slow start, fast retransmit and fast recovery)

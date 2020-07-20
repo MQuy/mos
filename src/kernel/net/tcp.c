@@ -267,6 +267,7 @@ int tcp_listen(struct socket *sock, int backlog)
 	tcp_create_tcb(tsk);
 
 	// TODO: MQ 2020-07-09
+	assert(false);
 
 	tsk->state = TCP_LISTEN;
 	return 0;
@@ -275,6 +276,8 @@ int tcp_listen(struct socket *sock, int backlog)
 int tcp_accept(struct socket *sock, struct sockaddr *addr, int sockaddr_len)
 {
 	// TODO: MQ 2020-07-09
+	assert(false);
+
 	return 0;
 }
 

@@ -178,6 +178,10 @@ int main(int argc, char *argv[])
 			uint32_t seg_ack = htonl(rtcp->ack_seq);
 			uint32_t seg_wnd = htonl(rtcp->window);
 
+			counter++;
+			if (counter == 15)
+				continue;
+
 			snd_una = seg_ack;
 			if (rcv_nxt == seg_seq)
 			{
