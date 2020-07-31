@@ -97,12 +97,131 @@ Application -> UI
 
 ### Implementation
 
-- [ ] Use `/dev/input/mice -> { x, y, state }`, `/dev/input/keyboard -> { key, state }` to distribute events to userland. Specified device files is easier to implement at the first step, we can later apply [linux way](https://www.kernel.org/doc/html/latest/input/input_uapi.html)
+- [ ] Use `/dev/input/mouse -> { x, y, state }`, `/dev/input/keyboard -> { key, state }` to distribute events to userland. Specified device files is easier to implement at the first step, we can later apply [linux way](https://www.kernel.org/doc/html/latest/input/input_uapi.html)
 - [ ] Signal
 - [ ] Map serial port terminals to `/dev/ttyS[N]` (COM1 -> 0, COM2 -> 2)
 - [ ] PTY master/slave (to make it simplier, using one struct contains both)
 
+#### Select syscall
+
+```c
+struct poll_table {
+  struct list_head list;
+}
+
+struct poll_table_entry {
+  struct vfs_file *file;
+  struct wait_queue_entry wait;
+  struct list_head sibling;
+}
+
+struct wait_queue_entry {
+	void *private;
+	void *func;
+	struct list_head sibling;
+};
+
+struct wait_queue_head {
+	struct list_head head;
+};
+
+// mouse.c
+struct wait_queue_head hwait;
+
+static uint32_t mouse_poll(struct vfs_file *file, struct poll_table *ptable)
+{
+  poll_wait(file, hwait, ptable);
+  // return possible POLLXXXs based on mouse_inode
+}
+
+// sched.c
+void wake_up(struct wait_queue_head *hqueue) {
+  for each entry in wait queue -> `entry->func(entry->private)`
+}
+
+// poll.c
+struct pollfd {
+  int   fd;         /* file descriptor */
+  short events;     /* requested events */
+  short revents;    /* returned events */
+};
+
+int sys_poll(struct pollfd *fds, nfds_t nfds)
+{
+  1. create `poll_table`
+  2. for each fd
+    - get file from fd
+    - call `file->poll(file, ptable)` to add wait queues and get a bit mask (which operations could be performed immediately without blokcing)
+    - AND returned bit mask with `events` and assign to `revents`
+  3. if there is at least one `pollfd` with valid `revents` (!= 0) -> step 5
+  4. sleep -> later is wakeup -> go to step 2
+  5. cleanup `poll_table` and return fds
+}
+
+int poll_wait(struct vfs_file *file, struct wait_queue_head *head, struct poll_table *ptable)
+{
+  1. Initialize `poll_table_entry` and `wait_queue_entry { private = current_thread, func = poll_wakeup }`
+  2. Link `poll_table -> poll_table_entry -> wait_queue_entry` and `hwait -> wait_queue_entry`
+}
+
+void poll_wakeup(struct thread *t) {
+  1. `t->state = THREAD_READY`
+}
+```
+
 #### Keyboard/Mice Event
+
+- create the new filesystem named `devtmpfs` and mount at `/dev` (subs are located in memory)
+- implement `wait_event(thread, cond)` (sleep until cond == true)
+
+1. Mouse
+
+```c
+struct mouse_motion {
+  int dx, dy;
+  int buttons;
+}
+
+#define PACKET_QUEUE_LEN 16
+// file->private_data = mouse_inode;
+struct mouse_inode {
+  bool ready;
+  struct mouse_motion packets[PACKET_QUEUE_LEN]; // only store 16 latest mouse motions
+  uint8 head, tail;
+  struct list_head sibling;
+  struct vfs_file *file;
+}
+
+struct vfs_file_operations mouse_fops = {
+  .open = mouse_open,
+}
+
+#define MOUSE_MAJOR 13
+struct chrdev_mouse mouse_dev = {
+	.name = "mouse",
+	.major = MOUSE_MAJOR,
+	.f_ops = &mouse_fops
+}
+
+struct list_head nodelist;
+struct wait_queue_head hwait;
+```
+
+- `mouse_mount` to open `/dev/input/mouse` and register corresponding its major (no minor due to only one mouse supported)
+- `open("/dev/input/mouse")` -> initializing a node and adding into `nodelist` (subscribe)
+  `close(fd)` -> removing existing node from `nodelist` (unsubscribe)
+  `read("/dev/input/mouse")`
+  - if there is an packet in `node->packets`
+    - get and remove that packet from list
+    - `node->ready = false` if nothing left in `node->packets`
+    - return that packet
+  - if not `wait_event(current_thread, node->ready)`
+- `irq_mouse_handler` is triggered (on 3rd time)
+  - update `current_mouse_motion` with mouse changes (dx, dy and buttons)
+  - for each node in `nodelist`
+    - adding `motion` into `node->packets` (only 16 pending packets -> latest packet will override oldest packet)
+    - set `node->ready = true`
+  - `wake_up(hwait)`
 
 #### Signals
 
