@@ -1,3 +1,16 @@
+- [Terminology](#terminology)
+  - [Terminal](#terminal)
+  - [Shell](#shell)
+  - [Termios](#termios)
+  - [X Window System](#x-window-system)
+  - [Signals](#signals)
+  - [References](#references)
+- [Implementation](#implementation)
+  - [Select syscall](#select-syscall)
+  - [Keyboard/Mice Event](#keyboardmice-event)
+  - [Signals](#signals-1)
+  - [PTY](#pty)
+
 ### Terminology
 
 #### Terminal
@@ -83,6 +96,48 @@ Application -> UI
 
 ![X Window System server](https://i.imgur.com/ebh5ny8.png)
 
+#### Signals
+
+There are 3 kind of signals
+
+- errors: program has done something invalid and cannot continue execution like division by zero, invalid memory addresses ...
+- external events: I/O or other processes like arrival of input, expiration of timer, termination of child process ...
+- explicit requests: use library function such as `kill`
+
+There are 2 kind of behaviours
+
+- synchronously: by a specific action in the program and is delivered during that action (errors or explicit requests by itself)
+- asynchronously: by evnts outside the control of the program that receives them and arrive at unpredictable times during execution (external events and explicit requests)
+
+There are 3 kind of actions which that signal is taken
+
+- ignore the signal (discard any signal immediately)
+- customized action
+- default action (by default if we don't specify anything)
+
+There are 2 basic strategies in signal handler functions
+
+- note signal arrived by tweaking global variables
+- termiate the program or transfer control like `setjmp/longjmp`
+
+When a handler is invoked on a signal(on the same process stack), that kind of signal is automatically blocked until it returns but other kind of signals are not blocked and can arrive during handler execution. There are 2 kind of signal blockings
+
+- `sigprocmask` while you are in critical section (whether in program or in handler)
+- `sigaction(sa_mask)` while a particular signal handler runs
+
+When a signal is generated (`raise` for itself, `kill` for general purpose). If it is blocked or the receiving process already has a pending signal of that kind, it is ignored (nothing will happen). Otherwise
+
+- signal is appended to the receiving process signal pending queue
+- the receiving process is moved to ready if currently blocked/suspended.
+
+A signal is delivered when receiving process responds to that signal e.g. by invoking a signal handler. If that kind of signal is blocked, it remains `pending` and once unblocked, it will be delived immediately
+
+![flow](https://i.imgur.com/4l6NaX9.png)
+
+Signals are inherited by child processes (`fork`) but will be set back to default when executing (`exec`)
+
+✍️ signal handler is executed in one of process's threads, we cannot predict which is chosen
+
 #### References
 
 - [Brian Will's Unix terminals and shells](https://www.youtube.com/channel/UCseUQK4kC3x2x543nHtGpzw)
@@ -94,6 +149,7 @@ Application -> UI
 - [TTYs / PTYs](https://forum.osdev.org/viewtopic.php?p=294636#p294636)
 - [How do keyboard input and text ouput work](https://unix.stackexchange.com/a/116630/366870)
 - [Character devices](https://www.win.tue.nl/~aeb/linux/lk/lk-11.html)
+- [Signals](https://www.gnu.org/software/libc/manual/html_node/Signal-Handling.html)
 
 ### Implementation
 
@@ -116,13 +172,13 @@ struct poll_table_entry {
 }
 
 struct wait_queue_entry {
-	void *private;
-	void *func;
-	struct list_head sibling;
+  void *private;
+  void *func;
+  struct list_head sibling;
 };
 
 struct wait_queue_head {
-	struct list_head head;
+  struct list_head head;
 };
 
 // mouse.c
@@ -141,7 +197,7 @@ void wake_up(struct wait_queue_head *hqueue) {
 
 // poll.c
 struct pollfd {
-  int   fd;         /* file descriptor */
+  int fd;         /* file descriptor */
   short events;     /* requested events */
   short revents;    /* returned events */
 };
@@ -223,8 +279,118 @@ struct wait_queue_head hwait;
     - set `node->ready = true`
   - `wake_up(hwait)`
 
+2. Keyboard is the same as mouse
+
 #### Signals
 
-![flow](https://i.imgur.com/4l6NaX9.png)
+```c
+#define NSIG 32
+
+struct process {
+  pid_t sid;
+  pid_t gid;
+  pid_t pid;
+  struct tty_struct *tty;
+
+  struct sigaction sighand[NSIG];
+}
+
+struct thread {
+  uint32_t pending;
+  uint32_t blocked;
+}
+
+typedef void *__sighandler_t(int);
+struct sigaction {
+  __sighandler_t sa_handler;
+  uint32_t sa_flags; // only support SA_RESTART
+  sigset_t sa_mask;
+}
+
+struct process *process_fork(struct proces *parent) {
+  1. assign `sid`, `gid` and `pid` with process's parent
+  2. copy `sighand` from parent to child thread
+}
+
+int sys_kill(pid_t pid, uint32_t signum) {
+  1. if pid > 0
+    - if pid == `current_process->pid` and `current_thread` is not in signal-handle state
+      - if signum is not blocked -> enable correspond bit in `current_thread->pending`
+      - call `signal_handle(current_thread)`
+    - otherwise, if signum is currently blocked or in pending in all threads of receiving process -> return
+      - pick receiving thread which doesn't block or has pending `signum`
+      - enable correspond bit in `thread->pending`
+      - if receiving thread is suspended -> move to ready state
+  2. if pid == 0 -> for each process in process group of calling process -> go through sub steps in step 1
+  3. if pid == -1 -> for each process which calling process can send -> go through sub steps in step 1
+  4. if pid < -1 -> send to process whose pid == -process->pid
+}
+
+int sys_sigaction(int signum, const struct sigaction *action, struct sigaction *old_action) {
+  1. if signum is `SIGKILL` or `SIGSTOP` -> return `EINVAL`
+  2. if old_action != NULL -> `memcpy(old_action, process->sighand[signum], sizeof(struct sigaction))`
+  3. if action != NULL -> `memcpy(process->sighand[signum], action, sizeof(struct sigaction))`
+}
+
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
+  1. if oldset != NULL -> copy `current_thread->blocked` to `oldset`
+  2. if `set` != NULL
+    - if `set` is `SIGKILL` or `SIGSTOP` -> return
+    - if how == `SIG_BLOCK` -> `current_thread->blocked` = `current_thread->blocked` ∪ `set` (union)
+    - if how == `SIG_UNBLOCK` -> `current_thread->blocked` = `current_thread->blocked` - `set` (remove `set` from `blocked`)
+    - if how = `SIG_SETMASK` -> `current_thread->blocked` = `set`
+}
+
+void signal_handle(struct thread *t) {
+  1. if there is no pending signals
+    - if thread is in signal-handle state
+      - copy `thread->uregs` into thread kernel stack
+      - umark thread from signal-handle state
+    - return
+  2. `regs` = the first trap frame on thread kernel stack
+  2. if thread not in signal-handle state
+    - if `regs->int_no` == 0x7F (syscall is interrupted)
+      - `is_syscall_return = true` only if `regs->eax` == `read/write` syscall
+      - `regs->eax = -EINTR`
+    - copy `regs` into `thread->uregs` (interrupt doesn't not copy regs into `thread->uregs`)
+  3. mark thread in signal-handle state
+  4. get the first pending signal
+  5. remove correspond signum bit in `process->pending`
+  6. if signal handler is default
+    - enable correspond signum and `sa_mask` bits in `process->blocked`
+    - call it directly
+    - reset `process->blocked`
+    - go to step 1
+  7. otherwise, setup trap frame in thread user stack
+  |_________________________| <- current user esp (A)
+  | thread->uregs           |
+  |-------------------------|
+  | process->blocked        |
+  |-------------------------|
+  | signum                  |
+  |-------------------------|
+  | sigreturn               | <- new user esp (B)
+  |-------------------------|
+  8. `regs->eip` = signal handler address and `regs->useresp` = new user esp
+  9. enable correspond signum and `sa_mask` in `process->blocked`
+  10. if `is_syscall_return` == true -> call `sigjump_usermode(thread->uregs)`
+}
+
+void sigreturn(struct interrupt_registers *regs) {
+  1. restore our context `current_thread->uregs`, `process->blocked` based on B
+  2. move user esp back to A
+  3. call `signal_handle(current_thread)`
+}
+
+int32_t thread_page_fault(struct interrupt_registers *regs) {
+  if fault address == sigreturn and from usermode -> call `sigreturn(regs)`
+}
+
+void schedule() {
+  unlock_scheduler();
+  1. if `current_thread` is not in signal-handle state
+    -> `signal_handle(current_thread)`
+}
+```
 
 #### PTY
