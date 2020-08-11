@@ -141,7 +141,6 @@ Signals are inherited by child processes (`fork`) but will be set back to defaul
 #### References
 
 - [Brian Will's Unix terminals and shells](https://www.youtube.com/channel/UCseUQK4kC3x2x543nHtGpzw)
-- [Killing a process and all of its descendants](http://morningcoffee.io/killing-a-process-and-all-of-its-descendants.html)
 - [The TTY demystified](http://www.linusakesson.net/programming/tty/)
 - [Using pseudo-terminals (pty) to control interactive programs](http://rachid.koucha.free.fr/tech_corner/pty_pdip.html)
 - [General Terminal Interface](https://pubs.opengroup.org/onlinepubs/7908799/xbd/termios.html)
@@ -150,6 +149,7 @@ Signals are inherited by child processes (`fork`) but will be set back to defaul
 - [How do keyboard input and text ouput work](https://unix.stackexchange.com/a/116630/366870)
 - [Character devices](https://www.win.tue.nl/~aeb/linux/lk/lk-11.html)
 - [Signals](https://www.gnu.org/software/libc/manual/html_node/Signal-Handling.html)
+- [Implementation of signal hanlding](http://courses.cms.caltech.edu/cs124/lectures/CS124Lec15.pdf)
 
 ### Implementation
 
@@ -178,7 +178,7 @@ struct wait_queue_entry {
 };
 
 struct wait_queue_head {
-  struct list_head head;
+  struct list_head list;
 };
 
 // mouse.c
@@ -394,3 +394,203 @@ void schedule() {
 ```
 
 #### PTY
+
+```c
+// pty.c
+#define PTY_MASTER_MAJOR 2
+#define PTY_SLAVE_MAJOR	3
+#define NR_PTY_MAX (1 << MINORBITS)
+
+struct tty_driver *pty_master_driver, *pty_slave_driver;
+
+struct tty_operations pty_ops = {
+	.write = pty_write,
+};
+
+int pty_write(struct tty_struct * tty, const unsigned char *buf, int count) {
+  1. get other side `to` via `tty->link`
+  2. call `to->ldisc.receive_buff(to, buf, count)`
+}
+
+
+int pty_init() {
+  1. init pty master and slave drivers with `NR_PTY_MAX` devices
+  2. set default termio and `pty_ops`
+  3. link pty master and slave via `driver->other`
+  4. `tty_register_driver` for both pty master and slave
+}
+
+// tty.c
+#define TTYAUX_MAJOR		5
+#define N_TTY_BUF_SIZE 4096
+#define NCCS 19
+
+struct termios {
+	tcflag_t c_iflag;		/* input mode flags */
+	tcflag_t c_oflag;		/* output mode flags */
+	tcflag_t c_cflag;		/* control mode flags */
+	tcflag_t c_lflag;		/* local mode flags */
+	cc_t c_line;			/* line discipline */
+	cc_t c_cc[NCCS];		/* control characters */
+};
+
+/*	intr=^C		quit=^\		erase=del	kill=^U
+	  eof=^D		vtime=\0	vmin=\1		sxtc=\0
+	  start=^Q	stop=^S		susp=^Z		eol=\0
+	  reprint=^R	discard=^U	werase=^W	lnext=^V
+	  eol2=\0
+*/
+#define INIT_C_CC "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0"
+
+struct tty_driver {
+	const char *name;
+  struct char_device *cdev;
+  int	major;		/* major device number */
+	int	minor_start;	/* start of minor device number */
+	int	minor_num;	/* number of *possible* devices */
+  int num; /* number of devices allocated */
+  struct tty_opereations *tops;
+  struct list_head sibling;
+  struct tty_driver *other;
+  struct termios init_termios;
+}
+
+struct tty_operations {
+  int  (*open)(struct tty_struct * tty, struct file * filp);
+	void (*close)(struct tty_struct * tty, struct file * filp);
+	int  (*write)(struct tty_struct * tty, const unsigned char *buf, int count);
+}
+
+struct tty_struct {
+  struct tty_driver *driver;
+  struct tty_ldisc *ldisc;
+  struct tty_struct *link;
+  struct termios termios;
+
+  int pgrp;
+	int session;
+
+  struct wait_queue_head write_wait;
+	struct wait_queue_head read_wait;
+}
+
+struct tty_ldisc {
+  int num;
+  struct list_head sibling;
+  uint32_t column;
+  char *read_buf;
+  char *write_buf;
+
+  int	(*open)(struct tty_struct *);
+	void (*close)(struct tty_struct *);
+  ssize_t	(*read)(struct tty_struct * tty, struct file * file, unsigned char * buf, size_t nr);
+	ssize_t	(*write)(struct tty_struct * tty, struct file * file, const unsigned char * buf, size_t nr);
+  void (*receive_buf)(struct tty_struct *, const unsigned char *cp, int count);
+  unsigned int (*poll)(struct tty_struct *, struct file *, struct poll_table_struct *);
+}
+
+struct termios tty_std_termios = {
+	.c_iflag = ICRNL | IXON,
+	.c_oflag = OPOST | ONLCR,
+	.c_cflag = B38400 | CS8 | CREAD | HUPCL,
+	.c_lflag = ISIG | ICANON | ECHO | ECHOE | ECHOK |
+		   ECHOCTL | ECHOKE | IEXTEN,
+	.c_cc = INIT_C_CC
+};
+
+struct list_head tty_drivers;
+struct list_head tty_ldiscs;
+
+int tty_register_driver(struct tty_driver *driver) {
+  1. init `driver->cdev` with `dev = MKDEV(driver->major, driver->minor_start)` and `fops = tty_fops`
+  2. if `driver->flags` not contain `TTY_DRIVER_NO_DEVFS` -> create `/dev/{driver->name}{XXX}` (XXX minor_start -> minor_start + minor_num)
+  2. add `driver` into `tty_drivers`
+}
+
+struct vfs_file_operations ptmx_fops = {
+  .open = ptmx_open,
+  .read = tty_read,
+  .write = tty_write,
+  .poll = tty_poll,
+}
+
+struct vfs_file_operations tty_fops = {
+  .open = tty_open,
+  .read = tty_read,
+  .write = tty_write,
+  .poll = tty_poll,
+}
+
+int tty_init() {
+  1. call `pty_init()`
+  2. create and register the new chardev `ptmx`
+    `{ name = "/dev/ptmx", major = TTYAUX_MAJOR, baseminor = 2, minorct = 1, f_ops = ptmx_fops }`
+  3. create `/dev/ptmx`
+}
+
+int init_dev(struct tty_driver *driver, int idx, struct tty_struct **tty) {
+  1. allocate and init `tty` based on `driver`, `idx` and `name`
+  2. assign `tty->terminos` with `driver->init_terminos`
+  3. call `tty->ldisc.open(tty)`
+}
+
+int ptmx_open(struct vfs_inode *inode, struct vfs_file *filp) {
+  1. get a new `index`
+  2. call `init_dev` for both master (`ttym`) and slave (`ttys`)
+  4. link `ttym` and `ttys`
+  4. create `/dev/ttys`
+}
+
+// n_tty.c
+int n_tty_write(struct tty_struct *tty, struct vfs_file *file, const unsigned char * buf, size_t nr) {
+  1. allocate new buffer `pbuf`
+  2. for each character in `buf`
+    - if `ch` == `SUSP` and terminos->c_lflag-ISIG enabled
+      - generate `SIGTSTP` to all processes in the foreground proces group controlling terminal
+    - if terminos->c_oflag-OPOST enabled
+      - if `ONLCR` && ch == NL -> ch = CR-NL
+      - if `OCRNL` && ch == CR -> ch = NL
+    - otherwise, `*pbuf++ = ch`
+  3. call `tty->driver->write(pbuf, nr)`
+}
+
+void n_tty_receive_buf(struct tty_struct *tty, const unsigned char *buf, int count) {
+  2. for each character in `buf`
+    - if `ch` == `INTR/QUIT/SUSP` and terminos->c_lflag-ISIG enabled
+      - generate `SIGINT/SIGQUIT/SIGTSTP` to all processes in the foreground proces group controlling terminal
+    - if `ch` == `ERASE/KILL` and terminos->c_lflag-ICANON enabled
+      - erase the last character/delete the entire line only in the current line
+      - echo if termios->c_lflag-ECHOE/ECHOK enabled and in canonical mode
+    - if `ch` == `EOF` and terminos->c_lflag-ICANON enabled
+      - write `tmp_buffer + '\0'` to read buffer and wake thread up
+    - if `ch` == `NL/EOL` and terminos->c_lflag-ICANON enabled
+      - if temrinos->c_iflag-INLCR is eanbled
+      - write `tmp_buffer + ch` to read buffer and wake thread up
+      - echo if termios->c_lflag-ECHONL is enabled and in canonical mode
+    - if `ch` == `CR` and terminos->c_iflag-ICRNL, terminos->c_lflag-ICANON enabled and termios->c_iflag-IGNCR disabled
+      - `CR` is translated into `NL`
+    - if terminos->c_iflag-IUCLC enabled, upper to lower mapping is performed
+    - otherwise, `*tmp_buf++ = ch` and echo if echo mode is enabled
+  3. if terminos mode == non-canonical mode and read buffer >= MIN
+    - wake thread up
+}
+
+int n_tty_read(struct tty_struct *tty, struct vfs_file *file, const unsigned char * buf, size_t nr) {
+  1. if terminos mode == canonical mode
+    - sleep till reader buffer contains either NL, EOL or EOF (`\0`)
+  2. if terminos mode == non-canonical mode
+    - sleep till MIN bytes is satisfied
+}
+
+int n_tty_poll(struct tty_struct * tty, struct file * file, poll_table *wait) {
+  1. `poll_wait(file, &tty->read_wait, wait)`
+  2. return possible POLLXXX based on tty
+}
+
+// char_dev.c
+void chardev_init() {
+  1. init chardev list
+  2. mount devfs at `/dev`
+  3. call `tty_init()`
+}
+```
