@@ -3,6 +3,7 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/pic.h>
 #include <kernel/cpu/tss.h>
+#include <kernel/fs/poll.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/system/time.h>
 
@@ -226,6 +227,15 @@ int32_t thread_page_fault(struct interrupt_registers *regs)
 	}
 
 	return IRQ_HANDLER_CONTINUE;
+}
+
+void wake_up(struct wait_queue_head *hq)
+{
+	struct wait_queue_entry *iter;
+	list_for_each_entry(iter, &hq->list, sibling)
+	{
+		iter->func(iter->thread);
+	}
 }
 
 void sched_init()

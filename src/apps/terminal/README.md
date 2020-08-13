@@ -202,7 +202,7 @@ struct pollfd {
   short revents;    /* returned events */
 };
 
-int sys_poll(struct pollfd *fds, nfds_t nfds)
+int sys_poll(struct pollfd *fds, uint32_t nfds)
 {
   1. create `poll_table`
   2. for each fd
@@ -228,7 +228,7 @@ void poll_wakeup(struct thread *t) {
 #### Keyboard/Mice Event
 
 - create the new filesystem named `devtmpfs` and mount at `/dev` (subs are located in memory)
-- implement `wait_event(thread, cond)` (sleep until cond == true)
+- implement `wait_event(thread, cond)` (create `wait_queue_entry` and sleep until cond == true)
 
 1. Mouse
 

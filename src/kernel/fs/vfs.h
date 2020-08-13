@@ -3,6 +3,7 @@
 
 #include <include/ctype.h>
 #include <include/list.h>
+#include <kernel/fs/poll.h>
 #include <kernel/locking/semaphore.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -182,6 +183,7 @@ struct vfs_file_operations
 	loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
 	ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
 	ssize_t (*write)(struct vfs_file *file, const char *buf, size_t count, loff_t ppos);
+	unsigned int (*poll)(struct vfs_file *, struct poll_table *pt);
 	int (*mmap)(struct vfs_file *, struct vm_area_struct *);
 	int (*open)(struct vfs_inode *, struct vfs_file *);
 	int (*release)(struct vfs_inode *, struct vfs_file *);

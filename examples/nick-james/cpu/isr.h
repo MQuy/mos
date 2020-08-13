@@ -78,18 +78,19 @@ extern void irq15();
  * - All the registers by pusha
  * - `push eax` whose lower 16-bits contain DS
  */
-typedef struct {
-   uint32_t ds; /* Data segment selector */
-   uint32_t edi, esi, ebp, useless, ebx, edx, ecx, eax; /* Pushed by pusha. */
-   uint32_t int_no, err_code; /* Interrupt number and error code (if applicable) */
-   uint32_t eip, cs, eflags, esp, ss; /* Pushed by the processor automatically */
+typedef struct
+{
+	uint32_t gs, fs, es, ds;						 /* Data segment selector */
+	uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; /* Pushed by pusha. */
+	uint32_t int_no, err_code;						 /* Interrupt number and error code (if applicable) */
+	uint32_t eip, cs, eflags, esp, ss;				 /* Pushed by the processor automatically */
 } registers_t;
 
 void isr_install();
 void isr_handler(registers_t *r);
 void irq_install();
 
-typedef void (*isr_t)(registers_t*);
+typedef void (*isr_t)(registers_t *);
 void register_interrupt_handler(uint8_t n, isr_t handler);
 
 #endif

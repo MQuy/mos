@@ -139,5 +139,6 @@ void thread_sleep(uint32_t ms);
 // sched.c
 void lock_scheduler();
 void unlock_scheduler();
+void wake_up(struct wait_queue_head *hq);
 
 #endif
