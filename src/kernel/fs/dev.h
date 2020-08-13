@@ -15,6 +15,7 @@ struct char_device
 {
 	const char *name;
 	uint32_t major;
+	dev_t dev;
 	struct list_head sibling;
 	struct vfs_file_operations *f_ops;
 };

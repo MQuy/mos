@@ -33,11 +33,16 @@ int tmpfs_setsize(struct vfs_inode *inode, loff_t new_size)
 	return 0;
 }
 
-int tmpfs_mknod(struct vfs_inode *dir, char *name, int mode, dev_t dev)
+int tmpfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
 {
 	struct vfs_inode *i = tmpfs_get_inode(dir->i_sb, mode);
 	uint32_t current_seconds = get_seconds(NULL);
-	dir->i_ctime.tv_sec = current_seconds;
+	i->i_ctime.tv_sec = current_seconds;
+	i->i_mtime.tv_sec = current_seconds;
+	i->i_atime.tv_sec = current_seconds;
+	i->i_rdev = dev;
+
+	dentry->d_inode = i;
 	dir->i_mtime.tv_sec = current_seconds;
 	return 0;
 }
@@ -62,3 +67,5 @@ struct vfs_inode_operations tmpfs_dir_inode_operations = {
 	.create = tmpfs_create_inode,
 	.mknod = tmpfs_mknod,
 };
+
+struct vfs_inode_operations tmpfs_special_inode_operations = {};

@@ -227,7 +227,7 @@ void poll_wakeup(struct thread *t) {
 
 #### Keyboard/Mice Event
 
-- create the new filesystem named `devtmpfs` and mount at `/dev` (subs are located in memory)
+- create the new filesystem named `devfs` and mount at `/dev` (subs are located in memory)
 - implement `wait_event(thread, cond)` (create `wait_queue_entry` and sleep until cond == true)
 
 1. Mouse

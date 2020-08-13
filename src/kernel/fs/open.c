@@ -159,7 +159,11 @@ int vfs_mknod(const char *path, int mode, dev_t dev)
 	strlsplat(path, strliof(path, "/"), &dir, &name);
 
 	struct nameidata *nd = path_walk(dir);
-	return nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, name, mode, dev);
+	struct vfs_dentry *d_child = alloc_dentry(nd->dentry, name);
+	int ret = nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, d_child, mode, dev);
+	list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
+
+	return ret;
 }
 
 int simple_setattr(struct vfs_dentry *d, struct iattr *attrs)

@@ -150,7 +150,7 @@ struct vfs_inode_operations
 	struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
 	struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
 	int (*mkdir)(struct vfs_inode *, char *, int);
-	int (*mknod)(struct vfs_inode *, char *, int, dev_t);
+	int (*mknod)(struct vfs_inode *, struct vfs_dentry *, int, dev_t);
 	void (*truncate)(struct vfs_inode *);
 	int (*setattr)(struct vfs_dentry *, struct iattr *);
 	int (*getattr)(struct vfs_mount *mnt, struct vfs_dentry *, struct kstat *);

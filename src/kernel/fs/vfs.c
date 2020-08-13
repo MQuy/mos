@@ -7,6 +7,7 @@
 #include <kernel/utils/string.h>
 
 #include "dev.h"
+#include "devfs/devfs.h"
 #include "ext2/ext2.h"
 #include "sockfs/sockfs.h"
 #include "tmpfs/tmpfs.h"
@@ -129,8 +130,12 @@ void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 	init_ext2_fs();
 	init_rootfs(fs, dev_name);
 
+	DEBUG &&debug_println(DEBUG_INFO, "\tMount devfs");
+	init_devfs();
+
 	DEBUG &&debug_println(DEBUG_INFO, "\tMount tmpfs");
 	init_tmpfs();
+
 	DEBUG &&debug_println(DEBUG_INFO, "\tMount sockfs");
 	init_sockfs();
 
