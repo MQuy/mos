@@ -12,10 +12,6 @@
 extern void irq_task_handler();
 extern void do_switch(uint32_t *addr_current_kernel_esp, uint32_t next_kernel_esp, uint32_t cr3);
 
-extern struct thread *current_thread;
-extern struct process *current_process;
-
-struct thread *idle_thread;
 struct plist_head terminated_list, waiting_list;
 struct plist_head kernel_ready_list, system_ready_list, app_ready_list;
 
@@ -231,8 +227,8 @@ int32_t thread_page_fault(struct interrupt_registers *regs)
 
 void wake_up(struct wait_queue_head *hq)
 {
-	struct wait_queue_entry *iter;
-	list_for_each_entry(iter, &hq->list, sibling)
+	struct wait_queue_entry *iter, *next;
+	list_for_each_entry_safe(iter, next, &hq->list, sibling)
 	{
 		iter->func(iter->thread);
 	}

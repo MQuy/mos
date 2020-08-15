@@ -3,8 +3,6 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 
-extern struct thread *current_thread;
-
 void poll_table_free(struct poll_table *pt)
 {
 	struct poll_table_entry *iter, *next;

@@ -10,8 +10,6 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-extern struct process *current_process;
-
 static char rx_buffer[RX_PADDING_BUFFER_SIZE] __attribute__((aligned(4)));
 // NOTE: MQ 2020-04-10 The maximum ethernet transmitted packet's size is 1792 -> one page
 static char tx_buffer[4][PMM_FRAME_SIZE] __attribute__((aligned(4)));

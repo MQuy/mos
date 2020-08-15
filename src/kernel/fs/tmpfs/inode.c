@@ -6,8 +6,6 @@
 
 #include "tmpfs.h"
 
-extern struct process *current_process;
-
 int tmpfs_setsize(struct vfs_inode *inode, loff_t new_size)
 {
 	uint32_t aligned_new_size = PAGE_ALIGN(new_size);

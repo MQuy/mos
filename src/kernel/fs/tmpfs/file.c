@@ -7,8 +7,6 @@
 
 #include "tmpfs.h"
 
-extern struct process *current_process;
-
 loff_t tmpfs_llseek_file(struct vfs_file *file, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;

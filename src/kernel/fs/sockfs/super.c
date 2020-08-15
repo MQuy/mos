@@ -12,8 +12,6 @@
 #define SOCKFS_ROOT "/dev/sockfs"
 #define SOCK_NUMBER_LENGTH 11
 
-extern struct process *current_process;
-
 uint32_t nsock;
 
 int32_t get_unused_socket_number()

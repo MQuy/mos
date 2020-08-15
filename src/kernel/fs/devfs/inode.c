@@ -6,8 +6,6 @@
 
 #include "devfs.h"
 
-extern struct process *current_process;
-
 int devfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
 {
 	struct vfs_inode *i = devfs_get_inode(dir->i_sb, mode);

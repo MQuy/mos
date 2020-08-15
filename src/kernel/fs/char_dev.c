@@ -1,38 +1,38 @@
-#include <include/errno.h>
+#include "char_dev.h"
 
-#include "dev.h"
+#include <include/errno.h>
 
 struct list_head devlist;
 
-struct char_device *get_chrdev(uint32_t major)
+struct char_device *get_chrdev(dev_t dev)
 {
 	struct char_device *iter = NULL;
 	list_for_each_entry(iter, &devlist, sibling)
 	{
-		if (iter->major == major)
+		if (iter->dev == dev)
 			return iter;
 	};
 	return NULL;
 }
 
-int register_chrdev(struct char_device *new_dev)
+int register_chrdev(struct char_device *new_cdev)
 {
-	struct char_device *exist = get_chrdev(new_dev->major);
+	struct char_device *exist = get_chrdev(new_cdev->dev);
 	if (exist == NULL)
 	{
-		list_add_tail(&new_dev->sibling, &devlist);
+		list_add_tail(&new_cdev->sibling, &devlist);
 		return 0;
 	}
 	else
 		return -EEXIST;
 }
 
-int unregister_chrdev(uint32_t major)
+int unregister_chrdev(dev_t dev)
 {
-	struct char_device *dev = get_chrdev(major);
-	if (dev)
+	struct char_device *cdev = get_chrdev(dev);
+	if (cdev)
 	{
-		list_del(&dev->sibling);
+		list_del(&cdev->sibling);
 		return 0;
 	}
 	else
@@ -41,13 +41,13 @@ int unregister_chrdev(uint32_t major)
 
 int chrdev_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
-	struct char_device *dev = get_chrdev(MAJOR(inode->i_rdev));
-	if (dev == NULL)
+	struct char_device *cdev = get_chrdev(inode->i_rdev);
+	if (cdev == NULL)
 		return -ENODEV;
 
-	if (dev->f_ops->open)
+	if (cdev->f_ops->open)
 	{
-		dev->f_ops->open(inode, filp);
+		cdev->f_ops->open(inode, filp);
 		return 0;
 	}
 	return -EINVAL;

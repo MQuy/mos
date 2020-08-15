@@ -1,5 +1,5 @@
 #include <include/errno.h>
-#include <kernel/fs/dev.h>
+#include <kernel/fs/char_dev.h>
 #include <kernel/utils/math.h>
 #include <kernel/utils/printf.h>
 
@@ -74,33 +74,22 @@ struct vfs_file_operations random_fops = {
 	.release = random_release,
 };
 
-int memory_open(struct vfs_inode *inode, struct vfs_file *filp)
-{
-	switch (MINOR(inode->i_rdev))
-	{
-	case NULL_DEVICE:
-		filp->f_op = &null_fops;
-		return 0;
-	case RANDOM_DEVICE:
-		filp->f_op = &random_fops;
-		return 0;
-	}
-	return -EINVAL;
-}
-
-struct vfs_file_operations memory_fops = {
-	.open = memory_open,
+struct char_device cdev_null = {
+	.name = "null",
+	.dev = MKDEV(MEMORY_MAJOR, NULL_DEVICE),
+	.f_ops = &null_fops,
 };
 
-struct char_device chrdev_memory = {
-	.name = "memory",
-	.major = MEMORY_MAJOR,
-	.f_ops = &memory_fops,
+struct char_device cdev_random = {
+	.name = "random",
+	.dev = MKDEV(MEMORY_MAJOR, RANDOM_DEVICE),
+	.f_ops = &random_fops,
 };
 
 void chrdev_memory_init()
 {
-	register_chrdev(&chrdev_memory);
+	register_chrdev(&cdev_null);
+	register_chrdev(&cdev_random);
 
 	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount null");
 	vfs_mknod("/dev/null", S_IFCHR, MKDEV(MEMORY_MAJOR, NULL_DEVICE));

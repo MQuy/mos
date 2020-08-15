@@ -7,8 +7,6 @@
 #include <kernel/proc/task.h>
 #include <kernel/system/time.h>
 
-extern struct process *current_process;
-
 // TODO: MQ 2019-01-03 Implement empty for read and full for write (http://man7.org/linux/man-pages/man7/pipe.7.html)
 ssize_t pipe_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {

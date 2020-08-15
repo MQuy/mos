@@ -39,7 +39,6 @@
 #include "utils/printf.h"
 #include "utils/string.h"
 
-extern struct thread *current_thread;
 extern struct vfs_file_system_type ext2_fs_type;
 
 void setup_window_server(struct Elf32_Layout *elf_layout)
@@ -64,37 +63,6 @@ void setup_window_server(struct Elf32_Layout *elf_layout)
 	ws_fb->addr = area->vm_start;
 }
 
-void client_demo()
-{
-	char *message = kcalloc(0x100000, 1);
-	message = vfs_read("/demo.txt");
-
-	int fd = sys_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	struct socket *sock = sockfd_lookup(fd);
-	struct net_device *dev = get_current_net_device();
-
-	struct sockaddr_in *sin = kcalloc(1, sizeof(struct sockaddr_in));
-	sin->sin_addr = dev->local_ip;
-	sin->sin_port = 40001;
-	sock->ops->bind(sock, (struct sockaddr *)sin, sizeof(struct sockaddr_in));
-
-	struct sockaddr_in *din = kcalloc(1, sizeof(struct sockaddr_in));
-	// 192.168.1.71
-	din->sin_addr = 0xC0A80147;
-	din->sin_port = 40000;
-	debug_println(DEBUG_INFO, "tcp connecting");
-	while (sock->ops->connect(sock, (struct sockaddr *)din, sizeof(struct sockaddr_in)) < 0)
-		;
-
-	// debug_println(DEBUG_INFO, "tcp connected");
-	// sock->ops->shutdown(sock);
-	// debug_println(DEBUG_INFO, "tcp shutdown");
-
-	sock->ops->sendmsg(sock, message, 0x100000);
-	debug_println(DEBUG_INFO, "tcp sending done");
-	sock->ops->shutdown(sock);
-}
-
 void kernel_init()
 {
 	// when a task switches to kernel/net thread at the first time, it has to call `schedule` (also `lock_scheduler`)
@@ -113,12 +81,6 @@ void kernel_init()
 
 	vfs_init(&ext2_fs_type, "/dev/hda");
 	chrdev_memory_init();
-
-	net_init();
-	rtl8139_init();
-	dhcp_setup();
-
-	client_demo();
 
 	// init ipc message queue
 	mq_init();

@@ -6,8 +6,6 @@
 
 #include "sockfs.h"
 
-extern struct process *current_process;
-
 struct vfs_inode *sockfs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
 {
 	return sockfs_get_inode(dir->i_sb, mode);

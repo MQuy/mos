@@ -3,8 +3,6 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 
-extern struct thread *current_thread;
-
 struct semaphore_waiter
 {
 	struct list_head sibling;

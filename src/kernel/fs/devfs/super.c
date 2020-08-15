@@ -8,8 +8,6 @@
 
 #define DEVFS_MAGIC 0xA302B109
 
-extern struct process *current_process;
-
 struct vfs_inode *devfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 {
 	struct vfs_inode *i = sb->s_op->alloc_inode(sb);

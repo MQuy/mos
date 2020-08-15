@@ -6,8 +6,6 @@
 
 #include "sockfs.h"
 
-extern struct process *current_process;
-
 // TODO: MQ 2020-06-01 Support socket syscall read
 ssize_t sockfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {

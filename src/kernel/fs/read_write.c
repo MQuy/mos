@@ -4,8 +4,6 @@
 
 #include "vfs.h"
 
-extern struct process *current_process;
-
 char *vfs_read(const char *path)
 {
 	long fd = vfs_open(path);

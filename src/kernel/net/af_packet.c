@@ -9,8 +9,6 @@
 #include <kernel/proc/task.h>
 #include <kernel/utils/string.h>
 
-extern struct thread *current_thread;
-
 int packet_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {
 	struct packet_sock *psk = pkt_sk(sock->sk);

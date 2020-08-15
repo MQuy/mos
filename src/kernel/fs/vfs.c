@@ -6,7 +6,7 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-#include "dev.h"
+#include "char_dev.h"
 #include "devfs/devfs.h"
 #include "ext2/ext2.h"
 #include "sockfs/sockfs.h"
@@ -14,8 +14,6 @@
 
 static struct vfs_file_system_type *file_systems;
 struct list_head vfsmntlist;
-
-extern struct process *current_process;
 
 struct vfs_file_system_type **find_filesystem(const char *name)
 {

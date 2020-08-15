@@ -15,8 +15,6 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-extern struct process *current_process;
-extern struct thread *current_thread;
 extern volatile uint32_t scheduler_lock_counter;
 
 struct thread *backup_thread;

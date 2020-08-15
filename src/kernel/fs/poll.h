@@ -54,5 +54,22 @@ struct pollfd
 
 int do_poll(struct pollfd *fds, uint32_t nfds);
 void poll_wait(struct vfs_file *file, struct wait_queue_head *wh, struct poll_table *pt);
+void poll_wakeup(struct thread *t);
+
+extern volatile struct thread *current_thread;
+extern void schedule();
+
+#define DEFINE_WAIT(name)            \
+	struct wait_queue_entry name = { \
+		.thread = current_thread,    \
+		.func = poll_wakeup,         \
+	}
+
+#define wait_event(wh, cond) ({                  \
+	DEFINE_WAIT(__wait);                         \
+	list_add_tail(&__wait.sibling, &(wh)->list); \
+	for (; !(cond);) schedule();                 \
+	list_del(&__wait.sibling);                   \
+})
 
 #endif

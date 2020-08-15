@@ -7,8 +7,6 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-extern struct thread *current_thread;
-
 struct semaphore mq_locking;
 struct hashmap mq_map;
 

@@ -13,9 +13,6 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-extern struct thread *current_thread;
-extern struct process *current_process;
-
 void sys_exit(int32_t code)
 {
 	current_thread->exit_code = code;

@@ -5,8 +5,6 @@
 #define PKMAP_BASE 0xE0000000
 #define LAST_PKMAP 1024
 
-extern struct process *current_process;
-
 uint32_t pkmap[LAST_PKMAP];
 
 void pkmap_bitmap_set(uint32_t block)

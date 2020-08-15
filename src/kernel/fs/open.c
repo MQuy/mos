@@ -4,8 +4,6 @@
 
 #include "vfs.h"
 
-extern struct process *current_process;
-
 struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name)
 {
 	struct vfs_dentry *d = kcalloc(1, sizeof(struct vfs_dentry));

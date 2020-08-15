@@ -8,8 +8,6 @@
 
 #define TMPFS_MAGIC 0x01021994
 
-extern struct process *current_process;
-
 struct vfs_inode *tmpfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 {
 	struct vfs_inode *i = sb->s_op->alloc_inode(sb);

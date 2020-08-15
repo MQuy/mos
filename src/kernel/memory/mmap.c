@@ -5,8 +5,6 @@
 
 #include "vmm.h"
 
-extern struct process *current_process;
-
 // TODO: MQ 2020-01-25 Add support for release block when there is no reference to frame block
 
 struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
