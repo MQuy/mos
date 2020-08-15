@@ -380,10 +380,10 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 				// workaround via using left/right command to simuate left/right click
 				if (key == KEY_LCOMMAND || key == KEY_RCOMMAND)
 				{
-					struct mouse_device *mouse = kcalloc(1, sizeof(struct mouse_device));
+					struct mouse_motion *mouse = kcalloc(1, sizeof(struct mouse_motion));
 					mouse->x = 0;
 					mouse->y = 0;
-					mouse->state = key == KEY_LCOMMAND ? MOUSE_LEFT_CLICK : MOUSE_RIGHT_CLICK;
+					mouse->buttons = key == KEY_LCOMMAND ? MOUSE_LEFT_CLICK : MOUSE_RIGHT_CLICK;
 					enqueue_mouse_event(mouse);
 					kfree(mouse);
 				}

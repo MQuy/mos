@@ -88,12 +88,11 @@ struct char_device cdev_random = {
 
 void chrdev_memory_init()
 {
-	register_chrdev(&cdev_null);
-	register_chrdev(&cdev_random);
-
 	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount null");
-	vfs_mknod("/dev/null", S_IFCHR, MKDEV(MEMORY_MAJOR, NULL_DEVICE));
+	register_chrdev(&cdev_null);
+	vfs_mknod("/dev/null", S_IFCHR, cdev_null.dev);
 
 	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount random");
-	vfs_mknod("/dev/random", S_IFCHR, MKDEV(MEMORY_MAJOR, RANDOM_DEVICE));
+	register_chrdev(&cdev_random);
+	vfs_mknod("/dev/random", S_IFCHR, cdev_random.dev);
 }

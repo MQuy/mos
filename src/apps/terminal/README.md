@@ -263,7 +263,7 @@ struct list_head nodelist;
 struct wait_queue_head hwait;
 ```
 
-- `mouse_mount` to open `/dev/input/mouse` and register corresponding its major (no minor due to only one mouse supported)
+- `mouse_init` to create `/dev/input/mouse` and register its major and one minor
 - `open("/dev/input/mouse")` -> initializing a node and adding into `nodelist` (subscribe)
   `close(fd)` -> removing existing node from `nodelist` (unsubscribe)
   `read("/dev/input/mouse")`

@@ -7,7 +7,6 @@
 #include <kernel/utils/queue.h>
 #include <kernel/utils/string.h>
 
-extern struct thread *current_thread;
 static struct thread *wsthread;
 
 void uiserver_init(struct thread *t)
@@ -28,12 +27,12 @@ void enqueue_event(struct msgui_event *event)
 	}
 }
 
-void enqueue_mouse_event(struct mouse_device *md)
+void enqueue_mouse_event(struct mouse_motion *md)
 {
 	struct msgui_event *event = kcalloc(1, sizeof(struct msgui_event));
 	event->mouse_x = md->x;
 	event->mouse_y = md->y;
-	event->mouse_state = md->state;
+	event->mouse_state = md->buttons;
 	event->type = MSGUI_MOUSE;
 	enqueue_event(event);
 }
