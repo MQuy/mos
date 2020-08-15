@@ -153,7 +153,7 @@ Signals are inherited by child processes (`fork`) but will be set back to defaul
 
 ### Implementation
 
-- [ ] Use `/dev/input/mouse -> { x, y, state }`, `/dev/input/keyboard -> { key, state }` to distribute events to userland. Specified device files is easier to implement at the first step, we can later apply [linux way](https://www.kernel.org/doc/html/latest/input/input_uapi.html)
+- [x] Use `/dev/input/mouse -> { x, y, state }`, `/dev/input/keyboard -> { key, state }` to distribute events to userland. Specified device files is easier to implement at the first step, we can later apply [linux way](https://www.kernel.org/doc/html/latest/input/input_uapi.html)
 - [ ] Signal
 - [ ] Map serial port terminals to `/dev/ttyS[N]` (COM1 -> 0, COM2 -> 2)
 - [ ] PTY master/slave (to make it simplier, using one struct contains both)
@@ -290,7 +290,6 @@ struct process {
   pid_t sid;
   pid_t gid;
   pid_t pid;
-  struct tty_struct *tty;
 
   struct sigaction sighand[NSIG];
 }

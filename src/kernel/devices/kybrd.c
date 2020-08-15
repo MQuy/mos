@@ -1,16 +1,17 @@
 #include "kybrd.h"
 
 #include <include/ctype.h>
+#include <include/errno.h>
 #include <include/msgui.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
+#include <kernel/devices/mouse.h>
+#include <kernel/fs/char_dev.h>
 #include <kernel/system/uiserver.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-//============================================================================
-//    IMPLEMENTATION PRIVATE DEFINITIONS / ENUMERATIONS / SIMPLE TYPEDEFS
-//============================================================================
+static void kybrd_notify_readers(int32_t key);
 
 // keyboard encoder ------------------------------------------
 
@@ -100,19 +101,6 @@ enum KYBRD_ERROR
 	KYBRD_ERR_RESEND_CMD = 0xFE,
 	KYBRD_ERR_KEY = 0xFF
 };
-
-//============================================================================
-//    IMPLEMENTATION PRIVATE CLASS PROTOTYPES / EXTERNAL CLASS REFERENCES
-//============================================================================
-//============================================================================
-//    IMPLEMENTATION PRIVATE STRUCTURES / UTILITY CLASSES
-//============================================================================
-//============================================================================
-//    IMPLEMENTATION REQUIRED EXTERNAL REFERENCES (AVOID)
-//============================================================================
-//============================================================================
-//    IMPLEMENTATION PRIVATE DATA
-//============================================================================
 
 //! current scan code
 static char _scancode;
@@ -238,21 +226,10 @@ static int _kkybrd_scancode_std[] = {
 //! invalid scan code. Used to indicate the last scan code is not to be reused
 const int INVALID_SCANCODE = 0;
 
-//============================================================================
-//    INTERFACE DATA
-//============================================================================
-//============================================================================
-//    IMPLEMENTATION PRIVATE FUNCTION PROTOTYPES
-//============================================================================
-
 uint8_t kybrd_ctrl_read_status();
 void kybrd_ctrl_send_cmd(uint8_t);
 uint8_t kybrd_enc_read_buf();
 void kybrd_enc_send_cmd(uint8_t);
-
-//============================================================================
-//    IMPLEMENTATION PRIVATE FUNCTIONS
-//============================================================================
 
 //! read status from keyboard controller
 uint8_t kybrd_ctrl_read_status()
@@ -384,11 +361,11 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 					mouse->x = 0;
 					mouse->y = 0;
 					mouse->buttons = key == KEY_LCOMMAND ? MOUSE_LEFT_CLICK : MOUSE_RIGHT_CLICK;
-					enqueue_mouse_event(mouse);
+					mouse_notify_readers(mouse);
 					kfree(mouse);
 				}
 				else
-					enqueue_keyboard_event(key);
+					kybrd_notify_readers(key);
 			}
 		}
 
@@ -413,10 +390,6 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 
 	return IRQ_HANDLER_CONTINUE;
 }
-
-//============================================================================
-//    INTERFACE FUNCTIONS
-//============================================================================
 
 //! returns scroll lock state
 bool kkybrd_get_scroll_lock()
@@ -655,10 +628,88 @@ bool kkybrd_self_test()
 	return (kybrd_enc_read_buf() == 0x55) ? true : false;
 }
 
+struct list_head nodelist;
+struct wait_queue_head hwait;
+
+static void kybrd_notify_readers(int32_t key)
+{
+	struct kybrd_inode *iter;
+	list_for_each_entry(iter, &nodelist, sibling)
+	{
+		iter->tail = (iter->tail + 1) / KYBRD_PACKET_QUEUE_LEN;
+		iter->packets[iter->tail] = key;
+		if (iter->tail == iter->head)
+			iter->head = (iter->head + 1) / KYBRD_PACKET_QUEUE_LEN;
+		iter->ready = true;
+	}
+	wake_up(&hwait);
+}
+
+static int kybrd_open(struct vfs_inode *inode, struct vfs_file *file)
+{
+	struct kybrd_inode *mi = kcalloc(sizeof(struct kybrd_inode), 1);
+	mi->file = file;
+	file->private_data = mi;
+	list_add_tail(&mi->sibling, &nodelist);
+
+	return 0;
+}
+
+static ssize_t kybrd_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+{
+	struct kybrd_inode *mi = (struct kybrd_inode *)file->private_data;
+	wait_event(&hwait, mi->ready);
+
+	if (mi->head == mi->tail)
+		return -EINVAL;
+
+	memcpy(buf, &mi->packets[mi->head], sizeof(int32_t));
+	mi->head = (mi->head + 1) % KYBRD_PACKET_QUEUE_LEN;
+
+	if (mi->head == mi->tail)
+		mi->ready = false;
+
+	return 0;
+}
+
+static unsigned int kybrd_poll(struct vfs_file *file, struct poll_table *pt)
+{
+	struct kybrd_inode *mi = (struct kybrd_inode *)file->private_data;
+	poll_wait(file, &hwait, pt);
+
+	return mi->ready ? (POLLIN | POLLRDNORM) : 0;
+}
+
+static int kybrd_release(struct vfs_inode *inode, struct vfs_file *file)
+{
+	struct kybrd_inode *mi = (struct kybrd_inode *)file->private_data;
+	list_del(&mi->sibling);
+	kfree(mi);
+
+	return 0;
+}
+
+static struct vfs_file_operations kybrd_fops = {
+	.open = kybrd_open,
+	.read = kybrd_read,
+	.poll = kybrd_poll,
+	.release = kybrd_release,
+};
+
+static struct char_device cdev_kybrd = {
+	.name = "kybrd",
+	.dev = MKDEV(KYBRD_MAJOR, 1),
+	.f_ops = &kybrd_fops};
+
 //! prepares driver for use
 void kkybrd_install()
 {
 	DEBUG &&debug_println(DEBUG_INFO, "[keyboard] - Initializing");
+
+	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount kybrd");
+	register_chrdev(&cdev_kybrd);
+	vfs_mknod("/dev/keyboard", S_IFCHR, cdev_kybrd.dev);
+
 	//! Install our interrupt handler (irq 1 uses interrupt 33)
 	register_interrupt_handler(IRQ1, i86_kybrd_irq);
 

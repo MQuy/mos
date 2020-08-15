@@ -27,15 +27,15 @@ static struct mouse_motion current_mouse_motion;
 struct list_head nodelist;
 struct wait_queue_head hwait;
 
-static void mouse_notify_readers()
+void mouse_notify_readers(struct mouse_motion *mm)
 {
 	struct mouse_inode *iter;
 	list_for_each_entry(iter, &nodelist, sibling)
 	{
-		iter->tail = (iter->tail + 1) / PACKET_QUEUE_LEN;
-		iter->packets[iter->tail] = current_mouse_motion;
+		iter->tail = (iter->tail + 1) / MOUSE_PACKET_QUEUE_LEN;
+		iter->packets[iter->tail] = *mm;
 		if (iter->tail == iter->head)
-			iter->head = (iter->head + 1) / PACKET_QUEUE_LEN;
+			iter->head = (iter->head + 1) / MOUSE_PACKET_QUEUE_LEN;
 		iter->ready = true;
 	}
 	wake_up(&hwait);
@@ -47,6 +47,8 @@ static int mouse_open(struct vfs_inode *inode, struct vfs_file *file)
 	mi->file = file;
 	file->private_data = mi;
 	list_add_tail(&mi->sibling, &nodelist);
+
+	return 0;
 }
 
 static ssize_t mouse_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
@@ -58,7 +60,7 @@ static ssize_t mouse_read(struct vfs_file *file, char *buf, size_t count, loff_t
 		return -EINVAL;
 
 	memcpy(buf, &mi->packets[mi->head], sizeof(struct mouse_motion));
-	mi->head = (mi->head + 1) % PACKET_QUEUE_LEN;
+	mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
 
 	if (mi->head == mi->tail)
 		mi->ready = false;
@@ -70,6 +72,7 @@ static unsigned int mouse_poll(struct vfs_file *file, struct poll_table *pt)
 {
 	struct mouse_inode *mi = (struct mouse_inode *)file->private_data;
 	poll_wait(file, &hwait, pt);
+
 	return mi->ready ? (POLLIN | POLLRDNORM) : 0;
 }
 
@@ -78,6 +81,8 @@ static int mouse_release(struct vfs_inode *inode, struct vfs_file *file)
 	struct mouse_inode *mi = (struct mouse_inode *)file->private_data;
 	list_del(&mi->sibling);
 	kfree(mi);
+
+	return 0;
 }
 
 static struct vfs_file_operations mouse_fops = {
@@ -160,7 +165,7 @@ static int32_t irq_mouse_handler(struct interrupt_registers *regs)
 			mouse_byte[2] = mouse_in;
 			mouse_calculate_position();
 			if (current_mouse_motion.x != 0 || current_mouse_motion.y != 0 || current_mouse_motion.buttons != 0)
-				mouse_notify_readers();
+				mouse_notify_readers(&current_mouse_motion);
 			break;
 		}
 	}
