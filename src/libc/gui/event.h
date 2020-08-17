@@ -6,6 +6,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MOUSE_LEFT_CLICK 0x01
+#define MOUSE_RIGHT_CLICK 0x02
+#define MOUSE_MIDDLE_CLICK 0x04
+
 enum ui_event_type
 {
 	KEY_PRESS,
@@ -19,13 +23,6 @@ struct ui_event
 	int32_t key;
 	bool shift, ctrl;
 	int32_t mouse_x, mouse_y;
-	struct list_head listeners;
-};
-
-struct ui_queue
-{
-	struct ui_event *event;
-	struct ui_queue *next;
 };
 
 #endif

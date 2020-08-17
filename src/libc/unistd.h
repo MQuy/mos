@@ -33,10 +33,13 @@
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
-#define __NR_msgopen 200
-#define __NR_msgclose 201
-#define __NR_msgrcv 202
-#define __NR_msgsnd 203
+#define __NR_sendto 133
+#define __NR_poll 168
+#define __NR_mq_open 277
+#define __NR_mq_close (__NR_mq_open + 1)
+#define __NR_mq_unlink (__NR_mq_open + 2)
+#define __NR_mq_send (__NR_mq_open + 3)
+#define __NR_mq_receive (__NR_mq_open + 4)
 
 #define _syscall0(name)                           \
 	static inline int32_t syscall_##name()        \
@@ -96,6 +99,8 @@
 							 : "0"(__NR_##name), "b"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "D"(arg5)); \
 		return ret;                                                                                      \
 	}
+
+struct pollfd;
 
 _syscall0(fork);
 static inline int32_t fork()
@@ -163,28 +168,39 @@ static inline int32_t pipe(int32_t *fildes)
 	return syscall_pipe(fildes);
 }
 
-_syscall2(msgopen, const char *, int32_t);
-static inline int32_t msgopen(const char *name, int32_t flags)
+_syscall2(poll, struct pollfd *, uint32_t);
+static inline int32_t poll(struct pollfd *fds, uint32_t nfds)
 {
-	return syscall_msgopen(name, flags);
+	return syscall_poll(fds, nfds);
+}
+_syscall2(mq_open, const char *, int32_t);
+static inline int32_t mq_open(const char *name, int32_t flags)
+{
+	return syscall_mq_open(name, flags);
 }
 
-_syscall1(msgclose, const char *);
-static inline int32_t msgclose(const char *name)
+_syscall1(mq_close, int32_t);
+static inline int32_t mq_close(int32_t fd)
 {
-	return syscall_msgclose(name);
+	return syscall_mq_close(fd);
 }
 
-_syscall4(msgsnd, const char *, char *, int32_t, uint32_t);
-static inline int32_t msgsnd(const char *name, char *buf, int32_t mtype, uint32_t msize)
+_syscall1(mq_unlink, const char *);
+static inline int32_t mq_unlink(const char *name)
 {
-	return syscall_msgsnd(name, buf, mtype, msize);
+	return syscall_mq_unlink(name);
 }
 
-_syscall4(msgrcv, const char *, char *, int32_t, uint32_t);
-static inline int32_t msgrcv(const char *name, char *buf, int32_t mtype, uint32_t msize)
+_syscall4(mq_send, int32_t, char *, uint32_t, uint32_t);
+static inline int32_t mq_send(int32_t fd, char *buf, uint32_t priorty, uint32_t msize)
 {
-	return syscall_msgrcv(name, buf, mtype, msize);
+	return syscall_mq_send(fd, buf, priorty, msize);
+}
+
+_syscall4(mq_receive, int32_t, char *, uint32_t, uint32_t);
+static inline int32_t mq_receive(int32_t fd, char *buf, uint32_t priorty, uint32_t msize)
+{
+	return syscall_mq_receive(fd, buf, priorty, msize);
 }
 
 _syscall2(truncate, const char *, off_t);

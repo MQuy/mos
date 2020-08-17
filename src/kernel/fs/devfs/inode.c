@@ -22,7 +22,7 @@ int devfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_
 
 struct vfs_inode *devfs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
 {
-	return devfs_get_inode(dir->i_sb, mode | S_IFREG);
+	return devfs_get_inode(dir->i_sb, mode);
 }
 
 struct vfs_inode_operations devfs_file_inode_operations = {};

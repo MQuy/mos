@@ -1,92 +1,102 @@
 #include "message_queue.h"
 
 #include <include/errno.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/locking/semaphore.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/utils/hashmap.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-struct semaphore mq_locking;
+static const char defaultdir[] = "/dev/mqueue/";
+
 struct hashmap mq_map;
 
-void mq_init()
+static char *mq_normalize_path(char *name)
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Initializing");
+	char *fname = kcalloc(strlen(name) + sizeof(defaultdir), sizeof(char));
 
-	sema_init(&mq_locking, 1);
-	hashmap_init(&mq_map, hashmap_hash_string, hashmap_compare_string, 0);
+	strcpy(fname, defaultdir);
+	strcat(fname, name);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Done");
+	return fname;
 }
 
 int32_t mq_open(const char *name, int32_t flags)
 {
-	struct message_queue *mq = kcalloc(1, sizeof(struct message_queue));
-	INIT_LIST_HEAD(&mq->senders);
-	INIT_LIST_HEAD(&mq->receivers);
-	INIT_LIST_HEAD(&mq->messages);
+	char *fname = mq_normalize_path(name);
+	int32_t fd = vfs_open(fname, flags);
 
-	if (!hashmap_put(&mq_map, strdup(name), mq))
-		return -EINVAL;
+	kfree(fname);
 
-	return 0;
+	return fd;
 }
 
-int32_t mq_close(const char *name)
+int32_t mq_close(int32_t fd)
 {
-	int32_t ret = 0;
-	struct message_queue *mq = hashmap_get(&mq_map, name);
-	if (mq)
-	{
-		hashmap_remove(&mq_map, name);
-		kfree(mq);
-	}
-	return ret;
+	return vfs_close(fd);
 }
 
-// NOTE: MQ 2020-03-13 The method only be called in kernel
-int32_t mq_enqueue(const char *name, char *kernel_buf, int32_t mtype, uint32_t msize)
+int32_t mq_unlink(const char *name)
 {
 	struct message_queue *mq = hashmap_get(&mq_map, name);
 
 	if (!mq)
 		return -EINVAL;
 
-	struct mq_receiver *iter = NULL;
-	struct mq_receiver *mqr = NULL;
-	list_for_each_entry(iter, &mq->receivers, sibling)
+	struct mq_message *miter, *mnext;
+	list_for_each_entry_safe(miter, mnext, &mq->messages, sibling)
 	{
-		if (iter->mtype == mtype)
-		{
-			mqr = iter;
-			break;
-		}
+		list_del(&miter->sibling);
+		update_thread(miter->sender, THREAD_READY);
 	}
 
-	if (mqr)
+	struct mq_receiver *riter, *rnext;
+	list_for_each_entry_safe(riter, rnext, &mq->receivers, sibling)
 	{
-		mqr->sender = current_thread;
-		mqr->msize = msize;
-		mqr->buf = kernel_buf;
-		list_del(&mqr->sibling);
-		update_thread(mqr->receiver, THREAD_READY);
+		list_del(&riter->sibling);
+		update_thread(riter->receiver, THREAD_READY);
 	}
-	else
-	{
-		struct mq_message *msg = kcalloc(1, sizeof(struct mq_message));
-		msg->buf = kernel_buf;
-		msg->msize = msize;
-		msg->mtype = mtype;
-		msg->sender = current_thread;
-		list_add_tail(&msg->sibling, &mq->messages);
-	}
+
+	hashmap_remove(&mq_map, name);
+	kfree(mq);
 	return 0;
 }
 
-int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
+static void mq_add_message(struct message_queue *mq, struct mq_message *msg)
 {
-	struct message_queue *mq = hashmap_get(&mq_map, name);
+	struct mq_message *iter;
+	list_for_each_entry(iter, &mq->messages, sibling)
+	{
+		if (msg->priority > iter->priority)
+			break;
+	}
+
+	if (&iter->sibling == &mq->messages)
+		list_add_tail(&msg->sibling, &mq->messages);
+	else
+		list_add(&msg->sibling, iter->sibling.prev);
+}
+
+static void mq_add_receiver(struct message_queue *mq, struct mq_receiver *mqr)
+{
+	struct mq_receiver *iter;
+	list_for_each_entry(iter, &mq->receivers, sibling)
+	{
+		if (mqr->priority > iter->priority)
+			break;
+	}
+
+	if (&iter->sibling == &mq->messages)
+		list_add_tail(&mqr->sibling, &mq->messages);
+	else
+		list_add(&mqr->sibling, iter->sibling.prev);
+}
+
+int32_t mq_send(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize)
+{
+	struct vfs_file *file = current_thread->parent->files->fd[fd];
+	struct message_queue *mq = (struct message_queue *)file->private_data;
 
 	if (!mq)
 		return -EINVAL;
@@ -94,99 +104,68 @@ int32_t mq_send(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
 	char *kernel_buf = kcalloc(msize, sizeof(char));
 	memcpy(kernel_buf, user_buf, msize);
 
-	struct mq_receiver *iter = NULL;
-	struct mq_receiver *mqr = NULL;
-	list_for_each_entry(iter, &mq->receivers, sibling)
-	{
-		if (iter->mtype == mtype)
-		{
-			mqr = iter;
-			break;
-		}
-	}
+	struct mq_message *mqm = kcalloc(1, sizeof(struct mq_message));
+	mqm->buf = kernel_buf;
+	mqm->msize = msize;
+	mqm->priority = priority;
+	mqm->sender = current_thread;
+	mq_add_message(mq, mqm);
+
+	struct mq_receiver *mqr = list_first_entry_or_null(&mq->receivers, struct mq_receiver, sibling);
 
 	if (mqr)
 	{
-		mqr->sender = current_thread;
-		mqr->msize = msize;
-		mqr->buf = kernel_buf;
 		list_del(&mqr->sibling);
 		update_thread(mqr->receiver, THREAD_READY);
 	}
-	else
-	{
-		struct mq_message *msg = kcalloc(1, sizeof(struct mq_message));
-		msg->buf = kernel_buf;
-		msg->msize = msize;
-		msg->mtype = mtype;
-		msg->sender = current_thread;
-		list_add_tail(&msg->sibling, &mq->messages);
-	}
 
-	if (mtype >= 0)
-		// NOTE: MQ 2020-01-06 Negative thread id number is reserved for ack channel
-		// waiting to receive an ack from receiver
-		return mq_receive(name, NULL, -current_thread->tid, 0);
-	else
-		return 0;
+	wake_up(&mq->wait);
+	wait_until(list_is_poison(&mqm->sibling));
+	kfree(mqm);
+	kfree(kernel_buf);
+
+	return hashmap_get(&mq_map, file->f_dentry->d_name) ? 0 : -ESHUTDOWN;
 }
 
-int32_t mq_receive(const char *name, char *user_buf, int32_t mtype, uint32_t msize)
+int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize)
 {
-	struct message_queue *mq = hashmap_get(&mq_map, name);
+	struct vfs_file *file = current_thread->parent->files->fd[fd];
+	struct message_queue *mq = (struct message_queue *)file->private_data;
 
 	if (!mq)
 		return -EINVAL;
 
-	struct mq_message *iter = NULL;
-	struct mq_message *mqm = NULL;
-	list_for_each_entry(iter, &mq->messages, sibling)
-	{
-		if (iter->mtype == mtype)
-		{
-			mqm = iter;
-			break;
-		}
-	}
+	struct mq_message *mqm = list_first_entry_or_null(&mq->messages, struct mq_message, sibling);
 
-	char *kernel_buf = NULL;
-	void *msg = NULL;
-	tid_t sender_id;
-	if (mqm)
-	{
-		msg = mqm;
-		kernel_buf = mqm->buf;
-		sender_id = mqm->sender->tid;
-		list_del(&mqm->sibling);
-	}
-	else
+	if (!mqm)
 	{
 		struct mq_receiver *mqr = kcalloc(1, sizeof(struct mq_receiver));
-		mqr->mtype = mtype;
+		mqr->priority = priority;
 		mqr->msize = msize;
 		mqr->receiver = current_thread;
-		list_add_tail(&mqr->sibling, &mq->receivers);
-		update_thread(current_thread, THREAD_WAITING);
-		schedule();
 
-		if (!mqr->buf && mtype >= 0)
-			return -EINVAL;
+		wait_until_with_prework(!list_empty(&mq->messages), ({
+			if (list_is_poison(&mqr->sibling))
+				mq_add_receiver(mq, mqr);
+		}));
 
-		msg = mqr;
-		kernel_buf = mqr->buf;
-		sender_id = mqr->sender->tid;
 		list_del(&mqr->sibling);
+		kfree(mqr);
+		mqm = list_first_entry(&mq->messages, struct mq_message, sibling);
 	}
 
-	if (sender_id != current_thread->tid && mtype >= 0)
-		// send ack signal to sender
-		mq_send(name, NULL, -sender_id, 0);
-	if (mtype >= 0)
-	{
-		memcpy(user_buf, kernel_buf, msize);
-		kfree(kernel_buf);
-	}
-	kfree(msg);
+	list_del(&mqm->sibling);
+	memcpy(user_buf, mqm->buf, msize);
+	update_thread(mqm->sender, THREAD_READY);
 
-	return 0;
+	return hashmap_get(&mq_map, file->f_dentry->d_name) ? 0 : -ESHUTDOWN;
+}
+
+void mq_init()
+{
+	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Initializing");
+
+	hashmap_init(&mq_map, hashmap_hash_string, hashmap_compare_string, 0);
+
+	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Done");
 }

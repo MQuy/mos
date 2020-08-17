@@ -1,5 +1,6 @@
-#include <include/msgui.h>
 #include <libc/gui/layout.h>
+#include <libc/gui/msgui.h>
+#include <libc/poll.h>
 #include <libc/stdlib.h>
 #include <libc/string.h>
 #include <libc/unistd.h>
@@ -9,35 +10,67 @@
 
 int main(struct framebuffer fb)
 {
+	int32_t ws_fd = mq_open(WINDOW_SERVER_QUEUE, O_RDONLY);
+	int32_t mouse_fd = open("/dev/input/mouse", O_RDONLY, 0);
+	int32_t krb_fd = open("/dev/input/keyboard", O_RDONLY, 0);
+
+	struct pollfd pfds[3] = {
+		{.fd = ws_fd, .events = POLLIN},
+		{.fd = mouse_fd, .events = POLLIN},
+		{.fd = krb_fd, .events = POLLIN},
+	};
+
+	struct msgui ws_buf;
+	struct mouse_event mouse_event;
+	struct kybrd_event krb_event;
+
 	init_layout(&fb);
 	draw_layout();
 
-	struct msgui *buf = calloc(1, sizeof(struct msgui));
 	while (true)
 	{
-		memset(buf, 0, sizeof(struct msgui));
-		msgrcv(WINDOW_SERVER_SHM, (char *)buf, 0, sizeof(struct msgui));
-		if (buf->type == MSGUI_WINDOW)
-		{
-			struct msgui_window *msgwin = (struct msgui_window *)buf->data;
-			struct window *win = create_window(msgwin);
-			msgsnd(msgwin->sender, win->name, 0, WINDOW_NAME_LENGTH);
-		}
-		else if (buf->type == MSGUI_EVENT)
-		{
-			struct msgui_event *event = (struct msgui_event *)buf->data;
-			if (event->type == MSGUI_MOUSE)
-				handle_mouse_event(event);
-			else if (event->type == MSGUI_KEYBOARD)
-				handle_keyboard_event(event);
-			draw_layout();
-		}
-		else if (buf->type == MSGUI_FOCUS)
-		{
-			struct msgui_focus *focus = (struct msgui_focus *)buf->data;
-			handle_focus_event(focus);
-			draw_layout();
-		}
+		int32_t nr = poll(pfds, 3);
+
+		if (nr > 0)
+			for (int32_t i = 0; i < 3; ++i)
+			{
+				if (!pfds[i].revents)
+					continue;
+
+				if (pfds[i].fd == ws_fd)
+				{
+					memset(&ws_buf, 0, sizeof(struct msgui));
+					mq_receive(ws_fd, (char *)&ws_buf, 0, sizeof(struct msgui));
+
+					if (ws_buf.type == MSGUI_WINDOW)
+					{
+						struct msgui_window *msgwin = (struct msgui_window *)ws_buf.data;
+						struct window *win = create_window(msgwin);
+						int32_t wfd = mq_open(msgwin->sender, O_WRONLY);
+						mq_send(wfd, win->name, 0, WINDOW_NAME_LENGTH);
+						mq_close(wfd);
+					}
+					else if (ws_buf.type == MSGUI_FOCUS)
+					{
+						struct msgui_focus *focus = (struct msgui_focus *)ws_buf.data;
+						handle_focus_event(focus);
+						draw_layout();
+					}
+				}
+				else if (pfds[i].fd == mouse_fd)
+				{
+					memset(&mouse_event, 0, sizeof(struct mouse_event));
+					read(mouse_fd, (char *)&mouse_event, sizeof(struct mouse_event));
+					handle_mouse_event(&mouse_event);
+					draw_layout();
+				}
+				else if (pfds[i].fd == krb_fd)
+				{
+					read(krb_fd, (char *)&krb_event, sizeof(struct kybrd_event));
+					handle_keyboard_event(&krb_event);
+					draw_layout();
+				}
+			}
 	}
 
 	return 0;

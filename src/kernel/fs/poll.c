@@ -33,23 +33,31 @@ void poll_wait(struct vfs_file *file, struct wait_queue_head *wh, struct poll_ta
 
 int do_poll(struct pollfd *fds, uint32_t nfds)
 {
+	int32_t nr;
+
 	while (true)
 	{
 		struct poll_table *pt = kcalloc(sizeof(struct poll_table), 1);
-		bool is_ready = false;
+		INIT_LIST_HEAD(&pt->list);
+
+		nr = 0;
 		for (uint32_t i = 0; i < nfds; ++i)
 		{
 			struct pollfd *pfd = &fds[i];
 			struct vfs_file *f = current_thread->parent->files->fd[pfd->fd];
+
 			pfd->revents = f->f_op->poll(f, pt);
 			if (pfd->events & pfd->revents)
-				is_ready = true;
+				nr++;
 		}
-		if (is_ready)
+
+		if (nr > 0)
 			break;
+
 		update_thread(current_thread, THREAD_WAITING);
 		schedule();
 		poll_table_free(pt);
 	}
-	return 0;
+
+	return nr;
 }

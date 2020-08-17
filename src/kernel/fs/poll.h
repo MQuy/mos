@@ -47,9 +47,9 @@ struct poll_table_entry
 
 struct pollfd
 {
-	int fd;		   /* file descriptor */
-	short events;  /* requested events */
-	short revents; /* returned events */
+	int32_t fd;		 /* file descriptor */
+	int16_t events;	 /* requested events */
+	int16_t revents; /* returned events */
 };
 
 int do_poll(struct pollfd *fds, uint32_t nfds);
@@ -65,10 +65,26 @@ extern void schedule();
 		.func = poll_wakeup,         \
 	}
 
+// NOTE: MQ 2020-08-17 continue if receiving a signal
+#define wait_until(cond)                               \
+	for (; !(cond);)                                   \
+	{                                                  \
+		update_thread(current_thread, THREAD_WAITING); \
+		schedule();                                    \
+	}
+
+#define wait_until_with_prework(cond, prework)         \
+	for (; !(cond);)                                   \
+	{                                                  \
+		prework;                                       \
+		update_thread(current_thread, THREAD_WAITING); \
+		schedule();                                    \
+	}
+
 #define wait_event(wh, cond) ({                  \
 	DEFINE_WAIT(__wait);                         \
 	list_add_tail(&__wait.sibling, &(wh)->list); \
-	for (; !(cond);) schedule();                 \
+	wait_until(cond);                            \
 	list_del(&__wait.sibling);                   \
 })
 

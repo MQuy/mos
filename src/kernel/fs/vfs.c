@@ -9,6 +9,7 @@
 #include "char_dev.h"
 #include "devfs/devfs.h"
 #include "ext2/ext2.h"
+#include "mqueuefs/mqueuefs.h"
 #include "sockfs/sockfs.h"
 #include "tmpfs/tmpfs.h"
 
@@ -98,7 +99,7 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
 
 	struct vfs_file_system_type *fs = *find_filesystem(fstype);
 	struct vfs_mount *mnt = fs->mount(fs, fstype, name);
-	struct nameidata *nd = path_walk(dir);
+	struct nameidata *nd = path_walk(dir, S_IFDIR);
 
 	mnt->mnt_mountpoint->d_parent = nd->dentry;
 	list_add_tail(&mnt->mnt_mountpoint->d_sibling, &nd->dentry->d_subdirs);
@@ -130,6 +131,9 @@ void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 
 	DEBUG &&debug_println(DEBUG_INFO, "\tMount devfs");
 	init_devfs();
+
+	DEBUG &&debug_println(DEBUG_INFO, "\tMount mqueuefs");
+	init_mqueuefs();
 
 	DEBUG &&debug_println(DEBUG_INFO, "\tMount tmpfs");
 	init_tmpfs();

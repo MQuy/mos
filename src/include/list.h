@@ -738,4 +738,10 @@ static inline int list_count(const struct list_head *head)
 		count++;
 	return count;
 }
+
+static inline int list_is_poison(const struct list_head *entry)
+{
+	return entry->prev == LIST_POISON1 && entry->next == LIST_POISON2;
+}
+
 #endif

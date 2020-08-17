@@ -55,7 +55,6 @@ struct window *create_window(struct msgui_window *msgwin)
 {
 	char *window_name = get_window_name();
 	int32_t fd = shm_open(window_name, O_RDWR | O_CREAT, 0);
-
 	uint32_t screen_size = msgwin->height * msgwin->width * 4;
 	ftruncate(fd, screen_size);
 
@@ -304,12 +303,12 @@ void draw_layout()
 	memcpy((char *)desktop->fb->addr, desktop_buf, desktop->fb->pitch * desktop->fb->height);
 }
 
-void mouse_change(struct msgui_event *event)
+void mouse_change(struct mouse_event *event)
 {
 	struct graphic *graphic = &desktop->mouse.graphic;
 
-	graphic->x += event->mouse_x;
-	graphic->y += event->mouse_y;
+	graphic->x += event->x;
+	graphic->y += event->y;
 
 	if (graphic->x < 0)
 		graphic->x = 0;
@@ -321,7 +320,7 @@ void mouse_change(struct msgui_event *event)
 	else if (graphic->y + (int32_t)graphic->height > (int32_t)desktop->graphic.height)
 		graphic->y = desktop->graphic.height - graphic->height;
 
-	desktop->mouse.state = event->mouse_state;
+	desktop->mouse.buttons = event->buttons;
 }
 
 struct window *get_window_from_mouse_position(int32_t px, int32_t py)
@@ -358,11 +357,11 @@ struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
 	return NULL;
 }
 
-void handle_mouse_event(struct msgui_event *event)
+void handle_mouse_event(struct mouse_event *event)
 {
 	mouse_change(event);
 
-	if (event->mouse_state == MOUSE_LEFT_CLICK)
+	if (event->buttons == MOUSE_LEFT_CLICK)
 	{
 		struct ui_mouse *mouse = &desktop->mouse;
 		struct window *active_win = get_window_from_mouse_position(mouse->graphic.x, mouse->graphic.y);
@@ -372,7 +371,9 @@ void handle_mouse_event(struct msgui_event *event)
 			ui_event->event_type = MOUSE_CLICK;
 			ui_event->mouse_x = desktop->mouse.graphic.x;
 			ui_event->mouse_y = desktop->mouse.graphic.y;
-			msgsnd(active_win->name, (char *)ui_event, 0, sizeof(struct ui_event));
+			int32_t fd = mq_open(active_win->name, O_RDONLY);
+			mq_send(fd, (char *)ui_event, 0, sizeof(struct ui_event));
+			mq_close(fd);
 		}
 		else if (active_win)
 			desktop->active_window = active_win;
@@ -398,14 +399,16 @@ void handle_mouse_event(struct msgui_event *event)
 	}
 }
 
-void handle_keyboard_event(struct msgui_event *event)
+void handle_keyboard_event(struct kybrd_event *event)
 {
 	if (desktop->active_window)
 	{
 		struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
 		ui_event->event_type = KEY_PRESS;
 		ui_event->key = event->key;
-		msgsnd(desktop->active_window->name, (char *)ui_event, 0, sizeof(struct ui_event));
+		int32_t fd = mq_open(desktop->active_window->name, O_WRONLY);
+		mq_send(fd, (char *)ui_event, 0, sizeof(struct ui_event));
+		mq_close(fd);
 	}
 }
 

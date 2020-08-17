@@ -3,7 +3,7 @@
 
 #include <include/cdefs.h>
 #include <include/list.h>
-#include <include/msgui.h>
+#include <libc/gui/msgui.h>
 #include <libc/hashtable/hashmap.h>
 #include <stdint.h>
 
@@ -18,7 +18,7 @@ struct graphic
 {
 	char *buf;
 	int32_t x, y;
-	uint32_t width, height;
+	uint16_t width, height;
 };
 
 struct icon
@@ -39,7 +39,7 @@ struct ui_style
 struct ui_mouse
 {
 	struct graphic graphic;
-	int32_t state;
+	uint8_t buttons;
 };
 
 struct desktop

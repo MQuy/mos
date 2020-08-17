@@ -206,20 +206,20 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *name);
 
 // open.c
 struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name);
-long vfs_open(const char *path);
-long vfs_close(uint32_t fd);
+int32_t vfs_open(const char *path, int32_t flags);
+int32_t vfs_close(int32_t fd);
 int vfs_stat(const char *path, struct kstat *stat);
-int vfs_fstat(uint32_t fd, struct kstat *stat);
+int vfs_fstat(int32_t fd, struct kstat *stat);
 int vfs_mknod(const char *path, int mode, dev_t dev);
-struct nameidata *path_walk(const char *path);
+struct nameidata *path_walk(const char *path, mode_t mode);
 int vfs_truncate(const char *path, int32_t length);
-int vfs_ftruncate(uint32_t fd, int32_t length);
+int vfs_ftruncate(int32_t fd, int32_t length);
 
 // read_write.c
 char *vfs_read(const char *path);
-ssize_t vfs_fread(uint32_t fd, char *buf, size_t count);
+ssize_t vfs_fread(int32_t fd, char *buf, size_t count);
 int vfs_write(const char *path, const char *buf, size_t count);
-ssize_t vfs_fwrite(uint32_t fd, const char *buf, size_t count);
-loff_t vfs_flseek(uint32_t fd, loff_t offset);
+ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count);
+loff_t vfs_flseek(int32_t fd, loff_t offset);
 
 #endif

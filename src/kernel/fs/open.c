@@ -17,7 +17,7 @@ struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name)
 	return d;
 }
 
-struct nameidata *path_walk(const char *path)
+struct nameidata *path_walk(const char *path, mode_t mode)
 {
 	struct nameidata *nd = kcalloc(1, sizeof(struct nameidata));
 	nd->dentry = current_process->fs->d_root;
@@ -51,10 +51,10 @@ struct nameidata *path_walk(const char *path)
 				inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, d_child->d_name);
 			if (inode == NULL)
 			{
-				uint32_t mode = S_IFDIR;
+				uint32_t part_mode = S_IFDIR;
 				if (i == length)
-					mode = S_IFREG;
-				inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child->d_name, mode);
+					part_mode = mode;
+				inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child->d_name, part_mode);
 			}
 			d_child->d_inode = inode;
 			list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
@@ -68,15 +68,16 @@ struct nameidata *path_walk(const char *path)
 	return nd;
 }
 
-long vfs_open(const char *path)
+int32_t vfs_open(const char *path, int32_t flags)
 {
 	int fd = find_unused_fd_slot();
-	struct nameidata *nd = path_walk(path);
+	struct nameidata *nd = path_walk(path, S_IFREG);
 
 	struct vfs_file *file = kcalloc(1, sizeof(struct vfs_file));
 	file->f_dentry = nd->dentry;
 	file->f_vfsmnt = nd->mnt;
 	file->f_pos = 0;
+	file->f_flags = flags;
 	file->f_op = nd->dentry->d_inode->i_fop;
 
 	if (file->f_op && file->f_op->open)
@@ -88,7 +89,7 @@ long vfs_open(const char *path)
 	return fd;
 }
 
-long vfs_close(uint32_t fd)
+int32_t vfs_close(int32_t fd)
 {
 	struct files_struct *files = current_process->files;
 
@@ -141,11 +142,11 @@ int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct kstat *s
 
 int vfs_stat(const char *path, struct kstat *stat)
 {
-	struct nameidata *nd = path_walk(path);
+	struct nameidata *nd = path_walk(path, S_IFREG);
 	return do_getattr(nd->mnt, nd->dentry, stat);
 }
 
-int vfs_fstat(uint32_t fd, struct kstat *stat)
+int vfs_fstat(int32_t fd, struct kstat *stat)
 {
 	struct vfs_file *f = current_process->files->fd[fd];
 	return do_getattr(f->f_vfsmnt, f->f_dentry, stat);
@@ -156,7 +157,7 @@ int vfs_mknod(const char *path, int mode, dev_t dev)
 	char *dir, *name;
 	strlsplat(path, strliof(path, "/"), &dir, &name);
 
-	struct nameidata *nd = path_walk(dir);
+	struct nameidata *nd = path_walk(dir, S_IFDIR);
 	struct vfs_dentry *d_child = alloc_dentry(nd->dentry, name);
 	int ret = nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, d_child, mode, dev);
 	list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
@@ -189,11 +190,11 @@ int do_truncate(struct vfs_dentry *dentry, int32_t length)
 
 int vfs_truncate(const char *path, int32_t length)
 {
-	struct nameidata *nd = path_walk(path);
+	struct nameidata *nd = path_walk(path, S_IFREG);
 	return do_truncate(nd->dentry, length);
 }
 
-int vfs_ftruncate(uint32_t fd, int32_t length)
+int vfs_ftruncate(int32_t fd, int32_t length)
 {
 	struct vfs_file *f = current_process->files->fd[fd];
 	return do_truncate(f->f_dentry, length);

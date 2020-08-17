@@ -17,12 +17,7 @@ struct vfs_inode *devfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 	i->i_ctime.tv_sec = get_seconds(NULL);
 	i->i_mtime.tv_sec = get_seconds(NULL);
 
-	if (S_ISREG(i->i_mode))
-	{
-		i->i_op = &devfs_file_inode_operations;
-		i->i_fop = &devfs_file_operations;
-	}
-	else if (S_ISDIR(i->i_mode))
+	if (S_ISDIR(i->i_mode))
 	{
 		i->i_op = &devfs_dir_inode_operations;
 		i->i_fop = &devfs_dir_operations;
@@ -39,7 +34,6 @@ struct vfs_inode *devfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 struct vfs_inode *devfs_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *inode = init_inode();
-	INIT_LIST_HEAD(&inode->i_data.pages);
 	inode->i_sb = sb;
 
 	return inode;

@@ -1,5 +1,4 @@
 #include <include/mman.h>
-#include <include/msgui.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -34,7 +33,6 @@
 #include "system/sysapi.h"
 #include "system/time.h"
 #include "system/timer.h"
-#include "system/uiserver.h"
 #include "utils/math.h"
 #include "utils/printf.h"
 #include "utils/string.h"
@@ -43,9 +41,6 @@ extern struct vfs_file_system_type ext2_fs_type;
 
 void setup_window_server(struct Elf32_Layout *elf_layout)
 {
-	uiserver_init(current_thread);
-	mq_open(WINDOW_SERVER_SHM, 0);
-
 	struct framebuffer *fb = get_framebuffer();
 	uint32_t screen_size = fb->height * fb->pitch;
 	struct vm_area_struct *area = get_unmapped_area(0, screen_size);
@@ -82,13 +77,17 @@ void kernel_init()
 	vfs_init(&ext2_fs_type, "/dev/hda");
 	chrdev_memory_init();
 
+	/// init keyboard and mouse
+	kkybrd_install();
+	mouse_init();
+
 	// init ipc message queue
 	mq_init();
 
 	// register system apis
 	syscall_init();
 
-	// process_load("window server", "/bin/window_server", 0, setup_window_server);
+	process_load("window server", "/bin/window_server", 0, setup_window_server);
 
 	// idle
 	update_thread(current_thread, THREAD_WAITING);
@@ -146,11 +145,9 @@ int kernel_main(uint32_t addr, uint32_t magic)
 
 	exception_init();
 
-	// timer and keyboard
+	// timer
 	rtc_init();
 	pit_init();
-	kkybrd_install();
-	mouse_init();
 
 	framebuffer_init(multiboot_framebuffer);
 

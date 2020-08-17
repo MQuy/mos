@@ -2,20 +2,18 @@
 
 - get queue from hashmap
 - copy buf from user space to kernel space (buf has to not contain any external pointers)
-- check is there a receiver with the same requested type
-  - if having, update message sender (id and thread's state to ready), buf and size -> remove it from queue
-  - if not, create the message with sender, buf and size -> add it into queue
-- if message type >= 0, call Receive with -type to wait to receive ack from a receiver
+- create and add message into queue
+- if there is receiver -> remove receiver from queue and mark as ready
+- wait until that message has no link
+- free that message
 
 ### Receive
 
 - get queue from hashmap
-- check is there a message with the same requested type
-  - if having, remove it from queue
-  - if not
-    - create receiver with buf, size and type
-    - add it to queue
-    - sleep
-    - wakeup (sender update receiver's thread state)
-- if message type >= 0, send ack to sender with -type
-- if buf != NULL, copy from receciver's buf to user buf
+- if there is a message in queue -> go to the last step
+- if not
+  - create and add receiver into queue
+  - mark as waiting and sleep until there is a message on queue
+  - remove receiver from queue
+  - go to the last step
+- copy to user space, remove message from queue and mark sender as ready

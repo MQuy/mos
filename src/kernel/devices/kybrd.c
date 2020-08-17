@@ -2,16 +2,16 @@
 
 #include <include/ctype.h>
 #include <include/errno.h>
-#include <include/msgui.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
+#include <kernel/devices/kybrd.h>
 #include <kernel/devices/mouse.h>
 #include <kernel/fs/char_dev.h>
-#include <kernel/system/uiserver.h>
+#include <kernel/proc/task.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-static void kybrd_notify_readers(int32_t key);
+static void kybrd_notify_readers(struct kybrd_event *event);
 
 // keyboard encoder ------------------------------------------
 
@@ -225,6 +225,7 @@ static int _kkybrd_scancode_std[] = {
 
 //! invalid scan code. Used to indicate the last scan code is not to be reused
 const int INVALID_SCANCODE = 0;
+struct kybrd_event current_kybrd_event;
 
 uint8_t kybrd_ctrl_read_status();
 void kybrd_ctrl_send_cmd(uint8_t);
@@ -310,6 +311,10 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 					_alt = false;
 					break;
 				}
+
+				current_kybrd_event.type = KEY_RELEASE;
+				current_kybrd_event.key = key;
+				kybrd_notify_readers(&current_kybrd_event);
 			}
 			else
 			{
@@ -357,7 +362,7 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 				// workaround via using left/right command to simuate left/right click
 				if (key == KEY_LCOMMAND || key == KEY_RCOMMAND)
 				{
-					struct mouse_motion *mouse = kcalloc(1, sizeof(struct mouse_motion));
+					struct mouse_event *mouse = kcalloc(1, sizeof(struct mouse_event));
 					mouse->x = 0;
 					mouse->y = 0;
 					mouse->buttons = key == KEY_LCOMMAND ? MOUSE_LEFT_CLICK : MOUSE_RIGHT_CLICK;
@@ -365,7 +370,11 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 					kfree(mouse);
 				}
 				else
-					kybrd_notify_readers(key);
+				{
+					current_kybrd_event.type = KEY_PRRESS;
+					current_kybrd_event.key = key;
+					kybrd_notify_readers(&current_kybrd_event);
+				}
 			}
 		}
 
@@ -631,13 +640,13 @@ bool kkybrd_self_test()
 struct list_head nodelist;
 struct wait_queue_head hwait;
 
-static void kybrd_notify_readers(int32_t key)
+static void kybrd_notify_readers(struct kybrd_event *event)
 {
 	struct kybrd_inode *iter;
 	list_for_each_entry(iter, &nodelist, sibling)
 	{
 		iter->tail = (iter->tail + 1) / KYBRD_PACKET_QUEUE_LEN;
-		iter->packets[iter->tail] = key;
+		iter->packets[iter->tail] = *event;
 		if (iter->tail == iter->head)
 			iter->head = (iter->head + 1) / KYBRD_PACKET_QUEUE_LEN;
 		iter->ready = true;
@@ -705,10 +714,12 @@ static struct char_device cdev_kybrd = {
 void kkybrd_install()
 {
 	DEBUG &&debug_println(DEBUG_INFO, "[keyboard] - Initializing");
+	INIT_LIST_HEAD(&nodelist);
+	INIT_LIST_HEAD(&hwait.list);
 
 	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount kybrd");
 	register_chrdev(&cdev_kybrd);
-	vfs_mknod("/dev/keyboard", S_IFCHR, cdev_kybrd.dev);
+	vfs_mknod("/dev/input/keyboard", S_IFCHR, cdev_kybrd.dev);
 
 	//! Install our interrupt handler (irq 1 uses interrupt 33)
 	register_interrupt_handler(IRQ1, i86_kybrd_irq);

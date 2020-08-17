@@ -1,7 +1,6 @@
 #include "mouse.h"
 
 #include <include/errno.h>
-#include <include/msgui.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/pic.h>
@@ -9,7 +8,7 @@
 #include <kernel/fs/poll.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/memory/vmm.h>
-#include <kernel/system/uiserver.h>
+#include <kernel/proc/task.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
@@ -23,11 +22,11 @@
 
 static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[4];
-static struct mouse_motion current_mouse_motion;
+static struct mouse_event current_mouse_motion;
 struct list_head nodelist;
 struct wait_queue_head hwait;
 
-void mouse_notify_readers(struct mouse_motion *mm)
+void mouse_notify_readers(struct mouse_event *mm)
 {
 	struct mouse_inode *iter;
 	list_for_each_entry(iter, &nodelist, sibling)
@@ -59,7 +58,7 @@ static ssize_t mouse_read(struct vfs_file *file, char *buf, size_t count, loff_t
 	if (mi->head == mi->tail)
 		return -EINVAL;
 
-	memcpy(buf, &mi->packets[mi->head], sizeof(struct mouse_motion));
+	memcpy(buf, &mi->packets[mi->head], sizeof(struct mouse_event));
 	mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
 
 	if (mi->head == mi->tail)
@@ -73,7 +72,7 @@ static unsigned int mouse_poll(struct vfs_file *file, struct poll_table *pt)
 	struct mouse_inode *mi = (struct mouse_inode *)file->private_data;
 	poll_wait(file, &hwait, pt);
 
-	return mi->ready ? (POLLIN | POLLRDNORM) : 0;
+	return mi->ready ? POLLIN : 0;
 }
 
 static int mouse_release(struct vfs_inode *inode, struct vfs_file *file)
@@ -218,6 +217,8 @@ static uint8_t mouse_input(void)
 void mouse_init()
 {
 	DEBUG &&debug_println(DEBUG_INFO, "[mouse] - Initializing");
+	INIT_LIST_HEAD(&nodelist);
+	INIT_LIST_HEAD(&hwait.list);
 
 	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount mouse");
 	register_chrdev(&cdev_mouse);

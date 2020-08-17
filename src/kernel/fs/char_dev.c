@@ -50,11 +50,60 @@ int chrdev_open(struct vfs_inode *inode, struct vfs_file *filp)
 		cdev->f_ops->open(inode, filp);
 		return 0;
 	}
+
+	return -EINVAL;
+}
+
+int chrdev_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+{
+	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
+	if (cdev == NULL)
+		return -ENODEV;
+
+	if (cdev->f_ops->read)
+	{
+		cdev->f_ops->read(file, buf, count, ppos);
+		return 0;
+	}
+
+	return -EINVAL;
+}
+
+int chrdev_poll(struct vfs_file *file, struct poll_table *pt)
+{
+	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
+	if (cdev == NULL)
+		return -ENODEV;
+
+	if (cdev->f_ops->poll)
+	{
+		cdev->f_ops->poll(file, pt);
+		return 0;
+	}
+
+	return -EINVAL;
+}
+
+int chrdev_release(struct vfs_inode *inode, struct vfs_file *file)
+{
+	struct char_device *cdev = get_chrdev(inode->i_rdev);
+	if (cdev == NULL)
+		return -ENODEV;
+
+	if (cdev->f_ops->release)
+	{
+		cdev->f_ops->release(inode, file);
+		return 0;
+	}
+
 	return -EINVAL;
 }
 
 struct vfs_file_operations def_chr_fops = {
 	.open = chrdev_open,
+	.read = chrdev_read,
+	.poll = chrdev_poll,
+	.release = chrdev_release,
 };
 
 void chrdev_init()

@@ -2,6 +2,7 @@
 
 #include <include/ctype.h>
 #include <include/errno.h>
+#include <include/fcntl.h>
 #include <kernel/cpu/hal.h>
 #include <kernel/fs/pipefs/pipe.h>
 #include <kernel/fs/sockfs/sockfs.h>
@@ -40,9 +41,9 @@ int32_t sys_write(uint32_t fd, char *buf, size_t count)
 	return vfs_fwrite(fd, buf, count);
 }
 
-int32_t sys_open(const char *path, int32_t flag, int32_t mode)
+int32_t sys_open(const char *path, int32_t flags, int32_t mode)
 {
-	return vfs_open(path);
+	return vfs_open(path, flags);
 }
 
 int32_t sys_fstat(int32_t fd, struct kstat *stat)
@@ -81,16 +82,6 @@ int32_t sys_ftruncate(uint32_t fd, int32_t length)
 	return vfs_ftruncate(fd, length);
 }
 
-int32_t sys_msgopen(const char *name, int32_t flags)
-{
-	return mq_open(name, flags);
-}
-
-int32_t sys_msgclose(const char *name)
-{
-	return mq_close(name);
-}
-
 int32_t sys_brk(uint32_t brk)
 {
 	struct mm_struct *current_mm = current_process->mm;
@@ -104,16 +95,6 @@ int32_t sys_brk(uint32_t brk)
 int32_t sys_sbrk(intptr_t increment)
 {
 	return sys_brk(current_process->mm->brk + increment);
-}
-
-int32_t sys_msgsnd(const char *name, char *buf, int32_t mtype, uint32_t msize)
-{
-	return mq_send(name, buf, mtype, msize);
-}
-
-int32_t sys_msgrcv(const char *name, char *buf, int32_t mtype, uint32_t msize)
-{
-	return mq_receive(name, buf, mtype, msize);
 }
 
 int32_t sys_getpid()
@@ -131,7 +112,7 @@ int32_t sys_posix_spawn(char *path)
 int32_t sys_socket(int32_t family, enum socket_type type, int32_t protocal)
 {
 	char *path = get_next_socket_path();
-	int32_t fd = vfs_open(path);
+	int32_t fd = vfs_open(path, O_RDWR);
 	socket_setup(family, type, protocal, current_process->files->fd[fd]);
 	return fd;
 }
@@ -160,6 +141,36 @@ int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
 	return sock->ops->recvmsg(sock, msg, len);
 }
 
+int32_t sys_poll(struct pollfd *fds, uint32_t nfds)
+{
+	return do_poll(fds, nfds);
+}
+
+int32_t sys_mq_open(const char *name, int32_t flags)
+{
+	return mq_open(name, flags);
+}
+
+int32_t sys_mq_close(int32_t fd)
+{
+	return mq_close(fd);
+}
+
+int32_t sys_mq_unlink(const char *name)
+{
+	return mq_unlink(name);
+}
+
+int32_t sys_mq_send(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
+{
+	return mq_send(fd, buf, priority, msize);
+}
+
+int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
+{
+	return mq_receive(fd, buf, priority, msize);
+}
+
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -186,11 +197,13 @@ int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
+#define __NR_poll 168
 #define __NR_sendto 133
-#define __NR_msgopen 200
-#define __NR_msgclose 201
-#define __NR_msgrcv 202
-#define __NR_msgsnd 203
+#define __NR_mq_open 277
+#define __NR_mq_close (__NR_mq_open + 1)
+#define __NR_mq_unlink (__NR_mq_open + 2)
+#define __NR_mq_send (__NR_mq_open + 3)
+#define __NR_mq_receive (__NR_mq_open + 4)
 
 static void *syscalls[] = {
 	[__NR_exit] = sys_exit,
@@ -214,10 +227,12 @@ static void *syscalls[] = {
 	[__NR_bind] = sys_bind,
 	[__NR_send] = sys_send,
 	[__NR_recv] = sys_recv,
-	[__NR_msgopen] = sys_msgopen,
-	[__NR_msgclose] = sys_msgclose,
-	[__NR_msgsnd] = sys_msgsnd,
-	[__NR_msgrcv] = sys_msgrcv,
+	[__NR_poll] = sys_poll,
+	[__NR_mq_open] = sys_mq_open,
+	[__NR_mq_close] = sys_mq_close,
+	[__NR_mq_unlink] = sys_mq_unlink,
+	[__NR_mq_send] = sys_mq_send,
+	[__NR_mq_receive] = sys_mq_receive,
 };
 
 int32_t syscall_dispatcher(struct interrupt_registers *regs)

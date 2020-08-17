@@ -2,7 +2,7 @@
 
 #include <include/fcntl.h>
 #include <include/mman.h>
-#include <include/msgui.h>
+#include <libc/gui/msgui.h>
 #include <libc/gui/psf.h>
 #include <libc/stdlib.h>
 #include <libc/string.h>
@@ -57,7 +57,9 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 	if (parent)
 		memcpy(msgwin->parent, parent->name, WINDOW_NAME_LENGTH);
 	memcpy(msgwin->sender, pid, WINDOW_NAME_LENGTH);
-	msgsnd(WINDOW_SERVER_SHM, (char *)msgui_sender, 0, sizeof(struct msgui));
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
+	mq_send(sfd, (char *)msgui_sender, 0, sizeof(struct msgui));
+	mq_close(sfd);
 
 	win->graphic.x = x;
 	win->graphic.y = y;
@@ -72,7 +74,9 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 	if (parent)
 		list_add_tail(&win->sibling, &parent->children);
 
-	msgrcv(msgwin->sender, win->name, 0, WINDOW_NAME_LENGTH);
+	int32_t wfd = mq_open(msgwin->sender, O_RDONLY);
+	mq_receive(wfd, win->name, 0, WINDOW_NAME_LENGTH);
+	mq_close(wfd);
 
 	uint32_t buf_size = width * height * 4;
 	int32_t fd = shm_open(win->name, O_RDWR | O_CREAT, 0);
@@ -102,15 +106,10 @@ void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, 
 
 struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
-	char *pid = calloc(1, WINDOW_NAME_LENGTH);
-	itoa(getpid(), 10, pid);
-	msgopen(pid, 0);
-
 	init_fonts();
 	struct window *win = calloc(1, sizeof(struct window));
 	gui_create_window(NULL, win, x, y, width, height, NULL);
 
-	msgopen(win->name, 0);
 	return win;
 }
 
@@ -120,13 +119,17 @@ void enter_event_loop(struct window *win)
 	msgui->type = MSGUI_FOCUS;
 	struct msgui_focus *msgfocus = (struct msgui_focus *)msgui->data;
 	memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
-	msgsnd(WINDOW_SERVER_SHM, (char *)msgui, 0, sizeof(struct msgui));
+
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
+	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
+	mq_close(sfd);
 
 	struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
+	int32_t wfd = mq_open(win->name, O_RDONLY);
 	while (true)
 	{
 		memset(ui_event, 0, sizeof(struct ui_event));
-		msgrcv(win->name, (char *)ui_event, 0, sizeof(struct ui_event));
+		mq_receive(wfd, (char *)ui_event, 0, sizeof(struct ui_event));
 
 		if (ui_event->event_type == MOUSE_CLICK)
 		{
@@ -139,4 +142,6 @@ void enter_event_loop(struct window *win)
 			}
 		}
 	};
+
+	mq_close(wfd);
 }
