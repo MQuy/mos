@@ -44,7 +44,7 @@ void add_event_handler(struct window *win, char *event_name, EVENT_HANDLER handl
 
 void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height, struct ui_style *style)
 {
-	char *pid = calloc(1, WINDOW_NAME_LENGTH);
+	char *pid = calloc(sizeof(char), WINDOW_NAME_LENGTH);
 	itoa(getpid(), 10, pid);
 
 	struct msgui *msgui_sender = calloc(1, sizeof(struct msgui));
@@ -60,6 +60,7 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
 	mq_send(sfd, (char *)msgui_sender, 0, sizeof(struct msgui));
 	mq_close(sfd);
+	free(msgui_sender);
 
 	win->graphic.x = x;
 	win->graphic.y = y;
@@ -123,6 +124,7 @@ void enter_event_loop(struct window *win)
 	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
 	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
 	mq_close(sfd);
+	free(msgui);
 
 	struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
 	int32_t wfd = mq_open(win->name, O_RDONLY);
@@ -144,4 +146,5 @@ void enter_event_loop(struct window *win)
 	};
 
 	mq_close(wfd);
+	free(ui_event);
 }

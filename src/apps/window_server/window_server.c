@@ -34,7 +34,7 @@ int main(struct framebuffer fb)
 		if (nr > 0)
 			for (int32_t i = 0; i < 3; ++i)
 			{
-				if (!pfds[i].revents)
+				if (!(pfds[i].revents & POLLIN))
 					continue;
 
 				if (pfds[i].fd == ws_fd)

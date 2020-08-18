@@ -23,18 +23,24 @@
 static uint8_t mouse_cycle = 0;
 static uint8_t mouse_byte[4];
 static struct mouse_event current_mouse_motion;
-struct list_head nodelist;
-struct wait_queue_head hwait;
+static struct list_head nodelist;
+static struct wait_queue_head hwait;
 
 void mouse_notify_readers(struct mouse_event *mm)
 {
 	struct mouse_inode *iter;
 	list_for_each_entry(iter, &nodelist, sibling)
 	{
-		iter->tail = (iter->tail + 1) / MOUSE_PACKET_QUEUE_LEN;
+		if (iter->ready == true)
+		{
+			iter->tail = (iter->tail + 1) % MOUSE_PACKET_QUEUE_LEN;
+			if (iter->tail == iter->head)
+				iter->head = (iter->head + 1) % MOUSE_PACKET_QUEUE_LEN;
+		}
+		else
+			iter->head = iter->tail;
+
 		iter->packets[iter->tail] = *mm;
-		if (iter->tail == iter->head)
-			iter->head = (iter->head + 1) / MOUSE_PACKET_QUEUE_LEN;
 		iter->ready = true;
 	}
 	wake_up(&hwait);
@@ -55,13 +61,16 @@ static ssize_t mouse_read(struct vfs_file *file, char *buf, size_t count, loff_t
 	struct mouse_inode *mi = (struct mouse_inode *)file->private_data;
 	wait_event(&hwait, mi->ready);
 
-	if (mi->head == mi->tail)
-		return -EINVAL;
-
 	memcpy(buf, &mi->packets[mi->head], sizeof(struct mouse_event));
-	mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
 
-	if (mi->head == mi->tail)
+	if (mi->tail != mi->head)
+	{
+		mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
+
+		if (mi->head == mi->tail)
+			mi->ready = false;
+	}
+	else
 		mi->ready = false;
 
 	return 0;
@@ -124,21 +133,19 @@ static void mouse_calculate_position()
 	current_mouse_motion.y = move_y;
 
 	current_mouse_motion.buttons = 0;
-	// FIXME: MQ 2020-03-22 on Mac 10.15.3, qemu 4.2.0
-	// after left/right clicking, next mouse events, first mouse packet state still has left/right state
-	// workaround via using left/right command to simuate left/right click
-	// if (state & MOUSE_LEFT_CLICK)
-	// {
-	//   current_mouse_motion.buttons |= MOUSE_LEFT_CLICK;
-	// }
-	// if (state & MOUSE_RIGHT_CLICK)
-	// {
-	//   current_mouse_motion.buttons |= MOUSE_RIGHT_CLICK;
-	// }
-	// if (state & MOUSE_MIDDLE_CLICK)
-	// {
-	//   current_mouse_motion.buttons |= MOUSE_MIDDLE_CLICK;
-	// }
+
+	if (state & MOUSE_LEFT_CLICK)
+	{
+		current_mouse_motion.buttons |= MOUSE_LEFT_CLICK;
+	}
+	if (state & MOUSE_RIGHT_CLICK)
+	{
+		current_mouse_motion.buttons |= MOUSE_RIGHT_CLICK;
+	}
+	if (state & MOUSE_MIDDLE_CLICK)
+	{
+		current_mouse_motion.buttons |= MOUSE_MIDDLE_CLICK;
+	}
 }
 
 static int32_t irq_mouse_handler(struct interrupt_registers *regs)
@@ -224,6 +231,9 @@ void mouse_init()
 	register_chrdev(&cdev_mouse);
 	vfs_mknod("/dev/input/mouse", S_IFCHR, cdev_mouse.dev);
 
+	register_interrupt_handler(IRQ12, irq_mouse_handler);
+	pic_clear_mask(12);
+
 	// empty input buffer
 	while ((inportb(MOUSE_STATUS) & 0x01))
 	{
@@ -259,7 +269,5 @@ void mouse_init()
 	mouse_output(0xF4);
 	mouse_input();
 
-	register_interrupt_handler(IRQ12, irq_mouse_handler);
-	pic_clear_mask(12);
 	DEBUG &&debug_println(DEBUG_INFO, "[mouse] - Done");
 }

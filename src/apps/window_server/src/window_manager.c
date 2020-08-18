@@ -374,6 +374,7 @@ void handle_mouse_event(struct mouse_event *event)
 			int32_t fd = mq_open(active_win->name, O_RDONLY);
 			mq_send(fd, (char *)ui_event, 0, sizeof(struct ui_event));
 			mq_close(fd);
+			free(ui_event);
 		}
 		else if (active_win)
 			desktop->active_window = active_win;
@@ -409,6 +410,7 @@ void handle_keyboard_event(struct kybrd_event *event)
 		int32_t fd = mq_open(desktop->active_window->name, O_WRONLY);
 		mq_send(fd, (char *)ui_event, 0, sizeof(struct ui_event));
 		mq_close(fd);
+		free(ui_event);
 	}
 }
 

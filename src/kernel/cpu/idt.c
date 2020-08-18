@@ -157,7 +157,7 @@ void handle_interrupt(struct interrupt_registers *regs)
 	}
 	else
 	{
-		DEBUG &&debug_println(DEBUG_ERROR, "\nunhandled interrupt %d", int_no);
+		DEBUG &&debug_println(DEBUG_ERROR, "unhandled interrupt %d", int_no);
 	}
 }
 

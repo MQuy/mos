@@ -200,6 +200,9 @@ void user_thread_entry(struct thread *t)
 
 void user_thread_elf_entry(struct thread *t, const char *path, void (*setup)(struct Elf32_Layout *))
 {
+	// explain in kernel_init#unlock_scheduler
+	unlock_scheduler();
+
 	char *buf = vfs_read(path);
 	struct Elf32_Layout *elf_layout = elf_load(buf);
 	t->user_stack = elf_layout->stack;

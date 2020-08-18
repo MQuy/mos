@@ -357,24 +357,10 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 					kkybrd_set_leds(_numlock, _capslock, _scrolllock);
 					break;
 				}
-				// FIXME: MQ 2020-03-22 on Mac 10.15.3, qemu 4.2.0
-				// after left/right clicking, next mouse events, first mouse packet state still has left/right state
-				// workaround via using left/right command to simuate left/right click
-				if (key == KEY_LCOMMAND || key == KEY_RCOMMAND)
-				{
-					struct mouse_event *mouse = kcalloc(1, sizeof(struct mouse_event));
-					mouse->x = 0;
-					mouse->y = 0;
-					mouse->buttons = key == KEY_LCOMMAND ? MOUSE_LEFT_CLICK : MOUSE_RIGHT_CLICK;
-					mouse_notify_readers(mouse);
-					kfree(mouse);
-				}
-				else
-				{
-					current_kybrd_event.type = KEY_PRRESS;
-					current_kybrd_event.key = key;
-					kybrd_notify_readers(&current_kybrd_event);
-				}
+
+				current_kybrd_event.type = KEY_PRRESS;
+				current_kybrd_event.key = key;
+				kybrd_notify_readers(&current_kybrd_event);
 			}
 		}
 
@@ -637,18 +623,24 @@ bool kkybrd_self_test()
 	return (kybrd_enc_read_buf() == 0x55) ? true : false;
 }
 
-struct list_head nodelist;
-struct wait_queue_head hwait;
+static struct list_head nodelist;
+static struct wait_queue_head hwait;
 
 static void kybrd_notify_readers(struct kybrd_event *event)
 {
 	struct kybrd_inode *iter;
 	list_for_each_entry(iter, &nodelist, sibling)
 	{
-		iter->tail = (iter->tail + 1) / KYBRD_PACKET_QUEUE_LEN;
+		if (iter->ready == true)
+		{
+			iter->tail = (iter->tail + 1) % MOUSE_PACKET_QUEUE_LEN;
+			if (iter->tail == iter->head)
+				iter->head = (iter->head + 1) % MOUSE_PACKET_QUEUE_LEN;
+		}
+		else
+			iter->head = iter->tail;
+
 		iter->packets[iter->tail] = *event;
-		if (iter->tail == iter->head)
-			iter->head = (iter->head + 1) / KYBRD_PACKET_QUEUE_LEN;
 		iter->ready = true;
 	}
 	wake_up(&hwait);
@@ -669,13 +661,16 @@ static ssize_t kybrd_read(struct vfs_file *file, char *buf, size_t count, loff_t
 	struct kybrd_inode *mi = (struct kybrd_inode *)file->private_data;
 	wait_event(&hwait, mi->ready);
 
-	if (mi->head == mi->tail)
-		return -EINVAL;
-
 	memcpy(buf, &mi->packets[mi->head], sizeof(int32_t));
-	mi->head = (mi->head + 1) % KYBRD_PACKET_QUEUE_LEN;
 
-	if (mi->head == mi->tail)
+	if (mi->tail != mi->head)
+	{
+		mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
+
+		if (mi->head == mi->tail)
+			mi->ready = false;
+	}
+	else
 		mi->ready = false;
 
 	return 0;

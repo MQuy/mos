@@ -18,7 +18,7 @@ void poll_table_free(struct poll_table *pt)
 
 void poll_wakeup(struct thread *t)
 {
-	t->state = THREAD_READY;
+	update_thread(t, THREAD_READY);
 }
 
 void poll_wait(struct vfs_file *file, struct wait_queue_head *wh, struct poll_table *pt)
