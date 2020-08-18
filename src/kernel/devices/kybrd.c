@@ -11,7 +11,7 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-static void kybrd_notify_readers(struct kybrd_event *event);
+static void kybrd_notify_readers(struct key_event *event);
 
 // keyboard encoder ------------------------------------------
 
@@ -225,7 +225,7 @@ static int _kkybrd_scancode_std[] = {
 
 //! invalid scan code. Used to indicate the last scan code is not to be reused
 const int INVALID_SCANCODE = 0;
-struct kybrd_event current_kybrd_event;
+struct key_event current_kybrd_event;
 
 uint8_t kybrd_ctrl_read_status();
 void kybrd_ctrl_send_cmd(uint8_t);
@@ -626,7 +626,7 @@ bool kkybrd_self_test()
 static struct list_head nodelist;
 static struct wait_queue_head hwait;
 
-static void kybrd_notify_readers(struct kybrd_event *event)
+static void kybrd_notify_readers(struct key_event *event)
 {
 	struct kybrd_inode *iter;
 	list_for_each_entry(iter, &nodelist, sibling)
@@ -664,12 +664,7 @@ static ssize_t kybrd_read(struct vfs_file *file, char *buf, size_t count, loff_t
 	memcpy(buf, &mi->packets[mi->head], sizeof(int32_t));
 
 	if (mi->tail != mi->head)
-	{
 		mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
-
-		if (mi->head == mi->tail)
-			mi->ready = false;
-	}
 	else
 		mi->ready = false;
 

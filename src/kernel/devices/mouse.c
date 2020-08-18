@@ -64,12 +64,7 @@ static ssize_t mouse_read(struct vfs_file *file, char *buf, size_t count, loff_t
 	memcpy(buf, &mi->packets[mi->head], sizeof(struct mouse_event));
 
 	if (mi->tail != mi->head)
-	{
 		mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
-
-		if (mi->head == mi->tail)
-			mi->ready = false;
-	}
 	else
 		mi->ready = false;
 
@@ -134,17 +129,17 @@ static void mouse_calculate_position()
 
 	current_mouse_motion.buttons = 0;
 
-	if (state & MOUSE_LEFT_CLICK)
+	if (state & BUTTON_LEFT)
 	{
-		current_mouse_motion.buttons |= MOUSE_LEFT_CLICK;
+		current_mouse_motion.buttons |= BUTTON_LEFT;
 	}
-	if (state & MOUSE_RIGHT_CLICK)
+	if (state & BUTTON_RIGHT)
 	{
-		current_mouse_motion.buttons |= MOUSE_RIGHT_CLICK;
+		current_mouse_motion.buttons |= BUTTON_RIGHT;
 	}
-	if (state & MOUSE_MIDDLE_CLICK)
+	if (state & BUTTON_MIDDLE)
 	{
-		current_mouse_motion.buttons |= MOUSE_MIDDLE_CLICK;
+		current_mouse_motion.buttons |= BUTTON_MIDDLE;
 	}
 }
 
@@ -169,8 +164,10 @@ static int32_t irq_mouse_handler(struct interrupt_registers *regs)
 			break;
 		case 2:
 			mouse_byte[2] = mouse_in;
+			uint8_t prev_buttons = current_mouse_motion.buttons;
 			mouse_calculate_position();
-			if (current_mouse_motion.x != 0 || current_mouse_motion.y != 0 || current_mouse_motion.buttons != 0)
+			if (current_mouse_motion.x != 0 || current_mouse_motion.y != 0 ||
+				current_mouse_motion.buttons != 0 || prev_buttons != current_mouse_motion.buttons)
 				mouse_notify_readers(&current_mouse_motion);
 			break;
 		}

@@ -126,25 +126,30 @@ void enter_event_loop(struct window *win)
 	mq_close(sfd);
 	free(msgui);
 
-	struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
+	struct xevent *event = calloc(1, sizeof(struct xevent));
 	int32_t wfd = mq_open(win->name, O_RDONLY);
 	while (true)
 	{
-		memset(ui_event, 0, sizeof(struct ui_event));
-		mq_receive(wfd, (char *)ui_event, 0, sizeof(struct ui_event));
+		memset(event, 0, sizeof(struct xevent));
+		mq_receive(wfd, (char *)event, 0, sizeof(struct xevent));
 
-		if (ui_event->event_type == MOUSE_CLICK)
+		if (event->type == XBUTTON_EVENT)
 		{
-			struct window *active_win = find_child_element_from_position(win, win->graphic.x, win->graphic.y, ui_event->mouse_x, ui_event->mouse_y);
-			if (active_win)
+			struct xbutton_event *bevent = (struct xbutton_event *)event->data;
+
+			if (bevent->action == XBUTTON_PRESS)
 			{
-				EVENT_HANDLER handler = hashmap_get(&active_win->events, "click");
-				if (handler)
-					handler(active_win);
+				struct window *active_win = find_child_element_from_position(win, win->graphic.x, win->graphic.y, bevent->x, bevent->y);
+				if (active_win)
+				{
+					EVENT_HANDLER handler = hashmap_get(&active_win->events, "click");
+					if (handler)
+						handler(active_win);
+				}
 			}
 		}
 	};
 
 	mq_close(wfd);
-	free(ui_event);
+	free(event);
 }

@@ -357,24 +357,22 @@ struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
 	return NULL;
 }
 
-void handle_mouse_event(struct mouse_event *event)
+void handle_mouse_event(struct mouse_event *mevent)
 {
-	mouse_change(event);
+	uint8_t prev_buttons = desktop->mouse.buttons;
+	mouse_change(mevent);
 
-	if (event->buttons == MOUSE_LEFT_CLICK)
+	if ((mevent->buttons & BUTTON_LEFT) && !(prev_buttons & BUTTON_LEFT))
 	{
 		struct ui_mouse *mouse = &desktop->mouse;
 		struct window *active_win = get_window_from_mouse_position(mouse->graphic.x, mouse->graphic.y);
 		if (active_win && active_win == desktop->active_window)
 		{
-			struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
-			ui_event->event_type = MOUSE_CLICK;
-			ui_event->mouse_x = desktop->mouse.graphic.x;
-			ui_event->mouse_y = desktop->mouse.graphic.y;
+			struct xevent *event = create_xbutton_event(BUTTON_LEFT, XBUTTON_PRESS, desktop->mouse.graphic.x, desktop->mouse.graphic.y);
 			int32_t fd = mq_open(active_win->name, O_RDONLY);
-			mq_send(fd, (char *)ui_event, 0, sizeof(struct ui_event));
+			mq_send(fd, (char *)event, 0, sizeof(struct xevent));
 			mq_close(fd);
-			free(ui_event);
+			free(event);
 		}
 		else if (active_win)
 			desktop->active_window = active_win;
@@ -400,17 +398,15 @@ void handle_mouse_event(struct mouse_event *event)
 	}
 }
 
-void handle_keyboard_event(struct kybrd_event *event)
+void handle_keyboard_event(struct key_event *kevent)
 {
 	if (desktop->active_window)
 	{
-		struct ui_event *ui_event = calloc(1, sizeof(struct ui_event));
-		ui_event->event_type = KEY_PRESS;
-		ui_event->key = event->key;
+		struct xevent *event = create_xkey_event(kevent->key, kevent->type);
 		int32_t fd = mq_open(desktop->active_window->name, O_WRONLY);
-		mq_send(fd, (char *)ui_event, 0, sizeof(struct ui_event));
+		mq_send(fd, (char *)event, 0, sizeof(struct xevent));
 		mq_close(fd);
-		free(ui_event);
+		free(event);
 	}
 }
 

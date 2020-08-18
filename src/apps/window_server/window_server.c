@@ -22,7 +22,7 @@ int main(struct framebuffer fb)
 
 	struct msgui ws_buf;
 	struct mouse_event mouse_event;
-	struct kybrd_event krb_event;
+	struct key_event krb_event;
 
 	init_layout(&fb);
 	draw_layout();
@@ -66,7 +66,7 @@ int main(struct framebuffer fb)
 				}
 				else if (pfds[i].fd == krb_fd)
 				{
-					read(krb_fd, (char *)&krb_event, sizeof(struct kybrd_event));
+					read(krb_fd, (char *)&krb_event, sizeof(struct key_event));
 					handle_keyboard_event(&krb_event);
 					draw_layout();
 				}

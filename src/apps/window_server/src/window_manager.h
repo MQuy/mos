@@ -11,22 +11,22 @@ struct mouse_event
 	uint8_t buttons;
 } mouse_event;
 
-enum kybrd_type
+enum key_event_type
 {
-	KEY_PRRESS,
-	KEY_RELEASE,
+	KEY_PRESS = 0,
+	KEY_RELEASE = 1,
 };
 
-struct kybrd_event
+struct key_event
 {
-	enum kybrd_type type;
+	enum key_event_type type;
 	int32_t key;
 };
 
 struct window *create_window(struct msgui_window *msgwin);
 struct window *get_window_from_mouse_position(int32_t px, int32_t py);
 void handle_mouse_event(struct mouse_event *event);
-void handle_keyboard_event(struct kybrd_event *event);
+void handle_keyboard_event(struct key_event *event);
 void handle_focus_event(struct msgui_focus *focus);
 void init_layout(struct framebuffer *fb);
 void draw_layout();

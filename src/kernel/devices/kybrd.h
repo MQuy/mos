@@ -9,22 +9,22 @@
 #define KYBRD_MAJOR 11
 #define KYBRD_PACKET_QUEUE_LEN 16
 
-enum kybrd_type
+enum key_event_type
 {
 	KEY_PRRESS,
 	KEY_RELEASE,
 };
 
-struct kybrd_event
+struct key_event
 {
-	enum kybrd_type type;
+	enum key_event_type type;
 	int32_t key;
 };
 
 struct kybrd_inode
 {
 	bool ready;
-	struct kybrd_event packets[KYBRD_PACKET_QUEUE_LEN];	 // only store 16 latest mouse motions
+	struct key_event packets[KYBRD_PACKET_QUEUE_LEN];  // only store 16 latest mouse motions
 	uint8_t head, tail;
 	struct list_head sibling;
 	struct vfs_file *file;
