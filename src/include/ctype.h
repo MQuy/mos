@@ -14,10 +14,12 @@ typedef unsigned long long ino_t;
 typedef unsigned short mode_t;
 typedef long ssize_t;
 typedef unsigned long sector_t;
-typedef unsigned int pid_t;
-typedef unsigned int tid_t;
-typedef unsigned int uid_t;
-typedef unsigned int gid_t;
+typedef int pid_t;
+typedef int tid_t;
+typedef int uid_t;
+typedef int gid_t;
+typedef int sid_t;
+typedef unsigned long sigset_t;
 
 #define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')

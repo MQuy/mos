@@ -4,6 +4,7 @@
 #include <kernel/cpu/pic.h>
 #include <kernel/cpu/tss.h>
 #include <kernel/fs/poll.h>
+#include <kernel/ipc/signal.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/system/time.h>
 
@@ -155,6 +156,9 @@ void schedule()
 	}
 
 	switch_thread(nt);
+
+	if (!current_thread->signaling)
+		signal_handle(current_thread);
 	unlock_scheduler();
 }
 
@@ -214,10 +218,15 @@ int32_t thread_page_fault(struct interrupt_registers *regs)
 	__asm__ __volatile__("mov %%cr2, %0"
 						 : "=r"(faultAddr));
 
-	if (faultAddr == PROCESS_TRAPPED_PAGE_FAULT && regs->cs == 0x1B)
+	if (regs->cs == 0x1B)
 	{
-		update_thread(current_thread, THREAD_TERMINATED);
-		schedule();
+		if (faultAddr == PROCESS_TRAPPED_PAGE_FAULT)
+		{
+			update_thread(current_thread, THREAD_TERMINATED);
+			schedule();
+		}
+		else if (faultAddr == (uint32_t)sigreturn)
+			sigreturn(regs);
 
 		return IRQ_HANDLER_STOP;
 	}

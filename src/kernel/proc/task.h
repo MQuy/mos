@@ -4,10 +4,12 @@
 #include <include/ctype.h>
 #include <include/list.h>
 #include <kernel/cpu/idt.h>
+#include <kernel/ipc/signal.h>
 #include <kernel/locking/semaphore.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/elf.h>
 #include <kernel/system/timer.h>
+#include <kernel/utils/hashmap.h>
 #include <kernel/utils/plist.h>
 #include <stdint.h>
 
@@ -91,13 +93,20 @@ struct thread
 	enum thread_state state;
 	enum thread_policy policy;
 	struct process *parent;
+
 	uint32_t esp;
 	uint32_t kernel_stack;
 	uint32_t user_stack;
+	struct interrupt_registers uregs;
+
+	sigset_t pending;
+	sigset_t blocked;
+	bool signaling;
+
 	uint32_t expiry_when;
 	uint32_t time_slice;
 	int32_t exit_code;
-	struct interrupt_registers uregs;
+
 	struct list_head sibling;
 	struct plist_node sched_sibling;
 	struct timer_list sleep_timer;
@@ -106,23 +115,33 @@ struct thread
 struct process
 {
 	pid_t pid;
-	uid_t uid;
 	gid_t gid;
+	sid_t sid;
+
 	char *name;
+	struct process *parent;
 	struct pdirectory *pdir;
+	struct thread *active_thread;
+
 	struct fs_struct *fs;
 	struct files_struct *files;
 	struct mm_struct *mm;
-	struct process *parent;
-	struct thread *active_thread;
+
+	struct sigaction sighand[NSIG];
+
 	struct list_head sibling;
 	struct list_head children;
 	struct list_head threads;
 };
 
-void task_init();
-void sched_init();
+extern volatile struct thread *current_thread;
+extern volatile struct process *current_process;
+extern volatile struct hashmap *mprocess;
 
+#define for_each_process(p, iter) \
+	for (iter = hashmap_iter(mprocess), p = hashmap_iter_get_data(iter); iter; iter = hashmap_iter_next(mprocess, iter), p = hashmap_iter_get_data(iter))
+
+void task_init();
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority);
 struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
 void update_thread(struct thread *thread, uint8_t state);
@@ -135,10 +154,10 @@ void schedule();
 struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy);
 int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
 void thread_sleep(uint32_t ms);
-extern volatile struct thread *current_thread;
-extern volatile struct process *current_process;
+struct process *find_process_by_pid(pid_t pid);
 
 // sched.c
+void sched_init();
 void lock_scheduler();
 void unlock_scheduler();
 void wake_up(struct wait_queue_head *hq);

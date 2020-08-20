@@ -22,7 +22,12 @@ volatile struct thread *current_thread;
 volatile struct process *current_process;
 static uint32_t next_pid = 0;
 static uint32_t next_tid = 0;
-struct hashmap mprocess;
+volatile struct hashmap *mprocess;
+
+struct process *find_process_by_pid(pid_t pid)
+{
+	return hashmap_get(mprocess, &pid);
+}
 
 struct files_struct *clone_file_descriptor_table(struct process *parent)
 {
@@ -144,7 +149,7 @@ struct process *create_process(struct process *parent, const char *name, struct 
 	INIT_LIST_HEAD(&p->children);
 	INIT_LIST_HEAD(&p->threads);
 
-	hashmap_put(&mprocess, &p->pid, p);
+	hashmap_put(mprocess, &p->pid, p);
 
 	unlock_scheduler();
 
@@ -173,7 +178,8 @@ void task_init(void *func)
 {
 	DEBUG &&debug_println(DEBUG_INFO, "[task] - Initializing");
 
-	hashmap_init(&mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
+	mprocess = kcalloc(1, sizeof(struct hashmap));
+	hashmap_init(mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
 	sched_init();
 	// register_interrupt_handler(IRQ0, irq_schedule_handler);
 	register_interrupt_handler(14, thread_page_fault);
@@ -266,9 +272,11 @@ struct process *process_fork(struct process *parent)
 	struct process *p = kcalloc(1, sizeof(struct process));
 	p->pid = next_pid++;
 	p->gid = parent->pid;
+	p->sid = parent->sid;
 	p->name = strdup(parent->name);
 	p->parent = parent;
 	p->mm = clone_mm_struct(parent);
+	memcpy(&p->sighand, &parent->sighand, sizeof(parent->sighand));
 
 	INIT_LIST_HEAD(&p->children);
 	INIT_LIST_HEAD(&p->threads);

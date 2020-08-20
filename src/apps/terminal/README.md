@@ -314,9 +314,10 @@ struct process *process_fork(struct proces *parent) {
 
 int sys_kill(pid_t pid, uint32_t signum) {
   1. if pid > 0
-    - if pid == `current_process->pid` and `current_thread` is not in signal-handle state
-      - if signum is not blocked -> enable correspond bit in `current_thread->pending`
-      - call `signal_handle(current_thread)`
+    - if pid == `current_process->pid`
+      - if signum is blocked -> return
+      - enable correspond bit in `current_thread->pending`
+      - if `current_thread` is not in signal-handle state -> call `signal_handle(current_thread)`
     - otherwise, if signum is currently blocked or in pending in all threads of receiving process -> return
       - pick receiving thread which doesn't block or has pending `signum`
       - enable correspond bit in `thread->pending`
@@ -355,24 +356,24 @@ void signal_handle(struct thread *t) {
     - copy `regs` into `thread->uregs` (interrupt doesn't not copy regs into `thread->uregs`)
   3. mark thread in signal-handle state
   4. get the first pending signal
-  5. remove correspond signum bit in `process->pending`
+  5. remove correspond signum bit in `thread->pending`
   6. if signal handler is default
-    - enable correspond signum and `sa_mask` bits in `process->blocked`
+    - enable correspond signum and `sa_mask` bits in `thread->blocked`
     - call it directly
-    - reset `process->blocked`
+    - reset `thread->blocked`
     - go to step 1
   7. otherwise, setup trap frame in thread user stack
   |_________________________| <- current user esp (A)
   | thread->uregs           |
   |-------------------------|
-  | process->blocked        |
+  | thread->blocked         |
   |-------------------------|
   | signum                  |
   |-------------------------|
   | sigreturn               | <- new user esp (B)
   |-------------------------|
   8. `regs->eip` = signal handler address and `regs->useresp` = new user esp
-  9. enable correspond signum and `sa_mask` in `process->blocked`
+  9. enable correspond signum and `sa_mask` in `thread->blocked`
   10. if `is_syscall_return` == true -> call `sigjump_usermode(thread->uregs)`
 }
 

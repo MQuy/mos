@@ -55,3 +55,7 @@ return_usermode:
 	mov eax, [eax + 11*4]
 
 	iret
+
+[global sigjump_usermode]
+sigjump_usermode:
+	noop

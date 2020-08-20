@@ -3,6 +3,7 @@
 
 #include <include/ctype.h>
 #include <include/fcntl.h>
+#include <libc/signal.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -16,8 +17,15 @@
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_getpid 20
+#define __NR_kill 37
 #define __NR_pipe 42
+#define __NR_getgid 47
+#define __NR_signal 48
 #define __NR_posix_spawn 49
+#define __NR_setpgid 57
+#define __NR_setsid 66
+#define __NR_sigaction 67
+#define __NR_sendto 82
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -33,7 +41,9 @@
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
-#define __NR_sendto 133
+#define __NR_sigprocmask 126
+#define __NR_getpgid 132
+#define __NR_getsid 147
 #define __NR_poll 168
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
@@ -232,6 +242,54 @@ _syscall0(getpid);
 static inline int32_t getpid()
 {
 	return syscall_getpid();
+}
+
+_syscall0(getpgid);
+static inline int32_t getpgid()
+{
+	return syscall_getpgid();
+}
+
+_syscall2(setpgid, pid_t, pid_t);
+static inline int32_t setpgid(pid_t pid, pid_t pgid)
+{
+	return syscall_setpgid(pid, pgid);
+}
+
+_syscall0(getsid);
+static inline int32_t getsid()
+{
+	return syscall_getsid();
+}
+
+_syscall0(setsid);
+static inline int32_t setsid()
+{
+	return syscall_setsid();
+}
+
+_syscall2(signal, int, sighandler_t);
+static inline int32_t signal(int signum, sighandler_t handler)
+{
+	return syscall_signal(signum, handler);
+}
+
+_syscall3(sigaction, int, const struct sigaction *, struct sigaction *);
+static inline int32_t sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	return syscall_sigaction(signum, act, oldact);
+}
+
+_syscall3(sigprocmask, int, const sigset_t *, sigset_t *);
+static inline int32_t sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+{
+	return syscall_sigprocmask(how, set, oldset);
+}
+
+_syscall2(kill, pid_t, int);
+static inline int32_t kill(pid_t pid, int sig)
+{
+	return syscall_kill(pid, sig);
 }
 
 _syscall1(posix_spawn, char *);

@@ -8,6 +8,7 @@
 #include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/ipc/message_queue.h>
+#include <kernel/ipc/signal.h>
 #include <kernel/net/net.h>
 #include <kernel/proc/elf.h>
 #include <kernel/proc/task.h>
@@ -102,6 +103,62 @@ int32_t sys_getpid()
 	return current_process->pid;
 }
 
+int32_t sys_getpgid()
+{
+	return current_process->gid;
+}
+
+int32_t sys_setpgid(pid_t pid, pid_t pgid)
+{
+	struct process *p = !pid ? current_process : find_process_by_pid(pid);
+	struct process *l = !pgid ? p : find_process_by_pid(pgid);
+
+	if (l->sid != p->sid)
+		return -1;
+
+	p->gid = l->pid;
+	return 0;
+}
+
+int32_t sys_getsid()
+{
+	return current_process->sid;
+}
+
+int32_t sys_setsid()
+{
+	if (current_process->pid == current_process->gid)
+		return -1;
+
+	current_process->sid = current_process->gid = current_process->pid;
+	return 0;
+}
+
+int32_t sys_signal(int signum, __sighandler_t handler)
+{
+	if (!valid_signal(signum) || signum < 0)
+		return -1;
+
+	current_process->sighand[signum - 1].sa_handler = handler;
+	current_process->sighand[signum - 1].sa_flags = SA_RESETHAND | SA_NODEFER;
+	return 0;
+}
+
+int32_t sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	return do_sigaction(signum, act, oldact);
+}
+
+int32_t sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+{
+	return do_sigprocmask(how, set, oldset);
+}
+
+int32_t sys_kill(pid_t pid, int sig)
+{
+	return do_kill(pid, sig);
+}
+
 int32_t sys_posix_spawn(char *path)
 {
 	int top = get_top_priority_from_list(THREAD_READY, THREAD_SYSTEM_POLICY);
@@ -180,8 +237,15 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_getpid 20
+#define __NR_kill 37
 #define __NR_pipe 42
+#define __NR_getgid 47
+#define __NR_signal 48
 #define __NR_posix_spawn 49
+#define __NR_setpgid 57
+#define __NR_setsid 66
+#define __NR_sigaction 67
+#define __NR_sendto 82
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -197,8 +261,10 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
+#define __NR_sigprocmask 126
+#define __NR_getpgid 132
+#define __NR_getsid 147
 #define __NR_poll 168
-#define __NR_sendto 133
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
 #define __NR_mq_unlink (__NR_mq_open + 2)
@@ -216,7 +282,15 @@ static void *syscalls[] = {
 	[__NR_close] = sys_close,
 	[__NR_brk] = sys_brk,
 	[__NR_sbrk] = sys_sbrk,
+	[__NR_kill] = sys_kill,
 	[__NR_getpid] = sys_getpid,
+	[__NR_getpgid] = sys_getpgid,
+	[__NR_setpgid] = sys_setpgid,
+	[__NR_getsid] = sys_getsid,
+	[__NR_setsid] = sys_setsid,
+	[__NR_signal] = sys_signal,
+	[__NR_sigaction] = sys_sigaction,
+	[__NR_sigprocmask] = sys_sigprocmask,
 	[__NR_pipe] = sys_pipe,
 	[__NR_posix_spawn] = sys_posix_spawn,
 	[__NR_mmap] = sys_mmap,
