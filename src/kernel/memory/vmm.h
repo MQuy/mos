@@ -84,6 +84,7 @@ void vmm_init();
 struct pdirectory *vmm_get_directory();
 void vmm_map_address(struct pdirectory *dir, uint32_t virt, uint32_t phys, uint32_t flags);
 void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt);
+void vmm_unmap_range(struct pdirectory *va_dir, uint32_t vm_start, uint32_t vm_end);
 void *create_kernel_stack(int32_t blocks);
 struct pdirectory *vmm_create_address_space(struct pdirectory *dir);
 uint32_t vmm_get_physical_address(uint32_t vaddr, bool is_page);

@@ -17,7 +17,7 @@
 
 void sys_exit(int32_t code)
 {
-	current_thread->exit_code = code;
+	current_process->exit_code = code;
 	update_thread(current_thread, THREAD_TERMINATED);
 	schedule();
 }
@@ -25,9 +25,7 @@ void sys_exit(int32_t code)
 pid_t sys_fork()
 {
 	struct process *child = process_fork(current_process);
-	struct thread *t = list_first_entry(&child->threads, struct thread, sibling);
-
-	queue_thread(t);
+	queue_thread(child->thread);
 
 	return child->pid;
 }

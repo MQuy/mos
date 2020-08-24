@@ -20,6 +20,8 @@ typedef int uid_t;
 typedef int gid_t;
 typedef int sid_t;
 typedef unsigned long sigset_t;
+typedef int idtype_t;
+typedef int id_t;
 
 #define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')

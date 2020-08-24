@@ -39,7 +39,7 @@ struct files_struct *clone_file_descriptor_table(struct process *parent)
 		// NOTE: MQ 2019-12-30 Increasing file description usage when forking because child refers to the same one
 		for (uint32_t i = 0; i < MAX_FD; ++i)
 			if (parent->files->fd[i])
-				parent->files->fd[i]->f_count++;
+				atomic_inc(&parent->files->fd[i]->f_count);
 	}
 	sema_init(&files->lock, 1);
 	return files;
@@ -115,7 +115,7 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 	frame->esi = 0;
 	frame->edi = 0;
 
-	list_add_tail(&t->sibling, &parent->threads);
+	parent->thread = t;
 
 	unlock_scheduler();
 
@@ -136,7 +136,6 @@ struct process *create_process(struct process *parent, const char *name, struct 
 	p->parent = parent;
 	p->files = clone_file_descriptor_table(parent);
 	p->fs = kcalloc(1, sizeof(struct fs_struct));
-
 	p->mm = kcalloc(1, sizeof(struct mm_struct));
 	INIT_LIST_HEAD(&p->mm->mmap);
 
@@ -147,7 +146,6 @@ struct process *create_process(struct process *parent, const char *name, struct 
 	}
 
 	INIT_LIST_HEAD(&p->children);
-	INIT_LIST_HEAD(&p->threads);
 
 	hashmap_put(mprocess, &p->pid, p);
 
@@ -160,16 +158,12 @@ void setup_swapper_process()
 {
 	current_process = create_process(NULL, "swapper", NULL);
 	current_thread = create_kernel_thread(current_process, 0, THREAD_RUNNING, 0);
-
-	current_process->active_thread = current_thread;
 }
 
 struct process *create_kernel_process(const char *pname, void *func, int32_t priority)
 {
 	struct process *p = create_process(current_process, pname, current_process->pdir);
-	struct thread *th = create_kernel_thread(p, (uint32_t)func, THREAD_WAITING, priority);
-
-	p->active_thread = th;
+	create_kernel_thread(p, (uint32_t)func, THREAD_WAITING, priority);
 
 	return p;
 }
@@ -191,7 +185,6 @@ void task_init(void *func)
 	struct process *init = create_process(current_process, "init", current_process->pdir);
 	struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 1);
 
-	init->active_thread = nt;
 	update_thread(current_thread, THREAD_TERMINATED);
 	update_thread(nt, THREAD_READY);
 	DEBUG &&debug_println(DEBUG_INFO, "[task] - Done");
@@ -250,7 +243,7 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 	frame->esi = 0;
 	frame->edi = 0;
 
-	list_add_tail(&t->sibling, &parent->threads);
+	parent->thread = t;
 
 	unlock_scheduler();
 
@@ -279,7 +272,6 @@ struct process *process_fork(struct process *parent)
 	memcpy(&p->sighand, &parent->sighand, sizeof(parent->sighand));
 
 	INIT_LIST_HEAD(&p->children);
-	INIT_LIST_HEAD(&p->threads);
 
 	list_add_tail(&p->sibling, &parent->children);
 
@@ -290,7 +282,7 @@ struct process *process_fork(struct process *parent)
 	p->pdir = vmm_fork(parent->pdir);
 
 	// copy active parent's thread
-	struct thread *parent_thread = parent->active_thread;
+	struct thread *parent_thread = parent->thread;
 	struct thread *t = kcalloc(1, sizeof(struct thread));
 	t->tid = next_tid++;
 	t->state = THREAD_READY;
@@ -320,7 +312,7 @@ struct process *process_fork(struct process *parent)
 	frame->esi = 0;
 	frame->edi = 0;
 
-	list_add_tail(&t->sibling, &p->threads);
+	parent->thread = t;
 
 	unlock_scheduler();
 

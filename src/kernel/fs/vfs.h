@@ -1,6 +1,7 @@
 #ifndef FS_VFS_H
 #define FS_VFS_H
 
+#include <include/atomic.h>
 #include <include/ctype.h>
 #include <include/list.h>
 #include <kernel/fs/poll.h>
@@ -171,7 +172,8 @@ struct vfs_file
 	struct vfs_dentry *f_dentry;
 	struct vfs_mount *f_vfsmnt;
 	struct vfs_file_operations *f_op;
-	long f_count;
+	atomic_t f_count;
+	size_t f_maxcount;
 	unsigned int f_flags;
 	void *private_data;
 	mode_t f_mode;
@@ -214,6 +216,7 @@ int vfs_mknod(const char *path, int mode, dev_t dev);
 struct nameidata *path_walk(const char *path, mode_t mode);
 int vfs_truncate(const char *path, int32_t length);
 int vfs_ftruncate(int32_t fd, int32_t length);
+struct vfs_file *get_empty_filp();
 
 // read_write.c
 char *vfs_read(const char *path);

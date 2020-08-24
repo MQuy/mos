@@ -123,7 +123,6 @@ void switch_thread(struct thread *nt)
 	current_thread->time_slice = 0;
 	current_thread->state = THREAD_RUNNING;
 	current_process = current_thread->parent;
-	current_process->active_thread = current_thread;
 
 	uint32_t paddr_cr3 = vmm_get_physical_address((uint32_t)current_thread->parent->pdir, true);
 	tss_set_stack(0x10, current_thread->kernel_stack);
@@ -157,24 +156,11 @@ void schedule()
 
 	switch_thread(nt);
 
-	if (!current_thread->signaling)
-		signal_handle(current_thread);
-	unlock_scheduler();
-}
-
-void sleep(uint32_t delay)
-{
-	lock_scheduler();
-
-	uint64_t time = get_milliseconds(NULL);
-	uint64_t when = time + delay;
-	if (when > time)
+	if (!current_thread->pending)
 	{
-		current_thread->expiry_when = when;
-		update_thread(current_thread, THREAD_WAITING);
+		struct interrupt_registers *regs = (struct interrupt_registers *)(current_thread->kernel_stack - sizeof(struct interrupt_registers));
+		handle_signal(regs);
 	}
-	schedule();
-
 	unlock_scheduler();
 }
 
@@ -184,18 +170,7 @@ int32_t irq_schedule_handler(struct interrupt_registers *regs)
 	lock_scheduler();
 
 	bool is_schedulable = false;
-	uint32_t time = get_milliseconds(NULL);
 	current_thread->time_slice++;
-
-	struct thread *t = NULL;
-	plist_for_each_entry(t, &waiting_list, sched_sibling)
-	{
-		if (t->expiry_when >= time)
-		{
-			update_thread(t, THREAD_READY);
-			is_schedulable = true;
-		}
-	}
 
 	if (current_thread->time_slice >= SLICE_THRESHOLD && current_thread->sched_sibling.prio == THREAD_APP_POLICY)
 	{
@@ -221,10 +196,7 @@ int32_t thread_page_fault(struct interrupt_registers *regs)
 	if (regs->cs == 0x1B)
 	{
 		if (faultAddr == PROCESS_TRAPPED_PAGE_FAULT)
-		{
-			update_thread(current_thread, THREAD_TERMINATED);
-			schedule();
-		}
+			do_exit(regs->eax);
 		else if (faultAddr == (uint32_t)sigreturn)
 			sigreturn(regs);
 

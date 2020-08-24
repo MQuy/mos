@@ -3,6 +3,7 @@
 
 #include <include/ctype.h>
 #include <kernel/cpu/idt.h>
+#include <kernel/utils/string.h>
 #include <stdint.h>
 
 #define NSIG 32
@@ -75,10 +76,58 @@ static inline int valid_signal(unsigned long sig)
 	return sig <= NSIG ? 1 : 0;
 }
 
+static inline void sigaddset(sigset_t *set, int _sig)
+{
+	__asm__ __volatile__("btsl %1,%0"
+						 : "=m"(*set)
+						 : "Ir"(_sig - 1)
+						 : "cc");
+}
+
+static inline void sigdelset(sigset_t *set, int _sig)
+{
+	__asm__ __volatile__("btrl %1,%0"
+						 : "=m"(*set)
+						 : "Ir"(_sig - 1)
+						 : "cc");
+}
+
+static inline int sigismember(sigset_t *set, int _sig)
+{
+	unsigned long sig = _sig - 1;
+	return 1 & (*set >> sig);
+}
+
+static inline void sigemptyset(sigset_t *set)
+{
+	memset(set, 0, sizeof(sigset_t));
+}
+
+static inline void sigaddsetmask(sigset_t *set, unsigned long mask)
+{
+	*set |= mask;
+}
+
+static inline void sigdelsetmask(sigset_t *set, unsigned long mask)
+{
+	*set &= ~mask;
+}
+
+static inline int sigtestsetmask(sigset_t *set, unsigned long mask)
+{
+	return (*set & mask) != 0;
+}
+
+static inline void siginitset(sigset_t *set, unsigned long mask)
+{
+	*set = mask;
+}
+
 int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int do_sigaction(int signum, const struct sigaction *action, struct sigaction *old_action);
 int do_kill(pid_t pid, int32_t signum);
-void signal_handle();
+void signal_handler(struct interrupt_registers *regs);
+void handle_signal(struct interrupt_registers *regs);
 void sigreturn(struct interrupt_registers *regs);
 
 #endif

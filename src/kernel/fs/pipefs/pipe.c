@@ -2,6 +2,7 @@
 
 #include <include/errno.h>
 #include <include/fcntl.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/locking/semaphore.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
@@ -127,17 +128,15 @@ int32_t do_pipe(int32_t *fd)
 	struct vfs_dentry *dentry = kcalloc(1, sizeof(struct vfs_dentry));
 	dentry->d_inode = inode;
 
-	struct vfs_file *f1 = kcalloc(1, sizeof(struct vfs_file));
+	struct vfs_file *f1 = get_empty_filp();
 	f1->f_flags = O_RDONLY;
 	f1->f_op = &pipe_fops;
 	f1->f_dentry = dentry;
-	f1->f_count = 1;
 
-	struct vfs_file *f2 = kcalloc(1, sizeof(struct vfs_file));
+	struct vfs_file *f2 = get_empty_filp();
 	f2->f_flags = O_WRONLY;
 	f2->f_op = &pipe_fops;
 	f2->f_dentry = dentry;
-	f2->f_count = 1;
 
 	int32_t ufd1 = find_unused_fd_slot();
 	current_process->files->fd[ufd1] = f1;

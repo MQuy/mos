@@ -1,3 +1,4 @@
+#include <include/limits.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 #include <kernel/utils/string.h>
@@ -68,15 +69,21 @@ struct nameidata *path_walk(const char *path, mode_t mode)
 	return nd;
 }
 
+struct vfs_file *get_empty_filp()
+{
+	struct vfs_file *file = kcalloc(1, sizeof(struct vfs_file));
+	file->f_maxcount = INT_MAX;
+	return file;
+}
+
 int32_t vfs_open(const char *path, int32_t flags)
 {
 	int fd = find_unused_fd_slot();
 	struct nameidata *nd = path_walk(path, S_IFREG);
 
-	struct vfs_file *file = kcalloc(1, sizeof(struct vfs_file));
+	struct vfs_file *file = get_empty_filp();
 	file->f_dentry = nd->dentry;
 	file->f_vfsmnt = nd->mnt;
-	file->f_pos = 0;
 	file->f_flags = flags;
 	file->f_op = nd->dentry->d_inode->i_fop;
 
@@ -96,8 +103,8 @@ int32_t vfs_close(int32_t fd)
 	acquire_semaphore(&files->lock);
 
 	struct vfs_file *f = files->fd[fd];
-	f->f_count--;
-	if (!f->f_count && f->f_op->release)
+	atomic_dec(&f->f_count);
+	if (!atomic_read(&f->f_count) && f->f_op->release)
 		f->f_op->release(f->f_dentry->d_inode, f);
 	files->fd[fd] = NULL;
 

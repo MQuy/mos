@@ -326,5 +326,5 @@ void net_init()
 
 	DEBUG &&debug_println(DEBUG_INFO, "[net] - Setup net process");
 	net_process = create_kernel_process("net", net_rx_loop, 0);
-	net_thread = net_process->active_thread;
+	net_thread = net_process->thread;
 }

@@ -13,6 +13,9 @@
 #include <kernel/utils/plist.h>
 #include <stdint.h>
 
+#define SWAPPER_PID 0
+#define INIT_PID 1
+
 #define MAX_FD 256
 #define PROCESS_TRAPPED_PAGE_FAULT 0xFFFFFFFF
 #define MAX_THREADS 0x10000
@@ -24,6 +27,10 @@
 #define VM_WRITE 0x00000002
 #define VM_EXEC 0x00000004
 #define VM_SHARED 0x00000008
+
+#define SIGNAL_STOPED 0x01
+#define SIGNAL_CONTINUED 0x02
+#define SIGNAL_TERMINATED 0x04
 
 struct vfs_file;
 struct vfs_dentry;
@@ -103,11 +110,8 @@ struct thread
 	sigset_t blocked;
 	bool signaling;
 
-	uint32_t expiry_when;
 	uint32_t time_slice;
-	int32_t exit_code;
 
-	struct list_head sibling;
 	struct plist_node sched_sibling;
 	struct timer_list sleep_timer;
 };
@@ -120,18 +124,21 @@ struct process
 
 	char *name;
 	struct process *parent;
+	struct thread *thread;
 	struct pdirectory *pdir;
-	struct thread *active_thread;
 
 	struct fs_struct *fs;
 	struct files_struct *files;
 	struct mm_struct *mm;
 
 	struct sigaction sighand[NSIG];
+	int32_t exit_code;
+	int32_t caused_signal;
+	uint32_t flags;
+	struct wait_queue_head wait_chld;
 
 	struct list_head sibling;
 	struct list_head children;
-	struct list_head threads;
 };
 
 extern volatile struct thread *current_thread;
@@ -155,6 +162,7 @@ struct plist_head *get_list_from_thread(enum thread_state state, enum thread_pol
 int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
 void thread_sleep(uint32_t ms);
 struct process *find_process_by_pid(pid_t pid);
+void do_exit(int32_t code);
 
 // sched.c
 void sched_init();

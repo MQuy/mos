@@ -312,21 +312,6 @@ struct process *process_fork(struct proces *parent) {
   2. copy `sighand` from parent to child thread
 }
 
-int sys_kill(pid_t pid, uint32_t signum) {
-  1. if pid > 0
-    - if pid == `current_process->pid`
-      - if signum is blocked -> return
-      - enable correspond bit in `current_thread->pending`
-      - if `current_thread` is not in signal-handle state -> call `signal_handle(current_thread)`
-    - otherwise, if signum is currently blocked or in pending in all threads of receiving process -> return
-      - pick receiving thread which doesn't block or has pending `signum`
-      - enable correspond bit in `thread->pending`
-      - if receiving thread is suspended -> move to ready state
-  2. if pid == 0 -> for each process in process group of calling process -> go through sub steps in step 1
-  3. if pid == -1 -> for each process which calling process can send -> go through sub steps in step 1
-  4. if pid < -1 -> send to process whose pid == -process->pid
-}
-
 int sys_sigaction(int signum, const struct sigaction *action, struct sigaction *old_action) {
   1. if signum is `SIGKILL` or `SIGSTOP` -> return `EINVAL`
   2. if old_action != NULL -> `memcpy(old_action, process->sighand[signum], sizeof(struct sigaction))`
@@ -342,45 +327,71 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
     - if how = `SIG_SETMASK` -> `current_thread->blocked` = `set`
 }
 
-void signal_handle(struct thread *t) {
-  1. if there is no pending signals
-    - if thread is in signal-handle state
-      - copy `thread->uregs` into thread kernel stack
-      - umark thread from signal-handle state
-    - return
-  2. `regs` = the first trap frame on thread kernel stack
-  2. if thread not in signal-handle state
-    - if `regs->int_no` == 0x7F (syscall is interrupted)
-      - `is_syscall_return = true` only if `regs->eax` == `read/write` syscall
-      - `regs->eax = -EINTR`
-    - copy `regs` into `thread->uregs` (interrupt doesn't not copy regs into `thread->uregs`)
-  3. mark thread in signal-handle state
-  4. get the first pending signal
-  5. remove correspond signum bit in `thread->pending`
-  6. if signal handler is default
-    - enable correspond signum and `sa_mask` bits in `thread->blocked`
-    - call it directly
-    - reset `thread->blocked`
-    - go to step 1
-  7. otherwise, setup trap frame in thread user stack
-  |_________________________| <- current user esp (A)
-  | thread->uregs           |
-  |-------------------------|
-  | thread->blocked         |
-  |-------------------------|
-  | signum                  |
-  |-------------------------|
-  | sigreturn               | <- new user esp (B)
-  |-------------------------|
-  8. `regs->eip` = signal handler address and `regs->useresp` = new user esp
-  9. enable correspond signum and `sa_mask` in `thread->blocked`
-  10. if `is_syscall_return` == true -> call `sigjump_usermode(thread->uregs)`
+int sys_kill(pid_t pid, uint32_t signum) {
+  1. if pid > 0
+    - if `sig_ignored(signum)` -> return (fast check)
+    - if signum is `SIGCONT`
+      - remove any pending stop signals and resume thread (if not current)
+      - `process->flags |= SIGNAL_CONTINUE` and unmark `SIGNAL_TERMIATED/SIGNAL_STOPED`
+      - send `SIGCHLD` to parent
+      - wake `parent->wait_chld`
+    - if signum is a stop signal
+      - remove pending SIGCONT signal
+      - `process->flags |= SIGNAL_STOPED` and unmark `SIGNAL_TERMIATED/SIGNAL_CONTINUED`
+      - send `SIGCHLD` to parent
+      - wake `parent->wait_chld`
+      - stop thread
+    - otherwise, enable correspond bit in `thread->pending`
+    - if signum is `SIGKILL` -> resume thread (if not current)
+  2. if pid == 0 -> for each process in process group of calling process -> go through sub steps in step 1
+  3. if pid == -1 -> for each process which calling process can send -> go through sub steps in step 1
+  4. if pid < -1 -> send to process whose pid == -process->pid
+}
+
+void signal_handler(regs) {
+  1. if there is no pending signals -> return
+  2. if `regs->cs != 0x1b` (might not correct) or regs is not the first trap frame (return to userspace) -> return
+  3. if `current_thread->signaling` -> return
+  4. call `handle_signal(regs)`
+}
+
+void handle_signal(regs) {
+  1. if `regs->int_no` == 0x7F (syscall is interrupted)
+    - `is_syscall = true` only if `regs->eax` == `read/write` syscall
+    - `regs->eax = -EINTR`
+  2. copy `regs` into `thread->uregs` (interrupt doesn't not copy regs into `thread->uregs`)
+  3. `current_thread->signaling = true`
+  4. get the first pending signal (terminated signals are highest and `SIGCONT` is lowest)
+  5. unmask correspond signum bit in `thread->pending`
+  6. signal handler has not be `SIG_IGN`
+  7. if signal handler is `SIG_DFL`
+    - default action has to be terminate or coredump
+    - `process->caused_signal = signum`
+    - `process->flags |= SIGNAL_TERMINATED` and unmark `SIGNAL_STOPED/SIGNAL_CONTINUED`
+    - unmark signal-handle
+    - empty pending signals in process
+    - kill the process (`exit`)
+  8. otherwise, setup trap frame in thread user stack
+    |_________________________| <- current user esp (A)
+    | thread->uregs           |
+    |-------------------------|
+    | thread->blocked         |
+    |-------------------------|
+    | thread->signaling       |
+    |-------------------------|
+    | signum                  |
+    |-------------------------|
+    | sigreturn               | <- new user esp (B)
+    |-------------------------|
+    -`regs->eip` = signal handler address and `regs->useresp` = new user esp
+    - enable correspond signum and `sa_mask` in `thread->blocked`
+    - if `is_syscall == true` -> call `sigjump_usermode(thread->uregs)`
 }
 
 void sigreturn(struct interrupt_registers *regs) {
-  1. restore our context `current_thread->uregs`, `process->blocked` based on B
+  1. restore our context `current_thread->uregs`, `current_thread->signaling`, `process->blocked` based on B
   2. move user esp back to A
-  3. call `signal_handle(current_thread)`
+  3. `memcpy(regs, current_thread->uregs)`
 }
 
 int32_t thread_page_fault(struct interrupt_registers *regs) {
@@ -389,8 +400,43 @@ int32_t thread_page_fault(struct interrupt_registers *regs) {
 
 void schedule() {
   unlock_scheduler();
-  1. if `current_thread` is not in signal-handle state
-    -> `signal_handle(current_thread)`
+  1. if `current_thread` has pending signals
+    - get `regs` from kernel stack
+    - `handle_signal(regs)`
+}
+
+void do_exit(int32_t code) {
+  1. for each `area` in `current_process->mm->mmap`
+    - if `area` doesn't link to a file -> unmap `area`
+    - unlink and free `area`
+  2. for each `file` in `current_process->files->fd[xxx]`
+    - release `file` if `file->f_count == 1`
+    - remove from `current_process->files->fd[xxx]`
+  3. for its thread
+    - set state to `THREAD_TERMINATED`
+    - unlink `sleep_timer`
+    - unmap its user stack
+  4. for each child process in `current_process->children`
+    - send `SIGHUP` to them
+    - assign a new parent process (usually `init`)
+  5. send `SIGCHLD` to parent process
+  6. if process is session leader with its controlling terminal
+    - send `SIGHUP` to foreground process group
+    - disassociate that terminal from the session
+  7. `current_process->exit_code = code` and `current_process->flags |= SIGNAL_TERMINATED`
+  8. wake `parent->wait_chldexit`
+}
+
+int do_wait(idtype_t idtype, id_t id, siginfo_t *infop, int options) {
+  1. add queue entry into `current_thread->wait`
+  2. for each children `p`
+    - if `p->pid` is not eligiable -> continue
+    - if `options & WEXITED` -> break if `p->flags & SIGNAL_TERMINATED`
+    - if `options & WSTOPPED` -> break if `p->flags & SIGNAL_STOPPED`
+    - if `options & WCONTINUED` -> break if `p->flags & SIGNAL_CONTINUED`
+  3. if there is no proces satisfies with the condition above -> go to step 2
+  4. fill `infop` properties based on `p`
+  5. remove entry above from `current_current->wait`
 }
 ```
 

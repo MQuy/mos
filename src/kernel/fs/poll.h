@@ -2,6 +2,7 @@
 #define FS_POLL_H
 
 #include <include/list.h>
+#include <kernel/proc/wait.h>
 #include <stdint.h>
 
 #define POLLIN 0x0001
@@ -16,22 +17,6 @@
 #define POLLWRBAND 0x0200
 #define POLLMSG 0x0400
 #define POLLREMOVE 0x1000
-
-struct thread;
-
-typedef void (*wait_queue_func)(struct thread *);
-
-struct wait_queue_head
-{
-	struct list_head list;
-};
-
-struct wait_queue_entry
-{
-	struct thread *thread;
-	wait_queue_func func;
-	struct list_head sibling;
-};
 
 struct poll_table
 {
@@ -55,37 +40,5 @@ struct pollfd
 int do_poll(struct pollfd *fds, uint32_t nfds);
 void poll_wait(struct vfs_file *file, struct wait_queue_head *wh, struct poll_table *pt);
 void poll_wakeup(struct thread *t);
-
-extern volatile struct thread *current_thread;
-extern void schedule();
-
-#define DEFINE_WAIT(name)            \
-	struct wait_queue_entry name = { \
-		.thread = current_thread,    \
-		.func = poll_wakeup,         \
-	}
-
-// NOTE: MQ 2020-08-17 continue if receiving a signal
-#define wait_until(cond)                               \
-	for (; !(cond);)                                   \
-	{                                                  \
-		update_thread(current_thread, THREAD_WAITING); \
-		schedule();                                    \
-	}
-
-#define wait_until_with_prework(cond, prework)         \
-	for (; !(cond);)                                   \
-	{                                                  \
-		prework;                                       \
-		update_thread(current_thread, THREAD_WAITING); \
-		schedule();                                    \
-	}
-
-#define wait_event(wh, cond) ({                  \
-	DEFINE_WAIT(__wait);                         \
-	list_add_tail(&__wait.sibling, &(wh)->list); \
-	wait_until(cond);                            \
-	list_del(&__wait.sibling);                   \
-})
 
 #endif

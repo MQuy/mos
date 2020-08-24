@@ -247,6 +247,15 @@ void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt)
 	vmm_flush_tlb_entry(virt);
 }
 
+void vmm_unmap_range(struct pdirectory *va_dir, uint32_t vm_start, uint32_t vm_end)
+{
+	assert(PAGE_ALIGN(vm_start) == vm_start);
+	assert(PAGE_ALIGN(vm_end) == vm_end);
+
+	for (uint32_t addr = vm_start; addr < vm_end; addr += PMM_FRAME_SIZE)
+		vmm_unmap_address(va_dir, addr);
+}
+
 struct pdirectory *vmm_fork(struct pdirectory *va_dir)
 {
 	struct pdirectory *forked_dir = vmm_create_address_space(va_dir);

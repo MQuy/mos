@@ -37,4 +37,14 @@ static inline void clear_bit(int nr, volatile unsigned long* addr)
 		: "=m"(ADDR)
 		: "Ir"(nr));
 }
+
+static inline int test_bit(int nr, const unsigned long* addr)
+{
+	int mask;
+
+	addr += nr >> 5;
+	mask = 1 << (nr & 0x1f);
+	return ((mask & *addr) != 0);
+}
+
 #endif

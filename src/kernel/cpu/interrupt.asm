@@ -1,5 +1,6 @@
 [extern isr_handler]
 [extern irq_handler]
+[extern signal_handler]
 
 ; Common ISR code
 isr_common_stub:
@@ -19,6 +20,7 @@ isr_common_stub:
     cld ; C code following the sysV ABI requires DF to be clear on function entry
     push esp ; interrupt_registers *r
     call isr_handler
+    call signal_handler
     add esp, 4
     
     ; 3. Restore state
@@ -49,6 +51,7 @@ irq_common_stub:
     cld
     push esp
     call irq_handler ; Different than the ISR code
+    call signal_handler
     add esp, 4
 
     pop gs
