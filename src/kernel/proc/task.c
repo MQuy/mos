@@ -18,11 +18,11 @@ extern void return_usermode(struct interrupt_registers *regs);
 extern void irq_schedule_handler(struct interrupt_registers *regs);
 extern int32_t thread_page_fault(struct interrupt_registers *regs);
 
-volatile struct thread *current_thread;
-volatile struct process *current_process;
 static uint32_t next_pid = 0;
 static uint32_t next_tid = 0;
-volatile struct hashmap *mprocess;
+volatile struct thread *current_thread = NULL;
+volatile struct process *current_process = NULL;
+volatile struct hashmap *mprocess = NULL;
 
 struct process *find_process_by_pid(pid_t pid)
 {
@@ -74,9 +74,9 @@ void kernel_thread_entry(struct thread *t, void *flow())
 
 void thread_sleep_timer(struct timer_list *timer)
 {
-	struct thread *t = from_timer(t, timer, sleep_timer);
+	struct thread *th = from_timer(th, timer, sleep_timer);
 	list_del(&timer->sibling);
-	update_thread(t, THREAD_READY);
+	update_thread(th, THREAD_READY);
 }
 
 void thread_sleep(uint32_t ms)
@@ -89,20 +89,20 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 {
 	lock_scheduler();
 
-	struct thread *t = kcalloc(1, sizeof(struct thread));
-	t->tid = next_tid++;
-	t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
-	t->parent = parent;
-	t->state = state;
-	t->esp = t->kernel_stack - sizeof(struct trap_frame);
-	plist_node_init(&t->sched_sibling, priority);
-	t->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
+	struct thread *th = kcalloc(1, sizeof(struct thread));
+	th->tid = next_tid++;
+	th->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
+	th->parent = parent;
+	th->state = state;
+	th->esp = th->kernel_stack - sizeof(struct trap_frame);
+	plist_node_init(&th->sched_sibling, priority);
+	th->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
 
-	struct trap_frame *frame = (struct trap_frame *)t->esp;
+	struct trap_frame *frame = (struct trap_frame *)th->esp;
 	memset(frame, 0, sizeof(struct trap_frame));
 
 	frame->parameter2 = eip;
-	frame->parameter1 = (uint32_t)t;
+	frame->parameter1 = (uint32_t)th;
 	frame->return_address = PROCESS_TRAPPED_PAGE_FAULT;
 	frame->eip = (uint32_t)kernel_thread_entry;
 
@@ -115,43 +115,44 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 	frame->esi = 0;
 	frame->edi = 0;
 
-	parent->thread = t;
+	parent->thread = th;
 
 	unlock_scheduler();
 
-	return t;
+	return th;
 }
 
 struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir)
 {
 	lock_scheduler();
 
-	struct process *p = kcalloc(1, sizeof(struct process));
-	p->pid = next_pid++;
-	p->name = strdup(name);
+	struct process *proc = kcalloc(1, sizeof(struct process));
+	proc->pid = next_pid++;
+	proc->name = strdup(name);
 	if (pdir)
-		p->pdir = vmm_create_address_space(pdir);
+		proc->pdir = vmm_create_address_space(pdir);
 	else
-		p->pdir = vmm_get_directory();
-	p->parent = parent;
-	p->files = clone_file_descriptor_table(parent);
-	p->fs = kcalloc(1, sizeof(struct fs_struct));
-	p->mm = kcalloc(1, sizeof(struct mm_struct));
-	INIT_LIST_HEAD(&p->mm->mmap);
+		proc->pdir = vmm_get_directory();
+	proc->parent = parent;
+	proc->files = clone_file_descriptor_table(parent);
+	proc->fs = kcalloc(1, sizeof(struct fs_struct));
+	proc->mm = kcalloc(1, sizeof(struct mm_struct));
+	INIT_LIST_HEAD(&proc->wait_chld.list);
+	INIT_LIST_HEAD(&proc->mm->mmap);
 
 	if (parent)
 	{
-		memcpy(p->fs, parent->fs, sizeof(struct fs_struct));
-		list_add_tail(&p->sibling, &parent->children);
+		memcpy(proc->fs, parent->fs, sizeof(struct fs_struct));
+		list_add_tail(&proc->sibling, &parent->children);
 	}
 
-	INIT_LIST_HEAD(&p->children);
+	INIT_LIST_HEAD(&proc->children);
 
-	hashmap_put(mprocess, &p->pid, p);
+	hashmap_put(mprocess, &proc->pid, proc);
 
 	unlock_scheduler();
 
-	return p;
+	return proc;
 }
 
 void setup_swapper_process()
@@ -162,10 +163,10 @@ void setup_swapper_process()
 
 struct process *create_kernel_process(const char *pname, void *func, int32_t priority)
 {
-	struct process *p = create_process(current_process, pname, current_process->pdir);
-	create_kernel_thread(p, (uint32_t)func, THREAD_WAITING, priority);
+	struct process *proc = create_process(current_process, pname, current_process->pdir);
+	create_kernel_thread(proc, (uint32_t)func, THREAD_WAITING, priority);
 
-	return p;
+	return proc;
 }
 
 void task_init(void *func)
@@ -191,21 +192,21 @@ void task_init(void *func)
 	schedule();
 }
 
-void user_thread_entry(struct thread *t)
+void user_thread_entry(struct thread *th)
 {
-	tss_set_stack(0x10, t->kernel_stack);
-	return_usermode(&t->uregs);
+	tss_set_stack(0x10, th->kernel_stack);
+	return_usermode(&th->uregs);
 }
 
-void user_thread_elf_entry(struct thread *t, const char *path, void (*setup)(struct Elf32_Layout *))
+void user_thread_elf_entry(struct thread *th, const char *path, void (*setup)(struct Elf32_Layout *))
 {
 	// explain in kernel_init#unlock_scheduler
 	unlock_scheduler();
 
 	char *buf = vfs_read(path);
 	struct Elf32_Layout *elf_layout = elf_load(buf);
-	t->user_stack = elf_layout->stack;
-	tss_set_stack(0x10, t->kernel_stack);
+	th->user_stack = elf_layout->stack;
+	tss_set_stack(0x10, th->kernel_stack);
 	if (setup)
 		setup(elf_layout);
 	enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
@@ -215,22 +216,22 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 {
 	lock_scheduler();
 
-	struct thread *t = kcalloc(1, sizeof(struct thread));
-	t->tid = next_tid++;
-	t->parent = parent;
-	t->state = state;
-	t->policy = policy;
-	t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
-	t->esp = t->kernel_stack - sizeof(struct trap_frame);
-	plist_node_init(&t->sched_sibling, priority);
-	t->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
+	struct thread *th = kcalloc(1, sizeof(struct thread));
+	th->tid = next_tid++;
+	th->parent = parent;
+	th->state = state;
+	th->policy = policy;
+	th->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
+	th->esp = th->kernel_stack - sizeof(struct trap_frame);
+	plist_node_init(&th->sched_sibling, priority);
+	th->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
 
-	struct trap_frame *frame = (struct trap_frame *)t->esp;
+	struct trap_frame *frame = (struct trap_frame *)th->esp;
 	memset(frame, 0, sizeof(struct trap_frame));
 
 	frame->parameter3 = (uint32_t)setup;
 	frame->parameter2 = (uint32_t)strdup(path);
-	frame->parameter1 = (uint32_t)t;
+	frame->parameter1 = (uint32_t)th;
 	frame->return_address = PROCESS_TRAPPED_PAGE_FAULT;
 	frame->eip = (uint32_t)user_thread_elf_entry;
 
@@ -243,18 +244,18 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 	frame->esi = 0;
 	frame->edi = 0;
 
-	parent->thread = t;
+	parent->thread = th;
 
 	unlock_scheduler();
 
-	return t;
+	return th;
 }
 
 void process_load(const char *pname, const char *path, int priority, void (*setup)(struct Elf32_Layout *))
 {
-	struct process *p = create_process(current_process, pname, current_process->pdir);
-	struct thread *t = create_user_thread(p, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);
-	queue_thread(t);
+	struct process *proc = create_process(current_process, pname, current_process->pdir);
+	struct thread *th = create_user_thread(proc, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);
+	queue_thread(th);
 }
 
 struct process *process_fork(struct process *parent)
@@ -262,44 +263,44 @@ struct process *process_fork(struct process *parent)
 	lock_scheduler();
 
 	// fork process
-	struct process *p = kcalloc(1, sizeof(struct process));
-	p->pid = next_pid++;
-	p->gid = parent->pid;
-	p->sid = parent->sid;
-	p->name = strdup(parent->name);
-	p->parent = parent;
-	p->mm = clone_mm_struct(parent);
-	memcpy(&p->sighand, &parent->sighand, sizeof(parent->sighand));
+	struct process *proc = kcalloc(1, sizeof(struct process));
+	proc->pid = next_pid++;
+	proc->gid = parent->pid;
+	proc->sid = parent->sid;
+	proc->name = strdup(parent->name);
+	proc->parent = parent;
+	proc->mm = clone_mm_struct(parent);
+	memcpy(&proc->sighand, &parent->sighand, sizeof(parent->sighand));
 
-	INIT_LIST_HEAD(&p->children);
+	INIT_LIST_HEAD(&proc->children);
 
-	list_add_tail(&p->sibling, &parent->children);
+	list_add_tail(&proc->sibling, &parent->children);
 
-	p->fs = kcalloc(1, sizeof(struct fs_struct));
-	memcpy(p->fs, parent->fs, sizeof(struct fs_struct));
+	proc->fs = kcalloc(1, sizeof(struct fs_struct));
+	memcpy(proc->fs, parent->fs, sizeof(struct fs_struct));
 
-	p->files = clone_file_descriptor_table(parent);
-	p->pdir = vmm_fork(parent->pdir);
+	proc->files = clone_file_descriptor_table(parent);
+	proc->pdir = vmm_fork(parent->pdir);
 
 	// copy active parent's thread
 	struct thread *parent_thread = parent->thread;
-	struct thread *t = kcalloc(1, sizeof(struct thread));
-	t->tid = next_tid++;
-	t->state = THREAD_READY;
-	t->policy = parent_thread->policy;
-	t->time_slice = 0;
-	t->parent = p;
-	t->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
-	t->user_stack = parent_thread->user_stack;
+	struct thread *th = kcalloc(1, sizeof(struct thread));
+	th->tid = next_tid++;
+	th->state = THREAD_READY;
+	th->policy = parent_thread->policy;
+	th->time_slice = 0;
+	th->parent = proc;
+	th->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
+	th->user_stack = parent_thread->user_stack;
 	// NOTE: MQ 2019-12-18 Setup trap frame
-	t->esp = t->kernel_stack - sizeof(struct trap_frame);
-	plist_node_init(&t->sched_sibling, parent_thread->sched_sibling.prio);
+	th->esp = th->kernel_stack - sizeof(struct trap_frame);
+	plist_node_init(&th->sched_sibling, parent_thread->sched_sibling.prio);
 
-	memcpy(&t->uregs, &parent_thread->uregs, sizeof(struct interrupt_registers));
-	t->uregs.eax = 0;
+	memcpy(&th->uregs, &parent_thread->uregs, sizeof(struct interrupt_registers));
+	th->uregs.eax = 0;
 
-	struct trap_frame *frame = (struct trap_frame *)t->esp;
-	frame->parameter1 = (uint32_t)t;
+	struct trap_frame *frame = (struct trap_frame *)th->esp;
+	frame->parameter1 = (uint32_t)th;
 	frame->return_address = PROCESS_TRAPPED_PAGE_FAULT;
 	frame->eip = (uint32_t)user_thread_entry;
 
@@ -312,9 +313,9 @@ struct process *process_fork(struct process *parent)
 	frame->esi = 0;
 	frame->edi = 0;
 
-	parent->thread = t;
+	proc->thread = th;
 
 	unlock_scheduler();
 
-	return p;
+	return proc;
 }

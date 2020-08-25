@@ -8,7 +8,7 @@
 #include <kernel/utils/string.h>
 
 // TODO: MQ 2020-08-21 implement signal jump
-void sigjump_usermode(struct interrupt_registers *);
+extern void return_usermode(struct interrupt_registers *);
 
 struct signal_frame
 {
@@ -19,39 +19,6 @@ struct signal_frame
 	struct interrupt_registers uregs;
 };
 
-#define M(sig) (1UL << ((sig)-1))
-#define T(sig, mask) (M(sig) & (mask))
-
-#define SIG_KERNEL_ONLY_MASK (M(SIGKILL) | M(SIGSTOP))
-
-#define SIG_KERNEL_STOP_MASK (M(SIGSTOP) | M(SIGTSTP) | M(SIGTTIN) | M(SIGTTOU))
-
-#define SIG_KERNEL_COREDUMP_MASK (                     \
-	M(SIGQUIT) | M(SIGILL) | M(SIGTRAP) | M(SIGABRT) | \
-	M(SIGFPE) | M(SIGSEGV) | M(SIGBUS) | M(SIGSYS) |   \
-	M(SIGXCPU) | M(SIGXFSZ))
-
-#define SIG_KERNEL_IGNORE_MASK ( \
-	M(SIGCHLD) | M(SIGWINCH) | M(SIGURG))
-
-#define sig_kernel_only(sig) \
-	(((sig) < SIGRTMIN) && T(sig, SIG_KERNEL_ONLY_MASK))
-#define sig_kernel_coredump(sig) \
-	(((sig) < SIGRTMIN) && T(sig, SIG_KERNEL_COREDUMP_MASK))
-#define sig_kernel_ignore(sig) \
-	(((sig) < SIGRTMIN) && T(sig, SIG_KERNEL_IGNORE_MASK))
-#define sig_kernel_stop(sig) \
-	(((sig) < SIGRTMIN) && T(sig, SIG_KERNEL_STOP_MASK))
-
-#define sig_user_defined(p, signr)                      \
-	(((p)->sighand[(signr)-1].sa_handler != SIG_DFL) && \
-	 ((p)->sighand[(signr)-1].sa_handler != SIG_IGN))
-#define sig_default_action(p, signr) ((p)->sighand[(signr)-1].sa_handler == SIG_DFL)
-
-#define sig_fatal(p, signr)                                      \
-	(!T(signr, SIG_KERNEL_IGNORE_MASK | SIG_KERNEL_STOP_MASK) && \
-	 (p)->sighand[(signr)-1].sa_handler == SIG_DFL)
-
 int next_signal(sigset_t pending, sigset_t blocked)
 {
 	sigset_t mask = pending & ~blocked;
@@ -59,20 +26,20 @@ int next_signal(sigset_t pending, sigset_t blocked)
 
 	if (mask & SIG_KERNEL_COREDUMP_MASK)
 		signum = ffz(~(mask & SIG_KERNEL_COREDUMP_MASK)) + 1;
-	else if (mask & ~M(SIGCONT))
-		signum = ffz(~(mask & ~M(SIGCONT))) + 1;
-	else if (mask & M(SIGCONT))
+	else if (mask & ~sigmask(SIGCONT))
+		signum = ffz(~(mask & ~sigmask(SIGCONT))) + 1;
+	else if (mask & sigmask(SIGCONT))
 		signum = SIGCONT;
 
 	return signum;
 }
 
-bool sig_ignored(struct thread *tsk, int sig)
+bool sig_ignored(struct thread *th, int sig)
 {
-	if (sigismember(&tsk->blocked, sig))
+	if (sigismember(&th->blocked, sig))
 		return false;
 
-	__sighandler_t handler = tsk->parent->sighand[sig - 1].sa_handler;
+	__sighandler_t handler = th->parent->sighand[sig - 1].sa_handler;
 	return handler == SIG_IGN || (handler == SIG_DFL && sig_kernel_ignore(sig));
 }
 
@@ -123,36 +90,47 @@ int do_kill(pid_t pid, int32_t signum)
 	if (pid > 0)
 	{
 		struct process *proc = find_process_by_pid(pid);
-		struct thread *tsk = proc->thread;
-
-		if (sig_ignored(tsk, signum))
-			return 0;
+		struct thread *th = proc->thread;
 
 		if (signum == SIGCONT)
 		{
-			sigdelsetmask(&current_thread->pending, SIG_KERNEL_STOP_MASK);
 			current_process->flags |= SIGNAL_CONTINUED;
 			current_process->flags &= !SIGNAL_STOPED;
+			sigdelsetmask(&current_thread->pending, SIG_KERNEL_STOP_MASK);
+
+			if (th != current_thread)
+				update_thread(th, THREAD_READY);
+
 			do_kill(current_process->parent->pid, SIGCHLD);
 			wake_up(&current_process->parent->wait_chld);
 		}
 		else if (sig_kernel_stop(signum))
 		{
-			sigdelset(&current_thread->pending, SIGCONT);
 			current_process->flags |= SIGNAL_STOPED;
 			current_process->flags &= !SIGNAL_CONTINUED;
+			sigdelset(&current_thread->pending, SIGCONT);
+
+			update_thread(th, THREAD_WAITING);
+
 			do_kill(current_process->parent->pid, SIGCHLD);
 			wake_up(&current_process->parent->wait_chld);
-		}
 
-		tsk->pending |= M(signum);
-		if ((signum == SIGCONT || signum == SIGKILL) && tsk != current_thread)
-			update_thread(tsk, THREAD_READY);
+			if (th == current_thread)
+				schedule();
+		}
+		else if (!sig_ignored(th, signum))
+		{
+			th->pending |= sigmask(signum);
+
+			if (signum == SIGKILL && th != current_thread)
+				update_thread(th, THREAD_READY);
+		}
 	}
 	else if (pid == 0)
 	{
 		struct process *proc;
 		struct hashmap_iter *iter;
+
 		for_each_process(proc, iter)
 		{
 			if (proc->gid == current_process->gid)
@@ -163,6 +141,7 @@ int do_kill(pid_t pid, int32_t signum)
 	{
 		struct process *proc;
 		struct hashmap_iter *iter;
+
 		for_each_process(proc, iter)
 		{
 			// TODO: MQ 2020-08-20 Make sure calling process has permission to send signals
@@ -174,6 +153,7 @@ int do_kill(pid_t pid, int32_t signum)
 	{
 		struct process *proc;
 		struct hashmap_iter *iter;
+
 		for_each_process(proc, iter)
 		{
 			if (proc->gid == -pid)
@@ -186,7 +166,7 @@ int do_kill(pid_t pid, int32_t signum)
 
 void signal_handler(struct interrupt_registers *regs)
 {
-	if (!current_thread->pending || current_thread->signaling ||
+	if (!current_thread || !current_thread->pending || current_thread->signaling ||
 		((uint32_t)regs + sizeof(struct interrupt_registers) != current_thread->kernel_stack))
 		return;
 
@@ -215,7 +195,7 @@ void handle_signal(struct interrupt_registers *regs)
 	assert(!sig_ignored(current_thread, signum));
 	if (sig_default_action(current_process, signum))
 	{
-		assert(sig_kernel_coredump(signum));
+		assert(sig_fatal(current_process, signum));
 		current_process->caused_signal = signum;
 		current_process->flags |= SIGNAL_TERMINATED;
 		current_process->flags &= !(SIGNAL_CONTINUED | SIGNAL_STOPED);
@@ -235,9 +215,9 @@ void handle_signal(struct interrupt_registers *regs)
 
 		struct sigaction *sigaction = &current_process->sighand[signum - 1];
 		regs->eip = (uint32_t)sigaction->sa_handler;
-		current_thread->blocked |= M(signum) | sigaction->sa_mask;
+		current_thread->blocked |= sigmask(signum) | sigaction->sa_mask;
 		if (from_syscall)
-			sigjump_usermode(&current_thread->uregs);
+			return_usermode(&current_thread->uregs);
 	}
 }
 

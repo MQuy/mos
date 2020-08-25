@@ -23,10 +23,6 @@
 #define P_PID 1
 #define P_PGID 2
 
-struct thread;
-
-typedef void (*wait_queue_func)(struct thread *);
-
 struct infop
 {
 	pid_t si_pid;
@@ -34,6 +30,10 @@ struct infop
 	int32_t si_status;
 	int32_t si_code;
 };
+
+struct thread;
+
+typedef void (*wait_queue_func)(struct thread *);
 
 struct wait_queue_head
 {

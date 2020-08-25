@@ -1,12 +1,21 @@
-#include <libc/gui/layout.h>
 #include <libc/stdlib.h>
 #include <libc/unistd.h>
+#include <libc/wait.h>
 #include <stdint.h>
 
 int main()
 {
-	struct window *win = init_window(100, 100, 100, 100);
-	enter_event_loop(win);
+	pid_t pid = fork();
+
+	if (!pid)
+	{
+		exit(0);
+	}
+	else
+	{
+		struct infop infop;
+		waitid(P_PID, pid, &infop, WEXITED);
+	}
 
 	return 0;
 }

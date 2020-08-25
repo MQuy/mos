@@ -101,6 +101,7 @@ int tmpfs_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 int tmpfs_release(struct vfs_inode *inode, struct vfs_file *file)
 {
 	// TODO: MQ 2020-08-22 implement release for `inode->i_data.pages`
+	return 0;
 }
 
 struct vfs_file_operations tmpfs_file_operations = {

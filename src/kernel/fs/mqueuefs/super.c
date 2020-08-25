@@ -35,6 +35,7 @@ struct vfs_inode *mqueuefs_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *inode = init_inode();
 	inode->i_sb = sb;
+	atomic_set(&inode->i_count, 1);
 
 	return inode;
 }

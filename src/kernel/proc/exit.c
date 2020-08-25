@@ -1,4 +1,5 @@
 #include <include/atomic.h>
+#include <kernel/ipc/signal.h>
 
 #include "task.h"
 
@@ -21,7 +22,7 @@ static void exit_files(struct process *proc)
 	{
 		struct vfs_file *file = proc->files->fd[i];
 
-		if (file && atomic_read(&file->f_count) == 1)
+		if (file && atomic_read(&file->f_count) == 1 && file->f_op->release)
 		{
 			file->f_op->release(file->f_dentry->d_inode, file);
 			kfree(file);
@@ -31,11 +32,11 @@ static void exit_files(struct process *proc)
 
 static void exit_thread(struct process *proc)
 {
-	struct thread *tsk = proc->thread;
+	struct thread *th = proc->thread;
 
-	update_thread(tsk, THREAD_TERMINATED);
-	del_timer(&tsk->sleep_timer);
-	vmm_unmap_range(proc->pdir, tsk->user_stack - STACK_SIZE, tsk->user_stack);
+	update_thread(th, THREAD_TERMINATED);
+	del_timer(&th->sleep_timer);
+	vmm_unmap_range(proc->pdir, th->user_stack - STACK_SIZE, th->user_stack);
 }
 
 static void exit_notify(struct process *proc)
@@ -46,6 +47,9 @@ static void exit_notify(struct process *proc)
 		do_kill(iter->pid, SIGHUP);
 		iter->parent = find_process_by_pid(INIT_PID);
 	}
+	if (!proc->caused_signal)
+		proc->flags |= EXIT_TERMINATED;
+
 	do_kill(proc->parent->pid, SIGCHLD);
 	wake_up(&proc->parent->wait_chld);
 }
@@ -69,7 +73,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 
 	list_add_tail(&wentry.sibling, &current_process->wait_chld.list);
 
-	struct process *pchild;
+	struct process *pchild = NULL;
 	while (true)
 	{
 		struct process *iter;
@@ -80,7 +84,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 				  idtype == P_ALL))
 				continue;
 
-			if ((options & WEXITED && iter->flags & SIGNAL_TERMINATED) ||
+			if ((options & WEXITED && (iter->flags & SIGNAL_TERMINATED || iter->flags & EXIT_TERMINATED)) ||
 				(options & WSTOPPED && iter->flags & SIGNAL_STOPED) ||
 				(options & WCONTINUED && iter->flags & SIGNAL_CONTINUED))
 			{
@@ -88,22 +92,31 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 				break;
 			}
 		}
+
+		if (pchild)
+			break;
+
+		update_thread(current_thread, THREAD_WAITING);
+		schedule();
 	}
 	list_del(&wentry.sibling);
 
 	if (pchild)
 	{
 		infop->si_pid = pchild->pid;
-		infop->si_signo = pchild->caused_signal;
-		infop->si_status = pchild->exit_code;
+		infop->si_signo = SIGCHLD;
+		infop->si_status = pchild->caused_signal;
 		if (pchild->flags & SIGNAL_STOPED)
 			infop->si_code = CLD_STOPPED;
 		else if (pchild->flags & SIGNAL_CONTINUED)
 			infop->si_code = CLD_CONTINUED;
 		else if (pchild->flags & SIGNAL_TERMINATED)
-			infop->si_code = CLD_KILLED;
-		else
+			infop->si_code = sig_kernel_coredump(pchild->caused_signal) ? CLD_DUMPED : CLD_KILLED;
+		else if (pchild->flags & EXIT_TERMINATED)
+		{
 			infop->si_code = CLD_EXITED;
+			infop->si_status = pchild->exit_code;
+		}
 		ret = 0;
 	}
 

@@ -4,10 +4,11 @@
 #include <include/ctype.h>
 #include <include/fcntl.h>
 #include <libc/signal.h>
+#include <libc/wait.h>
 #include <stddef.h>
 #include <stdint.h>
 
-// FIXME MQ 2020-05-12 copy define constants from linux/include/asm-x86_64/unistd.h
+// FIXME MQ 2020-05-12 copy define constants from arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -25,7 +26,6 @@
 #define __NR_setpgid 57
 #define __NR_setsid 66
 #define __NR_sigaction 67
-#define __NR_sendto 82
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -50,6 +50,8 @@
 #define __NR_mq_unlink (__NR_mq_open + 2)
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
+#define __NR_waitid 284
+#define __NR_sendto 369
 
 #define _syscall0(name)                           \
 	static inline int32_t syscall_##name()        \
@@ -290,6 +292,12 @@ _syscall2(kill, pid_t, int);
 static inline int32_t kill(pid_t pid, int sig)
 {
 	return syscall_kill(pid, sig);
+}
+
+_syscall4(waitid, idtype_t, id_t, struct infop *, int);
+static inline int32_t waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
+{
+	return syscall_waitid(idtype, id, infop, options);
 }
 
 _syscall1(posix_spawn, char *);

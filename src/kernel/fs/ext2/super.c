@@ -47,6 +47,7 @@ struct vfs_inode *ext2_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *i = init_inode();
 	i->i_sb = sb;
+	atomic_set(&i->i_count, 1);
 
 	return i;
 }

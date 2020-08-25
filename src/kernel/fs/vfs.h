@@ -130,6 +130,7 @@ struct vfs_inode
 	uid_t i_uid;
 	gid_t i_gid;
 	dev_t i_rdev;
+	atomic_t i_count;
 	struct timespec i_atime;
 	struct timespec i_mtime;
 	struct timespec i_ctime;

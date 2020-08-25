@@ -40,8 +40,8 @@ return_usermode:
 
 	mov eax, [esp + 4]
 
-	push dword [eax + 18*4] ;user data segment with bottom 2 bits set for ring 3
-	push dword [eax + 17*4] ;push our current stack just for the heck of it
+	push dword [eax + 18*4] ;user data segment
+	push dword [eax + 17*4] ;push our current stack
 	push dword [eax + 16*4]	;EFLAGS
 	push dword [eax + 15*4] ;segment selector
 	push dword [eax + 14*4] ;eip
@@ -55,7 +55,3 @@ return_usermode:
 	mov eax, [eax + 11*4]
 
 	iret
-
-[global sigjump_usermode]
-sigjump_usermode:
-	noop

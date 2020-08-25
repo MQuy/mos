@@ -17,9 +17,7 @@
 
 void sys_exit(int32_t code)
 {
-	current_process->exit_code = code;
-	update_thread(current_thread, THREAD_TERMINATED);
-	schedule();
+	do_exit(code & 0xff);
 }
 
 pid_t sys_fork()
@@ -28,6 +26,11 @@ pid_t sys_fork()
 	queue_thread(child->thread);
 
 	return child->pid;
+}
+
+int32_t sys_waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
+{
+	return do_wait(idtype, id, infop, options);
 }
 
 int32_t sys_read(uint32_t fd, char *buf, size_t count)
@@ -243,7 +246,6 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_setpgid 57
 #define __NR_setsid 66
 #define __NR_sigaction 67
-#define __NR_sendto 82
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -268,6 +270,8 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_mq_unlink (__NR_mq_open + 2)
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
+#define __NR_waitid 284
+#define __NR_sendto 369
 
 static void *syscalls[] = {
 	[__NR_exit] = sys_exit,
@@ -305,6 +309,7 @@ static void *syscalls[] = {
 	[__NR_mq_unlink] = sys_mq_unlink,
 	[__NR_mq_send] = sys_mq_send,
 	[__NR_mq_receive] = sys_mq_receive,
+	[__NR_waitid] = sys_waitid,
 };
 
 int32_t syscall_dispatcher(struct interrupt_registers *regs)

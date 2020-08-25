@@ -35,9 +35,9 @@ struct thread *pick_next_thread_from_list(struct plist_head *list)
 	if (plist_head_empty(list))
 		return NULL;
 
-	struct thread *t = plist_first_entry(list, struct thread, sched_sibling);
-	plist_del(&t->sched_sibling, list);
-	return t;
+	struct thread *th = plist_first_entry(list, struct thread, sched_sibling);
+	plist_del(&th->sched_sibling, list);
+	return th;
 }
 
 struct thread *pick_next_thread_to_run()
@@ -82,32 +82,32 @@ int get_top_priority_from_list(enum thread_state state, enum thread_policy polic
 	return INT_MAX;
 }
 
-void queue_thread(struct thread *t)
+void queue_thread(struct thread *th)
 {
-	struct plist_head *h = get_list_from_thread(t->state, t->policy);
+	struct plist_head *h = get_list_from_thread(th->state, th->policy);
 
 	if (h)
-		plist_add(&t->sched_sibling, h);
+		plist_add(&th->sched_sibling, h);
 }
 
-void remove_thread(struct thread *t)
+void remove_thread(struct thread *th)
 {
-	struct plist_head *h = get_list_from_thread(t->state, t->policy);
+	struct plist_head *h = get_list_from_thread(th->state, th->policy);
 
 	if (h)
-		plist_del(&t->sched_sibling, h);
+		plist_del(&th->sched_sibling, h);
 }
 
-void update_thread(struct thread *thread, uint8_t state)
+void update_thread(struct thread *th, uint8_t state)
 {
-	if (thread->state == state)
+	if (th->state == state)
 		return;
 
 	lock_scheduler();
 
-	remove_thread(thread);
-	thread->state = state;
-	queue_thread(thread);
+	remove_thread(th);
+	th->state = state;
+	queue_thread(th);
 
 	unlock_scheduler();
 }

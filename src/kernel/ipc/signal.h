@@ -64,6 +64,49 @@ typedef void (*__sighandler_t)(int);
 #define SIG_IGN ((__sighandler_t)1)	 /* ignore signal */
 #define SIG_ERR ((__sighandler_t)-1) /* error return from signal */
 
+#define sigmask(sig) (1UL << ((sig)-1))
+#define siginmask(sig, mask) \
+	((sig) > 0 && (sig) < SIGRTMIN && (sigmask(sig) & (mask)))
+
+#define SIG_KERNEL_ONLY_MASK (sigmask(SIGKILL) | sigmask(SIGSTOP))
+
+#define SIG_KERNEL_STOP_MASK (sigmask(SIGSTOP) | sigmask(SIGTSTP) | sigmask(SIGTTIN) | sigmask(SIGTTOU))
+
+#define SIG_KERNEL_TERMINATE_MASK (                         \
+    sigmask(SIGHUP) | sigmask(SIGINT) | sigmask(SIGKILL) | sigmask(SIGUSR1) |       \
+    sigmask(SIGUSR2)) | sigmask(SIGPIPE) | sigmask(SIGALRM) | sigmask(SIGTERM) |    \
+    sigmask(SIGVTALRM) | sigmask(SIGPROF) | sigmask(SIGPOLL) | sigmask(SIGSTKFLT) | \
+    sigmask(SIGPWR))
+
+#define SIG_KERNEL_COREDUMP_MASK (                                             \
+	sigmask(SIGQUIT) | sigmask(SIGILL) | sigmask(SIGTRAP) | sigmask(SIGABRT) | \
+	sigmask(SIGFPE) | sigmask(SIGSEGV) | sigmask(SIGBUS) | sigmask(SIGSYS) |   \
+	sigmask(SIGXCPU) | sigmask(SIGXFSZ))
+
+#define SIG_KERNEL_IGNORE_MASK ( \
+	sigmask(SIGCONT) | sigmask(SIGCHLD) | sigmask(SIGWINCH) | sigmask(SIGURG))
+
+#define sig_kernel_only(sig) \
+	(((sig) < SIGRTMIN) && siginmask(sig, SIG_KERNEL_ONLY_MASK))
+#define sig_kernel_terminate(sig) \
+	(((sig) < SIGRTMIN) && siginmask(sig, SIG_KERNEL_TERMINATE_MASK))
+#define sig_kernel_coredump(sig) \
+	(((sig) < SIGRTMIN) && siginmask(sig, SIG_KERNEL_COREDUMP_MASK))
+#define sig_kernel_ignore(sig) \
+	(((sig) < SIGRTMIN) && siginmask(sig, SIG_KERNEL_IGNORE_MASK))
+#define sig_kernel_stop(sig) \
+	(((sig) < SIGRTMIN) && siginmask(sig, SIG_KERNEL_STOP_MASK))
+
+#define sig_user_defined(p, signr)                      \
+	(((p)->sighand[(signr)-1].sa_handler != SIG_DFL) && \
+	 ((p)->sighand[(signr)-1].sa_handler != SIG_IGN))
+
+#define sig_default_action(p, signr) ((p)->sighand[(signr)-1].sa_handler == SIG_DFL)
+
+#define sig_fatal(p, signr)                                              \
+	(!siginmask(signr, SIG_KERNEL_IGNORE_MASK | SIG_KERNEL_STOP_MASK) && \
+	 (p)->sighand[(signr)-1].sa_handler == SIG_DFL)
+
 struct sigaction
 {
 	__sighandler_t sa_handler;

@@ -73,6 +73,7 @@ struct vfs_file *get_empty_filp()
 {
 	struct vfs_file *file = kcalloc(1, sizeof(struct vfs_file));
 	file->f_maxcount = INT_MAX;
+	atomic_set(&file->f_count, 1);
 	return file;
 }
 
@@ -88,9 +89,7 @@ int32_t vfs_open(const char *path, int32_t flags)
 	file->f_op = nd->dentry->d_inode->i_fop;
 
 	if (file->f_op && file->f_op->open)
-	{
 		file->f_op->open(nd->dentry->d_inode, file);
-	}
 
 	current_process->files->fd[fd] = file;
 	return fd;

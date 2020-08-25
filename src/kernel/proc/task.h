@@ -31,6 +31,7 @@
 #define SIGNAL_STOPED 0x01
 #define SIGNAL_CONTINUED 0x02
 #define SIGNAL_TERMINATED 0x04
+#define EXIT_TERMINATED 0x08
 
 struct vfs_file;
 struct vfs_dentry;
@@ -169,5 +170,9 @@ void sched_init();
 void lock_scheduler();
 void unlock_scheduler();
 void wake_up(struct wait_queue_head *hq);
+
+// exit.c
+int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options);
+void do_exit(int32_t code);
 
 #endif
