@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// FIXME MQ 2020-05-12 copy define constants from arch/x86/entry/syscalls/syscall_32.tbl
+// FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -44,6 +44,7 @@
 #define __NR_sigprocmask 126
 #define __NR_getpgid 132
 #define __NR_getsid 147
+#define __NR_nanosleep 162
 #define __NR_poll 168
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
@@ -304,6 +305,23 @@ _syscall1(posix_spawn, char *);
 static inline int32_t posix_spawn(char *path)
 {
 	return syscall_posix_spawn(path);
+}
+
+_syscall2(nanosleep, const struct timespec *, struct timespec *);
+static inline int32_t nanosleep(const struct timespec *req, struct timespec *rem)
+{
+	return syscall_nanosleep(req, rem);
+}
+
+static inline int32_t usleep(uint32_t usec)
+{
+	struct timespec req = {.tv_sec = usec / 1000, .tv_nsec = usec * 1000};
+	return syscall_nanosleep(&req, NULL);
+}
+
+static inline int32_t sleep(uint32_t sec)
+{
+	return usleep(sec * 1000);
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);

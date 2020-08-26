@@ -9,10 +9,13 @@ int main()
 
 	if (!pid)
 	{
-		exit(0);
+		while (true)
+			;
 	}
 	else
 	{
+		sleep(1);
+		kill(pid, SIGKILL);
 		struct infop infop;
 		waitid(P_PID, pid, &infop, WEXITED);
 	}

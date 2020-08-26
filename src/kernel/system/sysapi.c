@@ -199,6 +199,13 @@ int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
 	return sock->ops->recvmsg(sock, msg, len);
 }
 
+// NOTE: MQ 2020-08-26 we only support millisecond precision
+int32_t sys_nanosleep(const struct timespec *req, struct timespec *rem)
+{
+	thread_sleep(req->tv_nsec / 1000);
+	return 0;
+}
+
 int32_t sys_poll(struct pollfd *fds, uint32_t nfds)
 {
 	return do_poll(fds, nfds);
@@ -264,6 +271,7 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_sigprocmask 126
 #define __NR_getpgid 132
 #define __NR_getsid 147
+#define __NR_nanosleep 162
 #define __NR_poll 168
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
@@ -303,6 +311,7 @@ static void *syscalls[] = {
 	[__NR_bind] = sys_bind,
 	[__NR_send] = sys_send,
 	[__NR_recv] = sys_recv,
+	[__NR_nanosleep] = sys_nanosleep,
 	[__NR_poll] = sys_poll,
 	[__NR_mq_open] = sys_mq_open,
 	[__NR_mq_close] = sys_mq_close,
