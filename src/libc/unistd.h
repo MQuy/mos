@@ -24,6 +24,7 @@
 #define __NR_signal 48
 #define __NR_posix_spawn 49
 #define __NR_setpgid 57
+#define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
 #define __NR_mmap 90
@@ -251,6 +252,12 @@ _syscall0(getpgid);
 static inline int32_t getpgid()
 {
 	return syscall_getpgid();
+}
+
+_syscall0(getppid);
+static inline int32_t getppid()
+{
+	return syscall_getppid();
 }
 
 _syscall2(setpgid, pid_t, pid_t);

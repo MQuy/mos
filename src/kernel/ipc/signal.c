@@ -211,19 +211,33 @@ void handle_signal(struct interrupt_registers *regs)
 		frame->signum = signum;
 		frame->signaling = prev_signaling;
 		frame->blocked = current_thread->blocked;
-		frame->uregs = *regs;
+		frame->uregs = current_thread->uregs;
 
 		struct sigaction *sigaction = &current_process->sighand[signum - 1];
 		regs->eip = (uint32_t)sigaction->sa_handler;
 		current_thread->blocked |= sigmask(signum) | sigaction->sa_mask;
 		if (from_syscall)
-			return_usermode(&current_thread->uregs);
+			return_usermode(regs);
 	}
 }
 
 void sigreturn(struct interrupt_registers *regs)
 {
-	struct signal_frame *frame = (struct signal_frame *)regs->useresp;
+	// NOTE: MQ 2020-08-26
+	/*
+    |_________________________| <- original esp
+    | thread->uregs           |
+    |-------------------------|
+    | thread->blocked         |
+    |-------------------------|
+    | thread->signaling       |
+    |-------------------------|
+    | signum                  |
+    |-------------------------| <- after exiting from user defined signal handler
+    | sigreturn               | 
+    |-------------------------| <- trap frame esp
+    */
+	struct signal_frame *frame = (struct signal_frame *)(regs->useresp - 4);
 	current_thread->uregs = frame->uregs;
 	current_thread->signaling = frame->signaling;
 	current_thread->blocked = frame->blocked;

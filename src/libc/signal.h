@@ -69,4 +69,9 @@ struct sigaction
 	sigset_t sa_mask;
 };
 
+static inline void sigfillset(sigset_t *set)
+{
+	*set = -1;
+}
+
 #endif

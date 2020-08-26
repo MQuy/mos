@@ -109,6 +109,11 @@ int32_t sys_getpgid()
 	return current_process->gid;
 }
 
+int32_t sys_getppid()
+{
+	return current_process->parent->pid;
+}
+
 int32_t sys_setpgid(pid_t pid, pid_t pgid)
 {
 	struct process *p = !pid ? current_process : find_process_by_pid(pid);
@@ -251,6 +256,7 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_signal 48
 #define __NR_posix_spawn 49
 #define __NR_setpgid 57
+#define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
 #define __NR_mmap 90
@@ -294,6 +300,7 @@ static void *syscalls[] = {
 	[__NR_sbrk] = sys_sbrk,
 	[__NR_kill] = sys_kill,
 	[__NR_getpid] = sys_getpid,
+	[__NR_getppid] = sys_getppid,
 	[__NR_getpgid] = sys_getpgid,
 	[__NR_setpgid] = sys_setpgid,
 	[__NR_getsid] = sys_getsid,
