@@ -163,7 +163,7 @@ int32_t sys_kill(pid_t pid, int sig)
 int32_t sys_posix_spawn(char *path)
 {
 	int top = get_top_priority_from_list(THREAD_READY, THREAD_SYSTEM_POLICY);
-	process_load(path, path, top - 1, NULL);
+	process_load(path, path, THREAD_APP_POLICY, top - 1, NULL);
 	return 0;
 }
 

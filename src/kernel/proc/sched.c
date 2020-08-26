@@ -15,8 +15,8 @@ extern void do_switch(uint32_t *addr_current_kernel_esp, uint32_t next_kernel_es
 
 struct plist_head terminated_list, waiting_list;
 struct plist_head kernel_ready_list, system_ready_list, app_ready_list;
-
 uint32_t volatile scheduler_lock_counter = 0;
+
 void lock_scheduler()
 {
 	disable_interrupts();
@@ -30,7 +30,26 @@ void unlock_scheduler()
 		enable_interrupts();
 }
 
-struct thread *pick_next_thread_from_list(struct plist_head *list)
+struct thread *get_next_thread_from_list(struct plist_head *list)
+{
+	if (plist_head_empty(list))
+		return NULL;
+
+	return plist_first_entry(list, struct thread, sched_sibling);
+}
+
+struct thread *get_next_thread_to_run()
+{
+	struct thread *nt = get_next_thread_from_list(&kernel_ready_list);
+	if (!nt)
+		nt = get_next_thread_from_list(&system_ready_list);
+	if (!nt)
+		nt = get_next_thread_from_list(&app_ready_list);
+
+	return nt;
+}
+
+struct thread *pop_next_thread_from_list(struct plist_head *list)
 {
 	if (plist_head_empty(list))
 		return NULL;
@@ -40,13 +59,13 @@ struct thread *pick_next_thread_from_list(struct plist_head *list)
 	return th;
 }
 
-struct thread *pick_next_thread_to_run()
+struct thread *pop_next_thread_to_run()
 {
-	struct thread *nt = pick_next_thread_from_list(&kernel_ready_list);
+	struct thread *nt = pop_next_thread_from_list(&kernel_ready_list);
 	if (!nt)
-		nt = pick_next_thread_from_list(&system_ready_list);
+		nt = pop_next_thread_from_list(&system_ready_list);
 	if (!nt)
-		nt = pick_next_thread_from_list(&app_ready_list);
+		nt = pop_next_thread_from_list(&app_ready_list);
 
 	return nt;
 }
@@ -135,7 +154,7 @@ void schedule()
 		return;
 
 	lock_scheduler();
-	struct thread *nt = pick_next_thread_to_run();
+	struct thread *nt = pop_next_thread_to_run();
 
 	if (!nt)
 	{
@@ -144,7 +163,7 @@ void schedule()
 			unlock_scheduler();
 			halt();
 			lock_scheduler();
-			nt = pick_next_thread_to_run();
+			nt = pop_next_thread_to_run();
 			// NOTE: MQ 2020-06-14
 			// Normally, current_thread shouldn't be running because we update state before calling schedule
 			// If current thread is running and no next thread
@@ -156,7 +175,7 @@ void schedule()
 
 	switch_thread(nt);
 
-	if (!current_thread->pending)
+	if (current_thread->pending)
 	{
 		struct interrupt_registers *regs = (struct interrupt_registers *)(current_thread->kernel_stack - sizeof(struct interrupt_registers));
 		handle_signal(regs);
@@ -164,25 +183,51 @@ void schedule()
 	unlock_scheduler();
 }
 
-#define SLICE_THRESHOLD 50
+#define SLICE_THRESHOLD 8
 int32_t irq_schedule_handler(struct interrupt_registers *regs)
 {
+	if (current_thread->policy != THREAD_APP_POLICY)
+		return IRQ_HANDLER_CONTINUE;
+
 	lock_scheduler();
 
 	bool is_schedulable = false;
 	current_thread->time_slice++;
 
-	if (current_thread->time_slice >= SLICE_THRESHOLD && current_thread->sched_sibling.prio == THREAD_APP_POLICY)
+	if (current_thread->time_slice >= SLICE_THRESHOLD)
 	{
-		update_thread(current_thread, THREAD_READY);
-		is_schedulable = true;
+		struct thread *nt = get_next_thread_to_run();
+
+		if (nt)
+		{
+			// 1. if next thread to run is not app policy -> step 4
+			// 2. if all threads have the same priority -> increase its priorty -> step 4
+			// 3. otherwise -> swap each element and move current to the last
+			// 4. update thread
+			if (nt->policy == THREAD_APP_POLICY)
+			{
+				struct thread *first_thd = plist_first_entry(&app_ready_list, struct thread, sched_sibling);
+				struct thread *last_thd = plist_last_entry(&app_ready_list, struct thread, sched_sibling);
+
+				if (last_thd->sched_sibling.prio == first_thd->sched_sibling.prio && last_thd->sched_sibling.prio == current_thread->sched_sibling.prio)
+					current_thread->sched_sibling.prio++;
+				else
+				{
+					int32_t swap = last_thd->sched_sibling.prio;
+					last_thd->sched_sibling.prio = current_thread->sched_sibling.prio;
+					current_thread->sched_sibling.prio = swap;
+				}
+			}
+			update_thread(current_thread, THREAD_READY);
+			is_schedulable = true;
+		}
 	}
 
-	// NOTE: MQ 2019-10-15 If counter is 1, it means that there is not running scheduler
-	if (is_schedulable && scheduler_lock_counter == 1)
-		schedule();
-
 	unlock_scheduler();
+
+	// NOTE: MQ 2019-10-15 If counter is 1, it means that there is not running scheduler
+	if (is_schedulable && !scheduler_lock_counter)
+		schedule();
 
 	return IRQ_HANDLER_CONTINUE;
 }

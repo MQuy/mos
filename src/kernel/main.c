@@ -87,7 +87,7 @@ void kernel_init()
 	// register system apis
 	syscall_init();
 
-	process_load("terminal", "/bin/terminal", 0, NULL);
+	process_load("terminal", "/bin/terminal", THREAD_APP_POLICY, 0, NULL);
 
 	// idle
 	update_thread(current_thread, THREAD_WAITING);

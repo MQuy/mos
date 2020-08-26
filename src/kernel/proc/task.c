@@ -15,7 +15,7 @@
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
 extern void return_usermode(struct interrupt_registers *regs);
-extern void irq_schedule_handler(struct interrupt_registers *regs);
+extern int32_t irq_schedule_handler(struct interrupt_registers *regs);
 extern int32_t thread_page_fault(struct interrupt_registers *regs);
 
 static uint32_t next_pid = 0;
@@ -83,6 +83,7 @@ void thread_sleep(uint32_t ms)
 {
 	mod_timer(&current_thread->sleep_timer, get_milliseconds(NULL) + ms);
 	update_thread(current_thread, THREAD_WAITING);
+	schedule();
 }
 
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority)
@@ -94,6 +95,7 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 	th->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
 	th->parent = parent;
 	th->state = state;
+	th->policy = THREAD_KERNEL_POLICY;
 	th->esp = th->kernel_stack - sizeof(struct trap_frame);
 	plist_node_init(&th->sched_sibling, priority);
 	th->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
@@ -140,8 +142,13 @@ struct process *create_process(struct process *parent, const char *name, struct 
 	INIT_LIST_HEAD(&proc->wait_chld.list);
 	INIT_LIST_HEAD(&proc->mm->mmap);
 
+	for (int i = 0; i < NSIG; ++i)
+		proc->sighand[i].sa_handler = sig_kernel_ignore(i + 1) ? SIG_IGN : SIG_DFL;
+
 	if (parent)
 	{
+		proc->gid = parent->gid;
+		proc->sid = parent->sid;
 		memcpy(proc->fs, parent->fs, sizeof(struct fs_struct));
 		list_add_tail(&proc->sibling, &parent->children);
 	}
@@ -176,7 +183,7 @@ void task_init(void *func)
 	mprocess = kcalloc(1, sizeof(struct hashmap));
 	hashmap_init(mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
 	sched_init();
-	// register_interrupt_handler(IRQ0, irq_schedule_handler);
+	register_interrupt_handler(IRQ8, irq_schedule_handler);
 	register_interrupt_handler(14, thread_page_fault);
 
 	DEBUG &&debug_println(DEBUG_INFO, "\tSetup swapper process");
@@ -184,16 +191,22 @@ void task_init(void *func)
 
 	DEBUG &&debug_println(DEBUG_INFO, "\tSetup init process");
 	struct process *init = create_process(current_process, "init", current_process->pdir);
-	struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 1);
+	init->gid = init->pid;
+	init->sid = init->pid;
 
+	struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 1);
 	update_thread(current_thread, THREAD_TERMINATED);
 	update_thread(nt, THREAD_READY);
+
 	DEBUG &&debug_println(DEBUG_INFO, "[task] - Done");
 	schedule();
 }
 
 void user_thread_entry(struct thread *th)
 {
+	// explain in kernel_init#unlock_scheduler
+	unlock_scheduler();
+
 	tss_set_stack(0x10, th->kernel_stack);
 	return_usermode(&th->uregs);
 }
@@ -251,10 +264,10 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 	return th;
 }
 
-void process_load(const char *pname, const char *path, int priority, void (*setup)(struct Elf32_Layout *))
+void process_load(const char *pname, const char *path, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *))
 {
 	struct process *proc = create_process(current_process, pname, current_process->pdir);
-	struct thread *th = create_user_thread(proc, path, THREAD_READY, THREAD_SYSTEM_POLICY, priority, setup);
+	struct thread *th = create_user_thread(proc, path, THREAD_READY, policy, priority, setup);
 	queue_thread(th);
 }
 
@@ -287,7 +300,7 @@ struct process *process_fork(struct process *parent)
 	struct thread *th = kcalloc(1, sizeof(struct thread));
 	th->tid = next_tid++;
 	th->state = THREAD_READY;
-	th->policy = parent_thread->policy;
+	th->policy = THREAD_APP_POLICY;
 	th->time_slice = 0;
 	th->parent = proc;
 	th->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
@@ -314,6 +327,7 @@ struct process *process_fork(struct process *parent)
 	frame->edi = 0;
 
 	proc->thread = th;
+	hashmap_put(mprocess, &proc->pid, proc);
 
 	unlock_scheduler();
 

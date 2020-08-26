@@ -95,7 +95,7 @@ int do_kill(pid_t pid, int32_t signum)
 		if (signum == SIGCONT)
 		{
 			current_process->flags |= SIGNAL_CONTINUED;
-			current_process->flags &= !SIGNAL_STOPED;
+			current_process->flags &= ~SIGNAL_STOPED;
 			sigdelsetmask(&current_thread->pending, SIG_KERNEL_STOP_MASK);
 
 			if (th != current_thread)
@@ -107,7 +107,7 @@ int do_kill(pid_t pid, int32_t signum)
 		else if (sig_kernel_stop(signum))
 		{
 			current_process->flags |= SIGNAL_STOPED;
-			current_process->flags &= !SIGNAL_CONTINUED;
+			current_process->flags &= ~SIGNAL_CONTINUED;
 			sigdelset(&current_thread->pending, SIGCONT);
 
 			update_thread(th, THREAD_WAITING);
@@ -198,7 +198,7 @@ void handle_signal(struct interrupt_registers *regs)
 		assert(sig_fatal(current_process, signum));
 		current_process->caused_signal = signum;
 		current_process->flags |= SIGNAL_TERMINATED;
-		current_process->flags &= !(SIGNAL_CONTINUED | SIGNAL_STOPED);
+		current_process->flags &= ~(SIGNAL_CONTINUED | SIGNAL_STOPED);
 		current_thread->signaling = false;
 		sigemptyset(&current_thread->pending);
 		do_exit(signum);
