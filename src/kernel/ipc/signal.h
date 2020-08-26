@@ -166,6 +166,11 @@ static inline void siginitset(sigset_t *set, unsigned long mask)
 	*set = mask;
 }
 
+static inline void sigfillset(sigset_t *set)
+{
+	*set = -1;
+}
+
 int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int do_sigaction(int signum, const struct sigaction *action, struct sigaction *old_action);
 int do_kill(pid_t pid, int32_t signum);

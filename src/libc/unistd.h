@@ -302,6 +302,11 @@ static inline int32_t kill(pid_t pid, int sig)
 	return syscall_kill(pid, sig);
 }
 
+static inline int32_t raise(int32_t sig)
+{
+	return kill(getpid(), sig);
+}
+
 _syscall4(waitid, idtype_t, id_t, struct infop *, int);
 static inline int32_t waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
 {

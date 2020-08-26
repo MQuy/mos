@@ -142,12 +142,15 @@ int32_t sys_setsid()
 
 int32_t sys_signal(int signum, __sighandler_t handler)
 {
-	if (!valid_signal(signum) || signum < 0)
-		return -1;
+	struct sigaction act;
+	sigset_t mask;
 
-	current_process->sighand[signum - 1].sa_handler = handler;
-	current_process->sighand[signum - 1].sa_flags = SA_RESETHAND | SA_NODEFER;
-	return 0;
+	sigfillset(&mask);
+	act.sa_handler = handler;
+	act.sa_flags = SA_RESETHAND | SA_NODEFER;
+	act.sa_mask = mask;
+
+	return do_sigaction(signum, &act, NULL);
 }
 
 int32_t sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)

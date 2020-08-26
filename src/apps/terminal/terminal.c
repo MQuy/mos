@@ -5,38 +5,27 @@
 
 volatile int32_t usr_interrupt = 0;
 
-void synch_signal(int sig)
+void fatal_error_signal(int sig)
 {
 	usr_interrupt = 1;
-}
-
-/* The child process executes this function. */
-void child_function(void)
-{
-	/* Let parent know you’re done. */
-	kill(getppid(), SIGUSR1);
-	exit(0);
+	signal(sig, SIG_DFL);
+	raise(sig);
 }
 
 int main(void)
 {
 	struct sigaction usr_action;
 	sigset_t block_mask;
-	pid_t child_id;
 
 	/* Establish the signal handler. */
 	sigfillset(&block_mask);
-	usr_action.sa_handler = synch_signal;
+	usr_action.sa_handler = fatal_error_signal;
 	usr_action.sa_mask = block_mask;
 	usr_action.sa_flags = 0;
-	sigaction(SIGUSR1, &usr_action, NULL);
+	sigaction(SIGINT, &usr_action, NULL);
 
-	/* Create the child process. */
-	child_id = fork();
-	if (child_id == 0)
-		child_function(); /* Does not return. */
+	raise(SIGINT);
 
-	/* Busy wait for the child to send a signal. */
 	while (!usr_interrupt)
 		;
 
