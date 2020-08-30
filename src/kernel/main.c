@@ -12,6 +12,7 @@
 #include "cpu/tss.h"
 #include "devices/ata.h"
 #include "devices/char/memory.h"
+#include "devices/char/tty.h"
 #include "devices/kybrd.h"
 #include "devices/mouse.h"
 #include "devices/pci.h"
@@ -76,6 +77,7 @@ void kernel_init()
 
 	vfs_init(&ext2_fs_type, "/dev/hda");
 	chrdev_memory_init();
+	tty_init();
 
 	/// init keyboard and mouse
 	kkybrd_install();
@@ -87,7 +89,7 @@ void kernel_init()
 	// register system apis
 	syscall_init();
 
-	process_load("terminal", "/bin/terminal", THREAD_APP_POLICY, 0, NULL);
+	process_load("window server", "/bin/window_server", THREAD_KERNEL_POLICY, 0, setup_window_server);
 
 	// idle
 	update_thread(current_thread, THREAD_WAITING);

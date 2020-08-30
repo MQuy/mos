@@ -155,7 +155,7 @@ Signals are inherited by child processes (`fork`) but will be set back to defaul
 
 - [x] Use `/dev/input/mouse -> { x, y, state }`, `/dev/input/keyboard -> { key, state }` to distribute events to userland. Specified device files is easier to implement at the first step, we can later apply [linux way](https://www.kernel.org/doc/html/latest/input/input_uapi.html)
 - [x] Add mqueuefs and refactor message queue to link with file descriptor
-- [ ] Signal
+- [x] Signal
 - [ ] Map serial port terminals to `/dev/ttyS[N]` (COM1 -> 0, COM2 -> 2)
 - [ ] PTY master/slave (to make it simplier, using one struct contains both)
 
@@ -497,6 +497,7 @@ struct tty_driver {
 	int	minor_num;	/* number of *possible* devices */
   int num; /* number of devices allocated */
   struct tty_opereations *tops;
+  struct list_head ttys;
   struct list_head sibling;
   struct tty_driver *other;
   struct termios init_termios;
@@ -512,7 +513,7 @@ struct tty_struct {
   struct tty_driver *driver;
   struct tty_ldisc *ldisc;
   struct tty_struct *link;
-  struct termios termios;
+  struct termios *termios;
 
   int pgrp;
 	int session;
@@ -576,16 +577,17 @@ int tty_init() {
 }
 
 int init_dev(struct tty_driver *driver, int idx, struct tty_struct **tty) {
-  1. allocate and init `tty` based on `driver`, `idx` and `name`
-  2. assign `tty->terminos` with `driver->init_terminos`
+  1. init `tty` based on `driver`, `idx` and `name`
+  2. `tty->terminos` = `driver->init_terminos`
+  3. `tty->ldisc` = `tty_ldisc_N_TTY`
   3. call `tty->ldisc.open(tty)`
 }
 
 int ptmx_open(struct vfs_inode *inode, struct vfs_file *filp) {
   1. get a new `index`
   2. call `init_dev` for both master (`ttym`) and slave (`ttys`)
-  4. link `ttym` and `ttys`
-  4. create `/dev/ttys`
+  3. link `ttym` and `ttys`
+  5. mount `/dev/pts/xxx`
 }
 
 // n_tty.c
@@ -636,8 +638,6 @@ int n_tty_poll(struct tty_struct * tty, struct file * file, poll_table *wait) {
 
 // char_dev.c
 void chardev_init() {
-  1. init chardev list
-  2. mount devfs at `/dev`
-  3. call `tty_init()`
+  1. call `tty_init()`
 }
 ```

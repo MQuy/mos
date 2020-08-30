@@ -74,17 +74,9 @@ struct vfs_file_operations random_fops = {
 	.release = random_release,
 };
 
-struct char_device cdev_null = {
-	.name = "null",
-	.dev = MKDEV(MEMORY_MAJOR, NULL_DEVICE),
-	.f_ops = &null_fops,
-};
+struct char_device cdev_null = (struct char_device)DECLARE_CHRDEV("null", MEMORY_MAJOR, NULL_DEVICE, 1, &null_fops);
 
-struct char_device cdev_random = {
-	.name = "random",
-	.dev = MKDEV(MEMORY_MAJOR, RANDOM_DEVICE),
-	.f_ops = &random_fops,
-};
+struct char_device cdev_random = (struct char_device)DECLARE_CHRDEV("random", MEMORY_MAJOR, RANDOM_DEVICE, 1, &random_fops);
 
 void chrdev_memory_init()
 {

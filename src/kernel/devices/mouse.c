@@ -95,10 +95,7 @@ static struct vfs_file_operations mouse_fops = {
 	.release = mouse_release,
 };
 
-static struct char_device cdev_mouse = {
-	.name = "mouse",
-	.dev = MKDEV(MOUSE_MAJOR, 1),
-	.f_ops = &mouse_fops};
+static struct char_device cdev_mouse = (struct char_device)DECLARE_CHRDEV("mouse", MOUSE_MAJOR, 1, 1, &mouse_fops);
 
 static void mouse_calculate_position()
 {

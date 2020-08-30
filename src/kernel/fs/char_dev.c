@@ -1,15 +1,28 @@
 #include "char_dev.h"
 
 #include <include/errno.h>
+#include <kernel/memory/vmm.h>
 
 struct list_head devlist;
+
+struct char_device *alloc_chrdev(const char *name, uint32_t major, uint32_t minor, int32_t minorct)
+{
+	struct char_device *cdev = kcalloc(1, sizeof(struct char_device));
+	cdev->name = name;
+	cdev->major = major;
+	cdev->baseminor = minor;
+	cdev->minorct = minorct;
+	cdev->dev = MKDEV(major, minor);
+
+	return cdev;
+}
 
 struct char_device *get_chrdev(dev_t dev)
 {
 	struct char_device *iter = NULL;
 	list_for_each_entry(iter, &devlist, sibling)
 	{
-		if (iter->dev == dev)
+		if (iter->dev == dev || (MKDEV(iter->major, iter->baseminor) <= dev && dev < MKDEV(iter->major, iter->baseminor + iter->minorct)))
 			return iter;
 	};
 	return NULL;

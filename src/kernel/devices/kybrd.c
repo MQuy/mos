@@ -695,10 +695,7 @@ static struct vfs_file_operations kybrd_fops = {
 	.release = kybrd_release,
 };
 
-static struct char_device cdev_kybrd = {
-	.name = "kybrd",
-	.dev = MKDEV(KYBRD_MAJOR, 1),
-	.f_ops = &kybrd_fops};
+static struct char_device cdev_kybrd = (struct char_device)DECLARE_CHRDEV("kybrd", KYBRD_MAJOR, 1, 1, &kybrd_fops);
 
 //! prepares driver for use
 void kkybrd_install()
