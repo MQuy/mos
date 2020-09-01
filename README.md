@@ -1,5 +1,8 @@
 ## mOS
 
+![license MIT](https://img.shields.io/badge/license-MIT-blue>)
+[![By Vietnamese](https://raw.githubusercontent.com/webuild-community/badge/master/svg/by.svg)](https://webuild.community)
+
 mOS is the hobby operating system which is developed from scratch
 
 [![](http://i3.ytimg.com/vi/-I3gCIqPkuU/maxresdefault.jpg)](https://www.youtube.com/watch?v=-I3gCIqPkuU "mOS demo")
