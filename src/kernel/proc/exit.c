@@ -69,9 +69,8 @@ void do_exit(int32_t code)
 int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 {
 	int32_t ret = -1;
-	DEFINE_WAIT(wentry);
-
-	list_add_tail(&wentry.sibling, &current_process->wait_chld.list);
+	DEFINE_WAIT(wait);
+	list_add_tail(&wait.sibling, &current_process->wait_chld.list);
 
 	struct process *pchild = NULL;
 	while (true)
@@ -99,7 +98,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 		update_thread(current_thread, THREAD_WAITING);
 		schedule();
 	}
-	list_del(&wentry.sibling);
+	list_del(&wait.sibling);
 
 	if (pchild)
 	{

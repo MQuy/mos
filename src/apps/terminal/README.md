@@ -591,11 +591,13 @@ int ptmx_open(struct vfs_inode *inode, struct vfs_file *filp) {
 }
 
 // n_tty.c
+int ntty_open(struct tty_struct *tty) {
+  1. allocate `tty->read_buf` with `N_TTY_BUF_SIZE`
+}
+
 int n_tty_write(struct tty_struct *tty, struct vfs_file *file, const unsigned char * buf, size_t nr) {
   1. allocate new buffer `pbuf`
   2. for each character in `buf`
-    - if `ch` == `SUSP` and terminos->c_lflag-ISIG enabled
-      - generate `SIGTSTP` to all processes in the foreground proces group controlling terminal
     - if terminos->c_oflag-OPOST enabled
       - if `ONLCR` && ch == NL -> ch = CR-NL
       - if `OCRNL` && ch == CR -> ch = NL
@@ -620,8 +622,8 @@ void n_tty_receive_buf(struct tty_struct *tty, const unsigned char *buf, int cou
       - `CR` is translated into `NL`
     - if terminos->c_iflag-IUCLC enabled, upper to lower mapping is performed
     - otherwise, `*tmp_buf++ = ch` and echo if echo mode is enabled
-  3. if terminos mode == non-canonical mode and read buffer >= MIN
-    - wake thread up
+  3. if terminos mode == non-canonical mode
+    - wake thread up if read buffer >= MIN
 }
 
 int n_tty_read(struct tty_struct *tty, struct vfs_file *file, const unsigned char * buf, size_t nr) {
@@ -633,6 +635,7 @@ int n_tty_read(struct tty_struct *tty, struct vfs_file *file, const unsigned cha
 
 int n_tty_poll(struct tty_struct * tty, struct file * file, poll_table *wait) {
   1. `poll_wait(file, &tty->read_wait, wait)`
+  2. `poll_wait(file, &tty->write_wait, wait)`
   2. return possible POLLXXX based on tty
 }
 

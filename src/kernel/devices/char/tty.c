@@ -1,5 +1,6 @@
 #include "tty.h"
 
+#include <include/errno.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
@@ -15,7 +16,7 @@ struct termios tty_std_termios = {
 			   ECHOCTL | ECHOKE | IEXTEN,
 	.c_cc = INIT_C_CC};
 
-struct tty_struct *find_tty_from_driver(struct tty_driver *driver, uint32_t idx)
+struct tty_struct *find_tty_from_driver(struct tty_driver *driver, int idx)
 {
 	struct tty_struct *iter;
 	list_for_each_entry(iter, &driver->ttys, sibling)
@@ -27,7 +28,7 @@ struct tty_struct *find_tty_from_driver(struct tty_driver *driver, uint32_t idx)
 	return NULL;
 }
 
-int init_dev(struct tty_driver *driver, uint32_t idx, struct tty_struct *tty)
+int init_dev(struct tty_driver *driver, int idx, struct tty_struct *tty)
 {
 	tty->index = idx;
 	tty->pgrp = current_process->gid;
@@ -56,7 +57,7 @@ struct tty_struct *alloc_tty_struct()
 
 int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 {
-	uint32_t index = get_next_pty_number();
+	int index = get_next_pty_number();
 	struct tty_struct *ttym = alloc_tty_struct();
 	init_dev(ptm_driver, index, ttym);
 	file->private_data = ttym;
@@ -68,7 +69,7 @@ int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 	ttym->link = ttys;
 	ttys->link = ttym;
 
-	char path[64];
+	char path[64] = {0};
 	sprintf(path, "/dev/%s", ttys->name);
 	vfs_mknod(path, S_IFCHR, MKDEV(UNIX98_PTY_SLAVE_MAJOR, index));
 
@@ -93,17 +94,35 @@ int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 
 ssize_t tty_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
-	return 0;
+	struct tty_struct *tty = (struct tty_struct *)file->private_data;
+	struct tty_ldisc *ld = tty->ldisc;
+
+	if (!tty || !ld->read)
+		return -EIO;
+
+	return ld->read(tty, file, buf, count);
 }
 
 ssize_t tty_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
-	return 0;
+	struct tty_struct *tty = (struct tty_struct *)file->private_data;
+	struct tty_ldisc *ld = tty->ldisc;
+
+	if (!tty || !tty->driver->tops->write || !ld->write)
+		return -EIO;
+
+	return ld->write(tty, file, buf, count);
 }
 
 unsigned int tty_poll(struct vfs_file *file, struct poll_table *pt)
 {
-	return 0;
+	struct tty_struct *tty = (struct tty_struct *)file->private_data;
+	struct tty_ldisc *ld = tty->ldisc;
+
+	if (!tty || !ld->poll)
+		return -EIO;
+
+	return ld->poll(tty, file, pt);
 }
 
 struct vfs_file_operations ptmx_fops = {
@@ -129,10 +148,14 @@ struct tty_driver *alloc_tty_driver(int32_t lines)
 	return driver;
 }
 
+void tty_default_put_char(struct tty_struct *tty, const char ch)
+{
+	tty->driver->tops->write(tty, &ch, 1);
+}
+
 int tty_register_driver(struct tty_driver *driver)
 {
-	struct char_device *cdev = alloc_chrdev(driver->name, driver->major, driver->minor_start, driver->minor_num);
-	cdev->f_ops = &tty_fops;
+	struct char_device *cdev = alloc_chrdev(driver->name, driver->major, driver->minor_start, driver->minor_num, &tty_fops);
 	register_chrdev(cdev);
 	driver->cdev = cdev;
 
@@ -146,6 +169,8 @@ int tty_register_driver(struct tty_driver *driver)
 			vfs_mknod(name, S_IFCHR, MKDEV(driver->major, driver->minor_start + i));
 		}
 	}
+	if (!driver->tops->put_char)
+		driver->tops->put_char = tty_default_put_char;
 	list_add_tail(&driver->sibling, &tty_drivers);
 
 	return 0;
@@ -155,8 +180,7 @@ void tty_init()
 {
 	INIT_LIST_HEAD(&tty_drivers);
 
-	struct char_device *ptmx_cdev = alloc_chrdev("ptmx", TTYAUX_MAJOR, 2, 1);
-	ptmx_cdev->f_ops = &ptmx_fops;
+	struct char_device *ptmx_cdev = alloc_chrdev("ptmx", TTYAUX_MAJOR, 2, 1, &ptmx_fops);
 	register_chrdev(ptmx_cdev);
 	vfs_mknod("/dev/ptmx", S_IFCHR, ptmx_cdev->dev);
 

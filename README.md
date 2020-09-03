@@ -49,16 +49,6 @@ tail -f serial.log | while read line ; do echo $line ; done
 
 ### References
 
-#### Memory management
-
-- [Virtual memory](https://www.youtube.com/watch?v=qcBIvnQt0Bw)
-- [How malloc works](https://forum.osdev.org/viewtopic.php?p=66669&sid=6491dc94867786304d824e07844575c4#p66669)
-- [Recursive page directory](http://www.rohitab.com/discuss/topic/31139-tutorial-paging-memory-mapping-with-a-recursive-page-directory/)
-
-#### Device
-
-- [FAT12 Overview](http://www.disc.ua.es/~gil/FAT12Description.pdf)
-
 #### Tutorials
 
 - http://www.brokenthorn.com/Resources

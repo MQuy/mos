@@ -35,7 +35,7 @@ struct char_device
 		.f_ops = _ops,                                            \
 	}
 
-struct char_device *alloc_chrdev(const char *name, uint32_t major, uint32_t minor, int32_t minorct);
+struct char_device *alloc_chrdev(const char *name, uint32_t major, uint32_t minor, int32_t minorct, struct vfs_file_operations *ops);
 int register_chrdev(struct char_device *cdev);
 int unregister_chrdev(dev_t dev);
 void chrdev_init();

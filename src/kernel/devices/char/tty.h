@@ -8,7 +8,9 @@
 #define UNIX98_PTY_MAJOR_COUNT 8
 #define UNIX98_PTY_SLAVE_MAJOR (UNIX98_PTY_MASTER_MAJOR + UNIX98_PTY_MAJOR_COUNT)
 #define N_TTY_BUF_SIZE 4096
+#define N_TTY_BUF_ALIGN(v) ((v) & (N_TTY_BUF_SIZE - 1))
 #define NCCS 19
+#define __DISABLED_CHAR '\0'
 
 #include <include/list.h>
 #include <kernel/fs/char_dev.h>
@@ -34,6 +36,9 @@
 #define WERASE_CHAR(tty) ((tty)->termios->c_cc[VWERASE])
 #define LNEXT_CHAR(tty) ((tty)->termios->c_cc[VLNEXT])
 #define EOL2_CHAR(tty) ((tty)->termios->c_cc[VEOL2])
+#define LINE_SEPARATOR(tty, ch) ({ \
+    typeof(ch) _ch = (ch); \
+    EOF_CHAR(tty) == _ch || EOL_CHAR(tty) == _ch || EOL2_CHAR(tty) == _ch; })
 
 #define _I_FLAG(tty, f) ((tty)->termios->c_iflag & (f))
 #define _O_FLAG(tty, f) ((tty)->termios->c_oflag & (f))
@@ -128,12 +133,14 @@
 #define TTY_MAGIC 0x5401
 #define TTY_DRIVER_MAGIC 0x5402
 #define TTY_LDISC_MAGIC 0x5403
+#define N_TTY_BUF_SIZE 4096
 
 struct tty_struct;
 
 struct tty_driver
 {
 	int32_t magic;
+	const char *driver_name;
 	const char *name;
 	struct char_device *cdev;
 	int major;		 /* major device number */
@@ -154,13 +161,15 @@ struct tty_operations
 {
 	int (*open)(struct tty_struct *tty, struct vfs_file *filp);
 	void (*close)(struct tty_struct *tty, struct vfs_file *filp);
-	int (*write)(struct tty_struct *tty, const unsigned char *buf, int count);
+	int (*write)(struct tty_struct *tty, const char *buf, int count);
+	void (*put_char)(struct tty_struct *tty, const char ch);
+	int (*write_room)(struct tty_struct *tty);
 };
 
 struct tty_struct
 {
-	uint32_t magic;
-	uint32_t index;
+	int magic;
+	int index;
 	char name[64];
 	struct tty_driver *driver;
 	struct tty_ldisc *ldisc;
@@ -172,6 +181,12 @@ struct tty_struct
 
 	struct wait_queue_head write_wait;
 	struct wait_queue_head read_wait;
+	int column;
+	int read_head;
+	int read_tail;
+	int read_count;
+	char *read_buf;
+	char *write_buf;
 	struct list_head sibling;
 };
 
@@ -180,16 +195,14 @@ struct tty_ldisc
 	int magic;
 	int num;
 	struct list_head sibling;
-	uint32_t column;
-	char *read_buf;
-	char *write_buf;
 
 	int (*open)(struct tty_struct *);
 	void (*close)(struct tty_struct *);
-	ssize_t (*read)(struct tty_struct *tty, struct vfs_file *file, unsigned char *buf, size_t nr);
-	ssize_t (*write)(struct tty_struct *tty, struct vfs_file *file, const unsigned char *buf, size_t nr);
-	void (*receive_buf)(struct tty_struct *, const unsigned char *cp, int count);
-	unsigned int (*poll)(struct tty_struct *, struct vfs_file *, struct poll_table *);
+	ssize_t (*read)(struct tty_struct *tty, struct vfs_file *file, char *buf, size_t nr);
+	ssize_t (*write)(struct tty_struct *tty, struct vfs_file *file, const char *buf, size_t nr);
+	int (*receive_room)(struct tty_struct *tty);
+	void (*receive_buf)(struct tty_struct *tty, const char *cp, int count);
+	unsigned int (*poll)(struct tty_struct *tty, struct vfs_file *, struct poll_table *);
 };
 
 // tty.c
@@ -202,7 +215,7 @@ void tty_init();
 // pty.c
 extern struct tty_driver *ptm_driver, *pts_driver;
 void pty_init();
-uint32_t get_next_pty_number();
+int get_next_pty_number();
 
 // n_tty.c
 extern struct tty_ldisc tty_ldisc_N_TTY;

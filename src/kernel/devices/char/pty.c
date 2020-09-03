@@ -3,10 +3,11 @@
 #define NR_PTY_MAX (1 << MINORBITS)
 
 struct tty_driver *ptm_driver, *pts_driver;
-volatile uint32_t next_pty_number = 0;
+volatile int next_pty_number = 0;
 
-uint32_t get_next_pty_number()
+int get_next_pty_number()
 {
+	// TODO: MQ 2020-09-04 Use bitmap to get/check next an unused number, release/uncheck a number
 	return next_pty_number++;
 }
 
@@ -15,23 +16,44 @@ int pty_open(struct tty_struct *tty, struct vfs_file *filp)
 	return 0;
 }
 
-int pty_write(struct tty_struct *tty, const unsigned char *buf, int count)
+int pty_write(struct tty_struct *tty, const char *buf, int count)
 {
-	return 0;
+	struct tty_struct *to = tty->link;
+
+	if (!to)
+		return 0;
+
+	int c = to->ldisc->receive_room(to);
+	if (c > count)
+		c = count;
+	to->ldisc->receive_buf(to, buf, c);
+	return c;
+}
+
+int pty_write_room(struct tty_struct *tty)
+{
+	struct tty_struct *to = tty->link;
+
+	if (!to)
+		return 0;
+
+	return to->ldisc->receive_room(to);
 }
 
 struct tty_operations pty_ops = {
 	.open = pty_open,
 	.write = pty_write,
+	.write_room = pty_write_room,
 };
 
 void pty_init()
 {
 	ptm_driver = alloc_tty_driver(NR_PTY_MAX);
+	ptm_driver->driver_name = "pty_master";
 	ptm_driver->name = "ptm";
-	ptm_driver->major = PTY_MASTER_MAJOR;
+	ptm_driver->major = UNIX98_PTY_MASTER_MAJOR;
 	ptm_driver->minor_start = 0;
-	ptm_driver->type = UNIX98_PTY_MASTER_MAJOR;
+	ptm_driver->type = TTY_DRIVER_TYPE_PTY;
 	ptm_driver->subtype = PTY_TYPE_MASTER;
 	ptm_driver->init_termios = tty_std_termios;
 	ptm_driver->init_termios.c_iflag = 0;
@@ -45,6 +67,7 @@ void pty_init()
 	tty_register_driver(ptm_driver);
 
 	pts_driver = alloc_tty_driver(NR_PTY_MAX);
+	pts_driver->driver_name = "pty_slave";
 	pts_driver->name = "pts";
 	pts_driver->major = UNIX98_PTY_SLAVE_MAJOR;
 	pts_driver->minor_start = 0;
