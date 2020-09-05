@@ -1,6 +1,7 @@
 #include "tty.h"
 
 #include <include/errno.h>
+#include <include/ioctls.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
@@ -31,8 +32,8 @@ struct tty_struct *find_tty_from_driver(struct tty_driver *driver, int idx)
 int init_dev(struct tty_driver *driver, int idx, struct tty_struct *tty)
 {
 	tty->index = idx;
-	tty->pgrp = current_process->gid;
 	tty->session = current_process->sid;
+	tty->pgrp = current_process->gid;
 	tty->driver = driver;
 	tty->ldisc = &tty_ldisc_N_TTY;
 	tty->termios = &driver->init_termios;
@@ -89,6 +90,13 @@ int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 
 	file->private_data = tty;
 
+	if (current_process->pid == current_process->sid && !current_process->tty && !tty->session)
+	{
+		current_process->tty = tty;
+		tty->session = current_process->sid;
+		tty->pgrp = current_process->gid;
+	}
+
 	return 0;
 }
 
@@ -125,11 +133,54 @@ unsigned int tty_poll(struct vfs_file *file, struct poll_table *pt)
 	return ld->poll(tty, file, pt);
 }
 
+static int tiocsctty(struct tty_struct *tty, int arg)
+{
+	if (current_process->pid != current_process->sid || current_process->tty)
+		return -EPERM;
+
+	if (tty->session)
+	{
+		if (arg != 1)
+			return -EPERM;
+
+		struct process *proc;
+		struct hashmap_iter *iter;
+		for_each_process(proc, iter)
+		{
+			if (proc->pid == tty->session)
+				proc->tty = NULL;
+		}
+	}
+
+	current_process->tty = tty;
+	tty->session = current_process->sid;
+	tty->pgrp = current_process->gid;
+	return 0;
+}
+
+int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
+{
+	struct tty_struct *tty = (struct tty_struct *)file->private_data;
+
+	if (!tty)
+		return -ENODEV;
+
+	switch (cmd)
+	{
+	case TIOCSCTTY:
+		return tiocsctty(tty, arg);
+	default:
+		break;
+	}
+	return 0;
+}
+
 struct vfs_file_operations ptmx_fops = {
 	.open = ptmx_open,
 	.read = tty_read,
 	.write = tty_write,
 	.poll = tty_poll,
+	.ioctl = tty_ioctl,
 };
 
 struct vfs_file_operations tty_fops = {
@@ -137,6 +188,7 @@ struct vfs_file_operations tty_fops = {
 	.read = tty_read,
 	.write = tty_write,
 	.poll = tty_poll,
+	.ioctl = tty_ioctl,
 };
 
 struct tty_driver *alloc_tty_driver(int32_t lines)

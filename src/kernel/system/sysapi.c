@@ -138,6 +138,7 @@ int32_t sys_setsid()
 		return -1;
 
 	current_process->sid = current_process->gid = current_process->pid;
+	current_process->tty = NULL;
 	return 0;
 }
 
@@ -220,6 +221,16 @@ int32_t sys_poll(struct pollfd *fds, uint32_t nfds)
 	return do_poll(fds, nfds);
 }
 
+int32_t sys_ioctl(int fd, unsigned int cmd, unsigned long arg)
+{
+	struct vfs_file *file = current_process->files->fd[fd];
+
+	if (file && file->f_op->ioctl)
+		return file->f_op->ioctl(file->f_dentry->d_inode, file, cmd, arg);
+
+	return -EINVAL;
+}
+
 int32_t sys_mq_open(const char *name, int32_t flags)
 {
 	return mq_open(name, flags);
@@ -270,6 +281,7 @@ int32_t sys_getptsname(int32_t fdm, char *buf)
 #define __NR_getgid 47
 #define __NR_signal 48
 #define __NR_posix_spawn 49
+#define __NR_ioctl 54
 #define __NR_setpgid 57
 #define __NR_getppid 64
 #define __NR_setsid 66
@@ -315,6 +327,7 @@ static void *syscalls[] = {
 	[__NR_brk] = sys_brk,
 	[__NR_sbrk] = sys_sbrk,
 	[__NR_kill] = sys_kill,
+	[__NR_ioctl] = sys_ioctl,
 	[__NR_getpid] = sys_getpid,
 	[__NR_getppid] = sys_getppid,
 	[__NR_getpgid] = sys_getpgid,

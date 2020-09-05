@@ -101,6 +101,18 @@ unsigned int chrdev_poll(struct vfs_file *file, struct poll_table *pt)
 	return -EINVAL;
 }
 
+int chrdev_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
+{
+	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
+	if (cdev == NULL)
+		return -ENODEV;
+
+	if (cdev->f_ops->ioctl)
+		return cdev->f_ops->ioctl(inode, file, cmd, arg);
+
+	return -EINVAL;
+}
+
 int chrdev_release(struct vfs_inode *inode, struct vfs_file *file)
 {
 	struct char_device *cdev = get_chrdev(inode->i_rdev);
@@ -118,6 +130,7 @@ struct vfs_file_operations def_chr_fops = {
 	.read = chrdev_read,
 	.write = chrdev_write,
 	.poll = chrdev_poll,
+	.ioctl = chrdev_ioctl,
 	.release = chrdev_release,
 };
 

@@ -186,10 +186,11 @@ struct vfs_file_operations
 	loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
 	ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
 	ssize_t (*write)(struct vfs_file *file, const char *buf, size_t count, loff_t ppos);
-	unsigned int (*poll)(struct vfs_file *, struct poll_table *pt);
-	int (*mmap)(struct vfs_file *, struct vm_area_struct *);
-	int (*open)(struct vfs_inode *, struct vfs_file *);
-	int (*release)(struct vfs_inode *, struct vfs_file *);
+	unsigned int (*poll)(struct vfs_file *file, struct poll_table *pt);
+	int (*ioctl)(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg);
+	int (*mmap)(struct vfs_file *file, struct vm_area_struct *vm);
+	int (*open)(struct vfs_inode *inode, struct vfs_file *file);
+	int (*release)(struct vfs_inode *inode, struct vfs_file *file);
 };
 
 struct nameidata

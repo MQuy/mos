@@ -9,6 +9,8 @@ int main(void)
 	int fdm, fds, rc;
 	char input[150] = {0};
 
+	setsid();
+
 	fdm = posix_openpt(O_RDWR);
 	fds = open(ptsname(fdm), O_RDWR, 0);
 

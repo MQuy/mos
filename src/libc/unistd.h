@@ -23,6 +23,7 @@
 #define __NR_getgid 47
 #define __NR_signal 48
 #define __NR_posix_spawn 49
+#define __NR_ioctl 54
 #define __NR_setpgid 57
 #define __NR_getppid 64
 #define __NR_setsid 66
@@ -325,6 +326,12 @@ _syscall2(nanosleep, const struct timespec *, struct timespec *);
 static inline int32_t nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	return syscall_nanosleep(req, rem);
+}
+
+_syscall3(ioctl, int, unsigned int, unsigned long);
+static inline int32_t ioctl(int32_t fd, unsigned int cmd, unsigned long arg)
+{
+	return syscall_ioctl(fd, cmd, arg);
 }
 
 _syscall2(getptsname, int32_t, char *);
