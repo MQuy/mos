@@ -1,33 +1,31 @@
 #include <libc/stdlib.h>
+#include <libc/string.h>
 #include <libc/unistd.h>
 #include <libc/wait.h>
 #include <stdint.h>
 
-volatile int32_t usr_interrupt = 0;
-
-void fatal_error_signal(int sig)
-{
-	usr_interrupt = 1;
-	signal(sig, SIG_DFL);
-	raise(sig);
-}
-
 int main(void)
 {
-	struct sigaction usr_action;
-	sigset_t block_mask;
+	int fdm, fds, rc;
+	char input[150] = {0};
 
-	/* Establish the signal handler. */
-	sigfillset(&block_mask);
-	usr_action.sa_handler = fatal_error_signal;
-	usr_action.sa_mask = block_mask;
-	usr_action.sa_flags = 0;
-	sigaction(SIGINT, &usr_action, NULL);
+	fdm = posix_openpt(O_RDWR);
+	fds = open(ptsname(fdm), O_RDWR, 0);
 
-	raise(SIGINT);
+	if (fork())
+	{
+		char msg[] = "hello world\027, from masterr\177\n";
+		write(fdm, msg, sizeof(msg) - 1);	  // ptm write
+		read(fdm, input, sizeof(input) - 1);  // pts echo back
+		memset(input, 0, sizeof(input));
+		rc = read(fdm, input, sizeof(input) - 1);  // pts write back
+	}
+	else
+	{
+		char msg[] = "let's end this conversation\n";
+		write(fdm, msg, sizeof(msg) - 1);  // pts write
+		rc = read(fds, input, sizeof(input) - 1);
+	}
 
-	while (!usr_interrupt)
-		;
-
-	return 0;
+	return rc;
 }
