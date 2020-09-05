@@ -278,7 +278,7 @@ struct process *process_fork(struct process *parent)
 	// fork process
 	struct process *proc = kcalloc(1, sizeof(struct process));
 	proc->pid = next_pid++;
-	proc->gid = parent->pid;
+	proc->gid = parent->gid;
 	proc->sid = parent->sid;
 	proc->name = strdup(parent->name);
 	proc->parent = parent;
