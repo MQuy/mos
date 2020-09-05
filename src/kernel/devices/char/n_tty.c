@@ -12,7 +12,10 @@ static void put_tty_queue(struct tty_struct *tty, char ch)
 	if (tty->read_count >= N_TTY_BUF_SIZE)
 		return;
 
-	tty->read_tail = N_TTY_BUF_ALIGN(tty->read_tail + 1);
+	if (tty->read_count)
+		tty->read_tail = N_TTY_BUF_ALIGN(tty->read_tail + 1);
+	else
+		assert(tty->read_head == tty->read_tail);
 	tty->read_buf[tty->read_tail] = ch;
 	tty->read_count++;
 }
@@ -29,6 +32,7 @@ static ssize_t opost_block(struct tty_struct *tty, const char *buf, ssize_t nr)
 	if (O_OPOST(tty))
 	{
 		char *wbuf = kcalloc(1, N_TTY_BUF_SIZE);
+		char *ibuf = wbuf;
 		int wlength = 0;
 
 		for (int i = 0; i < nr; ++i)
@@ -36,23 +40,23 @@ static ssize_t opost_block(struct tty_struct *tty, const char *buf, ssize_t nr)
 			char ch = buf[i];
 			if (O_ONLCR(tty) && ch == '\n')
 			{
-				*wbuf++ = '\r';
-				*wbuf++ = ch;
+				*ibuf++ = '\r';
+				*ibuf++ = ch;
 				wlength += 2;
 			}
 			else if (O_OCRNL(tty) && ch == '\r')
 			{
-				*wbuf++ = '\n';
+				*ibuf++ = '\n';
 				wlength++;
 			}
 			else
 			{
-				*wbuf++ = O_OLCUC(tty) ? toupper(ch) : ch;
+				*ibuf++ = O_OLCUC(tty) ? toupper(ch) : ch;
 				wlength++;
 			}
 		}
 
-		tty->driver->tops->write(tty, wbuf - wlength, wlength);
+		tty->driver->tops->write(tty, wbuf, wlength);
 		kfree(wbuf);
 		return wlength;
 	}
@@ -119,9 +123,9 @@ static void assert_from_read_buf(struct tty_struct *tty, int length)
 	if (tty->read_head != tty->read_tail)
 	{
 		if (tty->read_head > tty->read_tail)
-			assert(tty->read_head + length <= tty->read_tail + N_TTY_BUF_SIZE);
+			assert(tty->read_head + length - 1 <= tty->read_tail + N_TTY_BUF_SIZE);
 		else
-			assert(tty->read_head + length <= tty->read_tail);
+			assert(tty->read_head + length - 1 <= tty->read_tail);
 	}
 	else
 		assert(length == 1);
@@ -180,15 +184,21 @@ ssize_t ntty_read(struct tty_struct *tty, struct vfs_file *file, char *buf, size
 	}
 	list_del(&wait.sibling);
 
-	if (length > nr || length > tty->read_count)
+	if (!length || length > nr || length > tty->read_count)
 		return -EFAULT;
 
 	assert_from_read_buf(tty, length);
 	copy_from_read_buf(tty, length, buf);
-	if (tty->read_head == tty->read_tail)
-		tty->read_tail = N_TTY_BUF_ALIGN(tty->read_head + length);
-	tty->read_head = N_TTY_BUF_ALIGN(tty->read_head + length);
-	tty->read_count -= length;
+	if (length == tty->read_count)
+	{
+		tty->read_head = tty->read_tail = 0;
+		tty->read_count = 0;
+	}
+	else
+	{
+		tty->read_head = N_TTY_BUF_ALIGN(tty->read_head + length);
+		tty->read_count -= length;
+	}
 	wake_up(&tty->write_wait);
 
 	return length;
@@ -284,16 +294,14 @@ void ntty_receive_buf(struct tty_struct *tty, const char *cp, int count)
 			}
 
 			put_tty_queue(tty, ch);
+			if (L_ECHO(tty))
+				opost_block(tty, &(const char){ch}, 1);
 		}
 	}
 	else
 	{
 		for (int i = 0; i < count; ++i)
-		{
-			tty->read_tail = N_TTY_BUF_ALIGN(tty->read_tail + 1);
-			tty->read_buf[tty->read_tail] = cp[i];
-		}
-		tty->read_count += count;
+			put_tty_queue(tty, cp[i]);
 		if (L_ECHO(tty))
 			opost_block(tty, cp, count);
 		if (tty->read_count >= MIN_CHAR(tty))

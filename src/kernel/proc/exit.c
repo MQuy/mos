@@ -1,4 +1,5 @@
 #include <include/atomic.h>
+#include <kernel/devices/char/tty.h>
 #include <kernel/ipc/signal.h>
 
 #include "task.h"
@@ -44,11 +45,17 @@ static void exit_notify(struct process *proc)
 	struct process *iter;
 	list_for_each_entry(iter, &proc->children, sibling)
 	{
-		do_kill(iter->pid, SIGHUP);
 		iter->parent = find_process_by_pid(INIT_PID);
 	}
 	if (!proc->caused_signal)
 		proc->flags |= EXIT_TERMINATED;
+
+	if (proc->pid == proc->sid && proc->tty && proc->pid == proc->tty->session)
+	{
+		proc->tty->session = 0;
+		proc->tty->pgrp = 0;
+		do_kill(-proc->tty->pgrp, SIGHUP);
+	}
 
 	do_kill(proc->parent->pid, SIGCHLD);
 	wake_up(&proc->parent->wait_chld);

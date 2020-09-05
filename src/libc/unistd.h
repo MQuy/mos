@@ -54,6 +54,8 @@
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
 #define __NR_sendto 369
+// TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
+#define __NR_getptsname 370
 
 #define _syscall0(name)                           \
 	static inline int32_t syscall_##name()        \
@@ -323,6 +325,12 @@ _syscall2(nanosleep, const struct timespec *, struct timespec *);
 static inline int32_t nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	return syscall_nanosleep(req, rem);
+}
+
+_syscall2(getptsname, int32_t, char *);
+static inline int32_t getptsname(int32_t fdm, char *ptsname)
+{
+	return syscall_getptsname(fdm, ptsname);
 }
 
 static inline int32_t usleep(uint32_t usec)

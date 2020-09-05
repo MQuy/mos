@@ -77,6 +77,18 @@ ssize_t chrdev_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 	return -EINVAL;
 }
 
+ssize_t chrdev_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+{
+	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
+	if (cdev == NULL)
+		return -ENODEV;
+
+	if (cdev->f_ops->write)
+		return cdev->f_ops->write(file, buf, count, ppos);
+
+	return -EINVAL;
+}
+
 unsigned int chrdev_poll(struct vfs_file *file, struct poll_table *pt)
 {
 	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
@@ -104,6 +116,7 @@ int chrdev_release(struct vfs_inode *inode, struct vfs_file *file)
 struct vfs_file_operations def_chr_fops = {
 	.open = chrdev_open,
 	.read = chrdev_read,
+	.write = chrdev_write,
 	.poll = chrdev_poll,
 	.release = chrdev_release,
 };

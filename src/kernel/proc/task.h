@@ -36,6 +36,7 @@
 struct vfs_file;
 struct vfs_dentry;
 struct vfs_mount;
+struct tty_struct;
 
 enum thread_state
 {
@@ -133,6 +134,7 @@ struct process
 	struct files_struct *files;
 	struct mm_struct *mm;
 
+	struct tty_struct *tty;
 	struct sigaction sighand[NSIG];
 	int32_t exit_code;
 	int32_t caused_signal;

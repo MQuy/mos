@@ -64,6 +64,7 @@ void pty_init()
 						TTY_DRIVER_NO_DEVFS | TTY_DRIVER_DEVPTS_MEM;
 	ptm_driver->tops = &pty_ops;
 	ptm_driver->other = pts_driver;
+	INIT_LIST_HEAD(&ptm_driver->ttys);
 	tty_register_driver(ptm_driver);
 
 	pts_driver = alloc_tty_driver(NR_PTY_MAX);
@@ -79,5 +80,6 @@ void pty_init()
 						TTY_DRIVER_NO_DEVFS | TTY_DRIVER_DEVPTS_MEM;
 	pts_driver->tops = &pty_ops;
 	pts_driver->other = ptm_driver;
+	INIT_LIST_HEAD(&pts_driver->ttys);
 	tty_register_driver(pts_driver);
 }

@@ -4,6 +4,7 @@
 #include <include/errno.h>
 #include <include/fcntl.h>
 #include <kernel/cpu/hal.h>
+#include <kernel/devices/char/tty.h>
 #include <kernel/fs/pipefs/pipe.h>
 #include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/fs/vfs.h>
@@ -244,6 +245,17 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 	return mq_receive(fd, buf, priority, msize);
 }
 
+int32_t sys_getptsname(int32_t fdm, char *buf)
+{
+	struct tty_struct *ttym = current_process->files->fd[fdm]->private_data;
+	if (!ttym || ttym->magic != TTY_MAGIC)
+		return -ENOTTY;
+
+	struct tty_struct *ttys = ttym->link;
+	sprintf(buf, "/dev/%s", ttys->name);
+	return 0;
+}
+
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -289,6 +301,7 @@ int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
 #define __NR_sendto 369
+#define __NR_getptsname 370
 
 static void *syscalls[] = {
 	[__NR_exit] = sys_exit,
@@ -329,6 +342,7 @@ static void *syscalls[] = {
 	[__NR_mq_send] = sys_mq_send,
 	[__NR_mq_receive] = sys_mq_receive,
 	[__NR_waitid] = sys_waitid,
+	[__NR_getptsname] = sys_getptsname,
 };
 
 int32_t syscall_dispatcher(struct interrupt_registers *regs)

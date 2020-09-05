@@ -38,7 +38,7 @@
 #define EOL2_CHAR(tty) ((tty)->termios->c_cc[VEOL2])
 #define LINE_SEPARATOR(tty, ch) ({ \
     typeof(ch) _ch = (ch); \
-    EOF_CHAR(tty) == _ch || EOL_CHAR(tty) == _ch || EOL2_CHAR(tty) == _ch; })
+    EOF_CHAR(tty) == _ch || EOL_CHAR(tty) == _ch || EOL2_CHAR(tty) == _ch || _ch == '\n'; })
 
 #define _I_FLAG(tty, f) ((tty)->termios->c_iflag & (f))
 #define _O_FLAG(tty, f) ((tty)->termios->c_oflag & (f))
