@@ -29,7 +29,8 @@ cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
 mkdir "/Volumes/${VOLUME_NAME}/etc"
 cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"
 
-cp demo.txt "/Volumes/${VOLUME_NAME}"
+mkdir "/Volumes/${VOLUME_NAME}/tmp"
+cp assets/book.txt "/Volumes/${VOLUME_NAME}/tmp"
 
 hdiutil detach $DISK_NAME
 

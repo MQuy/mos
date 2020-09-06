@@ -68,7 +68,7 @@ else
   then
     sudo qemu-system-i386 -s -S -boot c -cdrom mos.iso -hda hdd.img \
       -netdev tap,id=mnet0,ifname=tap0,script=./tapup.sh,downscript=./tapdown.sh -device rtl8139,netdev=mnet0,mac=52:55:00:d1:55:01 \
-      -serial stdio -serial file:uart2.log -serial file:uart3.log -serial file:uart4.log \
+      -serial stdio -serial file:logs/uart2.log -serial file:logs/uart3.log -serial file:logs/uart4.log \
       -rtc driftfix=slew
   else
     qemu-system-i386 -s -drive format=raw,file=mos.img,index=0,media=disk -d guest_errors,int
