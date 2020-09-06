@@ -18,7 +18,7 @@ struct char_device *alloc_chrdev(const char *name, uint32_t major, uint32_t mino
 	return cdev;
 }
 
-struct char_device *get_chrdev(dev_t dev)
+static struct char_device *get_chrdev(dev_t dev)
 {
 	struct char_device *iter = NULL;
 	list_for_each_entry(iter, &devlist, sibling)
@@ -53,7 +53,7 @@ int unregister_chrdev(dev_t dev)
 		return -ENODEV;
 }
 
-int chrdev_open(struct vfs_inode *inode, struct vfs_file *filp)
+static int chrdev_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
 	struct char_device *cdev = get_chrdev(inode->i_rdev);
 	if (cdev == NULL)
@@ -65,7 +65,7 @@ int chrdev_open(struct vfs_inode *inode, struct vfs_file *filp)
 	return -EINVAL;
 }
 
-ssize_t chrdev_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t chrdev_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
 	if (cdev == NULL)
@@ -77,7 +77,7 @@ ssize_t chrdev_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 	return -EINVAL;
 }
 
-ssize_t chrdev_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t chrdev_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
 	if (cdev == NULL)
@@ -89,7 +89,7 @@ ssize_t chrdev_write(struct vfs_file *file, const char *buf, size_t count, loff_
 	return -EINVAL;
 }
 
-unsigned int chrdev_poll(struct vfs_file *file, struct poll_table *pt)
+static unsigned int chrdev_poll(struct vfs_file *file, struct poll_table *pt)
 {
 	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
 	if (cdev == NULL)
@@ -101,7 +101,7 @@ unsigned int chrdev_poll(struct vfs_file *file, struct poll_table *pt)
 	return -EINVAL;
 }
 
-int chrdev_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
+static int chrdev_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
 {
 	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
 	if (cdev == NULL)
@@ -113,7 +113,7 @@ int chrdev_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cm
 	return -EINVAL;
 }
 
-int chrdev_release(struct vfs_inode *inode, struct vfs_file *file)
+static int chrdev_release(struct vfs_inode *inode, struct vfs_file *file)
 {
 	struct char_device *cdev = get_chrdev(inode->i_rdev);
 	if (cdev == NULL)

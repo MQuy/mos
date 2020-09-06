@@ -16,7 +16,7 @@
 static struct vfs_file_system_type *file_systems;
 struct list_head vfsmntlist;
 
-struct vfs_file_system_type **find_filesystem(const char *name)
+static struct vfs_file_system_type **find_filesystem(const char *name)
 {
 	struct vfs_file_system_type **p;
 	for (p = &file_systems; *p; p = &(*p)->next)
@@ -108,7 +108,7 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
 	return mnt;
 }
 
-void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
+static void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
 {
 	struct vfs_mount *mnt = fs_type->mount(fs_type, dev_name, "/");
 	list_add_tail(&mnt->sibling, &vfsmntlist);

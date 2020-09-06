@@ -6,7 +6,7 @@
 
 #include "devfs.h"
 
-int devfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
+static int devfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
 {
 	struct vfs_inode *i = devfs_get_inode(dir->i_sb, mode);
 	uint32_t current_seconds = get_seconds(NULL);
@@ -20,7 +20,7 @@ int devfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_
 	return 0;
 }
 
-struct vfs_inode *devfs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
+static struct vfs_inode *devfs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
 {
 	return devfs_get_inode(dir->i_sb, mode);
 }

@@ -7,7 +7,7 @@
 
 #include "tmpfs.h"
 
-loff_t tmpfs_llseek_file(struct vfs_file *file, loff_t ppos)
+static loff_t tmpfs_llseek_file(struct vfs_file *file, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 
@@ -18,7 +18,7 @@ loff_t tmpfs_llseek_file(struct vfs_file *file, loff_t ppos)
 	return ppos;
 }
 
-ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 	struct vfs_superblock *sb = inode->i_sb;
@@ -49,7 +49,7 @@ ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t p
 	return count;
 }
 
-ssize_t tmpfs_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t tmpfs_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 	struct vfs_superblock *sb = inode->i_sb;
@@ -80,7 +80,7 @@ ssize_t tmpfs_write_file(struct vfs_file *file, const char *buf, size_t count, l
 	return count;
 }
 
-int tmpfs_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
+static int tmpfs_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 	struct vfs_superblock *sb = inode->i_sb;
@@ -98,7 +98,7 @@ int tmpfs_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 	return 0;
 }
 
-int tmpfs_release(struct vfs_inode *inode, struct vfs_file *file)
+static int tmpfs_release(struct vfs_inode *inode, struct vfs_file *file)
 {
 	// TODO: MQ 2020-08-22 implement release for `inode->i_data.pages`
 	return 0;

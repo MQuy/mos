@@ -1,6 +1,6 @@
 #include "bmp.h"
 
-void bmp_bi_bitfields_draw(
+static void bmp_bi_bitfields_draw(
 	struct graphic *dgraph,
 	struct bmp_header *bmp_header,
 	struct dip_bitmapcoreheader *dip_header,

@@ -1,8 +1,8 @@
 #include "math.h"
 
-uint32_t rseed = 1;
+static uint32_t rseed = 1;
 
-uint32_t rand_r(uint32_t *seed)
+static uint32_t rand_r(uint32_t *seed)
 {
 	unsigned int next = *seed;
 	int result;

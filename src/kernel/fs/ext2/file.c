@@ -6,7 +6,7 @@
 
 #include "ext2.h"
 
-loff_t ext2_llseek_file(struct vfs_file *file, loff_t ppos)
+static loff_t ext2_llseek_file(struct vfs_file *file, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 
@@ -17,7 +17,7 @@ loff_t ext2_llseek_file(struct vfs_file *file, loff_t ppos)
 	return ppos;
 }
 
-void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+static void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
 	char *block_buf = ext2_bread_block(sb, block);
 	int32_t pstart = (ppos > *p) ? ppos - *p : 0;
@@ -28,28 +28,28 @@ void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, ui
 	*iter_buf += sb->s_blocksize - pstart - pend;
 }
 
-void ext2_read_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+static void ext2_read_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
 	uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
 	for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
 		ext2_read_direct_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
-void ext2_read_doubly_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+static void ext2_read_doubly_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
 	uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
 	for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
 		ext2_read_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
-void ext2_read_triply_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+static void ext2_read_triply_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
 	uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
 	for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
 		ext2_read_triply_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
 }
 
-ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 	struct ext2_inode *ei = EXT2_INODE(inode);
@@ -84,7 +84,7 @@ ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, loff_t pp
 	return count;
 }
 
-ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 	struct ext2_inode *ei = EXT2_INODE(inode);

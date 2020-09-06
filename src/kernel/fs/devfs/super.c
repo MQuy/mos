@@ -31,7 +31,7 @@ struct vfs_inode *devfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 	return i;
 }
 
-struct vfs_inode *devfs_alloc_inode(struct vfs_superblock *sb)
+static struct vfs_inode *devfs_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *inode = init_inode();
 	inode->i_sb = sb;
@@ -44,7 +44,7 @@ struct vfs_super_operations devfs_super_operations = {
 	.alloc_inode = devfs_alloc_inode,
 };
 
-int devfs_fill_super(struct vfs_superblock *sb)
+static int devfs_fill_super(struct vfs_superblock *sb)
 {
 	sb->s_magic = DEVFS_MAGIC;
 	sb->s_blocksize = PMM_FRAME_SIZE;
@@ -52,8 +52,8 @@ int devfs_fill_super(struct vfs_superblock *sb)
 	return 0;
 }
 
-struct vfs_mount *devfs_mount(struct vfs_file_system_type *fs_type,
-							  char *dev_name, char *dir_name)
+static struct vfs_mount *devfs_mount(struct vfs_file_system_type *fs_type,
+									 char *dev_name, char *dir_name)
 {
 	struct vfs_superblock *sb = kcalloc(1, sizeof(struct vfs_superblock));
 	sb->s_blocksize = PMM_FRAME_SIZE;

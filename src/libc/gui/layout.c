@@ -18,7 +18,7 @@ void init_fonts()
 	psf_init(buf, stat->size);
 }
 
-struct window *find_child_element_from_position(struct window *win, int32_t px, int32_t py, int32_t mx, int32_t my)
+static struct window *find_child_element_from_position(struct window *win, int32_t px, int32_t py, int32_t mx, int32_t my)
 {
 	struct window *iter_win;
 	list_for_each_entry(iter_win, &win->children, sibling)
@@ -37,12 +37,12 @@ struct window *find_child_element_from_position(struct window *win, int32_t px, 
 	return NULL;
 }
 
-void add_event_handler(struct window *win, char *event_name, EVENT_HANDLER handler)
+static void add_event_handler(struct window *win, char *event_name, EVENT_HANDLER handler)
 {
 	hashmap_put(&win->events, event_name, handler);
 }
 
-void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height, struct ui_style *style)
+static void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height, struct ui_style *style)
 {
 	char *pid = calloc(sizeof(char), WINDOW_NAME_LENGTH);
 	itoa(getpid(), 10, pid);
@@ -84,7 +84,7 @@ void gui_create_window(struct window *parent, struct window *win, int32_t x, int
 	win->graphic.buf = (char *)mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd);
 }
 
-void gui_label_set_text(struct ui_label *label, char *text)
+static void gui_label_set_text(struct ui_label *label, char *text)
 {
 	memset(label->window.graphic.buf, 0, label->window.graphic.width * label->window.graphic.height * 4);
 

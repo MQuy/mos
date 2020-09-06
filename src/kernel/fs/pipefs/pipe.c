@@ -9,7 +9,7 @@
 #include <kernel/system/time.h>
 
 // TODO: MQ 2019-01-03 Implement empty for read and full for write (http://man7.org/linux/man-pages/man7/pipe.7.html)
-ssize_t pipe_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t pipe_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	if (file->f_flags & O_WRONLY)
 		return -EINVAL;
@@ -22,7 +22,7 @@ ssize_t pipe_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 	return 0;
 }
 
-ssize_t pipe_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t pipe_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	if (file->f_flags & O_RDONLY)
 		return -EINVAL;
@@ -35,7 +35,7 @@ ssize_t pipe_write(struct vfs_file *file, const char *buf, size_t count, loff_t 
 	return 0;
 }
 
-int pipe_open(struct vfs_inode *inode, struct vfs_file *file)
+static int pipe_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	struct pipe *p = inode->i_pipe;
 
@@ -54,7 +54,7 @@ int pipe_open(struct vfs_inode *inode, struct vfs_file *file)
 	return 0;
 }
 
-int pipe_release(struct vfs_inode *inode, struct vfs_file *file)
+static int pipe_release(struct vfs_inode *inode, struct vfs_file *file)
 {
 	struct pipe *p = inode->i_pipe;
 
@@ -88,7 +88,7 @@ struct vfs_file_operations pipe_fops = {
 	.release = pipe_release,
 };
 
-struct pipe *alloc_pipe()
+static struct pipe *alloc_pipe()
 {
 	struct pipe *p = kcalloc(1, sizeof(struct pipe));
 	p->files = 0;
@@ -103,7 +103,7 @@ struct pipe *alloc_pipe()
 	return p;
 }
 
-struct vfs_inode *get_pipe_inode()
+static struct vfs_inode *get_pipe_inode()
 {
 	struct pipe *p = alloc_pipe();
 	p->readers = p->writers = 1;

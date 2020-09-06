@@ -12,7 +12,7 @@
 #define SOCKFS_ROOT "/dev/sockfs"
 #define SOCK_NUMBER_LENGTH 11
 
-uint32_t nsock;
+static uint32_t nsock;
 
 int32_t get_unused_socket_number()
 {
@@ -60,7 +60,7 @@ struct vfs_inode *sockfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 	return i;
 }
 
-struct vfs_inode *sockfs_alloc_inode(struct vfs_superblock *sb)
+static struct vfs_inode *sockfs_alloc_inode(struct vfs_superblock *sb)
 {
 	struct socket_alloc *ei = kcalloc(1, sizeof(struct socket_alloc));
 
@@ -80,8 +80,8 @@ struct vfs_super_operations sockfs_super_operations = {
 	.alloc_inode = sockfs_alloc_inode,
 };
 
-struct vfs_mount *sockfs_mount(struct vfs_file_system_type *fs_type,
-							   char *dev_name, char *dir_name)
+static struct vfs_mount *sockfs_mount(struct vfs_file_system_type *fs_type,
+									  char *dev_name, char *dir_name)
 {
 	struct vfs_superblock *sb = kcalloc(1, sizeof(struct vfs_superblock));
 	sb->s_blocksize = PMM_FRAME_SIZE;

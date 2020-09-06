@@ -13,7 +13,7 @@
 #define ERR_WRONG_VERSION 4
 #define ERR_NOT_SUPPORTED_TYPE 5
 
-int elf_verify(struct Elf32_Ehdr *elf_header)
+static int elf_verify(struct Elf32_Ehdr *elf_header)
 {
 	if (!(elf_header->e_ident[EI_MAG0] == ELFMAG0 &&
 		  elf_header->e_ident[EI_MAG1] == ELFMAG1 &&

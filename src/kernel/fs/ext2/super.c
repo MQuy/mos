@@ -31,7 +31,7 @@ void ext2_write_group_desc(struct vfs_superblock *sb, struct ext2_group_desc *gd
 	ext2_bwrite_block(sb, block, group_block_buf);
 }
 
-struct ext2_inode *ext2_get_inode(struct vfs_superblock *sb, ino_t ino)
+static struct ext2_inode *ext2_get_inode(struct vfs_superblock *sb, ino_t ino)
 {
 	struct ext2_superblock *ext2_sb = EXT2_SB(sb);
 	uint32_t group = get_group_from_inode(ext2_sb, ino);
@@ -121,7 +121,7 @@ void ext2_write_inode(struct vfs_inode *i)
 	ext2_bwrite_block(i->i_sb, block, buf);
 }
 
-void ext2_write_super(struct vfs_superblock *sb)
+static void ext2_write_super(struct vfs_superblock *sb)
 {
 	struct ext2_superblock *ext2_sb = EXT2_SB(sb);
 	ext2_bwrite_block(sb, ext2_sb->s_first_data_block, (char *)ext2_sb);
@@ -134,7 +134,7 @@ struct vfs_super_operations ext2_super_operations = {
 	.write_super = ext2_write_super,
 };
 
-int ext2_fill_super(struct vfs_superblock *sb)
+static int ext2_fill_super(struct vfs_superblock *sb)
 {
 	struct ext2_superblock *ext2_sb = (struct ext2_superblock *)kcalloc(1, sizeof(struct ext2_superblock));
 	char *buf = ext2_bread_block(sb, 1);
@@ -151,8 +151,8 @@ int ext2_fill_super(struct vfs_superblock *sb)
 	return 0;
 }
 
-struct vfs_mount *ext2_mount(struct vfs_file_system_type *fs_type,
-							 char *dev_name, char *dir_name)
+static struct vfs_mount *ext2_mount(struct vfs_file_system_type *fs_type,
+									char *dev_name, char *dir_name)
 {
 	struct vfs_superblock *sb = (struct vfs_superblock *)kcalloc(1, sizeof(struct vfs_superblock));
 	sb->s_blocksize = EXT2_MIN_BLOCK_SIZE;

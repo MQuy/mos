@@ -7,19 +7,19 @@
 #include "sockfs.h"
 
 // TODO: MQ 2020-06-01 Support socket syscall read
-ssize_t sockfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t sockfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	return 0;
 }
 
 // TODO: MQ 2020-06-01 Support socket syscall write
-ssize_t sockfs_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t sockfs_write_file(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	return 0;
 }
 
 // TODO: MQ 2020-06-06 Cleanup socket, sock
-int sockfs_release_file(struct vfs_inode *inode, struct vfs_file *file)
+static int sockfs_release_file(struct vfs_inode *inode, struct vfs_file *file)
 {
 	return 0;
 }

@@ -32,6 +32,7 @@ struct message_queue
 	struct list_head receivers;
 };
 
+extern struct hashmap mq_map;
 void mq_init();
 int32_t mq_open(const char *name, int32_t flags);
 int32_t mq_close(int32_t fd);

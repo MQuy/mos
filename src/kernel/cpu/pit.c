@@ -22,7 +22,7 @@ volatile uint64_t jiffies = 0;
 // each half second in pit (why? one second with latency is already in the frame)
 // -> if there is a latency due to overhead in other interrupts <-> jiffies < (current_seconds - boot_seconds) * 100
 // -> jiffies = (current_seconds - boot_seconds) * 1000
-int32_t pit_interrupt_handler(struct interrupt_registers *regs)
+static int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 {
 	if (!jiffies)
 	{

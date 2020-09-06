@@ -25,7 +25,7 @@ void set_current_time(uint16_t year, uint8_t month, uint8_t day,
 }
 
 // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#civil_from_days
-struct time *get_time_from_seconds(int32_t seconds)
+static struct time *get_time_from_seconds(int32_t seconds)
 {
 	struct time *t = kcalloc(1, sizeof(struct time));
 	int32_t days = seconds / (24 * 3600);
@@ -51,7 +51,7 @@ struct time *get_time_from_seconds(int32_t seconds)
 }
 
 // NOTE: MQ 2019-07-25 According to this paper http://howardhinnant.github.io/date_algorithms.html#days_from_civil
-uint32_t get_days(struct time *t)
+static uint32_t get_days(struct time *t)
 {
 	int32_t year = t->year;
 	uint32_t month = t->month;

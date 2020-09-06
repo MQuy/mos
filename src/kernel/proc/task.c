@@ -15,8 +15,6 @@
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
 extern void return_usermode(struct interrupt_registers *regs);
-extern int32_t irq_schedule_handler(struct interrupt_registers *regs);
-extern int32_t thread_page_fault(struct interrupt_registers *regs);
 
 static uint32_t next_pid = 0;
 static uint32_t next_tid = 0;
@@ -29,7 +27,7 @@ struct process *find_process_by_pid(pid_t pid)
 	return hashmap_get(mprocess, &pid);
 }
 
-struct files_struct *clone_file_descriptor_table(struct process *parent)
+static struct files_struct *clone_file_descriptor_table(struct process *parent)
 {
 	struct files_struct *files = kcalloc(1, sizeof(struct files_struct));
 
@@ -45,7 +43,7 @@ struct files_struct *clone_file_descriptor_table(struct process *parent)
 	return files;
 }
 
-struct mm_struct *clone_mm_struct(struct process *parent)
+static struct mm_struct *clone_mm_struct(struct process *parent)
 {
 	struct mm_struct *mm = kcalloc(1, sizeof(struct mm_struct));
 	memcpy(mm, parent->mm, sizeof(struct mm_struct));
@@ -66,13 +64,13 @@ struct mm_struct *clone_mm_struct(struct process *parent)
 	return mm;
 }
 
-void kernel_thread_entry(struct thread *t, void *flow())
+static void kernel_thread_entry(struct thread *t, void *flow())
 {
 	flow();
 	schedule();
 }
 
-void thread_sleep_timer(struct timer_list *timer)
+static void thread_sleep_timer(struct timer_list *timer)
 {
 	struct thread *th = from_timer(th, timer, sleep_timer);
 	list_del(&timer->sibling);
@@ -124,7 +122,7 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 	return th;
 }
 
-struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir)
+static struct process *create_process(struct process *parent, const char *name, struct pdirectory *pdir)
 {
 	lock_scheduler();
 
@@ -162,7 +160,7 @@ struct process *create_process(struct process *parent, const char *name, struct 
 	return proc;
 }
 
-void setup_swapper_process()
+static void setup_swapper_process()
 {
 	current_process = create_process(NULL, "swapper", NULL);
 	current_thread = create_kernel_thread(current_process, 0, THREAD_RUNNING, 0);
@@ -202,7 +200,7 @@ void task_init(void *func)
 	schedule();
 }
 
-void user_thread_entry(struct thread *th)
+static void user_thread_entry(struct thread *th)
 {
 	// explain in kernel_init#unlock_scheduler
 	unlock_scheduler();
@@ -211,7 +209,7 @@ void user_thread_entry(struct thread *th)
 	return_usermode(&th->uregs);
 }
 
-void user_thread_elf_entry(struct thread *th, const char *path, void (*setup)(struct Elf32_Layout *))
+static void user_thread_elf_entry(struct thread *th, const char *path, void (*setup)(struct Elf32_Layout *))
 {
 	// explain in kernel_init#unlock_scheduler
 	unlock_scheduler();

@@ -54,9 +54,9 @@ struct pci_device
 	struct list_head sibling;
 };
 
+void pci_init();
 void pci_scan_bus(uint8_t bus);
 void pci_scan_buses();
-void pci_init();
 struct pci_device *get_pci_device(int32_t vendorID, int32_t deviceID);
 uint16_t pci_get_command(uint32_t address);
 uint32_t pci_read_field(uint32_t address, uint8_t offset);

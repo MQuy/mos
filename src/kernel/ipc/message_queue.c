@@ -9,7 +9,6 @@
 #include <kernel/utils/string.h>
 
 static const char defaultdir[] = "/dev/mqueue/";
-
 struct hashmap mq_map;
 
 static char *mq_normalize_path(char *name)

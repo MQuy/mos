@@ -6,7 +6,6 @@
 
 enum socket_type;
 
-int32_t syscall_dispatcher(struct interrupt_registers *registers);
 void syscall_init();
 pid_t sys_fork();
 int32_t sys_socket(int32_t family, enum socket_type type, int32_t protocal);

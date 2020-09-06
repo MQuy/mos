@@ -111,13 +111,13 @@ static char *tag_opening[] = {
 };
 static char tag_closing[] = "\\\\033[m";
 
-void debug_write(const char *str)
+static void debug_write(const char *str)
 {
 	for (char *ch = str; *ch; ++ch)
 		serial_output(SERIAL_PORT_A, *ch);
 }
 
-int debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
+static int debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
 {
 	int out = vsprintf(log_buffer, fmt, args);
 	if (level != DEBUG_INFO)

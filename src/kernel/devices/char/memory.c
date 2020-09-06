@@ -9,31 +9,32 @@
 
 extern struct vfs_file_operations def_chr_fops;
 
-int null_open(struct vfs_inode *inode, struct vfs_file *filp)
+static int null_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
 	return 0;
 }
 
-int null_release(struct vfs_inode *inode, struct vfs_file *filp)
+static int null_release(struct vfs_inode *inode, struct vfs_file *filp)
 {
 	return 0;
 }
 
-loff_t null_llseek(struct vfs_file *file, loff_t ppos)
+static loff_t null_llseek(struct vfs_file *file, loff_t ppos)
 {
 	return 0;
 }
 
-ssize_t null_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
-{
-	return 0;
-}
-ssize_t null_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t null_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	return 0;
 }
 
-struct vfs_file_operations null_fops = {
+static ssize_t null_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+{
+	return 0;
+}
+
+static struct vfs_file_operations null_fops = {
 	.llseek = null_llseek,
 	.read = null_read,
 	.write = null_write,
@@ -41,32 +42,33 @@ struct vfs_file_operations null_fops = {
 	.release = null_release,
 };
 
-int random_open(struct vfs_inode *inode, struct vfs_file *filp)
+static int random_open(struct vfs_inode *inode, struct vfs_file *filp)
 {
 	return 0;
 }
 
-int random_release(struct vfs_inode *inode, struct vfs_file *filp)
+static int random_release(struct vfs_inode *inode, struct vfs_file *filp)
 {
 	return 0;
 }
 
-loff_t random_llseek(struct vfs_file *file, loff_t ppos)
+static loff_t random_llseek(struct vfs_file *file, loff_t ppos)
 {
 	return ppos;
 }
 
-ssize_t random_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t random_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	*(uint32_t *)buf = rand();
 	return count;
 }
-ssize_t random_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+
+static ssize_t random_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	return count;
 }
 
-struct vfs_file_operations random_fops = {
+static struct vfs_file_operations random_fops = {
 	.llseek = random_llseek,
 	.read = random_read,
 	.write = random_write,
@@ -74,9 +76,9 @@ struct vfs_file_operations random_fops = {
 	.release = random_release,
 };
 
-struct char_device cdev_null = (struct char_device)DECLARE_CHRDEV("null", MEMORY_MAJOR, NULL_DEVICE, 1, &null_fops);
+static struct char_device cdev_null = (struct char_device)DECLARE_CHRDEV("null", MEMORY_MAJOR, NULL_DEVICE, 1, &null_fops);
 
-struct char_device cdev_random = (struct char_device)DECLARE_CHRDEV("random", MEMORY_MAJOR, RANDOM_DEVICE, 1, &random_fops);
+static struct char_device cdev_random = (struct char_device)DECLARE_CHRDEV("random", MEMORY_MAJOR, RANDOM_DEVICE, 1, &random_fops);
 
 void chrdev_memory_init()
 {

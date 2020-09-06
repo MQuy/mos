@@ -5,85 +5,100 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/utils/printf.h>
 
-int32_t divide_by_zero_fault(struct interrupt_registers *regs)
+//! something is wrong--bail out
+static void kernel_panic(const char *fmt, ...)
+{
+	disable_interrupts();
+
+	va_list args;
+	va_start(args, fmt);
+	va_end(args);
+
+	DEBUG &&debug_println(DEBUG_FATAL, fmt, args);
+
+	for (;;)
+		;
+}
+
+static int32_t divide_by_zero_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Divide by 0");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t single_step_trap(struct interrupt_registers *regs)
+static int32_t single_step_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("Single step");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t nmi_trap(struct interrupt_registers *regs)
+static int32_t nmi_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("NMI trap");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t breakpoint_trap(struct interrupt_registers *regs)
+static int32_t breakpoint_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("Breakpoint trap");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t overflow_trap(struct interrupt_registers *regs)
+static int32_t overflow_trap(struct interrupt_registers *regs)
 {
 	kernel_panic("Overflow trap");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t bounds_check_fault(struct interrupt_registers *regs)
+static int32_t bounds_check_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Bounds check fault");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t invalid_opcode_fault(struct interrupt_registers *regs)
+static int32_t invalid_opcode_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Invalid opcode");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t no_device_fault(struct interrupt_registers *regs)
+static int32_t no_device_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Device not found");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t double_fault_abort(struct interrupt_registers *regs)
+static int32_t double_fault_abort(struct interrupt_registers *regs)
 {
 	kernel_panic("Double fault");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t invalid_tss_fault(struct interrupt_registers *regs)
+static int32_t invalid_tss_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Invalid TSS");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t no_segment_fault(struct interrupt_registers *regs)
+static int32_t no_segment_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Invalid segment");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t stack_fault(struct interrupt_registers *regs)
+static int32_t stack_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Stack fault");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t general_protection_fault(struct interrupt_registers *regs)
+static int32_t general_protection_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("General Protection Fault");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t page_fault(__unused struct interrupt_registers *regs)
+static int32_t page_fault(__unused struct interrupt_registers *regs)
 {
 	// uint32_t faultAddr = 0;
 	// int error_code = regs->err_code;
@@ -105,43 +120,28 @@ int32_t page_fault(__unused struct interrupt_registers *regs)
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t fpu_fault(struct interrupt_registers *regs)
+static int32_t fpu_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("FPU Fault");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t alignment_check_fault(struct interrupt_registers *regs)
+static int32_t alignment_check_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("Alignment Check");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t machine_check_abort(struct interrupt_registers *regs)
+static int32_t machine_check_abort(struct interrupt_registers *regs)
 {
 	kernel_panic("Machine Check");
 	return IRQ_HANDLER_STOP;
 }
 
-int32_t simd_fpu_fault(struct interrupt_registers *regs)
+static int32_t simd_fpu_fault(struct interrupt_registers *regs)
 {
 	kernel_panic("FPU SIMD fault");
 	return IRQ_HANDLER_STOP;
-}
-
-//! something is wrong--bail out
-void kernel_panic(const char *fmt, ...)
-{
-	disable_interrupts();
-
-	va_list args;
-	va_start(args, fmt);
-	va_end(args);
-
-	DEBUG &&debug_println(DEBUG_FATAL, fmt, args);
-
-	for (;;)
-		;
 }
 
 void exception_init()

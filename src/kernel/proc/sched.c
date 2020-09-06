@@ -30,7 +30,7 @@ void unlock_scheduler()
 		enable_interrupts();
 }
 
-struct thread *get_next_thread_from_list(struct plist_head *list)
+static struct thread *get_next_thread_from_list(struct plist_head *list)
 {
 	if (plist_head_empty(list))
 		return NULL;
@@ -38,7 +38,7 @@ struct thread *get_next_thread_from_list(struct plist_head *list)
 	return plist_first_entry(list, struct thread, sched_sibling);
 }
 
-struct thread *get_next_thread_to_run()
+static struct thread *get_next_thread_to_run()
 {
 	struct thread *nt = get_next_thread_from_list(&kernel_ready_list);
 	if (!nt)
@@ -49,7 +49,7 @@ struct thread *get_next_thread_to_run()
 	return nt;
 }
 
-struct thread *pop_next_thread_from_list(struct plist_head *list)
+static struct thread *pop_next_thread_from_list(struct plist_head *list)
 {
 	if (plist_head_empty(list))
 		return NULL;
@@ -59,7 +59,7 @@ struct thread *pop_next_thread_from_list(struct plist_head *list)
 	return th;
 }
 
-struct thread *pop_next_thread_to_run()
+static struct thread *pop_next_thread_to_run()
 {
 	struct thread *nt = pop_next_thread_from_list(&kernel_ready_list);
 	if (!nt)
@@ -70,7 +70,7 @@ struct thread *pop_next_thread_to_run()
 	return nt;
 }
 
-struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy)
+static struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy)
 {
 	if (state == THREAD_READY)
 	{
@@ -109,7 +109,7 @@ void queue_thread(struct thread *th)
 		plist_add(&th->sched_sibling, h);
 }
 
-void remove_thread(struct thread *th)
+static void remove_thread(struct thread *th)
 {
 	struct plist_head *h = get_list_from_thread(th->state, th->policy);
 
@@ -131,7 +131,7 @@ void update_thread(struct thread *th, uint8_t state)
 	unlock_scheduler();
 }
 
-void switch_thread(struct thread *nt)
+static void switch_thread(struct thread *nt)
 {
 	if (current_thread == nt)
 		return;

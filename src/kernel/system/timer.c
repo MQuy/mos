@@ -3,9 +3,9 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/system/time.h>
 
-struct list_head list_of_timer;
+static struct list_head list_of_timer;
 
-void assert_timer_valid(struct timer_list *timer)
+static void assert_timer_valid(struct timer_list *timer)
 {
 	if (timer->magic != TIMER_MAGIC)
 		__asm__ __volatile("int $0x01");
@@ -45,7 +45,7 @@ void mod_timer(struct timer_list *timer, uint64_t expires)
 	add_timer(timer);
 }
 
-int32_t timer_schedule_handler(struct interrupt_registers *regs)
+static int32_t timer_schedule_handler(struct interrupt_registers *regs)
 {
 	struct timer_list *iter, *next;
 	uint64_t cms = get_milliseconds(NULL);

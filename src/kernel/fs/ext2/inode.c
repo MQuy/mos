@@ -8,7 +8,7 @@
 
 #include "ext2.h"
 
-uint32_t find_unused_block_number(struct vfs_superblock *sb)
+static uint32_t find_unused_block_number(struct vfs_superblock *sb)
 {
 	struct ext2_superblock *ext2_sb = EXT2_SB(sb);
 
@@ -54,7 +54,7 @@ uint32_t ext2_create_block(struct vfs_superblock *sb)
 	return block;
 }
 
-uint32_t find_unused_inode_number(struct vfs_superblock *sb)
+static uint32_t find_unused_inode_number(struct vfs_superblock *sb)
 {
 	struct ext2_superblock *ext2_sb = EXT2_SB(sb);
 
@@ -73,7 +73,7 @@ uint32_t find_unused_inode_number(struct vfs_superblock *sb)
 	return -ENOSPC;
 }
 
-struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
+static struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
 {
 	struct ext2_superblock *ext2_sb = EXT2_SB(dir->i_sb);
 	uint32_t ino = find_unused_inode_number(dir->i_sb);
@@ -202,7 +202,7 @@ struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename, mode_
 	return NULL;
 }
 
-struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *filename)
+static struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *filename)
 {
 	for (int i = 0; i < 11; ++i)
 	{
@@ -234,11 +234,11 @@ struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *filename)
 	return NULL;
 }
 
-void ext2_truncate_inode(struct vfs_inode *i)
+static void ext2_truncate_inode(struct vfs_inode *i)
 {
 }
 
-int ext2_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
+static int ext2_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
 {
 	struct vfs_inode *inode = ext2_lookup_inode(dir, dentry->d_name);
 	if (inode == NULL)
@@ -261,6 +261,4 @@ struct vfs_inode_operations ext2_dir_inode_operations = {
 	.mknod = ext2_mknod,
 };
 
-struct vfs_inode_operations ext2_special_inode_operations = {
-
-};
+struct vfs_inode_operations ext2_special_inode_operations = {};

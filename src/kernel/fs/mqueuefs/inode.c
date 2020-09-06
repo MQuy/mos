@@ -7,7 +7,7 @@
 
 #include "mqueuefs.h"
 
-struct vfs_inode *mqueuefs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
+static struct vfs_inode *mqueuefs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
 {
 	return mqueuefs_get_inode(dir->i_sb, mode);
 }

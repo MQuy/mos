@@ -4,6 +4,7 @@
 #include <include/ctype.h>
 #include <kernel/cpu/idt.h>
 #include <kernel/utils/string.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #define NSIG 32
@@ -107,6 +108,8 @@ typedef void (*__sighandler_t)(int);
 	(!siginmask(signr, SIG_KERNEL_IGNORE_MASK | SIG_KERNEL_STOP_MASK) && \
 	 (p)->sighand[(signr)-1].sa_handler == SIG_DFL)
 
+struct thread;
+
 struct sigaction
 {
 	__sighandler_t sa_handler;
@@ -174,6 +177,7 @@ static inline void sigfillset(sigset_t *set)
 int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int do_sigaction(int signum, const struct sigaction *action, struct sigaction *old_action);
 int do_kill(pid_t pid, int32_t signum);
+bool sig_ignored(struct thread *th, int sig);
 void signal_handler(struct interrupt_registers *regs);
 void handle_signal(struct interrupt_registers *regs);
 void sigreturn(struct interrupt_registers *regs);

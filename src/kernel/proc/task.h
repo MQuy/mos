@@ -153,27 +153,27 @@ extern volatile struct hashmap *mprocess;
 	struct hashmap_iter *__hm_iter; \
 	for (__hm_iter = hashmap_iter(mprocess), p = hashmap_iter_get_data(__hm_iter); __hm_iter; __hm_iter = hashmap_iter_next(mprocess, __hm_iter), p = hashmap_iter_get_data(__hm_iter))
 
+// task.c
 void task_init();
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority);
 struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
-void update_thread(struct thread *thread, uint8_t state);
 struct process *create_kernel_process(const char *pname, void *func, int32_t priority);
 void process_load(const char *pname, const char *path, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
 struct process *process_fork(struct process *parent);
-void queue_thread(struct thread *t);
-void switch_thread(struct thread *nt);
-void schedule();
-struct plist_head *get_list_from_thread(enum thread_state state, enum thread_policy policy);
-int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
 void thread_sleep(uint32_t ms);
 struct process *find_process_by_pid(pid_t pid);
-void do_exit(int32_t code);
 
 // sched.c
+void update_thread(struct thread *thread, uint8_t state);
+void queue_thread(struct thread *t);
+void schedule();
 void sched_init();
 void lock_scheduler();
 void unlock_scheduler();
+int get_top_priority_from_list(enum thread_state state, enum thread_policy policy);
 void wake_up(struct wait_queue_head *hq);
+int32_t thread_page_fault(struct interrupt_registers *regs);
+int32_t irq_schedule_handler(struct interrupt_registers *regs);
 
 // exit.c
 int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options);

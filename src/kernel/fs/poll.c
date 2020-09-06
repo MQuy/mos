@@ -3,7 +3,7 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/task.h>
 
-void poll_table_free(struct poll_table *pt)
+static void poll_table_free(struct poll_table *pt)
 {
 	struct poll_table_entry *iter, *next;
 

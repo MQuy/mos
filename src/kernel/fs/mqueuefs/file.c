@@ -9,8 +9,6 @@
 
 #include "mqueuefs.h"
 
-extern struct hashmap mq_map;
-
 static int mqueue_file_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	char *name = file->f_dentry->d_name;

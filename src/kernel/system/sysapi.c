@@ -16,7 +16,7 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-void sys_exit(int32_t code)
+static void sys_exit(int32_t code)
 {
 	do_exit(code & 0xff);
 }
@@ -29,63 +29,63 @@ pid_t sys_fork()
 	return child->pid;
 }
 
-int32_t sys_waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
+static int32_t sys_waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
 {
 	return do_wait(idtype, id, infop, options);
 }
 
-int32_t sys_read(uint32_t fd, char *buf, size_t count)
+static int32_t sys_read(uint32_t fd, char *buf, size_t count)
 {
 	return vfs_fread(fd, buf, count);
 }
 
-int32_t sys_write(uint32_t fd, char *buf, size_t count)
+static int32_t sys_write(uint32_t fd, char *buf, size_t count)
 {
 	return vfs_fwrite(fd, buf, count);
 }
 
-int32_t sys_open(const char *path, int32_t flags, int32_t mode)
+static int32_t sys_open(const char *path, int32_t flags, int32_t mode)
 {
 	return vfs_open(path, flags);
 }
 
-int32_t sys_fstat(int32_t fd, struct kstat *stat)
+static int32_t sys_fstat(int32_t fd, struct kstat *stat)
 {
 	return vfs_fstat(fd, stat);
 }
 
-int32_t sys_stat(const char *path, struct kstat *stat)
+static int32_t sys_stat(const char *path, struct kstat *stat)
 {
 	return vfs_stat(path, stat);
 }
 
-int32_t sys_close(uint32_t fd)
+static int32_t sys_close(uint32_t fd)
 {
 	return vfs_close(fd);
 }
 
-int32_t sys_pipe(int32_t *fd)
+static int32_t sys_pipe(int32_t *fd)
 {
 	return do_pipe(fd);
 }
 
-int32_t sys_mmap(uint32_t addr, size_t length, uint32_t prot, uint32_t flags,
-				 int32_t fd)
+static int32_t sys_mmap(uint32_t addr, size_t length, uint32_t prot, uint32_t flags,
+						int32_t fd)
 {
 	return do_mmap(addr, length, prot, flags, fd);
 }
 
-int32_t sys_truncate(const char *path, int32_t length)
+static int32_t sys_truncate(const char *path, int32_t length)
 {
 	return vfs_truncate(path, length);
 }
 
-int32_t sys_ftruncate(uint32_t fd, int32_t length)
+static int32_t sys_ftruncate(uint32_t fd, int32_t length)
 {
 	return vfs_ftruncate(fd, length);
 }
 
-int32_t sys_brk(uint32_t brk)
+static int32_t sys_brk(uint32_t brk)
 {
 	struct mm_struct *current_mm = current_process->mm;
 	if (brk < current_mm->start_brk)
@@ -95,27 +95,27 @@ int32_t sys_brk(uint32_t brk)
 	return brk;
 }
 
-int32_t sys_sbrk(intptr_t increment)
+static int32_t sys_sbrk(intptr_t increment)
 {
 	return sys_brk(current_process->mm->brk + increment);
 }
 
-int32_t sys_getpid()
+static int32_t sys_getpid()
 {
 	return current_process->pid;
 }
 
-int32_t sys_getpgid()
+static int32_t sys_getpgid()
 {
 	return current_process->gid;
 }
 
-int32_t sys_getppid()
+static int32_t sys_getppid()
 {
 	return current_process->parent->pid;
 }
 
-int32_t sys_setpgid(pid_t pid, pid_t pgid)
+static int32_t sys_setpgid(pid_t pid, pid_t pgid)
 {
 	struct process *p = !pid ? current_process : find_process_by_pid(pid);
 	struct process *l = !pgid ? p : find_process_by_pid(pgid);
@@ -127,12 +127,12 @@ int32_t sys_setpgid(pid_t pid, pid_t pgid)
 	return 0;
 }
 
-int32_t sys_getsid()
+static int32_t sys_getsid()
 {
 	return current_process->sid;
 }
 
-int32_t sys_setsid()
+static int32_t sys_setsid()
 {
 	if (current_process->pid == current_process->gid)
 		return -1;
@@ -142,7 +142,7 @@ int32_t sys_setsid()
 	return 0;
 }
 
-int32_t sys_signal(int signum, __sighandler_t handler)
+static int32_t sys_signal(int signum, __sighandler_t handler)
 {
 	struct sigaction act;
 	sigset_t mask;
@@ -155,22 +155,22 @@ int32_t sys_signal(int signum, __sighandler_t handler)
 	return do_sigaction(signum, &act, NULL);
 }
 
-int32_t sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+static int32_t sys_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 {
 	return do_sigaction(signum, act, oldact);
 }
 
-int32_t sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+static int32_t sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 {
 	return do_sigprocmask(how, set, oldset);
 }
 
-int32_t sys_kill(pid_t pid, int sig)
+static int32_t sys_kill(pid_t pid, int sig)
 {
 	return do_kill(pid, sig);
 }
 
-int32_t sys_posix_spawn(char *path)
+static int32_t sys_posix_spawn(char *path)
 {
 	int top = get_top_priority_from_list(THREAD_READY, THREAD_SYSTEM_POLICY);
 	process_load(path, path, THREAD_APP_POLICY, top - 1, NULL);
@@ -185,43 +185,43 @@ int32_t sys_socket(int32_t family, enum socket_type type, int32_t protocal)
 	return fd;
 }
 
-int32_t sys_bind(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
+static int32_t sys_bind(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
 {
 	struct socket *sock = sockfd_lookup(sockfd);
 	return sock->ops->bind(sock, addr, addrlen);
 }
 
-int32_t sys_connect(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
+static int32_t sys_connect(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
 {
 	struct socket *sock = sockfd_lookup(sockfd);
 	return sock->ops->connect(sock, addr, addrlen);
 }
 
-int32_t sys_send(int32_t sockfd, void *msg, size_t len)
+static int32_t sys_send(int32_t sockfd, void *msg, size_t len)
 {
 	struct socket *sock = sockfd_lookup(sockfd);
 	return sock->ops->sendmsg(sock, msg, len);
 }
 
-int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
+static int32_t sys_recv(int32_t sockfd, void *msg, size_t len)
 {
 	struct socket *sock = sockfd_lookup(sockfd);
 	return sock->ops->recvmsg(sock, msg, len);
 }
 
 // NOTE: MQ 2020-08-26 we only support millisecond precision
-int32_t sys_nanosleep(const struct timespec *req, struct timespec *rem)
+static int32_t sys_nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	thread_sleep(req->tv_nsec / 1000);
 	return 0;
 }
 
-int32_t sys_poll(struct pollfd *fds, uint32_t nfds)
+static int32_t sys_poll(struct pollfd *fds, uint32_t nfds)
 {
 	return do_poll(fds, nfds);
 }
 
-int32_t sys_ioctl(int fd, unsigned int cmd, unsigned long arg)
+static int32_t sys_ioctl(int fd, unsigned int cmd, unsigned long arg)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
 
@@ -231,32 +231,32 @@ int32_t sys_ioctl(int fd, unsigned int cmd, unsigned long arg)
 	return -EINVAL;
 }
 
-int32_t sys_mq_open(const char *name, int32_t flags)
+static int32_t sys_mq_open(const char *name, int32_t flags)
 {
 	return mq_open(name, flags);
 }
 
-int32_t sys_mq_close(int32_t fd)
+static int32_t sys_mq_close(int32_t fd)
 {
 	return mq_close(fd);
 }
 
-int32_t sys_mq_unlink(const char *name)
+static int32_t sys_mq_unlink(const char *name)
 {
 	return mq_unlink(name);
 }
 
-int32_t sys_mq_send(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
+static int32_t sys_mq_send(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 {
 	return mq_send(fd, buf, priority, msize);
 }
 
-int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
+static int32_t sys_mq_receive(int32_t fd, char *buf, uint32_t priority, uint32_t msize)
 {
 	return mq_receive(fd, buf, priority, msize);
 }
 
-int32_t sys_getptsname(int32_t fdm, char *buf)
+static int32_t sys_getptsname(int32_t fdm, char *buf)
 {
 	struct tty_struct *ttym = current_process->files->fd[fdm]->private_data;
 	if (!ttym || ttym->magic != TTY_MAGIC)
@@ -358,7 +358,7 @@ static void *syscalls[] = {
 	[__NR_getptsname] = sys_getptsname,
 };
 
-int32_t syscall_dispatcher(struct interrupt_registers *regs)
+static int32_t syscall_dispatcher(struct interrupt_registers *regs)
 {
 	int idx = regs->eax;
 

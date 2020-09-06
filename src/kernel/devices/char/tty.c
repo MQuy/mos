@@ -8,7 +8,7 @@
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
-struct list_head tty_drivers;
+static struct list_head tty_drivers;
 struct termios tty_std_termios = {
 	.c_iflag = ICRNL | IXON,
 	.c_oflag = OPOST | ONLCR,
@@ -169,7 +169,7 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 	return 0;
 }
 
-struct vfs_file_operations ptmx_fops = {
+static struct vfs_file_operations ptmx_fops = {
 	.open = ptmx_open,
 	.read = tty_read,
 	.write = tty_write,
@@ -177,7 +177,7 @@ struct vfs_file_operations ptmx_fops = {
 	.ioctl = tty_ioctl,
 };
 
-struct vfs_file_operations tty_fops = {
+static struct vfs_file_operations tty_fops = {
 	.open = tty_open,
 	.read = tty_read,
 	.write = tty_write,

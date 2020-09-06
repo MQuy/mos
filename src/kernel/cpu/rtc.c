@@ -13,13 +13,13 @@
 
 static volatile uint64_t current_ticks = 0;
 
-uint8_t rtc_get_update_flag()
+static uint8_t rtc_get_update_flag()
 {
 	outportb(CMOS_ADDRESS, 0x0A);
 	return inportb(CMOS_DATA) & 0x80;
 }
 
-uint8_t rtc_get_register(uint32_t reg)
+static uint8_t rtc_get_register(uint32_t reg)
 {
 	outportb(CMOS_ADDRESS, reg);
 	return inportb(CMOS_DATA);
@@ -86,7 +86,7 @@ void rtc_get_datetime(uint16_t *year, uint8_t *month, uint8_t *day,
 	}
 }
 
-int32_t rtc_irq_handler(struct interrupt_registers *regs)
+static int32_t rtc_irq_handler(struct interrupt_registers *regs)
 {
 	current_ticks++;
 

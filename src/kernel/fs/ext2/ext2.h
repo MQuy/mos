@@ -101,7 +101,8 @@ struct ext2_inode
 	uint16_t i_links_count; /* Links count */
 	uint32_t i_blocks;		/* Blocks count */
 	uint32_t i_flags;		/* File flags */
-	union {
+	union
+	{
 		struct
 		{
 			uint32_t l_i_reserved1;
@@ -120,7 +121,8 @@ struct ext2_inode
 	uint32_t i_file_acl;   /* File ACL */
 	uint32_t i_dir_acl;	   /* Directory ACL */
 	uint32_t i_faddr;	   /* Fragment address */
-	union {
+	union
+	{
 		struct linux2
 		{
 			uint8_t l_i_frag;  /* Fragment number */
@@ -192,6 +194,7 @@ static inline struct ext2_inode *EXT2_INODE(struct vfs_inode *inode)
 #define get_relative_block_in_group(sb, block) ((block - sb->s_first_data_block) % sb->s_blocks_per_group)
 
 // super.c
+extern struct vfs_super_operations ext2_super_operations;
 void init_ext2_fs();
 void exit_ext2_fs();
 char *ext2_bread_block(struct vfs_superblock *sb, uint32_t iblock);
@@ -204,19 +207,15 @@ void ext2_write_inode(struct vfs_inode *);
 struct ext2_group_desc *ext2_get_group_desc(struct vfs_superblock *sb, uint32_t block_group);
 void ext2_write_group_desc(struct vfs_superblock *sb, struct ext2_group_desc *gdp);
 
-extern struct vfs_super_operations ext2_super_operations;
-
 // vfs_inode.c
-uint32_t ext2_create_block(struct vfs_superblock *sb);
-
 extern struct vfs_inode_operations ext2_dir_inode_operations;
 extern struct vfs_inode_operations ext2_file_inode_operations;
 extern struct vfs_inode_operations ext2_special_inode_operations;
+uint32_t ext2_create_block(struct vfs_superblock *sb);
 
 // file.c
 extern struct vfs_file_operations ext2_file_operations;
 extern struct vfs_file_operations ext2_dir_operations;
-
 extern struct vfs_file_operations def_chr_fops;
 
 #endif

@@ -111,7 +111,7 @@ int32_t vfs_close(int32_t fd)
 	return 0;
 }
 
-void generic_fillattr(struct vfs_inode *inode, struct kstat *stat)
+static void generic_fillattr(struct vfs_inode *inode, struct kstat *stat)
 {
 	stat->dev = inode->i_sb->s_dev;
 	stat->ino = inode->i_ino;
@@ -128,7 +128,7 @@ void generic_fillattr(struct vfs_inode *inode, struct kstat *stat)
 	stat->blksize = inode->i_blksize;
 }
 
-int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct kstat *stat)
+static int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct kstat *stat)
 {
 	struct vfs_inode *inode = dentry->d_inode;
 	if (inode->i_op->getattr)
@@ -171,7 +171,7 @@ int vfs_mknod(const char *path, int mode, dev_t dev)
 	return ret;
 }
 
-int simple_setattr(struct vfs_dentry *d, struct iattr *attrs)
+static int simple_setattr(struct vfs_dentry *d, struct iattr *attrs)
 {
 	struct vfs_inode *inode = d->d_inode;
 
@@ -180,7 +180,7 @@ int simple_setattr(struct vfs_dentry *d, struct iattr *attrs)
 	return 0;
 }
 
-int do_truncate(struct vfs_dentry *dentry, int32_t length)
+static int do_truncate(struct vfs_dentry *dentry, int32_t length)
 {
 	struct vfs_inode *inode = dentry->d_inode;
 	struct iattr *attrs = kcalloc(1, sizeof(struct iattr));

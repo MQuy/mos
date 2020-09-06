@@ -19,7 +19,7 @@ struct signal_frame
 	struct interrupt_registers uregs;
 };
 
-int next_signal(sigset_t pending, sigset_t blocked)
+static int next_signal(sigset_t pending, sigset_t blocked)
 {
 	sigset_t mask = pending & ~blocked;
 	uint32_t signum = 0;

@@ -18,9 +18,9 @@ struct interrupt_handler
 	struct list_head sibling;
 } interrupt_handler;
 
-struct list_head interrupt_handlers[256];
+static struct list_head interrupt_handlers[256];
 
-void idt_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IVT irq)
+static void idt_install_ir(uint32_t i, uint16_t flags, uint16_t sel, I86_IVT irq)
 {
 	if (i > I86_MAX_INTERRUPTS)
 		return;
@@ -44,7 +44,7 @@ void setvect_flags(uint32_t i, I86_IVT irq, uint32_t flags)
 	idt_install_ir(i, I86_IDT_DESC_PRESENT | I86_IDT_DESC_BIT32 | flags, 0x8, irq);
 }
 
-void i86_default_handler(struct interrupt_registers *regs)
+static void i86_default_handler(struct interrupt_registers *regs)
 {
 	disable_interrupts();
 
@@ -141,7 +141,7 @@ void register_interrupt_handler(uint32_t n, I86_IRQ_HANDLER handler)
 	list_add_tail(&ih->sibling, &interrupt_handlers[n]);
 }
 
-void handle_interrupt(struct interrupt_registers *regs)
+static void handle_interrupt(struct interrupt_registers *regs)
 {
 	uint32_t int_no = regs->int_no & 0xff;
 	struct list_head *ihlist = &interrupt_handlers[int_no];

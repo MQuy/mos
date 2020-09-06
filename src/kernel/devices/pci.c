@@ -9,7 +9,7 @@
 extern uint32_t current_row, current_column;
 static struct list_head ldevs;
 
-uint32_t pci_get_address(uint8_t bus, uint8_t slot, uint8_t func)
+static uint32_t pci_get_address(uint8_t bus, uint8_t slot, uint8_t func)
 {
 	uint32_t lbus = (uint32_t)bus;
 	uint32_t lslot = (uint32_t)slot;
@@ -31,19 +31,19 @@ void pci_write_field(uint32_t address, uint8_t offset, uint32_t value)
 	outportl(PCI_VALUE_PORT, value);
 }
 
-uint16_t pci_get_device_id(uint32_t address)
+static uint16_t pci_get_device_id(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x0);
 	return (reg >> 16) & 0xFFFF;
 }
 
-uint16_t pci_get_vender_id(uint32_t address)
+static uint16_t pci_get_vender_id(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x0);
 	return reg & 0xFFFF;
 }
 
-uint16_t pci_get_status(uint32_t address)
+static uint16_t pci_get_status(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x4);
 	return (reg >> 16) & 0xFFFF;
@@ -55,31 +55,31 @@ uint16_t pci_get_command(uint32_t address)
 	return reg & 0xFFFF;
 }
 
-uint16_t pci_get_class_code(uint32_t address)
+static uint16_t pci_get_class_code(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x8);
 	return (reg >> 24) & 0xFF;
 }
 
-uint16_t pci_get_subclass_code(uint32_t address)
+static uint16_t pci_get_subclass_code(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x8);
 	return (reg >> 16) & 0xFF;
 }
 
-uint16_t pci_get_prog_if(uint32_t address)
+static uint16_t pci_get_prog_if(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x8);
 	return (reg >> 8) & 0xFF;
 }
 
-uint16_t pci_get_header_type(uint32_t address)
+static uint16_t pci_get_header_type(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0xC);
 	return (reg >> 16) & 0xFF;
 }
 
-uint16_t pci_get_secondary_bus(uint32_t address)
+static uint16_t pci_get_secondary_bus(uint32_t address)
 {
 	uint32_t reg = pci_read_field(address, 0x18);
 	return (reg >> 8) & 0xFF;
@@ -91,7 +91,7 @@ uint8_t pci_get_interrupt_line(uint32_t address)
 	return reg & 0xFF;
 }
 
-void reg_device(uint8_t bus, uint8_t device, uint8_t function)
+static void reg_device(uint8_t bus, uint8_t device, uint8_t function)
 {
 	uint32_t address = pci_get_address(bus, device, function);
 	int vendorID = pci_get_vender_id(address);
@@ -114,7 +114,7 @@ void reg_device(uint8_t bus, uint8_t device, uint8_t function)
 	}
 }
 
-void pci_check_function(uint8_t bus, uint8_t device, uint8_t function)
+static void pci_check_function(uint8_t bus, uint8_t device, uint8_t function)
 {
 	uint8_t secondary_bus;
 
