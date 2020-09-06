@@ -16,7 +16,6 @@
 #include "devices/kybrd.h"
 #include "devices/mouse.h"
 #include "devices/pci.h"
-#include "devices/serial.h"
 #include "fs/ext2/ext2.h"
 #include "fs/vfs.h"
 #include "ipc/message_queue.h"
@@ -131,8 +130,8 @@ int kernel_main(uint32_t addr, uint32_t magic)
 		}
 	}
 
-	// setup serial ports
-	serial_init();
+	// setup serial port A for debug
+	debug_init();
 
 	// gdt including kernel, user and tss
 	gdt_init();

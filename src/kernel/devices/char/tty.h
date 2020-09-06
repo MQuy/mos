@@ -3,6 +3,7 @@
 
 #define PTY_MASTER_MAJOR 2
 #define PTY_SLAVE_MAJOR 3
+#define TTY_MAJOR 4
 #define TTYAUX_MAJOR 5
 #define UNIX98_PTY_MASTER_MAJOR 128
 #define UNIX98_PTY_MAJOR_COUNT 8
@@ -11,6 +12,7 @@
 #define N_TTY_BUF_ALIGN(v) ((v) & (N_TTY_BUF_SIZE - 1))
 #define NCCS 19
 #define __DISABLED_CHAR '\0'
+#define SERIAL_MINOR_BASE 64
 
 #include <include/list.h>
 #include <kernel/fs/char_dev.h>
@@ -145,7 +147,6 @@ struct tty_driver
 	struct char_device *cdev;
 	int major;		 /* major device number */
 	int minor_start; /* start of minor device number */
-	int minor_num;	 /* number of *possible* devices */
 	int num;		 /* number of devices allocated */
 	short type;		 /* type of tty driver */
 	short subtype;	 /* subtype of tty driver */
@@ -207,7 +208,6 @@ struct tty_ldisc
 
 // tty.c
 extern struct termios tty_std_termios;
-
 struct tty_driver *alloc_tty_driver(int32_t lines);
 int tty_register_driver(struct tty_driver *driver);
 void tty_init();
@@ -219,5 +219,11 @@ int get_next_pty_number();
 
 // n_tty.c
 extern struct tty_ldisc tty_ldisc_N_TTY;
+
+// serial.c
+extern struct tty_driver *serial_driver;
+void serial_output(int port, char a);
+void serial_enable(int port);
+void serial_init();
 
 #endif

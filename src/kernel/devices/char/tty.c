@@ -17,7 +17,7 @@ struct termios tty_std_termios = {
 			   ECHOCTL | ECHOKE | IEXTEN,
 	.c_cc = INIT_C_CC};
 
-struct tty_struct *find_tty_from_driver(struct tty_driver *driver, int idx)
+static struct tty_struct *find_tty_from_driver(struct tty_driver *driver, int idx)
 {
 	struct tty_struct *iter;
 	list_for_each_entry(iter, &driver->ttys, sibling)
@@ -29,7 +29,7 @@ struct tty_struct *find_tty_from_driver(struct tty_driver *driver, int idx)
 	return NULL;
 }
 
-struct tty_struct *create_tty_struct(struct tty_driver *driver, int idx)
+static struct tty_struct *create_tty_struct(struct tty_driver *driver, int idx)
 {
 	struct tty_struct *tty = kcalloc(1, sizeof(struct tty_struct));
 	tty->magic = TTY_MAGIC;
@@ -76,7 +76,7 @@ static int tiocsctty(struct tty_struct *tty, int arg)
 	return 0;
 }
 
-int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
+static int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	int index = get_next_pty_number();
 	struct tty_struct *ttym = create_tty_struct(ptm_driver, index);
@@ -95,7 +95,7 @@ int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 	return 0;
 }
 
-int tty_open(struct vfs_inode *inode, struct vfs_file *file)
+static int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	struct tty_struct *tty = NULL;
 	dev_t dev = inode->i_rdev;
@@ -105,6 +105,13 @@ int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 		tty = find_tty_from_driver(pts_driver, MINOR(dev));
 		tty->driver->tops->open(tty, file);
 	}
+	else if (MAJOR(dev) == TTY_MAJOR && MINOR(dev) >= SERIAL_MINOR_BASE)
+	{
+		tty = find_tty_from_driver(serial_driver, MINOR(dev));
+		if (!tty)
+			tty = create_tty_struct(serial_driver, MINOR(dev) - SERIAL_MINOR_BASE);
+		tty->driver->tops->open(tty, file);
+	}
 
 	file->private_data = tty;
 	tiocsctty(tty, 0);
@@ -112,7 +119,7 @@ int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 	return 0;
 }
 
-ssize_t tty_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
+static ssize_t tty_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	struct tty_struct *tty = (struct tty_struct *)file->private_data;
 	struct tty_ldisc *ld = tty->ldisc;
@@ -123,7 +130,7 @@ ssize_t tty_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 	return ld->read(tty, file, buf, count);
 }
 
-ssize_t tty_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
+static ssize_t tty_write(struct vfs_file *file, const char *buf, size_t count, loff_t ppos)
 {
 	struct tty_struct *tty = (struct tty_struct *)file->private_data;
 	struct tty_ldisc *ld = tty->ldisc;
@@ -134,7 +141,7 @@ ssize_t tty_write(struct vfs_file *file, const char *buf, size_t count, loff_t p
 	return ld->write(tty, file, buf, count);
 }
 
-unsigned int tty_poll(struct vfs_file *file, struct poll_table *pt)
+static unsigned int tty_poll(struct vfs_file *file, struct poll_table *pt)
 {
 	struct tty_struct *tty = (struct tty_struct *)file->private_data;
 	struct tty_ldisc *ld = tty->ldisc;
@@ -145,7 +152,7 @@ unsigned int tty_poll(struct vfs_file *file, struct poll_table *pt)
 	return ld->poll(tty, file, pt);
 }
 
-int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
+static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
 {
 	struct tty_struct *tty = (struct tty_struct *)file->private_data;
 
@@ -187,24 +194,24 @@ struct tty_driver *alloc_tty_driver(int32_t lines)
 	return driver;
 }
 
-void tty_default_put_char(struct tty_struct *tty, const char ch)
+static void tty_default_put_char(struct tty_struct *tty, const char ch)
 {
 	tty->driver->tops->write(tty, &ch, 1);
 }
 
 int tty_register_driver(struct tty_driver *driver)
 {
-	struct char_device *cdev = alloc_chrdev(driver->name, driver->major, driver->minor_start, driver->minor_num, &tty_fops);
+	struct char_device *cdev = alloc_chrdev(driver->name, driver->major, driver->minor_start, driver->num, &tty_fops);
 	register_chrdev(cdev);
 	driver->cdev = cdev;
 
 	if (!(driver->flags & TTY_DRIVER_NO_DEVFS))
 	{
 		char name[sizeof(PATH_DEV) + SPECNAMELEN] = {0};
-		for (int i = 0; i <= driver->minor_num; ++i)
+		for (int i = 0; i <= driver->num; ++i)
 		{
 			memset(&name, 0, sizeof(name));
-			sprintf(name, "/dev/%s%d", driver->name, driver->minor_start + i);
+			sprintf(name, "/dev/%s%d", driver->name, i);
 			vfs_mknod(name, S_IFCHR, MKDEV(driver->major, driver->minor_start + i));
 		}
 	}
@@ -224,4 +231,5 @@ void tty_init()
 	vfs_mknod("/dev/ptmx", S_IFCHR, ptmx_cdev->dev);
 
 	pty_init();
+	serial_init();
 }

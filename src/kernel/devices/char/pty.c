@@ -11,12 +11,12 @@ int get_next_pty_number()
 	return next_pty_number++;
 }
 
-int pty_open(struct tty_struct *tty, struct vfs_file *filp)
+static int pty_open(struct tty_struct *tty, struct vfs_file *filp)
 {
 	return 0;
 }
 
-int pty_write(struct tty_struct *tty, const char *buf, int count)
+static int pty_write(struct tty_struct *tty, const char *buf, int count)
 {
 	struct tty_struct *to = tty->link;
 
@@ -30,7 +30,7 @@ int pty_write(struct tty_struct *tty, const char *buf, int count)
 	return c;
 }
 
-int pty_write_room(struct tty_struct *tty)
+static int pty_write_room(struct tty_struct *tty)
 {
 	struct tty_struct *to = tty->link;
 
@@ -40,7 +40,7 @@ int pty_write_room(struct tty_struct *tty)
 	return to->ldisc->receive_room(to);
 }
 
-struct tty_operations pty_ops = {
+static struct tty_operations pty_ops = {
 	.open = pty_open,
 	.write = pty_write,
 	.write_room = pty_write_room,

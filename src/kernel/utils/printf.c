@@ -1,7 +1,9 @@
 #include "printf.h"
 
-#include <kernel/devices/serial.h>
+#include <kernel/devices/char/tty.h>
 #include <kernel/utils/string.h>
+
+#define SERIAL_PORT_A 0x3f8
 
 size_t vsprintf(char *buffer, const char *fmt, va_list args)
 {
@@ -112,7 +114,7 @@ static char tag_closing[] = "\\\\033[m";
 void debug_write(const char *str)
 {
 	for (char *ch = str; *ch; ++ch)
-		serial_write(*ch);
+		serial_output(SERIAL_PORT_A, *ch);
 }
 
 int debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
@@ -152,4 +154,9 @@ int debug_println(enum debug_level level, const char *fmt, ...)
 
 	va_end(args);
 	return out + 1;
+}
+
+void debug_init()
+{
+	serial_enable(SERIAL_PORT_A);
 }

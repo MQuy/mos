@@ -6,8 +6,7 @@
 *.o
 *.bin
 *.iso
-bochs.log
-src/serial.log
+*.log
 
 # ignored apps
 src/apps/window_server/window_server
