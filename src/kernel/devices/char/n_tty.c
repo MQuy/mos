@@ -147,7 +147,7 @@ void ntty_close(struct tty_struct *tty)
 
 ssize_t ntty_read(struct tty_struct *tty, struct vfs_file *file, char *buf, size_t nr)
 {
-	if (current_process->gid != tty->pgrp)
+	if (current_process->tty == tty && current_process->gid != tty->pgrp)
 	{
 		do_kill(-current_process->gid, SIGTTIN);
 		return -ERESTARTSYS;
@@ -212,7 +212,7 @@ ssize_t ntty_read(struct tty_struct *tty, struct vfs_file *file, char *buf, size
 
 ssize_t ntty_write(struct tty_struct *tty, struct vfs_file *file, const char *buf, size_t nr)
 {
-	if (current_process->gid != tty->pgrp)
+	if (current_process->tty == tty && current_process->gid != tty->pgrp)
 	{
 		do_kill(-current_process->gid, SIGTTOU);
 		return -ERESTARTSYS;

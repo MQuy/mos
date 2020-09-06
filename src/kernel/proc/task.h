@@ -149,8 +149,9 @@ extern volatile struct thread *current_thread;
 extern volatile struct process *current_process;
 extern volatile struct hashmap *mprocess;
 
-#define for_each_process(p, iter) \
-	for (iter = hashmap_iter(mprocess), p = hashmap_iter_get_data(iter); iter; iter = hashmap_iter_next(mprocess, iter), p = hashmap_iter_get_data(iter))
+#define for_each_process(p)         \
+	struct hashmap_iter *__hm_iter; \
+	for (__hm_iter = hashmap_iter(mprocess), p = hashmap_iter_get_data(__hm_iter); __hm_iter; __hm_iter = hashmap_iter_next(mprocess, __hm_iter), p = hashmap_iter_get_data(__hm_iter))
 
 void task_init();
 struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority);

@@ -129,9 +129,7 @@ int do_kill(pid_t pid, int32_t signum)
 	else if (pid == 0)
 	{
 		struct process *proc;
-		struct hashmap_iter *iter;
-
-		for_each_process(proc, iter)
+		for_each_process(proc)
 		{
 			if (proc->gid == current_process->gid)
 				do_kill(proc->gid, signum);
@@ -140,9 +138,7 @@ int do_kill(pid_t pid, int32_t signum)
 	else if (pid == -1)
 	{
 		struct process *proc;
-		struct hashmap_iter *iter;
-
-		for_each_process(proc, iter)
+		for_each_process(proc)
 		{
 			// TODO: MQ 2020-08-20 Make sure calling process has permission to send signals
 			if (proc->pid > 1)
@@ -152,9 +148,7 @@ int do_kill(pid_t pid, int32_t signum)
 	else
 	{
 		struct process *proc;
-		struct hashmap_iter *iter;
-
-		for_each_process(proc, iter)
+		for_each_process(proc)
 		{
 			if (proc->gid == -pid)
 				do_kill(proc->gid, signum);

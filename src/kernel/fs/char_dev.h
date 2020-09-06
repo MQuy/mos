@@ -13,6 +13,9 @@
 #define MINOR(dev) ((unsigned int)((dev)&MINORMASK))
 #define MKDEV(ma, mi) (((ma) << MINORBITS) | (mi))
 
+#define PATH_DEV "/dev/"
+#define SPECNAMELEN 255 /* max length of devicename */
+
 struct char_device
 {
 	const char *name;

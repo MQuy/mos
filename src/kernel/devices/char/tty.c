@@ -29,48 +29,66 @@ struct tty_struct *find_tty_from_driver(struct tty_driver *driver, int idx)
 	return NULL;
 }
 
-int init_dev(struct tty_driver *driver, int idx, struct tty_struct *tty)
+struct tty_struct *create_tty_struct(struct tty_driver *driver, int idx)
 {
+	struct tty_struct *tty = kcalloc(1, sizeof(struct tty_struct));
+	tty->magic = TTY_MAGIC;
 	tty->index = idx;
-	tty->session = current_process->sid;
-	tty->pgrp = current_process->gid;
 	tty->driver = driver;
 	tty->ldisc = &tty_ldisc_N_TTY;
 	tty->termios = &driver->init_termios;
 	sprintf(tty->name, "%s/%d", driver->name, idx);
+
+	INIT_LIST_HEAD(&tty->read_wait.list);
+	INIT_LIST_HEAD(&tty->write_wait.list);
 	list_add_tail(&tty->sibling, &driver->ttys);
 
 	if (tty->ldisc->open)
 		tty->ldisc->open(tty);
 
-	return 0;
+	return tty;
 }
 
-struct tty_struct *alloc_tty_struct()
+static int tiocsctty(struct tty_struct *tty, int arg)
 {
-	struct tty_struct *tty = kcalloc(1, sizeof(struct tty_struct));
-	tty->magic = TTY_MAGIC;
-	INIT_LIST_HEAD(&tty->read_wait.list);
-	INIT_LIST_HEAD(&tty->write_wait.list);
+	if (current_process->pid == current_process->sid && current_process->sid == tty->session)
+		return 0;
 
-	return tty;
+	if (current_process->pid != current_process->sid || current_process->tty)
+		return -EPERM;
+
+	if (tty->session)
+	{
+		if (arg != 1)
+			return -EPERM;
+
+		struct process *proc;
+		for_each_process(proc)
+		{
+			if (proc->tty == tty)
+				proc->tty = NULL;
+		}
+	}
+
+	current_process->tty = tty;
+	tty->session = current_process->sid;
+	tty->pgrp = current_process->gid;
+	return 0;
 }
 
 int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	int index = get_next_pty_number();
-	struct tty_struct *ttym = alloc_tty_struct();
-	init_dev(ptm_driver, index, ttym);
+	struct tty_struct *ttym = create_tty_struct(ptm_driver, index);
 	file->private_data = ttym;
 	ttym->driver->tops->open(ttym, file);
+	tiocsctty(ttym, 0);
 
-	struct tty_struct *ttys = alloc_tty_struct();
-	init_dev(pts_driver, index, ttys);
-
+	struct tty_struct *ttys = create_tty_struct(pts_driver, index);
 	ttym->link = ttys;
 	ttys->link = ttym;
 
-	char path[64] = {0};
+	char path[sizeof(PATH_DEV) + SPECNAMELEN] = {0};
 	sprintf(path, "/dev/%s", ttys->name);
 	vfs_mknod(path, S_IFCHR, MKDEV(UNIX98_PTY_SLAVE_MAJOR, index));
 
@@ -89,13 +107,7 @@ int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 	}
 
 	file->private_data = tty;
-
-	if (current_process->pid == current_process->sid && !current_process->tty && !tty->session)
-	{
-		current_process->tty = tty;
-		tty->session = current_process->sid;
-		tty->pgrp = current_process->gid;
-	}
+	tiocsctty(tty, 0);
 
 	return 0;
 }
@@ -131,31 +143,6 @@ unsigned int tty_poll(struct vfs_file *file, struct poll_table *pt)
 		return -EIO;
 
 	return ld->poll(tty, file, pt);
-}
-
-static int tiocsctty(struct tty_struct *tty, int arg)
-{
-	if (current_process->pid != current_process->sid || current_process->tty)
-		return -EPERM;
-
-	if (tty->session)
-	{
-		if (arg != 1)
-			return -EPERM;
-
-		struct process *proc;
-		struct hashmap_iter *iter;
-		for_each_process(proc, iter)
-		{
-			if (proc->pid == tty->session)
-				proc->tty = NULL;
-		}
-	}
-
-	current_process->tty = tty;
-	tty->session = current_process->sid;
-	tty->pgrp = current_process->gid;
-	return 0;
 }
 
 int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
@@ -213,7 +200,7 @@ int tty_register_driver(struct tty_driver *driver)
 
 	if (!(driver->flags & TTY_DRIVER_NO_DEVFS))
 	{
-		char name[64] = {0};
+		char name[sizeof(PATH_DEV) + SPECNAMELEN] = {0};
 		for (int i = 0; i <= driver->minor_num; ++i)
 		{
 			memset(&name, 0, sizeof(name));

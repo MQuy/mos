@@ -1,3 +1,4 @@
+#include <include/ioctls.h>
 #include <libc/stdlib.h>
 #include <libc/string.h>
 #include <libc/unistd.h>
@@ -9,13 +10,13 @@ int main(void)
 	int fdm, fds, rc;
 	char input[150] = {0};
 
-	setsid();
-
 	fdm = posix_openpt(O_RDWR);
 	fds = open(ptsname(fdm), O_RDWR, 0);
 
 	if (fork())
 	{
+		close(fds);
+
 		char msg[] = "hello world\027, from masterr\177\n";
 		write(fdm, msg, sizeof(msg) - 1);	  // ptm write
 		read(fdm, input, sizeof(input) - 1);  // pts echo back
@@ -24,8 +25,13 @@ int main(void)
 	}
 	else
 	{
+		close(fdm);
+
+		setsid();
+		ioctl(fds, TIOCSCTTY, 1);
+
 		char msg[] = "let's end this conversation\n";
-		write(fdm, msg, sizeof(msg) - 1);  // pts write
+		write(fds, msg, sizeof(msg) - 1);  // pts write
 		rc = read(fds, input, sizeof(input) - 1);
 	}
 
