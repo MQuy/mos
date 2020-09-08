@@ -10,6 +10,7 @@
   - [Keyboard/Mice Event](#keyboardmice-event)
   - [Signals](#signals-1)
   - [PTY](#pty)
+  - [Terminal](#terminal-1)
 
 ### Terminology
 
@@ -643,4 +644,85 @@ int n_tty_poll(struct tty_struct * tty, struct file * file, poll_table *wait) {
 void chardev_init() {
   1. call `tty_init()`
 }
+```
+
+#### Terminal
+
+#define MAX_LINES 400
+
+```c
+// terminal.c
+struct line {
+  char content[256]; // better to use linked list for buf
+  unsign long msec;
+  struct list_head sibling;
+  unsign int rowspan;
+}
+
+struct terminal {
+  struct list_head lines;
+  struct line *scroll_line;
+  unsign int nth_rowline;
+  unsign int line_count;
+  unsign int row_count;
+  unsign int max_rows;
+  unsign int width, height;
+  unsign int cursor_row, cursor_column;
+}
+
+main() {
+  1. create master/slave pty
+  2. `fork`
+  3. for child
+    - close master
+    - create a new session and set slave as the controlling temrinal
+    - set default input/output/error (0, 1, 2 file descriptors) to slave
+    - `exec` bash program
+  4. for parent
+    - close slave
+    - init main ui window -> `draw`
+    - enter evenloop <- use `poll` for key event from x11 and slave pty
+    | from x11
+      - convert key event to ascii
+      - write to slave pty
+    | from slave pty
+      - each character
+        | is EOL/EOF/NL
+          - create a new line -> append to `terminal->lines`
+          - `row_count`
+            - if `== max_rows` -> remove first line -> recalculate `line_count`, `row_count` and `scroll_line`
+            - increase `line_count`, `row_count`
+          - `scroll_line`
+            | `< max - 20` -> the same
+            | number of rows `scroll_line -> last line` == 20 -> increase
+        | is `ARROW_RIGHT/ARROW_LEFT`
+          - increase/decease `cursor_column` by one
+        | is `ARROW_UP`
+          | `nth_rowline` == 0 -> scroll_line is back to one line
+          | decrease `nth_rowline` by one
+        | is `ARROW_DOWN`
+          | `nth_rowline` == `scroll_line->rowspan` -> scroll_line to the next line
+          | increase `nth_rowline` by one
+        | other
+          - append to last line's content at `cursor_column` position
+          - increase `cursor_column` by one
+      - `draw`
+}
+
+draw() {
+  1. set `nth_rowline = terminal->nth_rowline`
+  2. for each line
+    - from `nth_rowline -> line->rowspan`
+      - jump to that segment in `line->content`
+      - draw to ui window
+    - `nth_rowline = 0`
+  3. draw cursor
+  4. draw bar
+}
+
+// bash.c
+main() {
+
+}
+
 ```
