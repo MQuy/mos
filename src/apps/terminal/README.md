@@ -720,9 +720,33 @@ draw() {
   4. draw bar
 }
 
-// bash.c
-main() {
-
+// shell.c
+struct shell {
+  char cwd[256];
+  gid_t foreground_gid;
 }
 
+main() {
+  1. create `/shm/shell`, assign it to initialized `shell`
+  2. output `cwd` (like `➜  ~`)
+  3. for each line reading from input (0-fd)
+  4. parse to get command and args // proper bash grammar later https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_10
+  5. command
+    | builtin
+      - is the same as external except instead of loading program, we call a function
+      - `shell` is modified via openning `/shm/shell`
+    | external
+      - fork
+        | for child
+          - set in/out/error to slave pty and close other fds
+          - new group as foreground group and child is group leader
+          - `foreground_gid = child->pid`
+          - `exec` program with args
+        | for parent
+          - wait for child to exit <- loop until success (failed means interrupt by signal)
+          - output `cwd`
+          - no foregroup ground and set `foreground_gid = shell->pid`
+  6. output `cwd`
+  7. go back to step 2
+}
 ```
