@@ -30,47 +30,48 @@ int main(struct framebuffer fb)
 	while (true)
 	{
 		int32_t nr = poll(pfds, 3);
+		if (nr <= 0)
+			continue;
 
-		if (nr > 0)
-			for (int32_t i = 0; i < 3; ++i)
+		for (int32_t i = 0; i < 3; ++i)
+		{
+			if (!(pfds[i].revents & POLLIN))
+				continue;
+
+			if (pfds[i].fd == ws_fd)
 			{
-				if (!(pfds[i].revents & POLLIN))
-					continue;
+				memset(&ws_buf, 0, sizeof(struct msgui));
+				mq_receive(ws_fd, (char *)&ws_buf, 0, sizeof(struct msgui));
 
-				if (pfds[i].fd == ws_fd)
+				if (ws_buf.type == MSGUI_WINDOW)
 				{
-					memset(&ws_buf, 0, sizeof(struct msgui));
-					mq_receive(ws_fd, (char *)&ws_buf, 0, sizeof(struct msgui));
-
-					if (ws_buf.type == MSGUI_WINDOW)
-					{
-						struct msgui_window *msgwin = (struct msgui_window *)ws_buf.data;
-						struct window *win = create_window(msgwin);
-						int32_t wfd = mq_open(msgwin->sender, O_WRONLY);
-						mq_send(wfd, win->name, 0, WINDOW_NAME_LENGTH);
-						mq_close(wfd);
-					}
-					else if (ws_buf.type == MSGUI_FOCUS)
-					{
-						struct msgui_focus *focus = (struct msgui_focus *)ws_buf.data;
-						handle_focus_event(focus);
-						draw_layout();
-					}
+					struct msgui_window *msgwin = (struct msgui_window *)ws_buf.data;
+					struct window *win = create_window(msgwin);
+					int32_t wfd = mq_open(msgwin->sender, O_WRONLY);
+					mq_send(wfd, win->name, 0, WINDOW_NAME_LENGTH);
+					mq_close(wfd);
 				}
-				else if (pfds[i].fd == mouse_fd)
+				else if (ws_buf.type == MSGUI_FOCUS)
 				{
-					memset(&mouse_event, 0, sizeof(struct mouse_event));
-					read(mouse_fd, (char *)&mouse_event, sizeof(struct mouse_event));
-					handle_mouse_event(&mouse_event);
-					draw_layout();
-				}
-				else if (pfds[i].fd == krb_fd)
-				{
-					read(krb_fd, (char *)&krb_event, sizeof(struct key_event));
-					handle_keyboard_event(&krb_event);
+					struct msgui_focus *focus = (struct msgui_focus *)ws_buf.data;
+					handle_focus_event(focus);
 					draw_layout();
 				}
 			}
+			else if (pfds[i].fd == mouse_fd)
+			{
+				memset(&mouse_event, 0, sizeof(struct mouse_event));
+				read(mouse_fd, (char *)&mouse_event, sizeof(struct mouse_event));
+				handle_mouse_event(&mouse_event);
+				draw_layout();
+			}
+			else if (pfds[i].fd == krb_fd)
+			{
+				read(krb_fd, (char *)&krb_event, sizeof(struct key_event));
+				handle_keyboard_event(&krb_event);
+				draw_layout();
+			}
+		}
 	}
 
 	return 0;

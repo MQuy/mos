@@ -44,11 +44,17 @@ int do_poll(struct pollfd *fds, uint32_t nfds)
 		for (uint32_t i = 0; i < nfds; ++i)
 		{
 			struct pollfd *pfd = &fds[i];
-			struct vfs_file *f = current_thread->parent->files->fd[pfd->fd];
 
-			pfd->revents = f->f_op->poll(f, pt);
-			if (pfd->events & pfd->revents)
-				nr++;
+			if (pfd->fd >= 0)
+			{
+				struct vfs_file *f = current_thread->parent->files->fd[pfd->fd];
+
+				pfd->revents = f->f_op->poll(f, pt);
+				if (pfd->events & pfd->revents)
+					nr++;
+			}
+			else
+				pfd->revents = 0;
 		}
 
 		if (nr > 0)

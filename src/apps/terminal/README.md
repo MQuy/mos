@@ -151,6 +151,7 @@ Signals are inherited by child processes (`fork`) but will be set back to defaul
 - [Character devices](https://www.win.tue.nl/~aeb/linux/lk/lk-11.html)
 - [Signals](https://www.gnu.org/software/libc/manual/html_node/Signal-Handling.html)
 - [Implementation of signal hanlding](http://courses.cms.caltech.edu/cs124/lectures/CS124Lec15.pdf)
+- [Bash](https://www.gnu.org/software/bash/manual/html_node/index.html)
 
 ### Implementation
 
@@ -654,20 +655,20 @@ void chardev_init() {
 // terminal.c
 struct line {
   char content[256]; // better to use linked list for buf
-  unsign long msec;
+  unsigned long msec;
   struct list_head sibling;
-  unsign int rowspan;
+  unsigned int rowspan;
 }
 
-struct terminal {
+struct tab {
   struct list_head lines;
   struct line *scroll_line;
-  unsign int nth_rowline;
-  unsign int line_count;
-  unsign int row_count;
-  unsign int max_rows;
-  unsign int width, height;
-  unsign int cursor_row, cursor_column;
+  unsigned int nth_rowline;
+  unsigned int line_count;
+  unsigned int row_count;
+  unsigned int max_rows;
+  unsigned int width, height;
+  unsigned int cursor_row, cursor_column;
 }
 
 main() {
@@ -727,7 +728,7 @@ struct shell {
 }
 
 main() {
-  1. create `/shm/shell`, assign it to initialized `shell`
+  1. create `/shm/shell`, is assigned to initialized `shell`
   2. output `cwd` (like `➜  ~`)
   3. for each line reading from input (0-fd)
   4. parse to get command and args // proper bash grammar later https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_10
@@ -746,7 +747,6 @@ main() {
           - wait for child to exit <- loop until success (failed means interrupt by signal)
           - output `cwd`
           - no foregroup ground and set `foreground_gid = shell->pid`
-  6. output `cwd`
-  7. go back to step 2
+  7. go back to step 3
 }
 ```

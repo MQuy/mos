@@ -8,6 +8,10 @@
 
 #define KYBRD_MAJOR 11
 #define KYBRD_PACKET_QUEUE_LEN 16
+#define SHIFT_MASK (1 << 0)
+#define LOCK_MASK (1 << 1)
+#define CONTROL_MASK (1 << 2)
+#define ALT_MASK (1 << 3)
 
 enum key_event_type
 {
@@ -18,7 +22,8 @@ enum key_event_type
 struct key_event
 {
 	enum key_event_type type;
-	int32_t key;
+	unsigned int key;
+	unsigned int state;
 };
 
 struct kybrd_inode
@@ -30,202 +35,272 @@ struct kybrd_inode
 	struct vfs_file *file;
 };
 
-enum KEYCODE
-{
+#define KEY_RESERVED 0
+#define KEY_ESC 1
+#define KEY_1 2
+#define KEY_2 3
+#define KEY_3 4
+#define KEY_4 5
+#define KEY_5 6
+#define KEY_6 7
+#define KEY_7 8
+#define KEY_8 9
+#define KEY_9 10
+#define KEY_0 11
+#define KEY_MINUS 12
+#define KEY_EQUAL 13
+#define KEY_BACKSPACE 14
+#define KEY_TAB 15
+#define KEY_Q 16
+#define KEY_W 17
+#define KEY_E 18
+#define KEY_R 19
+#define KEY_T 20
+#define KEY_Y 21
+#define KEY_U 22
+#define KEY_I 23
+#define KEY_O 24
+#define KEY_P 25
+#define KEY_LEFTBRACE 26
+#define KEY_RIGHTBRACE 27
+#define KEY_ENTER 28
+#define KEY_LEFTCTRL 29
+#define KEY_A 30
+#define KEY_S 31
+#define KEY_D 32
+#define KEY_F 33
+#define KEY_G 34
+#define KEY_H 35
+#define KEY_J 36
+#define KEY_K 37
+#define KEY_L 38
+#define KEY_SEMICOLON 39
+#define KEY_APOSTROPHE 40
+#define KEY_GRAVE 41
+#define KEY_LEFTSHIFT 42
+#define KEY_BACKSLASH 43
+#define KEY_Z 44
+#define KEY_X 45
+#define KEY_C 46
+#define KEY_V 47
+#define KEY_B 48
+#define KEY_N 49
+#define KEY_M 50
+#define KEY_COMMA 51
+#define KEY_DOT 52
+#define KEY_SLASH 53
+#define KEY_RIGHTSHIFT 54
+#define KEY_KPASTERISK 55
+#define KEY_LEFTALT 56
+#define KEY_SPACE 57
+#define KEY_CAPSLOCK 58
+#define KEY_F1 59
+#define KEY_F2 60
+#define KEY_F3 61
+#define KEY_F4 62
+#define KEY_F5 63
+#define KEY_F6 64
+#define KEY_F7 65
+#define KEY_F8 66
+#define KEY_F9 67
+#define KEY_F10 68
+#define KEY_NUMLOCK 69
+#define KEY_SCROLLLOCK 70
+#define KEY_KP7 71
+#define KEY_KP8 72
+#define KEY_KP9 73
+#define KEY_KPMINUS 74
+#define KEY_KP4 75
+#define KEY_KP5 76
+#define KEY_KP6 77
+#define KEY_KPPLUS 78
+#define KEY_KP1 79
+#define KEY_KP2 80
+#define KEY_KP3 81
+#define KEY_KP0 82
+#define KEY_KPDOT 83
 
-	// Alphanumeric keys ////////////////
+#define KEY_ZENKAKUHANKAKU 85
+#define KEY_102ND 86
+#define KEY_F11 87
+#define KEY_F12 88
+#define KEY_RO 89
+#define KEY_KATAKANA 90
+#define KEY_HIRAGANA 91
+#define KEY_HENKAN 92
+#define KEY_KATAKANAHIRAGANA 93
+#define KEY_MUHENKAN 94
+#define KEY_KPJPCOMMA 95
+#define KEY_KPENTER 96
+#define KEY_RIGHTCTRL 97
+#define KEY_KPSLASH 98
+#define KEY_SYSRQ 99
+#define KEY_RIGHTALT 100
+#define KEY_LINEFEED 101
+#define KEY_HOME 102
+#define KEY_UP 103
+#define KEY_PAGEUP 104
+#define KEY_LEFT 105
+#define KEY_RIGHT 106
+#define KEY_END 107
+#define KEY_DOWN 108
+#define KEY_PAGEDOWN 109
+#define KEY_INSERT 110
+#define KEY_DELETE 111
+#define KEY_MACRO 112
+#define KEY_MUTE 113
+#define KEY_VOLUMEDOWN 114
+#define KEY_VOLUMEUP 115
+#define KEY_POWER 116 /* SC System Power Down */
+#define KEY_KPEQUAL 117
+#define KEY_KPPLUSMINUS 118
+#define KEY_PAUSE 119
+#define KEY_SCALE 120 /* AL Compiz Scale (Expose) */
 
-	KEY_SPACE = ' ',
-	KEY_0 = '0',
-	KEY_1 = '1',
-	KEY_2 = '2',
-	KEY_3 = '3',
-	KEY_4 = '4',
-	KEY_5 = '5',
-	KEY_6 = '6',
-	KEY_7 = '7',
-	KEY_8 = '8',
-	KEY_9 = '9',
+#define KEY_KPCOMMA 121
+#define KEY_HANGEUL 122
+#define KEY_HANGUEL KEY_HANGEUL
+#define KEY_HANJA 123
+#define KEY_YEN 124
+#define KEY_LEFTMETA 125
+#define KEY_RIGHTMETA 126
+#define KEY_COMPOSE 127
 
-	KEY_A = 'a',
-	KEY_B = 'b',
-	KEY_C = 'c',
-	KEY_D = 'd',
-	KEY_E = 'e',
-	KEY_F = 'f',
-	KEY_G = 'g',
-	KEY_H = 'h',
-	KEY_I = 'i',
-	KEY_J = 'j',
-	KEY_K = 'k',
-	KEY_L = 'l',
-	KEY_M = 'm',
-	KEY_N = 'n',
-	KEY_O = 'o',
-	KEY_P = 'p',
-	KEY_Q = 'q',
-	KEY_R = 'r',
-	KEY_S = 's',
-	KEY_T = 't',
-	KEY_U = 'u',
-	KEY_V = 'v',
-	KEY_W = 'w',
-	KEY_X = 'x',
-	KEY_Y = 'y',
-	KEY_Z = 'z',
+#define KEY_STOP 128 /* AC Stop */
+#define KEY_AGAIN 129
+#define KEY_PROPS 130 /* AC Properties */
+#define KEY_UNDO 131  /* AC Undo */
+#define KEY_FRONT 132
+#define KEY_COPY 133  /* AC Copy */
+#define KEY_OPEN 134  /* AC Open */
+#define KEY_PASTE 135 /* AC Paste */
+#define KEY_FIND 136  /* AC Search */
+#define KEY_CUT 137	  /* AC Cut */
+#define KEY_HELP 138  /* AL Integrated Help Center */
+#define KEY_MENU 139  /* Menu (show menu) */
+#define KEY_CALC 140  /* AL Calculator */
+#define KEY_SETUP 141
+#define KEY_SLEEP 142  /* SC System Sleep */
+#define KEY_WAKEUP 143 /* System Wake Up */
+#define KEY_FILE 144   /* AL Local Machine Browser */
+#define KEY_SENDFILE 145
+#define KEY_DELETEFILE 146
+#define KEY_XFER 147
+#define KEY_PROG1 148
+#define KEY_PROG2 149
+#define KEY_WWW 150 /* AL Internet Browser */
+#define KEY_MSDOS 151
+#define KEY_COFFEE 152 /* AL Terminal Lock/Screensaver */
+#define KEY_SCREENLOCK KEY_COFFEE
+#define KEY_ROTATE_DISPLAY 153 /* Display orientation for e.g. tablets */
+#define KEY_DIRECTION KEY_ROTATE_DISPLAY
+#define KEY_CYCLEWINDOWS 154
+#define KEY_MAIL 155
+#define KEY_BOOKMARKS 156 /* AC Bookmarks */
+#define KEY_COMPUTER 157
+#define KEY_BACK 158	/* AC Back */
+#define KEY_FORWARD 159 /* AC Forward */
+#define KEY_CLOSECD 160
+#define KEY_EJECTCD 161
+#define KEY_EJECTCLOSECD 162
+#define KEY_NEXTSONG 163
+#define KEY_PLAYPAUSE 164
+#define KEY_PREVIOUSSONG 165
+#define KEY_STOPCD 166
+#define KEY_RECORD 167
+#define KEY_REWIND 168
+#define KEY_PHONE 169 /* Media Select Telephone */
+#define KEY_ISO 170
+#define KEY_CONFIG 171	 /* AL Consumer Control Configuration */
+#define KEY_HOMEPAGE 172 /* AC Home */
+#define KEY_REFRESH 173	 /* AC Refresh */
+#define KEY_EXIT 174	 /* AC Exit */
+#define KEY_MOVE 175
+#define KEY_EDIT 176
+#define KEY_SCROLLUP 177
+#define KEY_SCROLLDOWN 178
+#define KEY_KPLEFTPAREN 179
+#define KEY_KPRIGHTPAREN 180
+#define KEY_NEW 181	 /* AC New */
+#define KEY_REDO 182 /* AC Redo/Repeat */
 
-	KEY_RETURN = '\r',
-	KEY_ESCAPE = 0x1001,
-	KEY_BACKSPACE = '\b',
+#define KEY_F13 183
+#define KEY_F14 184
+#define KEY_F15 185
+#define KEY_F16 186
+#define KEY_F17 187
+#define KEY_F18 188
+#define KEY_F19 189
+#define KEY_F20 190
+#define KEY_F21 191
+#define KEY_F22 192
+#define KEY_F23 193
+#define KEY_F24 194
 
-	// Arrow keys ////////////////////////
+#define KEY_PLAYCD 200
+#define KEY_PAUSECD 201
+#define KEY_PROG3 202
+#define KEY_PROG4 203
+#define KEY_DASHBOARD 204 /* AL Dashboard */
+#define KEY_SUSPEND 205
+#define KEY_CLOSE 206 /* AC Close */
+#define KEY_PLAY 207
+#define KEY_FASTFORWARD 208
+#define KEY_BASSBOOST 209
+#define KEY_PRINT 210 /* AC Print */
+#define KEY_HP 211
+#define KEY_CAMERA 212
+#define KEY_SOUND 213
+#define KEY_QUESTION 214
+#define KEY_EMAIL 215
+#define KEY_CHAT 216
+#define KEY_SEARCH 217
+#define KEY_CONNECT 218
+#define KEY_FINANCE 219 /* AL Checkbook/Finance */
+#define KEY_SPORT 220
+#define KEY_SHOP 221
+#define KEY_ALTERASE 222
+#define KEY_CANCEL 223 /* AC Cancel */
+#define KEY_BRIGHTNESSDOWN 224
+#define KEY_BRIGHTNESSUP 225
+#define KEY_MEDIA 226
 
-	KEY_UP = 0x1100,
-	KEY_DOWN = 0x1101,
-	KEY_LEFT = 0x1102,
-	KEY_RIGHT = 0x1103,
+#define KEY_SWITCHVIDEOMODE 227 /* Cycle between available video \
+					   outputs (Monitor/LCD/TV-out/etc) */
+#define KEY_KBDILLUMTOGGLE 228
+#define KEY_KBDILLUMDOWN 229
+#define KEY_KBDILLUMUP 230
 
-	// Function keys /////////////////////
+#define KEY_SEND 231		/* AC Send */
+#define KEY_REPLY 232		/* AC Reply */
+#define KEY_FORWARDMAIL 233 /* AC Forward Msg */
+#define KEY_SAVE 234		/* AC Save */
+#define KEY_DOCUMENTS 235
 
-	KEY_F1 = 0x1201,
-	KEY_F2 = 0x1202,
-	KEY_F3 = 0x1203,
-	KEY_F4 = 0x1204,
-	KEY_F5 = 0x1205,
-	KEY_F6 = 0x1206,
-	KEY_F7 = 0x1207,
-	KEY_F8 = 0x1208,
-	KEY_F9 = 0x1209,
-	KEY_F10 = 0x120a,
-	KEY_F11 = 0x120b,
-	KEY_F12 = 0x120b,
-	KEY_F13 = 0x120c,
-	KEY_F14 = 0x120d,
-	KEY_F15 = 0x120e,
+#define KEY_BATTERY 236
 
-	KEY_DOT = '.',
-	KEY_COMMA = ',',
-	KEY_COLON = ':',
-	KEY_SEMICOLON = ';',
-	KEY_SLASH = '/',
-	KEY_BACKSLASH = '\\',
-	KEY_PLUS = '+',
-	KEY_MINUS = '-',
-	KEY_ASTERISK = '*',
-	KEY_EXCLAMATION = '!',
-	KEY_QUESTION = '?',
-	KEY_QUOTEDOUBLE = '\"',
-	KEY_QUOTE = '\'',
-	KEY_EQUAL = '=',
-	KEY_HASH = '#',
-	KEY_PERCENT = '%',
-	KEY_AMPERSAND = '&',
-	KEY_UNDERSCORE = '_',
-	KEY_LEFTPARENTHESIS = '(',
-	KEY_RIGHTPARENTHESIS = ')',
-	KEY_LEFTBRACKET = '[',
-	KEY_RIGHTBRACKET = ']',
-	KEY_LEFTCURL = '{',
-	KEY_RIGHTCURL = '}',
-	KEY_DOLLAR = '$',
-	KEY_POUND = '£',
-	KEY_EURO = '$',
-	KEY_LESS = '<',
-	KEY_GREATER = '>',
-	KEY_BAR = '|',
-	KEY_GRAVE = '`',
-	KEY_TILDE = '~',
-	KEY_AT = '@',
-	KEY_CARRET = '^',
+#define KEY_BLUETOOTH 237
+#define KEY_WLAN 238
+#define KEY_UWB 239
 
-	// Numeric keypad //////////////////////
+#define KEY_UNKNOWN 240
 
-	KEY_KP_0 = '0',
-	KEY_KP_1 = '1',
-	KEY_KP_2 = '2',
-	KEY_KP_3 = '3',
-	KEY_KP_4 = '4',
-	KEY_KP_5 = '5',
-	KEY_KP_6 = '6',
-	KEY_KP_7 = '7',
-	KEY_KP_8 = '8',
-	KEY_KP_9 = '9',
-	KEY_KP_PLUS = '+',
-	KEY_KP_MINUS = '-',
-	KEY_KP_DECIMAL = '.',
-	KEY_KP_DIVIDE = '/',
-	KEY_KP_ASTERISK = '*',
-	KEY_KP_NUMLOCK = 0x300f,
-	KEY_KP_ENTER = 0x3010,
+#define KEY_VIDEO_NEXT 241		 /* drive next video source */
+#define KEY_VIDEO_PREV 242		 /* drive previous video source */
+#define KEY_BRIGHTNESS_CYCLE 243 /* brightness up, after max is min */
+#define KEY_BRIGHTNESS_AUTO 244	 /* Set Auto Brightness: manual \
+					   brightness control is off,               \
+					   rely on ambient */
+#define KEY_BRIGHTNESS_ZERO KEY_BRIGHTNESS_AUTO
+#define KEY_DISPLAY_OFF 245 /* display device to off state */
 
-	KEY_TAB = 0x4000,
-	KEY_CAPSLOCK = 0x4001,
+#define KEY_WWAN 246 /* Wireless WAN (LTE, UMTS, GSM, etc.) */
+#define KEY_WIMAX KEY_WWAN
+#define KEY_RFKILL 247 /* Key that controls all radios */
 
-	// Modify keys ////////////////////////////
+#define KEY_MICMUTE 248 /* Mute / unmute the microphone */
 
-	KEY_LSHIFT = 0x4002,
-	KEY_LCTRL = 0x4003,
-	KEY_LALT = 0x4004,
-	KEY_LWIN = 0x4005,
-	KEY_RSHIFT = 0x4006,
-	KEY_RCTRL = 0x4007,
-	KEY_RALT = 0x4008,
-	KEY_RWIN = 0x4009,
-
-	KEY_INSERT = 0x400a,
-	KEY_DELETE = 0x400b,
-	KEY_HOME = 0x400c,
-	KEY_END = 0x400d,
-	KEY_PAGEUP = 0x400e,
-	KEY_PAGEDOWN = 0x400f,
-	KEY_SCROLLLOCK = 0x4010,
-	KEY_PAUSE = 0x4011,
-
-	KEY_LCOMMAND = 0x4012,
-	KEY_RCOMMAND = 0x4013,
-
-	KEY_UNKNOWN,
-	KEY_NUMKEYCODES
-} KEYCODE;
-
-//! returns status of lock keys
-bool kkybrd_get_scroll_lock();
-bool kkybrd_get_numlock();
-bool kkybrd_get_capslock();
-
-//! returns status of special keys
-bool kkybrd_get_alt();
-bool kkybrd_get_ctrl();
-bool kkybrd_get_shift();
-
-//! resend last command
-void kkybrd_ignore_resend();
-bool kkybrd_check_resend();
-
-//! returns status of tests. kkybrd_self_test runs the test
-bool kkybrd_get_diagnostic_res();
-bool kkybrd_get_bat_res();
-bool kkybrd_self_test();
-
-//! returns last scan code, last keystroke
-uint8_t kkybrd_get_last_scan();
-void kkybrd_discard_last_key();
-
-//! updates LEDs
 void kkybrd_set_leds(bool num, bool caps, bool scroll);
-
-//! converts keycode to ascii character (takes account of caps lock and shift keys)
-char kkybrd_key_to_ascii(enum KEYCODE keycode);
-
-//! keyboard enable / disable
-void kkybrd_disable();
-void kkybrd_enable();
-bool kkybrd_is_disabled();
-
-//! reset system
-void kkybrd_reset_system();
-
-//! install keyboard
 void kkybrd_install();
 
 #endif

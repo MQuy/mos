@@ -17,10 +17,16 @@ enum key_event_type
 	KEY_RELEASE = 1,
 };
 
+#define SHIFT_MASK (1 << 0)
+#define LOCK_MASK (1 << 1)
+#define CONTROL_MASK (1 << 2)
+#define ALT_MASK (1 << 3)
+
 struct key_event
 {
 	enum key_event_type type;
-	int32_t key;
+	unsigned int key;
+	unsigned int state;
 };
 
 struct window *create_window(struct msgui_window *msgwin);

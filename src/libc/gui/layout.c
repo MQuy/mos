@@ -4,6 +4,7 @@
 #include <include/mman.h>
 #include <libc/gui/msgui.h>
 #include <libc/gui/psf.h>
+#include <libc/poll.h>
 #include <libc/stdlib.h>
 #include <libc/string.h>
 #include <libc/unistd.h>
@@ -114,7 +115,8 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
 	return win;
 }
 
-void enter_event_loop(struct window *win)
+#define MAX_FD 10
+void enter_event_loop(struct window *win, int *fds, unsigned int nfds, void *callback(struct pollfd *, unsigned int))
 {
 	struct msgui *msgui = calloc(1, sizeof(struct msgui));
 	msgui->type = MSGUI_FOCUS;
@@ -128,27 +130,56 @@ void enter_event_loop(struct window *win)
 
 	struct xevent *event = calloc(1, sizeof(struct xevent));
 	int32_t wfd = mq_open(win->name, O_RDONLY);
+	memset(event, 0, sizeof(struct xevent));
+
+	struct pollfd pfds[MAX_FD] = {
+		{.fd = wfd, .events = POLLIN},
+	};
+	for (int i = 1; i < MAX_FD; ++i)
+	{
+		pfds[i].fd = -1;
+		pfds[i].events = POLLIN;
+	}
+
 	while (true)
 	{
-		memset(event, 0, sizeof(struct xevent));
-		mq_receive(wfd, (char *)event, 0, sizeof(struct xevent));
+		for (int i = 0; i < nfds; ++i)
+			pfds[i + 1].fd = fds[i];
 
-		if (event->type == XBUTTON_EVENT)
+		int nr = poll(pfds, MAX_FD);
+		if (nr <= 0)
+			continue;
+
+		for (int32_t i = 0; i < MAX_FD; ++i)
 		{
-			struct xbutton_event *bevent = (struct xbutton_event *)event->data;
+			if (!(pfds[i].revents & POLLIN))
+				continue;
 
-			if (bevent->action == XBUTTON_PRESS)
+			if (pfds[i].fd == wfd)
 			{
-				struct window *active_win = find_child_element_from_position(win, win->graphic.x, win->graphic.y, bevent->x, bevent->y);
-				if (active_win)
+				mq_receive(wfd, (char *)event, 0, sizeof(struct xevent));
+
+				if (event->type == XBUTTON_EVENT)
 				{
-					EVENT_HANDLER handler = hashmap_get(&active_win->events, "click");
-					if (handler)
-						handler(active_win);
+					struct xbutton_event *bevent = (struct xbutton_event *)event->data;
+
+					if (bevent->action == XBUTTON_PRESS)
+					{
+						struct window *active_win = find_child_element_from_position(win, win->graphic.x, win->graphic.y, bevent->x, bevent->y);
+						if (active_win)
+						{
+							EVENT_HANDLER handler = hashmap_get(&active_win->events, "click");
+							if (handler)
+								handler(active_win);
+						}
+					}
 				}
+				memset(event, 0, sizeof(struct xevent));
 			}
-		}
-	};
+			else if (callback)
+				callback(pfds, MAX_FD);
+		};
+	}
 
 	mq_close(wfd);
 	free(event);

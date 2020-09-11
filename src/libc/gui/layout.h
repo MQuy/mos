@@ -82,7 +82,7 @@ void gui_create_label(struct window *parent, struct ui_label *label, int32_t x, 
 void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, int32_t y, uint32_t width, uint32_t height, char *content);
 struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height);
 void init_fonts();
-void enter_event_loop(struct window *win);
+void enter_event_loop(struct window *win, int *fds, unsigned int nfds, void *callback(struct pollfd *, unsigned int));
 
 static __inline void set_pixel(char *pixel_dest, uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha_raw)
 {

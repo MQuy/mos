@@ -15,6 +15,7 @@
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_execve 11
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_getpid 20
@@ -25,6 +26,7 @@
 #define __NR_posix_spawn 49
 #define __NR_ioctl 54
 #define __NR_setpgid 57
+#define __NR_dup2 63
 #define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
@@ -165,6 +167,18 @@ _syscall1(close, uint32_t);
 static inline int32_t close(uint32_t fd)
 {
 	return syscall_close(fd);
+}
+
+_syscall3(execve, const char *, char *const, char *const);
+static inline int32_t execve(const char *pathname, char *const argv[], char *const envp[])
+{
+	return syscall_execve(pathname, argv, envp);
+}
+
+_syscall2(dup2, int, int);
+static inline int32_t dup2(int oldfd, int newfd)
+{
+	return syscall_dup2(oldfd, newfd);
 }
 
 _syscall1(brk, uint32_t);
