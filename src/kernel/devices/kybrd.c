@@ -186,9 +186,9 @@ static int _kkybrd_scancode_std[] = {
 	KEY_KP8,		 //0x48	//keypad up arrow
 	KEY_KP9,		 //0x49
 	KEY_KPMINUS,	 //0x4a
-	KEY_KP4,		 //0x4b
+	KEY_KP4,		 //0x4b // keypad left arrow
 	KEY_KP5,		 //0x4c
-	KEY_KP6,		 //0x4d
+	KEY_KP6,		 //0x4d // keypad right arrow
 	KEY_KPPLUS,		 //0x4e
 	KEY_KP1,		 //0x4f
 	KEY_KP2,		 //0x50	//keypad down arrow
@@ -246,7 +246,7 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 
 		//! is this an extended code? If so, set it and return
 		if (code == 0xE0 || code == 0xE1)
-			return;
+			return IRQ_HANDLER_CONTINUE;
 
 		current_kybrd_event.state = (_ctrl && CONTROL_MASK) || (_shift && SHIFT_MASK) || (_alt && ALT_MASK) || (_capslock && LOCK_MASK);
 		//! test if this is a break code (Original XT Scan Code Set specific)

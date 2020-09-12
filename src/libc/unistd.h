@@ -169,7 +169,7 @@ static inline int32_t close(uint32_t fd)
 	return syscall_close(fd);
 }
 
-_syscall3(execve, const char *, char *const, char *const);
+_syscall3(execve, const char *, char *const *, char *const *);
 static inline int32_t execve(const char *pathname, char *const argv[], char *const envp[])
 {
 	return syscall_execve(pathname, argv, envp);

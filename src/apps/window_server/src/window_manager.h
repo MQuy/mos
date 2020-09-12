@@ -1,6 +1,7 @@
 #ifndef WINDOW_SERVER_LAYOUT
 #define WINDOW_SERVER_LAYOUT
 
+#include <libc/gui/event.h>
 #include <libc/gui/layout.h>
 #include <libc/gui/msgui.h>
 
@@ -9,6 +10,7 @@ struct mouse_event
 	int32_t x;
 	int32_t y;
 	uint8_t buttons;
+	unsigned int state;
 } mouse_event;
 
 enum key_event_type
@@ -16,11 +18,6 @@ enum key_event_type
 	KEY_PRESS = 0,
 	KEY_RELEASE = 1,
 };
-
-#define SHIFT_MASK (1 << 0)
-#define LOCK_MASK (1 << 1)
-#define CONTROL_MASK (1 << 2)
-#define ALT_MASK (1 << 3)
 
 struct key_event
 {

@@ -684,7 +684,7 @@ main() {
     - init main ui window -> `draw`
     - enter evenloop <- use `poll` for key event from x11 and slave pty
     | from x11
-      - convert key event to ascii
+      - convert key event (keycode) to ascii
       - write to slave pty
     | from slave pty
       - each character

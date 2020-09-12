@@ -116,7 +116,7 @@ int main()
 	labels[LABEL_DOT] = create_label(win, 64, 176, 32, 32, ".", style1, on_click_label);
 	labels[LABEL_EQUAL] = create_label(win, 96, 176, 32, 32, "=", style1, on_click_label_equal);
 
-	enter_event_loop(win, NULL, 0, NULL);
+	enter_event_loop(win, NULL, NULL, 0, NULL);
 
 	return 0;
 }

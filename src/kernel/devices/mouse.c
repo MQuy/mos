@@ -124,6 +124,7 @@ static void mouse_calculate_position()
 	current_mouse_motion.x = move_x;
 	current_mouse_motion.y = move_y;
 
+	current_mouse_motion.state = current_mouse_motion.buttons;
 	current_mouse_motion.buttons = 0;
 
 	if (state & BUTTON_LEFT)

@@ -116,7 +116,7 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
 }
 
 #define MAX_FD 10
-void enter_event_loop(struct window *win, int *fds, unsigned int nfds, void *callback(struct pollfd *, unsigned int))
+void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *evt), int *fds, unsigned int nfds, void (*fds_callback)(struct pollfd *, unsigned int))
 {
 	struct msgui *msgui = calloc(1, sizeof(struct msgui));
 	msgui->type = MSGUI_FOCUS;
@@ -143,7 +143,7 @@ void enter_event_loop(struct window *win, int *fds, unsigned int nfds, void *cal
 
 	while (true)
 	{
-		for (int i = 0; i < nfds; ++i)
+		for (unsigned int i = 0; i < nfds; ++i)
 			pfds[i + 1].fd = fds[i];
 
 		int nr = poll(pfds, MAX_FD);
@@ -174,10 +174,12 @@ void enter_event_loop(struct window *win, int *fds, unsigned int nfds, void *cal
 						}
 					}
 				}
+				if (event_callback)
+					event_callback(event);
 				memset(event, 0, sizeof(struct xevent));
 			}
-			else if (callback)
-				callback(pfds, MAX_FD);
+			else if (fds_callback)
+				fds_callback(pfds, MAX_FD);
 		};
 	}
 

@@ -8,32 +8,11 @@
 
 #define KYBRD_MAJOR 11
 #define KYBRD_PACKET_QUEUE_LEN 16
+
 #define SHIFT_MASK (1 << 0)
 #define LOCK_MASK (1 << 1)
 #define CONTROL_MASK (1 << 2)
 #define ALT_MASK (1 << 3)
-
-enum key_event_type
-{
-	KEY_PRRESS,
-	KEY_RELEASE,
-};
-
-struct key_event
-{
-	enum key_event_type type;
-	unsigned int key;
-	unsigned int state;
-};
-
-struct kybrd_inode
-{
-	bool ready;
-	struct key_event packets[KYBRD_PACKET_QUEUE_LEN];  // only store 16 latest mouse motions
-	uint8_t head, tail;
-	struct list_head sibling;
-	struct vfs_file *file;
-};
 
 #define KEY_RESERVED 0
 #define KEY_ESC 1
@@ -299,6 +278,28 @@ struct kybrd_inode
 #define KEY_RFKILL 247 /* Key that controls all radios */
 
 #define KEY_MICMUTE 248 /* Mute / unmute the microphone */
+
+enum key_event_type
+{
+	KEY_PRRESS,
+	KEY_RELEASE,
+};
+
+struct key_event
+{
+	enum key_event_type type;
+	unsigned int key;
+	unsigned int state;
+};
+
+struct kybrd_inode
+{
+	bool ready;
+	struct key_event packets[KYBRD_PACKET_QUEUE_LEN];  // only store 16 latest mouse motions
+	uint8_t head, tail;
+	struct list_head sibling;
+	struct vfs_file *file;
+};
 
 void kkybrd_set_leds(bool num, bool caps, bool scroll);
 void kkybrd_install();

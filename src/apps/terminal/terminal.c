@@ -10,7 +10,7 @@
 struct terminal *iterm;
 int active_shell_pid;
 
-struct temrinal_tab *alloc_terminal_tab()
+struct terminal_tab *alloc_terminal_tab()
 {
 	struct terminal_line *line = calloc(1, sizeof(struct terminal_line));
 	struct terminal_tab *tab = calloc(1, sizeof(struct terminal_tab));
@@ -27,8 +27,8 @@ void init_terminal_tab_dev(struct terminal_tab *tab)
 	if (fdm < 0 || fds < 0)
 		return;
 
-	tab->pty[0] = fdm;
-	tab->pty[1] = fds;
+	tab->fd_ptm = fdm;
+	tab->fd_pts = fds;
 
 	int pid = fork();
 
@@ -53,10 +53,21 @@ void draw_terminal()
 {
 }
 
+void handle_x11_event(struct xevent *evt)
+{
+	if (evt->type == XKEY_EVENT)
+	{
+		struct xkey_event *kevt = (struct xkey_event *)evt->data;
+		unsigned char ascii = convert_keycode_to_ascii(kevt->key, kevt->state);
+
+		write(active_shell_pid, (const char *)&ascii, sizeof(ascii));
+	}
+}
+
 void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 {
 	bool has_event = false;
-	for (int i = 0; i < nfds; ++i)
+	for (unsigned int i = 0; i < nfds; ++i)
 	{
 		if (pfds[i].revents & POLLIN && pfds[i].fd == active_shell_pid)
 		{
@@ -75,9 +86,10 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 	for (int i = 0, length = strlen(input); i < length; ++i)
 	{
 		char ch = input[i];
-		if (ch == '\l')
+		if (ch == 'n')
 		{
 		}
+
 		draw_terminal();
 	}
 }
@@ -96,7 +108,7 @@ int main(void)
 	list_add_tail(&iterm->active_tab->sibling, &iterm->tabs);
 	init_terminal_tab_dev(tab);
 
-	active_shell_pid = iterm->active_tab->pty[1];
-	enter_event_loop(win, &active_shell_pid, 1, handle_slave_event);
+	active_shell_pid = iterm->active_tab->fd_pts;
+	enter_event_loop(win, handle_x11_event, &active_shell_pid, 1, handle_slave_event);
 	return 0;
 }

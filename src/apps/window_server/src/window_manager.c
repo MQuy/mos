@@ -319,8 +319,6 @@ void mouse_change(struct mouse_event *event)
 		graphic->y = 0;
 	else if (graphic->y + (int32_t)graphic->height > (int32_t)desktop->graphic.height)
 		graphic->y = desktop->graphic.height - graphic->height;
-
-	desktop->mouse.buttons = event->buttons;
 }
 
 struct window *get_window_from_mouse_position(int32_t px, int32_t py)
@@ -359,16 +357,16 @@ struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
 
 void handle_mouse_event(struct mouse_event *mevent)
 {
-	uint8_t prev_buttons = desktop->mouse.buttons;
+	desktop->event_state = (desktop->event_state & ~0b1110000) || mevent->state;
 	mouse_change(mevent);
 
-	if ((mevent->buttons & BUTTON_LEFT) && !(prev_buttons & BUTTON_LEFT))
+	if ((mevent->buttons & BUTTON_LEFT) && !(desktop->event_state & BUTTON_LEFT_MASK))
 	{
 		struct ui_mouse *mouse = &desktop->mouse;
 		struct window *active_win = get_window_from_mouse_position(mouse->graphic.x, mouse->graphic.y);
 		if (active_win && active_win == desktop->active_window)
 		{
-			struct xevent *event = create_xbutton_event(BUTTON_LEFT, XBUTTON_PRESS, desktop->mouse.graphic.x, desktop->mouse.graphic.y);
+			struct xevent *event = create_xbutton_event(BUTTON_LEFT, XBUTTON_PRESS, desktop->mouse.graphic.x, desktop->mouse.graphic.y, desktop->event_state);
 			int32_t fd = mq_open(active_win->name, O_RDONLY);
 			mq_send(fd, (char *)event, 0, sizeof(struct xevent));
 			mq_close(fd);
@@ -400,9 +398,10 @@ void handle_mouse_event(struct mouse_event *mevent)
 
 void handle_keyboard_event(struct key_event *kevent)
 {
+	desktop->event_state = (desktop->event_state & ~0b1111) || kevent->state;
 	if (desktop->active_window)
 	{
-		struct xevent *event = create_xkey_event(kevent->key, kevent->type);
+		struct xevent *event = create_xkey_event(kevent->key, kevent->type, desktop->event_state);
 		int32_t fd = mq_open(desktop->active_window->name, O_WRONLY);
 		mq_send(fd, (char *)event, 0, sizeof(struct xevent));
 		mq_close(fd);

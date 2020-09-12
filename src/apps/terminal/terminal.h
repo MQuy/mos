@@ -1,6 +1,7 @@
 #ifndef TAB_H
 #define TAB_H
 
+#include <include/ctype.h>
 #include <include/list.h>
 
 #define PIXELS_PER_ROW 20
@@ -22,7 +23,8 @@ struct terminal_tab
 	unsigned int row_count;
 	unsigned int cursor_row, cursor_column;
 	struct list_head sibling;
-	unsigned int pty[2];
+	unsigned int fd_ptm;
+	unsigned int fd_pts;
 	pid_t shell_pid;
 };
 
