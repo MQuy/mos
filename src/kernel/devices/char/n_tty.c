@@ -298,7 +298,7 @@ void ntty_receive_buf(struct tty_struct *tty, const char *cp, int count)
 				if (EOL_CHAR(tty) == ch || (ch == EOL2_CHAR(tty) && L_IEXTEN(tty)) || ch == '\n')
 				{
 					put_tty_queue(tty, ch);
-					if (L_ECHONL(tty))
+					if (L_ECHONL(tty) && ch == '\n')
 						opost_block(tty, &(const char){ch}, 1);
 					wake_up(&tty->read_wait);
 					continue;
