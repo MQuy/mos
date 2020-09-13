@@ -57,10 +57,12 @@ void handle_x11_event(struct xevent *evt)
 {
 	if (evt->type == XKEY_EVENT)
 	{
+		int nbuf;
+		unsigned char buf[100] = {0};
 		struct xkey_event *kevt = (struct xkey_event *)evt->data;
-		unsigned char ascii = convert_keycode_to_ascii(kevt->key, kevt->state);
+		convert_keycode_to_ascii(kevt->key, kevt->state, buf, &nbuf);
 
-		write(active_shell_pid, (const char *)&ascii, sizeof(ascii));
+		write(active_shell_pid, (const char *)buf, nbuf);
 	}
 }
 
@@ -86,7 +88,12 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 	for (int i = 0, length = strlen(input); i < length; ++i)
 	{
 		char ch = input[i];
-		if (ch == 'n')
+
+		if (ch == '\033')
+		{
+			// TODO: MQ 2020-09-13 handle ANSI escape sequences
+		}
+		else
 		{
 		}
 

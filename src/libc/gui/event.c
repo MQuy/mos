@@ -1,6 +1,7 @@
 #include "event.h"
 
 #include <libc/stdlib.h>
+#include <libc/string.h>
 
 struct xevent *create_xkey_event(uint32_t key, enum xevent_action action, unsigned int state)
 {
@@ -48,6 +49,7 @@ struct keycode_to_ascii
 	unsigned int keycode;
 	unsigned char ascii;
 };
+
 static struct keycode_to_ascii map0[] = {
 	{KEY_ESC, 0x1B},
 	{KEY_1, '1'},
@@ -76,7 +78,7 @@ static struct keycode_to_ascii map0[] = {
 	{KEY_P, 'p'},
 	{KEY_LEFTBRACE, '['},
 	{KEY_RIGHTBRACE, ']'},
-	{KEY_ENTER, '\r'},
+	{KEY_ENTER, '\n'},
 	{KEY_A, 'a'},
 	{KEY_S, 's'},
 	{KEY_D, 'd'},
@@ -224,23 +226,60 @@ static struct keycode_to_ascii map3[] = {
 	{KEY_COMMA, '¯'},
 };
 
-unsigned char find_ascii_from_table(struct keycode_to_ascii *map, int length, unsigned int keycode)
+int find_ascii_from_table(struct keycode_to_ascii *map, int length, unsigned int keycode, unsigned char *buf, int *nbuf)
 {
 	for (int i = 0; i < length; ++i)
 		if (map[i].keycode == keycode)
-			return map[i].ascii;
+		{
+			*buf = map[i].ascii;
+			*nbuf = 1;
+			return 0;
+		}
 
-	return 0;
+	return -1;
 }
 
-unsigned char convert_keycode_to_ascii(unsigned int keycode, unsigned int state)
+int convert_keycode_to_ascii(unsigned int keycode, unsigned int state, unsigned char *buf, int *nbuf)
 {
-	if (state & SHIFT_MASK && state & ALT_MASK)
-		return find_ascii_from_table(map3, sizeof(map3) / sizeof(struct keycode_to_ascii), keycode);
+	int ret = 0;
+	if (state & CONTROL_MASK && keycode >= 64 && keycode <= 96)
+	{
+		*buf = ((char)keycode - 64) & 0x7F;
+		*nbuf = 1;
+	}
+	else if (state & SHIFT_MASK && state & ALT_MASK)
+		ret = find_ascii_from_table(map3, sizeof(map3) / sizeof(struct keycode_to_ascii), keycode, buf, nbuf);
 	else if (state & ALT_MASK)
-		return find_ascii_from_table(map2, sizeof(map2) / sizeof(struct keycode_to_ascii), keycode);
+		find_ascii_from_table(map2, sizeof(map2) / sizeof(struct keycode_to_ascii), keycode, buf, nbuf);
 	else if (state & SHIFT_MASK)
-		return find_ascii_from_table(map1, sizeof(map1) / sizeof(struct keycode_to_ascii), keycode);
+		ret = find_ascii_from_table(map1, sizeof(map1) / sizeof(struct keycode_to_ascii), keycode, buf, nbuf);
 	else
-		return find_ascii_from_table(map0, sizeof(map0) / sizeof(struct keycode_to_ascii), keycode);
+	{
+		ret = find_ascii_from_table(map0, sizeof(map0) / sizeof(struct keycode_to_ascii), keycode, buf, nbuf);
+		if (ret == -1)
+		{
+			if (keycode == KEY_KP4)	 // left arrow
+			{
+				*nbuf = 4;
+				memcpy(buf, "\033[1D", *nbuf);
+			}
+			else if (keycode == KEY_KP6)  // right arrow
+			{
+				*nbuf = 4;
+				memcpy(buf, "\033[1C", *nbuf);
+			}
+			else if (keycode == KEY_KP8)  // up arrow
+			{
+				*nbuf = 4;
+				memcpy(buf, "\033[1A", *nbuf);
+			}
+			else if (keycode == KEY_KP2)  // down arrow
+			{
+				*nbuf = 4;
+				memcpy(buf, "\033[1B", *nbuf);
+			}
+		}
+	}
+
+	return ret;
 }
