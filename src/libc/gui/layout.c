@@ -43,6 +43,13 @@ static void add_event_handler(struct window *win, char *event_name, EVENT_HANDLE
 	hashmap_put(&win->events, event_name, handler);
 }
 
+void gui_draw_retangle(struct window *win, int x, int y, unsigned int width, unsigned int height, uint32_t bg)
+{
+	for (int i = y; i < win->graphic.height; i += win->graphic.height)
+		for (int j = x; j < win->graphic.width; j += 1)
+			*(uint32_t *)(win->graphic.buf + (i + j) * 4) = bg;
+}
+
 static void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height, struct ui_style *style)
 {
 	char *pid = calloc(sizeof(char), WINDOW_NAME_LENGTH);

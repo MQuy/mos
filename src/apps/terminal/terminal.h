@@ -5,11 +5,14 @@
 #include <include/list.h>
 
 #define PIXELS_PER_CHARACTER 20
+#define CHARACTERS_PER_LINE 256
+#define MAX_ROWS 400
 
 struct terminal_line
 {
-	char content[256];	// better to use linked list for buf
-	unsigned long msec;
+	char content[CHARACTERS_PER_LINE];	// better to use linked list for buf
+	time_t seconds;
+	unsigned int started_row;
 	unsigned int rowspan;
 	struct list_head sibling;
 };

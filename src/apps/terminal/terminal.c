@@ -50,7 +50,7 @@ void init_terminal_tab_dev(struct terminal_tab *tab)
 		close(fdm);
 		dup2(fds, 0);
 		dup2(fds, 1);
-		dup2(fds, 3);
+		dup2(fds, 2);
 
 		setsid();
 		execve("/bin/shell", NULL, NULL);
@@ -67,16 +67,16 @@ int pixels_per_character(unsigned char ch)
 	return (ch == '\t' ? 4 : 1) * PIXELS_PER_CHARACTER;
 }
 
-void recalculate_tab_line_and_row(struct terminal_tab *tab)
+void recalculate_tab(struct terminal_tab *tab)
 {
 	int lines = 0;
 	int rows = 0;
-
 	struct terminal_line *iter;
 	list_for_each_entry(iter, &tab->lines, sibling)
 	{
-		lines++;
+		iter->started_row = rows;
 		rows += iter->rowspan;
+		lines++;
 	}
 	tab->line_count = lines;
 	tab->row_count = rows;
@@ -92,27 +92,43 @@ int pixels_from_content(const char *content)
 	return columns;
 }
 
-int count_rows_in_line_range(struct terminal_line *from, struct terminal_line *to)
+int count_rows_in_line_range(struct terminal_line *from_line, int from_row, struct terminal_line *to_line, int to_row)
 {
-	int rows = to->rowspan;
-	struct terminal_line *iter = from;
-	list_for_each_entry_from(iter, &to->sibling, sibling)
+	return (to_line->started_row + to_row) - (from_line->started_row + from_row);
+}
+
+void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_line *to_line, int to_row)
+{
+	struct terminal_tab *tab = iterm->active_tab;
+	struct terminal_line *cursor_line = tab->cursor_line;
+	int cursor_row = 0;
+	int cursor_column = 0;
+	int ix = 0;
+	for (int i = 0, length = strlen(cursor_line->content); i < length && i < (int)tab->cursor_column; ++i)
 	{
-		rows += iter->rowspan;
+		if (ix + pixels_per_character(cursor_line->content[i]) >= cursor_row * iterm->width)
+		{
+			cursor_row++;
+			cursor_column = 0;
+		}
+		ix += pixels_per_character(cursor_line->content[i]);
+		cursor_column++;
 	}
-	return rows;
+
+	if (from_line->started_row + from_row >= cursor_line->started_row + cursor_row &&
+		cursor_line->started_row + cursor_row <= to_line->started_row + to_row)
+	{
+		int relative_row = cursor_line->started_row + cursor_row - (from_line->started_row + from_row);
+		gui_draw_retangle(win, relative_row, cursor_column, PIXELS_PER_CHARACTER, PIXELS_PER_CHARACTER, 0xAAAAAA);
+	}
 }
 
-void draw_cursor()
-{
-}
-
-void draw_terminal_line(struct terminal_line *line, int from_rowspan, int to_rowspan, int prow)
+void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, int prow)
 {
 	for (int i = 0, ix = 0, length = strlen(line->content); i < length; ++i)
 	{
-		if (ix + pixels_per_character(line->content[i]) >= from_rowspan * iterm->width &&
-			ix + pixels_per_character(line->content[i]) <= (to_rowspan + 1) * iterm->width)
+		if (ix + pixels_per_character(line->content[i]) >= from_row * iterm->width &&
+			ix + pixels_per_character(line->content[i]) <= (to_row + 1) * iterm->width)
 		{
 			int jx = 0;
 			while (i < length)
@@ -137,64 +153,59 @@ void draw_terminal_line(struct terminal_line *line, int from_rowspan, int to_row
 void draw_terminal()
 {
 	struct terminal_tab *tab = iterm->active_tab;
-	struct terminal_line *from_line, *to_line;
 	struct terminal_line *last_line = list_last_entry(&tab->lines, struct terminal_line, sibling);
-	int from_rowspan, to_rowspan;
-	int rows = count_rows_in_line_range(tab->scroll_line, last_line);
+	struct terminal_line *from_line, *to_line;
+	int from_row, to_row;
+	int rows = count_rows_in_line_range(tab->scroll_line, 0, last_line, last_line->rowspan - 1);
 	if (rows <= 20)
 	{
 		int count = 0;
-		from_rowspan = 0;
+		from_row = 0;
 		list_for_each_entry_reverse(from_line, &tab->lines, sibling)
 		{
 			count += from_line->rowspan;
 			if (count >= 20)
 			{
-				from_rowspan = from_line->rowspan - (count - 20);
+				from_row = from_line->rowspan - (count - 20);
 				break;
 			}
 		}
 		to_line = last_line;
-		to_rowspan = last_line->rowspan;
+		to_row = last_line->rowspan - 1;
 	}
 	else
 	{
 		to_line = from_line = tab->scroll_line;
-		from_rowspan = 0;
-		to_rowspan = to_line->rowspan;
+		from_row = 0;
+		to_row = to_line->rowspan - 1;
 		int count = 0;
 		list_for_each_entry_from(to_line, &tab->lines, sibling)
 		{
 			count += to_line->rowspan;
 			if (count >= 20)
 			{
-				to_rowspan = to_line->rowspan - (count - 20);
+				to_row = to_line->rowspan - (count - 20);
 				break;
 			}
 		}
 	}
 
-	struct terminal_line *iter_line;
+	struct terminal_line *iter_line = from_line;
 	int irow = 0;
 	list_for_each_entry_from(iter_line, to_line->sibling.next, sibling)
 	{
+		int ifrom = 0;
+		int ito = to_line->rowspan - 1;
+
 		if (iter_line == from_line)
-		{
-			draw_terminal_line(iter_line, from_rowspan, iter_line->rowspan - 1, irow);
-			irow += iter_line->rowspan - from_rowspan;
-		}
-		else if (iter_line == to_line)
-		{
-			draw_terminal_line(iter_line, 0, to_rowspan, irow);
-			irow += to_rowspan + 1;
-		}
-		else
-		{
-			draw_terminal_line(iter_line, 0, iter_line->rowspan - 1, irow);
-			irow += iter_line->rowspan;
-		}
+			ifrom = from_row;
+		if (iter_line == to_line)
+			ito = to_row;
+		draw_terminal_line(iter_line, ifrom, ito, irow);
+		irow += ito - ifrom + 1;
 	}
-	draw_cursor();
+
+	draw_cursor(from_line, from_row, to_line, to_row);
 }
 
 void handle_x11_event(struct xevent *evt)
@@ -229,6 +240,7 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 	if (ret < 0)
 		return;
 
+	struct terminal_tab *tab = iterm->active_tab;
 	for (int i = 0, length = strlen(input); i < length; ++i)
 	{
 		char ch = input[i];
@@ -237,39 +249,52 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 		{
 			// TODO: MQ 2020-09-13 handle ANSI escape sequences
 		}
+		else if (ch == '\21')
+		{
+			// if ch is Device Control 1 and cursor line content is empty -> record timestamp
+			if (strlen(tab->cursor_line->content) == 0)
+				tab->cursor_line->seconds = time(NULL);
+		}
 		else if (ch == '\n')
 		{
-			struct terminal_tab *tab = iterm->active_tab;
+			struct terminal_line *first_line = list_first_entry(&tab->lines, struct terminal_line, sibling);
+			struct terminal_line *last_line = list_last_entry(&tab->lines, struct terminal_line, sibling);
+
+			if (last_line && last_line->seconds)
+				last_line->seconds = time(NULL);
+
 			struct terminal_line *line = alloc_terminal_line();
 			list_add_tail(&tab->lines, &line->sibling);
 
 			if (tab->row_count == iterm->max_rows)
 			{
-				struct terminal_line *first_line = list_first_entry(&tab->lines, struct terminal_line, sibling);
 				list_del(&first_line->sibling);
 				free(first_line);
-				recalculate_tab_line_and_row(tab);
+				recalculate_tab(tab);
 			}
 			else
 			{
+				line->started_row = last_line ? last_line->started_row + last_line->rowspan : 0;
 				tab->line_count++;
 				tab->row_count++;
 			}
 
-			int nrows = count_rows_in_line_range(tab->scroll_line, line);
-			if (nrows <= iterm->height / PIXELS_PER_CHARACTER)
-				tab->scroll_line = line;
+			if (tab->scroll_line == last_line)
+				tab->scroll_line == line;
 		}
 		// printable characters
 		else
 		{
-			struct terminal_tab *tab = iterm->active_tab;
-			struct terminal_line *line = tab->cursor_line;
-			line->content[tab->cursor_column++] = ch;
+			struct terminal_line *cursor_line = tab->cursor_line;
 
-			int pixels = pixels_from_content(line->content);
-			line->rowspan = div_ceil(pixels, iterm->width);
-			recalculate_tab_line_and_row(tab);
+			if (tab->cursor_column > CHARACTERS_PER_LINE)
+				continue;
+
+			cursor_line->content[tab->cursor_column++] = ch;
+
+			int pixels = pixels_from_content(cursor_line->content);
+			cursor_line->rowspan = div_ceil(pixels, iterm->width);
+			recalculate_tab(tab);
 		}
 
 		draw_terminal();
@@ -285,7 +310,7 @@ int main(void)
 	iterm->width = win->graphic.width;
 	iterm->height = win->graphic.height;
 	iterm->active_tab = tab;
-	iterm->max_rows = iterm->height / PIXELS_PER_CHARACTER;
+	iterm->max_rows = MAX_ROWS;
 	INIT_LIST_HEAD(&iterm->tabs);
 	list_add_tail(&iterm->active_tab->sibling, &iterm->tabs);
 	init_terminal_tab_dev(tab);

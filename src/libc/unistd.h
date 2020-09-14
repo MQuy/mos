@@ -16,6 +16,7 @@
 #define __NR_open 5
 #define __NR_close 6
 #define __NR_execve 11
+#define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_getpid 20
@@ -173,6 +174,12 @@ _syscall3(execve, const char *, char *const *, char *const *);
 static inline int32_t execve(const char *pathname, char *const argv[], char *const envp[])
 {
 	return syscall_execve(pathname, argv, envp);
+}
+
+_syscall1(time, time_t *);
+static inline time_t time(time_t *tloc)
+{
+	return syscall_time(tloc);
 }
 
 _syscall2(dup2, int, int);

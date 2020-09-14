@@ -13,6 +13,7 @@
 #include <kernel/net/net.h>
 #include <kernel/proc/elf.h>
 #include <kernel/proc/task.h>
+#include <kernel/system/time.h>
 #include <kernel/utils/printf.h>
 #include <kernel/utils/string.h>
 
@@ -62,6 +63,14 @@ static int32_t sys_stat(const char *path, struct kstat *stat)
 static int32_t sys_close(uint32_t fd)
 {
 	return vfs_close(fd);
+}
+
+static int32_t sys_time(time_t *tloc)
+{
+	time_t t = get_seconds(NULL);
+	if (tloc)
+		*tloc = t;
+	return t;
 }
 
 static int32_t sys_pipe(int32_t *fd)
@@ -273,6 +282,7 @@ static int32_t sys_getptsname(int32_t fdm, char *buf)
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_getpid 20
@@ -324,6 +334,7 @@ static void *syscalls[] = {
 	[__NR_stat] = sys_stat,
 	[__NR_fstat] = sys_fstat,
 	[__NR_close] = sys_close,
+	[__NR_time] = sys_time,
 	[__NR_brk] = sys_brk,
 	[__NR_sbrk] = sys_sbrk,
 	[__NR_kill] = sys_kill,
