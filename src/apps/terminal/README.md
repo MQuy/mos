@@ -728,7 +728,7 @@ struct shell {
 }
 
 main() {
-  1. create `/shm/shell`, is assigned to initialized `shell`
+  1. create `/dev/shm/shell`, is assigned to initialized `shell`
   2. output `cwd` (like `➜  ~`)
   3. for each line reading from input (0-fd)
   4. parse to get command and args // proper bash grammar later https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_10
