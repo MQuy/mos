@@ -29,6 +29,8 @@ int32_t striof(const char *s1, const char *s2);
 int32_t strliof(const char *s1, const char *s2);
 int32_t strlsplat(const char *s1, uint32_t pos, char **sf, char **sl);
 
+int count_array_of_pointers(void *arr);
+
 static __inline void *memcpy(void *restrict dest, const void *restrict src, size_t n)
 {
 	if (n > 0)

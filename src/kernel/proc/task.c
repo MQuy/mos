@@ -8,6 +8,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/proc/elf.h>
+#include <kernel/system/sysapi.h>
 #include <kernel/system/time.h>
 #include <kernel/utils/hashmap.h>
 #include <kernel/utils/printf.h>
@@ -331,4 +332,63 @@ struct process *process_fork(struct process *parent)
 	unlock_scheduler();
 
 	return proc;
+}
+
+int32_t process_execve(const char *pathname, char *const argv[], char *const envp[])
+{
+	int argv_length = count_array_of_pointers(argv);
+	char **kernel_argv = kcalloc(argv_length, sizeof(char *));
+	for (int i = 0; i < argv_length; ++i)
+	{
+		int ilength = strlen(argv[i]);
+		kernel_argv[i] = kcalloc(ilength + 1, sizeof(char));
+		memcpy(kernel_argv[i], argv[i], ilength);
+	}
+
+	int envp_length = count_array_of_pointers(envp);
+	char **kernel_envp = kcalloc(envp_length, sizeof(char *));
+	for (int i = 0; i < envp_length; ++i)
+	{
+		int ilength = strlen(envp[i]);
+		kernel_envp[i] = kcalloc(ilength + 1, sizeof(char));
+		memcpy(kernel_envp[i], envp[i], ilength);
+	}
+
+	elf_unload();
+
+	char *buf = vfs_read(pathname);
+	struct Elf32_Layout *elf_layout = elf_load(buf);
+
+	// copy argv back to userspace
+	char **user_argv = (char **)sys_sbrk(argv_length + 1);
+	memset(user_argv, 0, argv_length + 1);
+	for (int i = 0; i < argv_length; ++i)
+	{
+		int ilength = strlen(kernel_argv[i]);
+		user_argv[i] = kcalloc(ilength + 1, sizeof(char));
+		memcpy(user_argv[i], kernel_argv[i], ilength);
+	}
+
+	// copy envp back to userspace
+	char **user_envp = (char **)sys_sbrk(envp_length + 1);
+	memset(user_envp, 0, envp_length + 1);
+	for (int i = 0; i < envp_length; ++i)
+	{
+		int ilength = strlen(kernel_envp[i]);
+		user_envp[i] = kcalloc(ilength + 1, sizeof(char));
+		memcpy(user_envp[i], kernel_envp[i], ilength);
+	}
+
+	// setup argv, envp in userstack
+	current_thread->user_stack = elf_layout->stack;
+	elf_layout->stack -= 4;
+	*(uint32_t *)elf_layout->stack = (uint32_t)user_envp;
+	elf_layout->stack -= 4;
+	*(uint32_t *)elf_layout->stack = (uint32_t)user_argv;
+	elf_layout->stack -= 4;
+	*(uint32_t *)elf_layout->stack = argv_length;
+
+	tss_set_stack(0x10, current_thread->kernel_stack);
+	enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
+	return 0;
 }

@@ -160,6 +160,7 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 struct process *create_kernel_process(const char *pname, void *func, int32_t priority);
 void process_load(const char *pname, const char *path, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
 struct process *process_fork(struct process *parent);
+int32_t process_execve(const char *pathname, char *const argv[], char *const envp[]);
 void thread_sleep(uint32_t ms);
 struct process *find_process_by_pid(pid_t pid);
 

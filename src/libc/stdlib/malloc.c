@@ -65,8 +65,8 @@ void *get_heap(uint32_t size)
 		remaining_from_last_used -= size;
 	else
 	{
-		uint32_t new_brk = sbrk(size);
-		remaining_from_last_used = new_brk - (heap_current + size);
+		sbrk(size);
+		remaining_from_last_used = sbrk(0) - (heap_current + size);
 	}
 
 	heap_current += size;

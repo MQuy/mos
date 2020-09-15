@@ -167,5 +167,6 @@ struct Elf32_Layout
 };
 
 struct Elf32_Layout *elf_load(char *);
+void elf_unload();
 
 #endif

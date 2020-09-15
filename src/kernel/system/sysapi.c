@@ -73,6 +73,17 @@ static int32_t sys_time(time_t *tloc)
 	return t;
 }
 
+static int32_t sys_execve(const char *pathname, char *const argv[], char *const envp[])
+{
+	return process_execve(pathname, argv, envp);
+}
+
+static int32_t sys_dup2(int oldfd, int newfd)
+{
+	current_process->files->fd[newfd] = current_process->files->fd[oldfd];
+	return newfd;
+}
+
 static int32_t sys_pipe(int32_t *fd)
 {
 	return do_pipe(fd);
@@ -101,12 +112,14 @@ static int32_t sys_brk(uint32_t brk)
 		return -EINVAL;
 
 	do_brk(current_mm->start_brk, brk - current_mm->start_brk);
-	return brk;
+	return 0;
 }
 
-static int32_t sys_sbrk(intptr_t increment)
+int32_t sys_sbrk(intptr_t increment)
 {
-	return sys_brk(current_process->mm->brk + increment);
+	uint32_t brk = current_process->mm->brk;
+	sys_brk(current_process->mm->brk + increment);
+	return brk;
 }
 
 static int32_t sys_getpid()
@@ -282,6 +295,7 @@ static int32_t sys_getptsname(int32_t fdm, char *buf)
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_execve 11
 #define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
@@ -293,6 +307,7 @@ static int32_t sys_getptsname(int32_t fdm, char *buf)
 #define __NR_posix_spawn 49
 #define __NR_ioctl 54
 #define __NR_setpgid 57
+#define __NR_dup2 63
 #define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
@@ -334,6 +349,8 @@ static void *syscalls[] = {
 	[__NR_stat] = sys_stat,
 	[__NR_fstat] = sys_fstat,
 	[__NR_close] = sys_close,
+	[__NR_execve] = sys_execve,
+	[__NR_dup2] = sys_dup2,
 	[__NR_time] = sys_time,
 	[__NR_brk] = sys_brk,
 	[__NR_sbrk] = sys_sbrk,
