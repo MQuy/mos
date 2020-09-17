@@ -20,6 +20,7 @@ struct psf_t
 };
 
 void psf_init(char *buff, size_t size);
+struct psf_t *get_current_font();
 void psf_putchar(
 	uint32_t c,
 	uint32_t cx, uint32_t cy,

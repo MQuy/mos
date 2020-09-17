@@ -19,6 +19,18 @@ void init_fonts()
 	psf_init(buf, stat->size);
 }
 
+int get_character_width(char ch)
+{
+	struct psf_t *font = get_current_font();
+	return (ch == '\t' ? 4 : 1) * font->width;
+}
+
+int get_character_height(char ch)
+{
+	struct psf_t *font = get_current_font();
+	return font->height;
+}
+
 static struct window *find_child_element_from_position(struct window *win, int32_t px, int32_t py, int32_t mx, int32_t my)
 {
 	struct window *iter_win;

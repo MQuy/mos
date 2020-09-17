@@ -4,9 +4,6 @@
 #include <include/ctype.h>
 #include <include/list.h>
 
-// TODO: MQ 2020-09-17 Using width and height from psf
-#define WIDTH_PIXELS_PER_CHARACTER 8
-#define HEIGHT_PIXELS_PER_CHARACTER 16
 #define CHARACTERS_PER_LINE 256
 #define MAX_ROWS 400
 

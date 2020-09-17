@@ -62,11 +62,6 @@ void init_terminal_tab_dev(struct terminal_tab *tab)
 	}
 }
 
-int pixels_per_character(unsigned char ch)
-{
-	return (ch == '\t' ? 4 : 1) * WIDTH_PIXELS_PER_CHARACTER;
-}
-
 void recalculate_tab(struct terminal_tab *tab)
 {
 	int lines = 0;
@@ -87,7 +82,7 @@ int pixels_from_content(const char *content)
 	int columns = 0;
 	for (char *ch = content; *ch; ch++)
 	{
-		columns += pixels_per_character(*ch);
+		columns += get_character_width(*ch);
 	}
 	return columns;
 }
@@ -106,20 +101,20 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 	int ix = 0;
 	for (int i = 0, length = strlen(cursor_line->content); i < length && i < (int)tab->cursor_column; ++i)
 	{
-		if (ix + pixels_per_character(cursor_line->content[i]) >= (cursor_row + 1) * iterm->width)
+		if (ix + get_character_width(cursor_line->content[i]) >= (cursor_row + 1) * iterm->width)
 		{
 			cursor_row++;
 			cursor_x = 0;
 		}
-		ix += pixels_per_character(cursor_line->content[i]);
-		cursor_x += pixels_per_character(cursor_line->content[i]);
+		ix += get_character_width(cursor_line->content[i]);
+		cursor_x += get_character_width(cursor_line->content[i]);
 	}
 
 	if (from_line->started_row + from_row >= cursor_line->started_row + cursor_row &&
 		cursor_line->started_row + cursor_row <= to_line->started_row + to_row)
 	{
 		int relative_row = cursor_line->started_row + cursor_row - (from_line->started_row + from_row);
-		gui_draw_retangle(win, cursor_x, relative_row * HEIGHT_PIXELS_PER_CHARACTER, WIDTH_PIXELS_PER_CHARACTER, HEIGHT_PIXELS_PER_CHARACTER, 0xd0d0d0ff);
+		gui_draw_retangle(win, cursor_x, relative_row * get_character_height(0), get_character_width(0), get_character_height(0), 0xd0d0d0ff);
 	}
 }
 
@@ -127,26 +122,26 @@ void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, in
 {
 	for (int i = 0, ix = 0, length = strlen(line->content); i < length; ++i)
 	{
-		if (ix + pixels_per_character(line->content[i]) >= from_row * iterm->width &&
-			ix + pixels_per_character(line->content[i]) <= (to_row + 1) * iterm->width)
+		if (ix + get_character_width(line->content[i]) >= from_row * iterm->width &&
+			ix + get_character_width(line->content[i]) <= (to_row + 1) * iterm->width)
 		{
 			int jx = 0;
 			while (i < length)
 			{
 				char ch = line->content[i];
-				if (jx + pixels_per_character(ch) >= iterm->width)
+				if (jx + get_character_width(ch) >= iterm->width)
 					break;
 				psf_putchar(ch,
-							jx, prow * WIDTH_PIXELS_PER_CHARACTER,
+							jx, prow * get_character_width(0),
 							0xffffffff, 0,
 							win->graphic.buf, win->graphic.width * 4);
-				jx += pixels_per_character(ch);
+				jx += get_character_width(ch);
 				i++;
 			}
 			ix = div_ceil(ix + iterm->width, iterm->width) * iterm->width;
 			continue;
 		}
-		ix += pixels_per_character(line->content[i]);
+		ix += get_character_width(line->content[i]);
 	}
 }
 

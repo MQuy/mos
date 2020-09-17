@@ -8,6 +8,11 @@
 static uint16_t *unicode;
 static char *psf_start;
 
+struct psf_t *get_current_font()
+{
+	return (struct psf_t *)psf_start;
+}
+
 void psf_init(char *buff, size_t size)
 {
 	psf_start = buff;
