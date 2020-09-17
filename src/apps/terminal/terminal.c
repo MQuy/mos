@@ -106,11 +106,12 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 			cursor_row++;
 			cursor_x = 0;
 		}
+		else
+			cursor_x += get_character_width(cursor_line->content[i]);
 		ix += get_character_width(cursor_line->content[i]);
-		cursor_x += get_character_width(cursor_line->content[i]);
 	}
 
-	if (from_line->started_row + from_row >= cursor_line->started_row + cursor_row &&
+	if (from_line->started_row + from_row <= cursor_line->started_row + cursor_row &&
 		cursor_line->started_row + cursor_row <= to_line->started_row + to_row)
 	{
 		int relative_row = cursor_line->started_row + cursor_row - (from_line->started_row + from_row);
@@ -120,7 +121,8 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 
 void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, int prow)
 {
-	for (int i = 0, ix = 0, length = strlen(line->content); i < length; ++i)
+	int py = prow * get_character_height(0);
+	for (int i = 0, ix = 0, length = strlen(line->content); i < length;)
 	{
 		if (ix + get_character_width(line->content[i]) >= from_row * iterm->width &&
 			ix + get_character_width(line->content[i]) <= (to_row + 1) * iterm->width)
@@ -129,19 +131,24 @@ void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, in
 			while (i < length)
 			{
 				char ch = line->content[i];
-				if (jx + get_character_width(ch) >= iterm->width)
+				if (jx + get_character_width(ch) > iterm->width)
 					break;
 				psf_putchar(ch,
-							jx, prow * get_character_width(0),
+							jx, py,
 							0xffffffff, 0,
 							win->graphic.buf, win->graphic.width * 4);
 				jx += get_character_width(ch);
 				i++;
 			}
 			ix = div_ceil(ix + iterm->width, iterm->width) * iterm->width;
+			py += get_character_height(0);
 			continue;
 		}
-		ix += get_character_width(line->content[i]);
+		else
+		{
+			ix += get_character_width(line->content[i]);
+			i++;
+		}
 	}
 }
 

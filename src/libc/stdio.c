@@ -1,5 +1,7 @@
 #include "stdio.h"
 
+#include <libc/string.h>
+
 size_t vsprintf(char *buffer, const char *fmt, va_list args)
 {
 	if (!fmt)
