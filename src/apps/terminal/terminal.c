@@ -11,7 +11,7 @@
 
 struct terminal *iterm;
 struct window *win;
-int active_shell_pid;
+int active_ptm;
 
 struct terminal_line *alloc_terminal_line()
 {
@@ -211,12 +211,15 @@ void handle_x11_event(struct xevent *evt)
 {
 	if (evt->type == XKEY_EVENT)
 	{
-		int nbuf;
-		unsigned char buf[100] = {0};
 		struct xkey_event *kevt = (struct xkey_event *)evt->data;
-		convert_keycode_to_ascii(kevt->key, kevt->state, buf, &nbuf);
+		if (kevt->action == XKEY_RELEASE)
+		{
+			int nbuf;
+			unsigned char buf[100] = {0};
+			convert_keycode_to_ascii(kevt->key, kevt->state, buf, &nbuf);
 
-		write(active_shell_pid, (const char *)buf, nbuf);
+			write(active_ptm, (const char *)buf, nbuf);
+		}
 	}
 }
 
@@ -225,7 +228,7 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 	bool has_event = false;
 	for (unsigned int i = 0; i < nfds; ++i)
 	{
-		if (pfds[i].revents & POLLIN && pfds[i].fd == active_shell_pid)
+		if (pfds[i].revents & POLLIN && pfds[i].fd == active_ptm)
 		{
 			has_event = true;
 			break;
@@ -235,7 +238,7 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 		return;
 
 	char input[4096] = {0};
-	int ret = read(active_shell_pid, input, sizeof(input));
+	int ret = read(active_ptm, input, sizeof(input));
 	if (ret < 0)
 		return;
 
@@ -315,7 +318,7 @@ int main(void)
 	list_add_tail(&iterm->active_tab->sibling, &iterm->tabs);
 	init_terminal_tab_dev(tab);
 
-	active_shell_pid = iterm->active_tab->fd_ptm;
-	enter_event_loop(win, handle_x11_event, &active_shell_pid, 1, handle_slave_event);
+	active_ptm = iterm->active_tab->fd_ptm;
+	enter_event_loop(win, handle_x11_event, &active_ptm, 1, handle_slave_event);
 	return 0;
 }

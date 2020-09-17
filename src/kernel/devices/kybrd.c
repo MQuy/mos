@@ -387,7 +387,7 @@ static ssize_t kybrd_read(struct vfs_file *file, char *buf, size_t count, loff_t
 	struct kybrd_inode *mi = (struct kybrd_inode *)file->private_data;
 	wait_event(&hwait, mi->ready);
 
-	memcpy(buf, &mi->packets[mi->head], sizeof(int32_t));
+	memcpy(buf, &mi->packets[mi->head], sizeof(struct key_event));
 
 	if (mi->tail != mi->head)
 		mi->head = (mi->head + 1) % MOUSE_PACKET_QUEUE_LEN;
