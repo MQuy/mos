@@ -289,6 +289,16 @@ static int32_t sys_getptsname(int32_t fdm, char *buf)
 	return 0;
 }
 
+static int32_t sys_debug_printf(enum debug_level level, const char *out)
+{
+	return debug_printf(level, out);
+}
+
+static int32_t sys_debug_println(enum debug_level level, const char *out)
+{
+	return debug_println(level, out);
+}
+
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -339,6 +349,8 @@ static int32_t sys_getptsname(int32_t fdm, char *buf)
 #define __NR_waitid 284
 #define __NR_sendto 369
 #define __NR_getptsname 370
+#define __NR_debug_printf 512
+#define __NR_debug_println 513
 
 static void *syscalls[] = {
 	[__NR_exit] = sys_exit,
@@ -384,6 +396,8 @@ static void *syscalls[] = {
 	[__NR_mq_receive] = sys_mq_receive,
 	[__NR_waitid] = sys_waitid,
 	[__NR_getptsname] = sys_getptsname,
+	[__NR_debug_printf] = sys_debug_printf,
+	[__NR_debug_println] = sys_debug_println,
 };
 
 static int32_t syscall_dispatcher(struct interrupt_registers *regs)
