@@ -2,7 +2,7 @@
 #include <libc/unistd.h>
 #include <stdbool.h>
 
-#define PREFIX_LINE "> "
+#define PREFIX_LINE "$ "
 #define CHARACTERS_PER_LINE 256
 
 struct shell

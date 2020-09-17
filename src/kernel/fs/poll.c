@@ -58,7 +58,10 @@ int do_poll(struct pollfd *fds, uint32_t nfds)
 		}
 
 		if (nr > 0)
+		{
+			poll_table_free(pt);
 			break;
+		}
 
 		update_thread(current_thread, THREAD_WAITING);
 		schedule();

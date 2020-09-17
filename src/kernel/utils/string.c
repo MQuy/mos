@@ -312,6 +312,9 @@ int32_t strlsplat(const char *s1, uint32_t pos, char **sf, char **sl)
 
 int count_array_of_pointers(void *arr)
 {
+	if (!arr)
+		return 0;
+
 	const int32_t *a = arr;
 	for (; *a; a++)
 		;

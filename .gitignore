@@ -11,6 +11,7 @@
 # ignored apps
 src/apps/window_server/window_server
 src/apps/terminal/terminal
+src/apps/shell/shell
 src/apps/calculator/calculator
 src/isodir
 src/logs

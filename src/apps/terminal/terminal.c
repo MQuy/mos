@@ -64,7 +64,7 @@ void init_terminal_tab_dev(struct terminal_tab *tab)
 
 int pixels_per_character(unsigned char ch)
 {
-	return (ch == '\t' ? 4 : 1) * PIXELS_PER_CHARACTER;
+	return (ch == '\t' ? 4 : 1) * WIDTH_PIXELS_PER_CHARACTER;
 }
 
 void recalculate_tab(struct terminal_tab *tab)
@@ -102,24 +102,24 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 	struct terminal_tab *tab = iterm->active_tab;
 	struct terminal_line *cursor_line = tab->cursor_line;
 	int cursor_row = 0;
-	int cursor_column = 0;
+	int cursor_x = 0;
 	int ix = 0;
 	for (int i = 0, length = strlen(cursor_line->content); i < length && i < (int)tab->cursor_column; ++i)
 	{
-		if (ix + pixels_per_character(cursor_line->content[i]) >= cursor_row * iterm->width)
+		if (ix + pixels_per_character(cursor_line->content[i]) >= (cursor_row + 1) * iterm->width)
 		{
 			cursor_row++;
-			cursor_column = 0;
+			cursor_x = 0;
 		}
 		ix += pixels_per_character(cursor_line->content[i]);
-		cursor_column++;
+		cursor_x += pixels_per_character(cursor_line->content[i]);
 	}
 
 	if (from_line->started_row + from_row >= cursor_line->started_row + cursor_row &&
 		cursor_line->started_row + cursor_row <= to_line->started_row + to_row)
 	{
 		int relative_row = cursor_line->started_row + cursor_row - (from_line->started_row + from_row);
-		gui_draw_retangle(win, relative_row, cursor_column, PIXELS_PER_CHARACTER, PIXELS_PER_CHARACTER, 0xAAAAAA);
+		gui_draw_retangle(win, cursor_x, relative_row * HEIGHT_PIXELS_PER_CHARACTER, WIDTH_PIXELS_PER_CHARACTER, HEIGHT_PIXELS_PER_CHARACTER, 0xd0d0d0ff);
 	}
 }
 
@@ -137,8 +137,8 @@ void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, in
 				if (jx + pixels_per_character(ch) >= iterm->width)
 					break;
 				psf_putchar(ch,
-							jx, prow * PIXELS_PER_CHARACTER,
-							0xffffff, 0,
+							jx, prow * WIDTH_PIXELS_PER_CHARACTER,
+							0xffffffff, 0,
 							win->graphic.buf, win->graphic.width * 4);
 				jx += pixels_per_character(ch);
 				i++;
@@ -161,8 +161,10 @@ void draw_terminal()
 	{
 		int count = 0;
 		from_row = 0;
-		list_for_each_entry_reverse(from_line, &tab->lines, sibling)
+		struct terminal_line *iter;
+		list_for_each_entry_reverse(iter, &tab->lines, sibling)
 		{
+			from_line = iter;
 			count += from_line->rowspan;
 			if (count >= 20)
 			{
@@ -179,8 +181,10 @@ void draw_terminal()
 		from_row = 0;
 		to_row = to_line->rowspan - 1;
 		int count = 0;
-		list_for_each_entry_from(to_line, &tab->lines, sibling)
+		struct terminal_line *iter = to_line;
+		list_for_each_entry_from(iter, &tab->lines, sibling)
 		{
+			to_line = iter;
 			count += to_line->rowspan;
 			if (count >= 20)
 			{
@@ -296,9 +300,10 @@ void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
 			cursor_line->rowspan = div_ceil(pixels, iterm->width);
 			recalculate_tab(tab);
 		}
-
-		draw_terminal();
 	}
+
+	draw_terminal();
+	gui_render(win);
 }
 
 int main(void)
@@ -315,7 +320,7 @@ int main(void)
 	list_add_tail(&iterm->active_tab->sibling, &iterm->tabs);
 	init_terminal_tab_dev(tab);
 
-	active_shell_pid = iterm->active_tab->fd_pts;
+	active_shell_pid = iterm->active_tab->fd_ptm;
 	enter_event_loop(win, handle_x11_event, &active_shell_pid, 1, handle_slave_event);
 	return 0;
 }

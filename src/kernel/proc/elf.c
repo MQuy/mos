@@ -58,6 +58,7 @@ static int elf_verify(struct Elf32_Ehdr *elf_header)
 * 	| .text section |
 * 	+---------------+
 */
+
 struct Elf32_Layout *elf_load(char *buf)
 {
 	struct Elf32_Ehdr *elf_header = (struct Elf32_Ehdr *)buf;
@@ -115,10 +116,15 @@ void elf_unload()
 	sigemptyset(&current_process->thread->pending);
 
 	// mm regions
-	struct vm_area_struct *iter;
-	list_for_each_entry(iter, &current_process->mm->mmap, vm_sibling)
+	struct vm_area_struct *iter, *next;
+	list_for_each_entry_safe(iter, next, &current_process->mm->mmap, vm_sibling)
 	{
 		if (!iter->vm_file && (iter->vm_flags & MAP_SHARED) == 0)
+		{
 			vmm_unmap_range(current_process->pdir, iter->vm_start, iter->vm_end);
+			list_del(&iter->vm_sibling);
+		}
 	}
+	memset(current_process->mm, 0, sizeof(struct mm_struct));
+	INIT_LIST_HEAD(&current_process->mm->mmap);
 }

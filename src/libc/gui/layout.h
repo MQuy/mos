@@ -83,6 +83,7 @@ struct ui_input
 void gui_draw_retangle(struct window *win, int x, int y, unsigned int width, unsigned int height, uint32_t bg);
 void gui_create_label(struct window *parent, struct ui_label *label, int32_t x, int32_t y, uint32_t width, uint32_t height, char *text, struct ui_style *padding);
 void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, int32_t y, uint32_t width, uint32_t height, char *content);
+void gui_render(struct window *win);
 struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height);
 void init_fonts();
 void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *evt), int *fds, unsigned int nfds, void (*fds_callback)(struct pollfd *, unsigned int));

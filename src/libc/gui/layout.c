@@ -45,9 +45,11 @@ static void add_event_handler(struct window *win, char *event_name, EVENT_HANDLE
 
 void gui_draw_retangle(struct window *win, int x, int y, unsigned int width, unsigned int height, uint32_t bg)
 {
-	for (int i = y; i < win->graphic.height; i += win->graphic.height)
-		for (int j = x; j < win->graphic.width; j += 1)
-			*(uint32_t *)(win->graphic.buf + (i + j) * 4) = bg;
+	int py = min_t(int, y + height, win->graphic.height);
+	int px = min_t(int, x + width, win->graphic.width);
+	for (int i = y; i < py; i += 1)
+		for (int j = x; j < px; j += 1)
+			*(uint32_t *)(win->graphic.buf + (i * win->graphic.width + j) * 4) = bg;
 }
 
 static void gui_create_window(struct window *parent, struct window *win, int32_t x, int32_t y, uint32_t width, uint32_t height, struct ui_style *style)
@@ -113,6 +115,19 @@ void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, 
 	gui_create_window(parent, &input->window, x, y, width, height, NULL);
 }
 
+void gui_render(struct window *win)
+{
+	struct msgui *msgui = calloc(1, sizeof(struct msgui));
+	msgui->type = MSGUI_FOCUS;
+	struct msgui_focus *msgfocus = (struct msgui_focus *)msgui->data;
+	memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
+
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
+	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
+	mq_close(sfd);
+	free(msgui);
+}
+
 struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
 	init_fonts();
@@ -125,15 +140,7 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
 #define MAX_FD 10
 void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *evt), int *fds, unsigned int nfds, void (*fds_callback)(struct pollfd *, unsigned int))
 {
-	struct msgui *msgui = calloc(1, sizeof(struct msgui));
-	msgui->type = MSGUI_FOCUS;
-	struct msgui_focus *msgfocus = (struct msgui_focus *)msgui->data;
-	memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
-
-	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
-	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
-	mq_close(sfd);
-	free(msgui);
+	gui_render(win);
 
 	struct xevent *event = calloc(1, sizeof(struct xevent));
 	int32_t wfd = mq_open(win->name, O_RDONLY);
