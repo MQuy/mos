@@ -16,6 +16,7 @@ static int mqueue_file_open(struct vfs_inode *inode, struct vfs_file *file)
 	if (!mq)
 	{
 		mq = kcalloc(1, sizeof(struct message_queue));
+		INIT_LIST_HEAD(&mq->senders);
 		INIT_LIST_HEAD(&mq->receivers);
 		INIT_LIST_HEAD(&mq->messages);
 		INIT_LIST_HEAD(&mq->wait.list);

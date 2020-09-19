@@ -57,20 +57,32 @@ extern void schedule();
 	}
 
 // NOTE: MQ 2020-08-17 continue if receiving a signal
-#define wait_until(cond)                               \
+#define wait_until(cond) ({                            \
 	for (; !(cond);)                                   \
 	{                                                  \
 		update_thread(current_thread, THREAD_WAITING); \
 		schedule();                                    \
-	}
+	}                                                  \
+})
 
-#define wait_until_with_prework(cond, prework)         \
+#define wait_until_with_prework(cond, prework) ({      \
 	for (; !(cond);)                                   \
 	{                                                  \
 		prework;                                       \
 		update_thread(current_thread, THREAD_WAITING); \
 		schedule();                                    \
-	}
+	}                                                  \
+})
+
+#define wait_until_with_setup(cond, prework, afterwork) ({ \
+	for (; !(cond);)                                       \
+	{                                                      \
+		prework;                                           \
+		update_thread(current_thread, THREAD_WAITING);     \
+		schedule();                                        \
+		afterwork;                                         \
+	}                                                      \
+})
 
 #define wait_event(wh, cond) ({                  \
 	DEFINE_WAIT(__wait);                         \

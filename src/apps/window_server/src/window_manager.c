@@ -367,7 +367,10 @@ void handle_mouse_event(struct mouse_event *mevent)
 		if (active_win && active_win == desktop->active_window)
 		{
 			struct xevent *event = create_xbutton_event(BUTTON_LEFT, XBUTTON_PRESS, desktop->mouse.graphic.x, desktop->mouse.graphic.y, desktop->event_state);
-			int32_t fd = mq_open(active_win->name, O_RDONLY);
+			int32_t fd = mq_open(active_win->name, O_RDONLY, &(struct mq_attr){
+																 .mq_msgsize = sizeof(struct xevent),
+																 .mq_maxmsg = 32,
+															 });
 			mq_send(fd, (char *)event, 0, sizeof(struct xevent));
 			mq_close(fd);
 			free(event);
@@ -402,7 +405,10 @@ void handle_keyboard_event(struct key_event *kevent)
 	if (desktop->active_window)
 	{
 		struct xevent *event = create_xkey_event(kevent->key, kevent->type, desktop->event_state);
-		int32_t fd = mq_open(desktop->active_window->name, O_WRONLY);
+		int32_t fd = mq_open(desktop->active_window->name, O_WRONLY, &(struct mq_attr){
+																		 .mq_msgsize = sizeof(struct xevent),
+																		 .mq_maxmsg = 32,
+																	 });
 		mq_send(fd, (char *)event, 0, sizeof(struct xevent));
 		mq_close(fd);
 		free(event);

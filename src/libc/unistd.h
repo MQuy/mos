@@ -3,6 +3,7 @@
 
 #include <include/ctype.h>
 #include <include/fcntl.h>
+#include <libc/mqueue.h>
 #include <libc/signal.h>
 #include <libc/stdio.h>
 #include <libc/wait.h>
@@ -215,10 +216,10 @@ static inline int32_t poll(struct pollfd *fds, uint32_t nfds)
 {
 	return syscall_poll(fds, nfds);
 }
-_syscall2(mq_open, const char *, int32_t);
-static inline int32_t mq_open(const char *name, int32_t flags)
+_syscall3(mq_open, const char *, int32_t, struct mq_attr *);
+static inline int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
-	return syscall_mq_open(name, flags);
+	return syscall_mq_open(name, flags, attr);
 }
 
 _syscall1(mq_close, int32_t);

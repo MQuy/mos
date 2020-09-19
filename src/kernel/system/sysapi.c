@@ -253,9 +253,9 @@ static int32_t sys_ioctl(int fd, unsigned int cmd, unsigned long arg)
 	return -EINVAL;
 }
 
-static int32_t sys_mq_open(const char *name, int32_t flags)
+static int32_t sys_mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
-	return mq_open(name, flags);
+	return mq_open(name, flags, attr);
 }
 
 static int32_t sys_mq_close(int32_t fd)

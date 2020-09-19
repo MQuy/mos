@@ -79,7 +79,10 @@ static void gui_create_window(struct window *parent, struct window *win, int32_t
 	if (parent)
 		memcpy(msgwin->parent, parent->name, WINDOW_NAME_LENGTH);
 	memcpy(msgwin->sender, pid, WINDOW_NAME_LENGTH);
-	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY, &(struct mq_attr){
+															 .mq_msgsize = sizeof(struct msgui),
+															 .mq_maxmsg = 32,
+														 });
 	mq_send(sfd, (char *)msgui_sender, 0, sizeof(struct msgui));
 	mq_close(sfd);
 	free(msgui_sender);
@@ -97,7 +100,10 @@ static void gui_create_window(struct window *parent, struct window *win, int32_t
 	if (parent)
 		list_add_tail(&win->sibling, &parent->children);
 
-	int32_t wfd = mq_open(msgwin->sender, O_RDONLY);
+	int32_t wfd = mq_open(msgwin->sender, O_RDONLY, &(struct mq_attr){
+														.mq_msgsize = WINDOW_NAME_LENGTH,
+														.mq_maxmsg = 32,
+													});
 	mq_receive(wfd, win->name, 0, WINDOW_NAME_LENGTH);
 	mq_close(wfd);
 
@@ -134,7 +140,10 @@ void gui_render(struct window *win)
 	struct msgui_focus *msgfocus = (struct msgui_focus *)msgui->data;
 	memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
 
-	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY);
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY, &(struct mq_attr){
+															 .mq_msgsize = sizeof(struct msgui),
+															 .mq_maxmsg = 32,
+														 });
 	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
 	mq_close(sfd);
 	free(msgui);
@@ -155,7 +164,10 @@ void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *
 	gui_render(win);
 
 	struct xevent *event = calloc(1, sizeof(struct xevent));
-	int32_t wfd = mq_open(win->name, O_RDONLY);
+	int32_t wfd = mq_open(win->name, O_RDONLY, &(struct mq_attr){
+												   .mq_msgsize = sizeof(struct xevent),
+												   .mq_maxmsg = 32,
+											   });
 	memset(event, 0, sizeof(struct xevent));
 
 	struct pollfd pfds[MAX_FD] = {
