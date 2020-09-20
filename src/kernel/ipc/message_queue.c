@@ -26,8 +26,10 @@ int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
 	char *fname = mq_normalize_path(name);
 	int32_t fd = vfs_open(fname, flags);
+	int32_t ret = fd;
 
 	struct message_queue *mq = hashmap_get(&mq_map, name);
+	// TODO: MQ 2020-09-20 Implement oflag to get rid of attr checking
 	if (!mq->attr)
 	{
 		struct mq_attr *mqattr = kcalloc(1, sizeof(struct mq_attr));
@@ -37,12 +39,12 @@ int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 
 		mq->attr = mqattr;
 	}
-	else if (attr)
-		assert(mq->attr->mq_maxmsg == attr->mq_maxmsg && mq->attr->mq_msgsize == attr->mq_msgsize);
+	else if (attr && (mq->attr->mq_maxmsg != attr->mq_maxmsg || mq->attr->mq_msgsize != attr->mq_msgsize))
+		ret = -EINVAL;
 
 	kfree(fname);
 
-	return fd;
+	return ret;
 }
 
 int32_t mq_close(int32_t fd)
@@ -181,7 +183,7 @@ int32_t mq_send(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize)
 
 	wake_up(&mq->wait);
 
-	return hashmap_get(&mq_map, file->f_dentry->d_name) ? 0 : -ESHUTDOWN;
+	return 0;
 }
 
 int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize)
@@ -191,6 +193,8 @@ int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize
 
 	if (!mq)
 		return -EINVAL;
+	else if (msize < mq->attr->mq_msgsize)
+		return -EMSGSIZE;
 
 	assert(0 <= mq->attr->mq_curmsgs && mq->attr->mq_curmsgs <= mq->attr->mq_maxmsg);
 	assert(msize >= mq->attr->mq_msgsize);
@@ -227,7 +231,7 @@ int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize
 	memcpy(user_buf, mqm->buf, msize);
 	kfree(mqm);
 
-	return hashmap_get(&mq_map, file->f_dentry->d_name) ? 0 : -ESHUTDOWN;
+	return 0;
 }
 
 void mq_init()
