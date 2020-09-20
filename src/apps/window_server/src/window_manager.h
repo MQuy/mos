@@ -27,12 +27,11 @@ struct key_event
 };
 
 struct window *create_window(struct msgui_window *msgwin);
-struct window *get_window_from_mouse_position(int32_t px, int32_t py);
+void init_layout(struct framebuffer *fb);
+void draw_layout();
+void draw_window_in_layout(char *name);
 void handle_mouse_event(struct mouse_event *event);
 void handle_keyboard_event(struct key_event *event);
 void handle_focus_event(struct msgui_focus *focus);
-void init_layout(struct framebuffer *fb);
-void draw_layout();
-void draw_single_window(char *name);
 
 #endif

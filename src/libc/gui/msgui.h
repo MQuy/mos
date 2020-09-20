@@ -11,6 +11,7 @@ struct msgui_window
 {
 	int32_t x, y;
 	uint32_t width, height;
+	bool transparent;
 	char parent[WINDOW_NAME_LENGTH];
 	char sender[WINDOW_NAME_LENGTH];
 };

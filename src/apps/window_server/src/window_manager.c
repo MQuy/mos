@@ -11,11 +11,11 @@
 #include <libc/string.h>
 #include <libc/unistd.h>
 
-struct desktop *desktop;
-char *desktop_buf;
-uint32_t nwin = 1;
+static struct desktop *desktop;
+static char *desktop_buf;
+static uint32_t nwin = 1;
 
-char *get_window_name()
+static char *get_window_name()
 {
 	char *wd = calloc(1, WINDOW_NAME_LENGTH);
 	memcpy(wd, "wd0000", WINDOW_NAME_LENGTH);
@@ -24,7 +24,7 @@ char *get_window_name()
 	return wd;
 }
 
-struct window *find_window_in_window(struct window *win, char *name)
+static struct window *find_window_in_window(struct window *win, char *name)
 {
 	if (!strcmp(win->name, name))
 		return win;
@@ -39,7 +39,7 @@ struct window *find_window_in_window(struct window *win, char *name)
 	return NULL;
 }
 
-struct window *find_window_in_root(char *name)
+static struct window *find_window_in_root(char *name)
 {
 	struct window *iter;
 	list_for_each_entry(iter, &desktop->children, sibling)
@@ -65,6 +65,7 @@ struct window *create_window(struct msgui_window *msgwin)
 	win->graphic.y = msgwin->y;
 	win->graphic.width = msgwin->width;
 	win->graphic.height = msgwin->height;
+	win->graphic.transparent = msgwin->transparent;
 
 	INIT_LIST_HEAD(&win->children);
 	hashmap_init(&win->events, hashmap_hash_string, hashmap_compare_string, 0);
@@ -113,7 +114,7 @@ static int icon_ini_handler(__unused void *_desktop, const char *section, const 
 	return 1;
 }
 
-void init_icons()
+static void init_icons()
 {
 	hashmap_init(&desktop->icons, hashmap_hash_string, hashmap_compare_string, 0);
 	ini_parse("/etc/desktop.ini", icon_ini_handler, &desktop);
@@ -134,7 +135,7 @@ void init_icons()
 	}
 }
 
-void init_mouse()
+static void init_mouse()
 {
 	struct graphic *graphic = &desktop->mouse.graphic;
 	graphic->x = 0;
@@ -152,7 +153,7 @@ void init_mouse()
 	bmp_draw(graphic, buf, 0, 0);
 }
 
-void init_dekstop_graphic()
+static void init_dekstop_graphic()
 {
 	struct graphic *graphic = &desktop->graphic;
 	graphic->x = 0;
@@ -184,7 +185,7 @@ void init_layout(struct framebuffer *fb)
 }
 
 // TODO: MQ 2020-03-24 Handle when win is not in buf's area
-void draw_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
+static void draw_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
 	for (uint32_t i = 0; i < height; ++i)
 	{
@@ -200,7 +201,7 @@ void draw_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y,
 }
 
 // TODO: MQ 2020-03-24 Handle when win is not in buf's area
-void draw_alpha_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
+static void draw_alpha_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
 	for (uint32_t i = 0; i < height; ++i)
 	{
@@ -215,7 +216,7 @@ void draw_alpha_graphic(char *buf, uint32_t scanline, char *win, int32_t x, int3
 	}
 }
 
-void draw_desktop_icons(char *buf)
+static void draw_desktop_icons(char *buf)
 {
 	struct hashmap_iter *iter = hashmap_iter(&desktop->icons);
 	while (iter)
@@ -266,19 +267,21 @@ void draw_desktop_icons(char *buf)
 	}
 }
 
-void draw_mouse(char *buf)
+static void draw_mouse(char *buf)
 {
 	struct graphic *graphic = &desktop->mouse.graphic;
 	draw_alpha_graphic(buf, desktop->fb->pitch, graphic->buf, graphic->x, graphic->y, graphic->width, graphic->height);
 }
 
-void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
+static void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
 {
 	int32_t ax = px + win->graphic.x;
 	int32_t ay = py + win->graphic.y;
 
-	// NOTE: MQ 2020-03-24 we don't support alpha channel for window due to slow render
-	draw_graphic(buf, desktop->fb->pitch, win->graphic.buf, ax, ay, win->graphic.width, win->graphic.height);
+	if (win->graphic.transparent)
+		draw_alpha_graphic(buf, desktop->fb->pitch, win->graphic.buf, ax, ay, win->graphic.width, win->graphic.height);
+	else
+		draw_graphic(buf, desktop->fb->pitch, win->graphic.buf, ax, ay, win->graphic.width, win->graphic.height);
 
 	struct window *iter_w;
 	list_for_each_entry(iter_w, &win->children, sibling)
@@ -287,7 +290,7 @@ void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
 	}
 }
 
-void draw_single_window(char *name)
+void draw_window_in_layout(char *name)
 {
 	struct window *win = find_window_in_root(name);
 	draw_window(desktop_buf, win, 0, 0);
@@ -311,7 +314,7 @@ void draw_layout()
 	memcpy((char *)desktop->fb->addr, desktop_buf, desktop->fb->pitch * desktop->fb->height);
 }
 
-void mouse_change(struct mouse_event *event)
+static void mouse_change(struct mouse_event *event)
 {
 	struct graphic *graphic = &desktop->mouse.graphic;
 
@@ -341,12 +344,7 @@ struct window *get_window_from_mouse_position(int32_t px, int32_t py)
 	return NULL;
 }
 
-struct window *get_active_window()
-{
-	return desktop->active_window;
-}
-
-struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
+static struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
 {
 	struct hashmap_iter *iter = hashmap_iter(&desktop->icons);
 	while (iter)

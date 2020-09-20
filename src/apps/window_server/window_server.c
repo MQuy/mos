@@ -66,7 +66,7 @@ int main(struct framebuffer fb)
 				else if (ws_buf.type == MSGUI_RENDER)
 				{
 					struct msgui_render *msgrender = (struct msgui_render *)ws_buf.data;
-					draw_single_window(msgrender->sender);
+					draw_window_in_layout(msgrender->sender);
 				}
 			}
 			else if (pfds[i].fd == mouse_fd)

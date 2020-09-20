@@ -20,6 +20,7 @@ struct graphic
 	char *buf;
 	int32_t x, y;
 	uint16_t width, height;
+	bool transparent;
 };
 
 struct icon
@@ -80,14 +81,28 @@ struct ui_input
 	char *value;
 };
 
+struct ui_button
+{
+	struct window window;
+	char *icon;
+};
+
+struct ui_block
+{
+	struct window window;
+};
+
 int get_character_width(char ch);
 int get_character_height(char ch);
 void gui_draw_retangle(struct window *win, int x, int y, unsigned int width, unsigned int height, uint32_t bg);
 void gui_create_label(struct window *parent, struct ui_label *label, int32_t x, int32_t y, uint32_t width, uint32_t height, char *text, struct ui_style *padding);
 void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, int32_t y, uint32_t width, uint32_t height, char *content);
+void gui_create_button(struct window *parent, struct ui_button *button, int32_t x, int32_t y, uint32_t width, uint32_t height, bool transparent, struct ui_style *style);
+void gui_create_block(struct window *parent, struct ui_block *block, int32_t x, int32_t y, uint32_t width, uint32_t height, bool transparent, struct ui_style *style);
 void gui_render(struct window *win);
 struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height);
 void init_fonts();
+char *load_bmp(char *path);
 void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *evt), int *fds, unsigned int nfds, void (*fds_callback)(struct pollfd *, unsigned int));
 
 static __inline void set_pixel(char *pixel_dest, uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha_raw)
