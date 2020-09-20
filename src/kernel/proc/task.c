@@ -182,8 +182,6 @@ void task_init(void *func)
 	mprocess = kcalloc(1, sizeof(struct hashmap));
 	hashmap_init(mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
 	sched_init();
-	register_interrupt_handler(IRQ8, irq_schedule_handler);
-	register_interrupt_handler(14, thread_page_fault);
 
 	DEBUG &&debug_println(DEBUG_INFO, "\tSetup swapper process");
 	setup_swapper_process();
@@ -197,7 +195,11 @@ void task_init(void *func)
 	update_thread(current_thread, THREAD_TERMINATED);
 	update_thread(nt, THREAD_READY);
 
+	register_interrupt_handler(IRQ8, irq_schedule_handler);
+	register_interrupt_handler(14, thread_page_fault);
+
 	DEBUG &&debug_println(DEBUG_INFO, "[task] - Done");
+
 	schedule();
 }
 
