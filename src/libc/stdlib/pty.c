@@ -8,7 +8,7 @@ int posix_openpt(int flags)
 
 char *ptsname(int fd)
 {
-	char *name = calloc(sizeof(_PATH_DEV + SPECNAMELEN), 1);
+	char *name = calloc(sizeof(_PATH_DEV) + SPECNAMELEN, 1);
 	getptsname(fd, name);
 	return name;
 }
