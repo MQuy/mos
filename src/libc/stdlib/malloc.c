@@ -5,8 +5,8 @@
 
 #define BLOCK_MAGIC 0x464E
 
-static uint32_t remaining_from_last_used = 0;
-static uint32_t heap_current = 0;
+static uint32_t user_remaining_from_last_used = 0;
+static uint32_t user_heap_current = 0;
 
 struct block_meta
 {
@@ -20,7 +20,7 @@ static struct block_meta *blocklist = NULL;
 
 void assert_block_valid(struct block_meta *block)
 {
-	if (block->magic != BLOCK_MAGIC)
+	if (block->magic != BLOCK_MAGIC || block->size > 0x2000000)
 		__asm__ __volatile("int $0x01");
 }
 
@@ -57,19 +57,19 @@ void split_block(struct block_meta *block, size_t size)
 
 void *get_heap(uint32_t size)
 {
-	if (!heap_current)
-		heap_current = sbrk(0);
+	if (!user_heap_current)
+		user_heap_current = sbrk(0);
 
-	uint32_t heap_base = heap_current;
-	if (size <= remaining_from_last_used)
-		remaining_from_last_used -= size;
+	uint32_t heap_base = user_heap_current;
+	if (size <= user_remaining_from_last_used)
+		user_remaining_from_last_used -= size;
 	else
 	{
 		sbrk(size);
-		remaining_from_last_used = sbrk(0) - (heap_current + size);
+		user_remaining_from_last_used = sbrk(0) - (user_heap_current + size);
 	}
 
-	heap_current += size;
+	user_heap_current += size;
 	return (void *)heap_base;
 }
 
