@@ -1,5 +1,5 @@
 #ifndef LIBC_STDIO_H
-#define LIBC_STDIO_h
+#define LIBC_STDIO_H
 
 #include <include/ctype.h>
 #include <stdarg.h>
@@ -16,5 +16,7 @@ enum debug_level
 
 size_t vsprintf(char *buffer, const char *fmt, va_list args);
 size_t sprintf(char *buffer, const char *fmt, ...);
+int debug_printf(enum debug_level level, const char *fmt, ...);
+int debug_println(enum debug_level level, const char *fmt, ...);
 
 #endif

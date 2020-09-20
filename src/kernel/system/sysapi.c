@@ -349,8 +349,8 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_waitid 284
 #define __NR_sendto 369
 #define __NR_getptsname 370
-#define __NR_debug_printf 512
-#define __NR_debug_println 513
+#define __NR_dprintf 512
+#define __NR_dprintln 513
 
 static void *syscalls[] = {
 	[__NR_exit] = sys_exit,
@@ -396,8 +396,8 @@ static void *syscalls[] = {
 	[__NR_mq_receive] = sys_mq_receive,
 	[__NR_waitid] = sys_waitid,
 	[__NR_getptsname] = sys_getptsname,
-	[__NR_debug_printf] = sys_debug_printf,
-	[__NR_debug_println] = sys_debug_println,
+	[__NR_dprintf] = sys_debug_printf,
+	[__NR_dprintln] = sys_debug_println,
 };
 
 static int32_t syscall_dispatcher(struct interrupt_registers *regs)

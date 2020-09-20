@@ -63,8 +63,8 @@
 // TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
 #define __NR_getptsname 370
 // TODO: MQ 2020-09-16 Replace by writting to /dev/ttyS0
-#define __NR_debug_printf 512
-#define __NR_debug_println 513
+#define __NR_dprintf 512
+#define __NR_dprintln 513
 
 #define _syscall0(name)                           \
 	static inline int32_t syscall_##name()        \
@@ -366,16 +366,16 @@ static inline int32_t getptsname(int32_t fdm, char *ptsname)
 	return syscall_getptsname(fdm, ptsname);
 }
 
-_syscall2(debug_printf, enum debug_level, const char *);
-static inline int32_t debug_printf(enum debug_level level, const char *out)
+_syscall2(dprintf, enum debug_level, const char *);
+static inline int32_t dprintf(enum debug_level level, const char *out)
 {
-	return syscall_debug_printf(level, out);
+	return syscall_dprintf(level, out);
 }
 
-_syscall2(debug_println, enum debug_level, const char *);
-static inline int32_t debug_println(enum debug_level level, const char *out)
+_syscall2(dprintln, enum debug_level, const char *);
+static inline int32_t dprintln(enum debug_level level, const char *out)
 {
-	return syscall_debug_println(level, out);
+	return syscall_dprintln(level, out);
 }
 
 static inline int32_t usleep(uint32_t usec)
