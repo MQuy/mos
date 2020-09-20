@@ -59,9 +59,14 @@ int main(struct framebuffer fb)
 				}
 				else if (ws_buf.type == MSGUI_FOCUS)
 				{
-					struct msgui_focus *focus = (struct msgui_focus *)ws_buf.data;
-					handle_focus_event(focus);
+					struct msgui_focus *msgfocus = (struct msgui_focus *)ws_buf.data;
+					handle_focus_event(msgfocus);
 					draw_layout();
+				}
+				else if (ws_buf.type == MSGUI_RENDER)
+				{
+					struct msgui_render *msgrender = (struct msgui_render *)ws_buf.data;
+					draw_single_window(msgrender->sender);
 				}
 			}
 			else if (pfds[i].fd == mouse_fd)
@@ -75,7 +80,6 @@ int main(struct framebuffer fb)
 			{
 				read(krb_fd, (char *)&krb_event, sizeof(struct key_event));
 				handle_keyboard_event(&krb_event);
-				draw_layout();
 			}
 		}
 	}

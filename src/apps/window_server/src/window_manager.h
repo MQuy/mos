@@ -33,5 +33,6 @@ void handle_keyboard_event(struct key_event *event);
 void handle_focus_event(struct msgui_focus *focus);
 void init_layout(struct framebuffer *fb);
 void draw_layout();
+void draw_single_window(char *name);
 
 #endif

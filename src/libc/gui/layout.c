@@ -136,6 +136,22 @@ void gui_create_input(struct window *parent, struct ui_input *input, int32_t x, 
 void gui_render(struct window *win)
 {
 	struct msgui *msgui = calloc(1, sizeof(struct msgui));
+	msgui->type = MSGUI_RENDER;
+	struct msgui_render *msgrender = (struct msgui_render *)msgui->data;
+	memcpy(msgrender->sender, win->name, WINDOW_NAME_LENGTH);
+
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY, &(struct mq_attr){
+															 .mq_msgsize = sizeof(struct msgui),
+															 .mq_maxmsg = 32,
+														 });
+	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
+	mq_close(sfd);
+	free(msgui);
+}
+
+void gui_focus(struct window *win)
+{
+	struct msgui *msgui = calloc(1, sizeof(struct msgui));
 	msgui->type = MSGUI_FOCUS;
 	struct msgui_focus *msgfocus = (struct msgui_focus *)msgui->data;
 	memcpy(msgfocus->sender, win->name, WINDOW_NAME_LENGTH);
@@ -161,7 +177,7 @@ struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height
 #define MAX_FD 10
 void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *evt), int *fds, unsigned int nfds, void (*fds_callback)(struct pollfd *, unsigned int))
 {
-	gui_render(win);
+	gui_focus(win);
 
 	struct xevent *event = calloc(1, sizeof(struct xevent));
 	int32_t wfd = mq_open(win->name, O_RDONLY, &(struct mq_attr){

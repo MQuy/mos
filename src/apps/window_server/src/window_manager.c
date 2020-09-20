@@ -287,6 +287,14 @@ void draw_window(char *buf, struct window *win, int32_t px, int32_t py)
 	}
 }
 
+void draw_single_window(char *name)
+{
+	struct window *win = find_window_in_root(name);
+	draw_window(desktop_buf, win, 0, 0);
+
+	memcpy((char *)desktop->fb->addr, desktop_buf, desktop->fb->pitch * desktop->fb->height);
+}
+
 // TODO: MQ 2020-03-21 Improve render speed via dirty rects
 void draw_layout()
 {

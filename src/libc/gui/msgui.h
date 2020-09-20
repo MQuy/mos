@@ -20,6 +20,11 @@ struct msgui_focus
 	char sender[WINDOW_NAME_LENGTH];
 };
 
+struct msgui_render
+{
+	char sender[WINDOW_NAME_LENGTH];
+};
+
 enum msgui_type
 {
 	MSGUI_WINDOW,

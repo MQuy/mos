@@ -230,7 +230,7 @@ void handle_x11_event(struct xevent *evt)
 	}
 }
 
-void handle_slave_event(struct pollfd *pfds, unsigned int nfds)
+void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 {
 	bool has_event = false;
 	for (unsigned int i = 0; i < nfds; ++i)
@@ -326,6 +326,6 @@ int main(void)
 	init_terminal_tab_dev(tab);
 
 	active_ptm = iterm->active_tab->fd_ptm;
-	enter_event_loop(win, handle_x11_event, &active_ptm, 1, handle_slave_event);
+	enter_event_loop(win, handle_x11_event, &active_ptm, 1, handle_master_event);
 	return 0;
 }
