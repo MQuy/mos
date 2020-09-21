@@ -68,20 +68,8 @@ void on_click_label_equal(__unused struct window *win)
 
 int main()
 {
-	struct window *win = init_window(336, 196, 128, 208);
-
-	for (uint32_t i = 0; i < win->graphic.height; ++i)
-	{
-		char *ibuf = win->graphic.buf + i * win->graphic.width * 4;
-		for (uint32_t j = 0; j < win->graphic.width; ++j)
-		{
-			ibuf[0] = 0x32;
-			ibuf[1] = 0x2C;
-			ibuf[2] = 0x28;
-			ibuf[3] = 0xFF;
-			ibuf += 4;
-		}
-	}
+	struct window *app_win = init_window(336, 196, 128, 208);
+	struct window *container_win = list_last_entry(&app_win->children, struct window, sibling);
 
 	struct ui_style *style1 = calloc(1, sizeof(struct ui_style));
 	style1->padding_top = 8;
@@ -90,33 +78,33 @@ int main()
 	style2->padding_top = 8;
 	style2->padding_left = 26;
 
-	labels[LABEL_RESULT] = create_label(win, 0, 16, 128, 32, "", style1, on_click_label_equal);
+	labels[LABEL_RESULT] = create_label(container_win, 0, 0, 128, 32, "", style1, on_click_label_equal);
 
-	labels[LABEL_AC] = create_label(win, 0, 48, 32, 32, "C", style1, on_click_label_ac);
-	labels[LABEL_SIGN] = create_label(win, 32, 48, 32, 32, "~", style1, on_click_label);
-	labels[LABEL_PERCENT] = create_label(win, 64, 48, 32, 32, "%", style1, on_click_label);
-	labels[LABEL_DIV] = create_label(win, 96, 48, 32, 32, "/", style1, on_click_label);
+	labels[LABEL_AC] = create_label(container_win, 0, 32, 32, 32, "C", style1, on_click_label_ac);
+	labels[LABEL_SIGN] = create_label(container_win, 32, 32, 32, 32, "~", style1, on_click_label);
+	labels[LABEL_PERCENT] = create_label(container_win, 64, 32, 32, 32, "%", style1, on_click_label);
+	labels[LABEL_DIV] = create_label(container_win, 96, 32, 32, 32, "/", style1, on_click_label);
 
-	labels[LABEL_SEVEN] = create_label(win, 0, 80, 32, 32, "7", style1, on_click_label);
-	labels[LABEL_EIGHT] = create_label(win, 32, 80, 32, 32, "8", style1, on_click_label);
-	labels[LABEL_SEVEN] = create_label(win, 64, 80, 32, 32, "9", style1, on_click_label);
-	labels[LABEL_MUL] = create_label(win, 96, 80, 32, 32, "*", style1, on_click_label);
+	labels[LABEL_SEVEN] = create_label(container_win, 0, 64, 32, 32, "7", style1, on_click_label);
+	labels[LABEL_EIGHT] = create_label(container_win, 32, 64, 32, 32, "8", style1, on_click_label);
+	labels[LABEL_SEVEN] = create_label(container_win, 64, 64, 32, 32, "9", style1, on_click_label);
+	labels[LABEL_MUL] = create_label(container_win, 96, 64, 32, 32, "*", style1, on_click_label);
 
-	labels[LABEL_FOUR] = create_label(win, 0, 112, 32, 32, "4", style1, on_click_label);
-	labels[LABEL_FIVE] = create_label(win, 32, 112, 32, 32, "5", style1, on_click_label);
-	labels[LABEL_SIX] = create_label(win, 64, 112, 32, 32, "6", style1, on_click_label);
-	labels[LABEL_PLUS] = create_label(win, 96, 112, 32, 32, "+", style1, on_click_label);
+	labels[LABEL_FOUR] = create_label(container_win, 0, 96, 32, 32, "4", style1, on_click_label);
+	labels[LABEL_FIVE] = create_label(container_win, 32, 96, 32, 32, "5", style1, on_click_label);
+	labels[LABEL_SIX] = create_label(container_win, 64, 96, 32, 32, "6", style1, on_click_label);
+	labels[LABEL_PLUS] = create_label(container_win, 96, 96, 32, 32, "+", style1, on_click_label);
 
-	labels[LABEL_ONE] = create_label(win, 0, 144, 32, 32, "1", style1, on_click_label);
-	labels[LABEL_TWO] = create_label(win, 32, 144, 32, 32, "2", style1, on_click_label);
-	labels[LABEL_THREE] = create_label(win, 64, 144, 32, 32, "3", style1, on_click_label);
-	labels[LABEL_MINUS] = create_label(win, 96, 144, 32, 32, "-", style1, on_click_label);
+	labels[LABEL_ONE] = create_label(container_win, 0, 128, 32, 32, "1", style1, on_click_label);
+	labels[LABEL_TWO] = create_label(container_win, 32, 128, 32, 32, "2", style1, on_click_label);
+	labels[LABEL_THREE] = create_label(container_win, 64, 128, 32, 32, "3", style1, on_click_label);
+	labels[LABEL_MINUS] = create_label(container_win, 96, 128, 32, 32, "-", style1, on_click_label);
 
-	labels[LABEL_ZERO] = create_label(win, 0, 176, 64, 32, "0", style2, on_click_label);
-	labels[LABEL_DOT] = create_label(win, 64, 176, 32, 32, ".", style1, on_click_label);
-	labels[LABEL_EQUAL] = create_label(win, 96, 176, 32, 32, "=", style1, on_click_label_equal);
+	labels[LABEL_ZERO] = create_label(container_win, 0, 160, 64, 32, "0", style2, on_click_label);
+	labels[LABEL_DOT] = create_label(container_win, 64, 160, 32, 32, ".", style1, on_click_label);
+	labels[LABEL_EQUAL] = create_label(container_win, 96, 160, 32, 32, "=", style1, on_click_label_equal);
 
-	enter_event_loop(win, NULL, NULL, 0, NULL);
+	enter_event_loop(app_win, NULL, NULL, 0, NULL);
 
 	return 0;
 }
