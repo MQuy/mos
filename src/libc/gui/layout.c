@@ -13,11 +13,16 @@
 void init_fonts()
 {
 	uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", 0, 0);
+
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
+
 	char *buf = calloc(stat->size, sizeof(char));
 	read(fd, buf, stat->size);
 	psf_init(buf, stat->size);
+
+	free(stat);
+	close(fd);
 }
 
 int get_character_width(char ch)
@@ -88,6 +93,7 @@ static void gui_create_window(struct window *parent, struct window *win, int32_t
 	if (parent)
 		memcpy(msgwin->parent, parent->name, WINDOW_NAME_LENGTH);
 	memcpy(msgwin->sender, pid, WINDOW_NAME_LENGTH);
+	free(pid);
 	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY, &(struct mq_attr){
 															 .mq_msgsize = sizeof(struct msgui),
 															 .mq_maxmsg = 32,

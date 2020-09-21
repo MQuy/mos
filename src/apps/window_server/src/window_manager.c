@@ -123,13 +123,9 @@ static void init_icons()
 	while (iter)
 	{
 		struct icon *icon = hashmap_iter_get_data(iter);
-
-		uint32_t fd = open(icon->icon_path, 0, 0);
-		struct stat *stat = calloc(1, sizeof(struct stat));
-		fstat(fd, stat);
-		char *buf = calloc(stat->size, sizeof(char));
-		read(fd, buf, stat->size);
+		char *buf = load_bmp(icon->icon_path);
 		bmp_draw(&icon->icon_graphic, buf, 0, 0);
+		free(buf);
 
 		iter = hashmap_iter_next(&desktop->icons, iter);
 	}
@@ -144,13 +140,9 @@ static void init_mouse()
 	graphic->height = 20;
 	graphic->buf = calloc(graphic->width * graphic->height * 4, sizeof(char));
 
-	uint32_t fd = open("/usr/share/images/cursor.bmp", 0, 0);
-	struct stat *stat = calloc(1, sizeof(struct stat));
-	fstat(fd, stat);
-	char *buf = calloc(stat->size, sizeof(char));
-	read(fd, buf, stat->size);
-
+	char *buf = load_bmp("/usr/share/images/cursor.bmp");
 	bmp_draw(graphic, buf, 0, 0);
+	free(buf);
 }
 
 static void init_dekstop_graphic()
@@ -162,13 +154,9 @@ static void init_dekstop_graphic()
 	graphic->height = desktop->fb->height;
 	graphic->buf = calloc(graphic->width * graphic->height * 4, sizeof(char));
 
-	uint32_t fd = open("/usr/share/images/background.bmp", 0, 0);
-	struct stat *stat = calloc(1, sizeof(struct stat));
-	fstat(fd, stat);
-	char *buf = calloc(stat->size, sizeof(char));
-	read(fd, buf, stat->size);
-
+	char *buf = load_bmp("/usr/share/images/background.bmp");
 	bmp_draw(graphic, buf, 0, 0);
+	free(buf);
 	desktop_buf = calloc(desktop->fb->pitch * desktop->fb->height, sizeof(char));
 }
 
