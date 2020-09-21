@@ -9,8 +9,12 @@
 #include <libc/unistd.h>
 #include <stdint.h>
 
+#define VERTICAL_PADDING 4
+#define HORIZONTAL_PADDING 8
+
 struct terminal *iterm;
-struct window *win;
+struct window *app_win;
+struct window *container_win;
 int active_ptm;
 
 struct terminal_line *alloc_terminal_line()
@@ -99,9 +103,10 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 	int cursor_row = 0;
 	int cursor_x = 0;
 	int ix = 0;
+	int width = iterm->width - 2 * HORIZONTAL_PADDING;
 	for (int i = 0, length = strlen(cursor_line->content); i < length && i < (int)tab->cursor_column; ++i)
 	{
-		if (ix + get_character_width(cursor_line->content[i]) >= (cursor_row + 1) * iterm->width)
+		if (ix + get_character_width(cursor_line->content[i]) >= (cursor_row + 1) * width)
 		{
 			cursor_row++;
 			cursor_x = 0;
@@ -111,36 +116,41 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 		ix += get_character_width(cursor_line->content[i]);
 	}
 
-	if (from_line->started_row + from_row <= cursor_line->started_row + cursor_row &&
-		cursor_line->started_row + cursor_row <= to_line->started_row + to_row)
-	{
-		int relative_row = cursor_line->started_row + cursor_row - (from_line->started_row + from_row);
-		gui_draw_retangle(win, cursor_x, relative_row * get_character_height(0), get_character_width(0), get_character_height(0), 0xd0d0d0ff);
-	}
+	int abs_from_row = from_line->started_row + from_row;
+	int abs_to_row = to_line->started_row + to_row;
+	int abs_row = cursor_line->started_row + cursor_row;
+	int relative_row = abs_row - abs_from_row;
+	int max_rows_in_ui = (container_win->graphic.height - 2 * VERTICAL_PADDING) / get_character_height(0);
+	if (abs_from_row <= abs_row &&
+		(abs_row <= abs_to_row ||
+		 // when cursor in the new row and first column of multiple span rows last line
+		 (abs_row == abs_to_row + 1 && cursor_x == 0 && relative_row <= max_rows_in_ui)))
+		gui_draw_retangle(container_win, cursor_x + HORIZONTAL_PADDING, relative_row * get_character_height(0) + VERTICAL_PADDING, get_character_width(0), get_character_height(0), 0xd0d0d0ff);
 }
 
 void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, int prow)
 {
+	int width = iterm->width - 2 * HORIZONTAL_PADDING;
 	int py = prow * get_character_height(0);
 	for (int i = 0, ix = 0, length = strlen(line->content); i < length;)
 	{
-		if (ix + get_character_width(line->content[i]) >= from_row * iterm->width &&
-			ix + get_character_width(line->content[i]) <= (to_row + 1) * iterm->width)
+		if (ix + get_character_width(line->content[i]) >= from_row * width &&
+			ix + get_character_width(line->content[i]) <= (to_row + 1) * width)
 		{
 			int jx = 0;
 			while (i < length)
 			{
 				char ch = line->content[i];
-				if (jx + get_character_width(ch) > iterm->width)
+				if (jx + get_character_width(ch) > width)
 					break;
 				psf_putchar(ch,
-							jx, py,
+							jx + HORIZONTAL_PADDING, py + VERTICAL_PADDING,
 							0xffffffff, 0,
-							win->graphic.buf, win->graphic.width * 4);
+							container_win->graphic.buf, container_win->graphic.width * 4);
 				jx += get_character_width(ch);
 				i++;
 			}
-			ix = div_ceil(ix + iterm->width, iterm->width) * iterm->width;
+			ix = div_ceil(ix + width, width) * width;
 			py += get_character_height(0);
 			continue;
 		}
@@ -159,7 +169,8 @@ void draw_terminal()
 	struct terminal_line *from_line, *to_line;
 	int from_row, to_row;
 	int rows = count_rows_in_line_range(tab->scroll_line, 0, last_line, last_line->rowspan - 1);
-	if (rows <= 20)
+	int max_rows_in_ui = (container_win->graphic.height - 2 * VERTICAL_PADDING) / get_character_height(0);
+	if (rows <= max_rows_in_ui)
 	{
 		int count = 0;
 		from_row = 0;
@@ -168,9 +179,9 @@ void draw_terminal()
 		{
 			from_line = iter;
 			count += from_line->rowspan;
-			if (count >= 20)
+			if (count >= max_rows_in_ui)
 			{
-				from_row = from_line->rowspan - (count - 20);
+				from_row = from_line->rowspan - (count - max_rows_in_ui);
 				break;
 			}
 		}
@@ -188,9 +199,9 @@ void draw_terminal()
 		{
 			to_line = iter;
 			count += to_line->rowspan;
-			if (count >= 20)
+			if (count >= max_rows_in_ui)
 			{
-				to_row = to_line->rowspan - (count - 20);
+				to_row = to_line->rowspan - (count - max_rows_in_ui);
 				break;
 			}
 		}
@@ -295,6 +306,7 @@ void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 		else
 		{
 			struct terminal_line *cursor_line = tab->cursor_line;
+			int width = iterm->width - 2 * HORIZONTAL_PADDING;
 
 			if (tab->cursor_column > CHARACTERS_PER_LINE)
 				continue;
@@ -302,23 +314,25 @@ void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			cursor_line->content[tab->cursor_column++] = ch;
 
 			int pixels = pixels_from_content(cursor_line->content);
-			cursor_line->rowspan = div_ceil(pixels, iterm->width);
+			cursor_line->rowspan = div_ceil(pixels, width);
 			recalculate_tab(tab);
 		}
 	}
 
 	draw_terminal();
-	gui_render(win);
+	gui_render(app_win);
 }
 
 int main(void)
 {
-	win = init_window(50, 50, 600, 400);
+	app_win = init_window(50, 50, 600, 400);
+	container_win = list_last_entry(&app_win->children, struct window, sibling);
+
 	struct terminal_tab *tab = alloc_terminal_tab();
 
 	iterm = calloc(1, sizeof(struct terminal));
-	iterm->width = win->graphic.width;
-	iterm->height = win->graphic.height;
+	iterm->width = app_win->graphic.width;
+	iterm->height = app_win->graphic.height;
 	iterm->active_tab = tab;
 	iterm->max_rows = MAX_ROWS;
 	INIT_LIST_HEAD(&iterm->tabs);
@@ -326,6 +340,6 @@ int main(void)
 	init_terminal_tab_dev(tab);
 
 	active_ptm = iterm->active_tab->fd_ptm;
-	enter_event_loop(win, handle_x11_event, &active_ptm, 1, handle_master_event);
+	enter_event_loop(app_win, handle_x11_event, &active_ptm, 1, handle_master_event);
 	return 0;
 }

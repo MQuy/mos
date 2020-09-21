@@ -42,13 +42,20 @@ static struct window *find_child_element_from_position(struct window *win, int32
 
 		if (cx < mx && mx < cx + iter_win->graphic.width &&
 			cy < my && my < cy + iter_win->graphic.height)
-			return iter_win;
-
-		struct window *w = find_child_element_from_position(iter_win, cx, cy, mx, my);
-		if (w)
-			return w;
+		{
+			struct window *w = find_child_element_from_position(iter_win, cx, cy, mx, my);
+			return w ? w : iter_win;
+		}
 	}
 	return NULL;
+}
+
+static struct window *get_top_level_window(struct window *win)
+{
+	struct window *top = win;
+	while (top->parent)
+		top = top->parent;
+	return top;
 }
 
 static void add_event_handler(struct window *win, char *event_name, EVENT_HANDLER handler)
@@ -205,6 +212,11 @@ void set_background_color(struct window *win, uint32_t bg)
 	}
 }
 
+void close_window(struct window *btn_win)
+{
+	exit(0);
+}
+
 void init_window_bar(struct window *win)
 {
 	struct ui_block *block = calloc(1, sizeof(struct ui_block));
@@ -216,6 +228,7 @@ void init_window_bar(struct window *win)
 	btn_close->icon = close_buf;
 	gui_create_button(&block->window, btn_close, win->graphic.width - 20, 4, 16, 16, true, NULL);
 	bmp_draw(&btn_close->window.graphic, close_buf, 4, 4);
+	btn_close->window.add_event_listener(&btn_close->window, "click", close_window);
 
 	struct ui_button *btn_minus = calloc(1, sizeof(struct ui_button));
 	char *minus_buf = load_bmp("/usr/share/images/minus.bmp");
@@ -224,12 +237,20 @@ void init_window_bar(struct window *win)
 	bmp_draw(&btn_minus->window.graphic, minus_buf, 4, 4);
 }
 
+void init_window_body(struct window *win)
+{
+	struct ui_block *block = calloc(1, sizeof(struct ui_block));
+	gui_create_block(win, block, 0, 24, win->graphic.width, win->graphic.height - 24, false, NULL);
+	set_background_color(&block->window, 0xFF000000);
+}
+
 struct window *init_window(int32_t x, int32_t y, uint32_t width, uint32_t height)
 {
 	init_fonts();
 	struct window *win = calloc(1, sizeof(struct window));
 	gui_create_window(NULL, win, x, y, width, height, false, NULL);
 	init_window_bar(win);
+	init_window_body(win);
 
 	return win;
 }

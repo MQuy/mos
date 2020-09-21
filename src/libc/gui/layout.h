@@ -59,7 +59,7 @@ struct window
 {
 	char name[WINDOW_NAME_LENGTH];
 	struct graphic graphic;
-	struct desktop *parent;
+	struct window *parent;
 	struct window *active_window;
 	struct ui_style *style;
 	struct list_head sibling;
