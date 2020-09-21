@@ -1,5 +1,6 @@
 #include "terminal.h"
 
+#include <include/cdefs.h>
 #include <libc/gui/layout.h>
 #include <libc/gui/psf.h>
 #include <libc/math.h>
@@ -17,26 +18,27 @@ struct window *app_win;
 struct window *container_win;
 int active_ptm;
 
-struct terminal_line *alloc_terminal_line()
+static struct terminal_line *alloc_terminal_line()
 {
 	struct terminal_line *line = calloc(1, sizeof(struct terminal_line));
 	line->rowspan = 1;
 	return line;
 }
 
-struct terminal_tab *alloc_terminal_tab()
+static struct terminal_tab *alloc_terminal_tab()
 {
 	struct terminal_tab *tab = calloc(1, sizeof(struct terminal_tab));
 	struct terminal_line *line = alloc_terminal_line();
 	tab->scroll_line = line;
 	tab->cursor_line = line;
+	tab->line_count = tab->row_count = 1;
 	INIT_LIST_HEAD(&tab->lines);
 	list_add_tail(&line->sibling, &tab->lines);
 
 	return tab;
 }
 
-void init_terminal_tab_dev(struct terminal_tab *tab)
+static void init_terminal_tab_dev(struct terminal_tab *tab)
 {
 	int fdm = posix_openpt(O_RDWR);
 	int fds = open(ptsname(fdm), O_RDWR, 0);
@@ -66,7 +68,7 @@ void init_terminal_tab_dev(struct terminal_tab *tab)
 	}
 }
 
-void recalculate_tab(struct terminal_tab *tab)
+static void recalculate_tab(struct terminal_tab *tab)
 {
 	int lines = 0;
 	int rows = 0;
@@ -81,22 +83,22 @@ void recalculate_tab(struct terminal_tab *tab)
 	tab->row_count = rows;
 }
 
-int pixels_from_content(const char *content)
+static int pixels_from_content(const char *content)
 {
-	int columns = 0;
+	int pixels = 0;
 	for (char *ch = content; *ch; ch++)
 	{
-		columns += get_character_width(*ch);
+		pixels += get_character_width(*ch);
 	}
-	return columns;
+	return pixels;
 }
 
-int count_rows_in_line_range(struct terminal_line *from_line, int from_row, struct terminal_line *to_line, int to_row)
+static __inline int count_rows_in_line_range(struct terminal_line *from_line, int from_row, struct terminal_line *to_line, int to_row)
 {
 	return (to_line->started_row + to_row) - (from_line->started_row + from_row);
 }
 
-void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_line *to_line, int to_row)
+static void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_line *to_line, int to_row)
 {
 	struct terminal_tab *tab = iterm->active_tab;
 	struct terminal_line *cursor_line = tab->cursor_line;
@@ -128,7 +130,7 @@ void draw_cursor(struct terminal_line *from_line, int from_row, struct terminal_
 		gui_draw_retangle(container_win, cursor_x + HORIZONTAL_PADDING, relative_row * get_character_height(0) + VERTICAL_PADDING, get_character_width(0), get_character_height(0), 0xd0d0d0ff);
 }
 
-void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, int prow)
+static void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, int prow)
 {
 	int width = iterm->width - 2 * HORIZONTAL_PADDING;
 	int py = prow * get_character_height(0);
@@ -162,7 +164,7 @@ void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, in
 	}
 }
 
-void draw_terminal()
+static void draw_terminal()
 {
 	struct terminal_tab *tab = iterm->active_tab;
 	struct terminal_line *last_line = list_last_entry(&tab->lines, struct terminal_line, sibling);
@@ -225,7 +227,7 @@ void draw_terminal()
 	draw_cursor(from_line, from_row, to_line, to_row);
 }
 
-void handle_x11_event(struct xevent *evt)
+static void handle_x11_event(struct xevent *evt)
 {
 	if (evt->type == XKEY_EVENT)
 	{
@@ -241,7 +243,7 @@ void handle_x11_event(struct xevent *evt)
 	}
 }
 
-void handle_master_event(struct pollfd *pfds, unsigned int nfds)
+static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 {
 	bool has_event = false;
 	for (unsigned int i = 0; i < nfds; ++i)
@@ -274,6 +276,29 @@ void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			// if ch is Device Control 1 and cursor line content is empty -> record timestamp
 			if (strlen(tab->cursor_line->content) == 0)
 				tab->cursor_line->seconds = time(NULL);
+		}
+		else if (ch == '\177')
+		{
+			struct terminal_line *cursor_line = tab->cursor_line;
+			struct terminal_line *last_line = list_last_entry(&tab->lines, struct terminal_line, sibling);
+
+			if (cursor_line != last_line)
+				continue;
+
+			int length = strlen(cursor_line->content);
+			if (length == 0 || (int)tab->cursor_column > length)
+				continue;
+
+			if (length < (int)tab->cursor_column)
+			{
+				for (int i = tab->cursor_column; i < length - 1; ++i)
+				{
+					cursor_line->content[i] = cursor_line->content[i + 1];
+				}
+				cursor_line->content[length - 1] = 0;
+			}
+			else
+				cursor_line->content[tab->cursor_column--] = 0;
 		}
 		else if (ch == '\n')
 		{
@@ -319,6 +344,7 @@ void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 		}
 	}
 
+	memset(container_win->graphic.buf, 0, container_win->graphic.width * container_win->graphic.height * 4);
 	draw_terminal();
 	gui_render(app_win);
 }

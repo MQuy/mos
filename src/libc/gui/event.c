@@ -51,7 +51,6 @@ struct keycode_to_ascii
 };
 
 static struct keycode_to_ascii map0[] = {
-	{KEY_ESC, 0x1B},
 	{KEY_1, '1'},
 	{KEY_2, '2'},
 	{KEY_3, '3'},
@@ -64,7 +63,6 @@ static struct keycode_to_ascii map0[] = {
 	{KEY_0, '0'},
 	{KEY_MINUS, '-'},
 	{KEY_EQUAL, '='},
-	{KEY_BACKSPACE, 0x08},
 	{KEY_TAB, 0x09},
 	{KEY_Q, 'q'},
 	{KEY_W, 'w'},
@@ -258,7 +256,12 @@ int convert_keycode_to_ascii(unsigned int keycode, unsigned int state, unsigned 
 		ret = find_ascii_from_table(map0, sizeof(map0) / sizeof(struct keycode_to_ascii), keycode, buf, nbuf);
 		if (ret == -1)
 		{
-			if (keycode == KEY_KP4)	 // left arrow
+			if (keycode == KEY_BACKSPACE)
+			{
+				*nbuf = 1;
+				memcpy(buf, "\177", *nbuf);
+			}
+			else if (keycode == KEY_KP4)  // left arrow
 			{
 				*nbuf = 4;
 				memcpy(buf, "\033[1D", *nbuf);
