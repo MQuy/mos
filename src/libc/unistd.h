@@ -4,6 +4,7 @@
 #include <include/ctype.h>
 #include <include/fcntl.h>
 #include <include/ioctls.h>
+#include <libc/dirent.h>
 #include <libc/mqueue.h>
 #include <libc/signal.h>
 #include <libc/stdio.h>
@@ -51,6 +52,7 @@
 #define __NR_fstat 108
 #define __NR_sigprocmask 126
 #define __NR_getpgid 132
+#define __NR_getdents 141
 #define __NR_getsid 147
 #define __NR_nanosleep 162
 #define __NR_poll 168
@@ -174,6 +176,12 @@ _syscall1(close, uint32_t);
 static inline int32_t close(uint32_t fd)
 {
 	return syscall_close(fd);
+}
+
+_syscall3(getdents, unsigned int, struct dirent *, unsigned int);
+static inline int32_t getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
+{
+	return syscall_getdents(fd, dirent, count);
 }
 
 _syscall3(execve, const char *, char *const *, char *const *);

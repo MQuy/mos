@@ -65,6 +65,19 @@ static int32_t sys_close(uint32_t fd)
 	return vfs_close(fd);
 }
 
+static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
+{
+	struct vfs_file *file = current_process->files->fd[fd];
+
+	if (!file)
+		return -EBADF;
+
+	if (file->f_op->readdir)
+		return file->f_op->readdir(file, dirent, count);
+
+	return -ENOTDIR;
+}
+
 static int32_t sys_time(time_t *tloc)
 {
 	time_t t = get_seconds(NULL);
@@ -338,6 +351,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_fstat 108
 #define __NR_sigprocmask 126
 #define __NR_getpgid 132
+#define __NR_getdents 141
 #define __NR_getsid 147
 #define __NR_nanosleep 162
 #define __NR_poll 168
@@ -361,6 +375,7 @@ static void *syscalls[] = {
 	[__NR_stat] = sys_stat,
 	[__NR_fstat] = sys_fstat,
 	[__NR_close] = sys_close,
+	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,
 	[__NR_dup2] = sys_dup2,
 	[__NR_time] = sys_time,

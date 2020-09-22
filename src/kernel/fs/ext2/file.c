@@ -1,5 +1,6 @@
 #include <include/errno.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/system/time.h>
 #include <kernel/utils/math.h>
 #include <kernel/utils/string.h>
@@ -55,6 +56,7 @@ static ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, lo
 	struct ext2_inode *ei = EXT2_INODE(inode);
 	struct vfs_superblock *sb = inode->i_sb;
 
+	count = min_t(size_t, ppos + count, ei->i_size) - ppos;
 	uint32_t p = (ppos / sb->s_blocksize) * sb->s_blocksize;
 	char *iter_buf = buf;
 	while (p < ppos + count)
@@ -126,10 +128,35 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 	return count;
 }
 
+int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count)
+{
+	char *buf = kcalloc(count, sizeof(char));
+	count = ext2_read_file(file, buf, count, 0);
+
+	int entries_size = 0;
+	struct dirent *idirent = dirent;
+	for (char *ibuf = buf; ibuf - buf < count;)
+	{
+		struct ext2_dir_entry *entry = (struct ext2_dir_entry *)ibuf;
+		idirent->d_ino = entry->ino;
+		idirent->d_off = 0;
+		idirent->d_reclen = sizeof(struct dirent) + entry->name_len;
+		idirent->d_type = entry->file_type;
+		memcpy(idirent->d_name, entry->name, entry->name_len);
+
+		entries_size += idirent->d_reclen;
+		ibuf += entry->rec_len;
+		idirent = (struct dirent *)((char *)idirent + idirent->d_reclen);
+	}
+	return entries_size;
+}
+
 struct vfs_file_operations ext2_file_operations = {
 	.llseek = ext2_llseek_file,
 	.read = ext2_read_file,
 	.write = ext2_write_file,
 };
 
-struct vfs_file_operations ext2_dir_operations = {};
+struct vfs_file_operations ext2_dir_operations = {
+	.readdir = ext2_readdir,
+};

@@ -40,6 +40,16 @@ struct address_space
 	uint32_t npages;
 };
 
+struct dirent
+{
+	ino_t d_ino;			 /* Inode number */
+	off_t d_off;			 /* Not an offset; see below */
+	unsigned short d_reclen; /* Length of this record */
+	unsigned short d_type;	 /* Type of file; not supported
+                                              by all filesystem types */
+	char d_name[];			 /* Null-terminated filename */
+};
+
 struct kstat
 {
 	unsigned long ino;
@@ -186,6 +196,7 @@ struct vfs_file_operations
 	loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
 	ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
 	ssize_t (*write)(struct vfs_file *file, const char *buf, size_t count, loff_t ppos);
+	int (*readdir)(struct vfs_file *file, struct dirent *dirent, unsigned int count);
 	unsigned int (*poll)(struct vfs_file *file, struct poll_table *pt);
 	int (*ioctl)(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg);
 	int (*mmap)(struct vfs_file *file, struct vm_area_struct *vm);

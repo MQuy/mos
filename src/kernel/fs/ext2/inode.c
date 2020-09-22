@@ -202,6 +202,7 @@ static struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename
 	return NULL;
 }
 
+// TODO: MQ 2020-09-22 Support 2, 3 and 4 level block
 static struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *filename)
 {
 	for (int i = 0; i < 11; ++i)
