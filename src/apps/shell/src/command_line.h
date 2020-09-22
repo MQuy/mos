@@ -11,5 +11,6 @@ struct command_line
 
 int parse_text(char *text, struct command_line *cmd);
 int pwd(char *cwd);
+int ls(char *path);
 
 #endif

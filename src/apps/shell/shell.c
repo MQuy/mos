@@ -71,7 +71,7 @@ int main()
 		{
 			setpgid(0, 0);
 			tcsetpgrp(1, getpid());
-			pwd(ishell->cwd);
+			ls(ishell->cwd);
 			exit(0);
 		}
 		else
