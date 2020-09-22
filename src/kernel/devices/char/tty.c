@@ -76,6 +76,27 @@ static int tiocsctty(struct tty_struct *tty, int arg)
 	return 0;
 }
 
+static int tiocgpgrp(struct tty_struct *tty, __unused int arg)
+{
+	if (current_process->tty != tty)
+		return -ENOTTY;
+
+	return tty->pgrp;
+}
+
+static int tiocspgrp(struct tty_struct *tty, int arg)
+{
+	pid_t pgrp = *(uint32_t *)arg;
+	struct process *p = find_process_by_pid(pgrp);
+
+	if (!p)
+		return -EINVAL;
+	if (tty->session != p->sid)
+		return -EPERM;
+	tty->pgrp = pgrp;
+	return 0;
+}
+
 static int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	int index = get_next_pty_number();
@@ -163,6 +184,10 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 	{
 	case TIOCSCTTY:
 		return tiocsctty(tty, arg);
+	case TIOCGPGRP:
+		return tiocgpgrp(tty, arg);
+	case TIOCSPGRP:
+		return tiocspgrp(tty, arg);
 	default:
 		break;
 	}

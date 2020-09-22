@@ -3,6 +3,7 @@
 
 #include <include/ctype.h>
 #include <include/fcntl.h>
+#include <include/ioctls.h>
 #include <libc/mqueue.h>
 #include <libc/signal.h>
 #include <libc/stdio.h>
@@ -387,6 +388,16 @@ static inline int32_t usleep(uint32_t usec)
 static inline int32_t sleep(uint32_t sec)
 {
 	return usleep(sec * 1000);
+}
+
+static int tcsetpgrp(int fd, pid_t pid)
+{
+	return ioctl(fd, TIOCSPGRP, (unsigned long)&pid);
+}
+
+static pid_t tcgetpgrp(int fd)
+{
+	return ioctl(fd, TIOCGPGRP, 0);
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);
