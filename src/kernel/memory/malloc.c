@@ -149,7 +149,13 @@ void *kalign_heap(size_t size)
 	while (padding_size <= KERNEL_HEAP_TOP)
 	{
 		if (padding_size > required_size)
-			return kcalloc(padding_size - required_size, sizeof(char));
+		{
+			struct block_meta *last = kblocklist;
+			while (!last->next)
+				last = last->next;
+			struct block_meta *block = request_space(last, padding_size - required_size);
+			return block + 1;
+		}
 		padding_size += size;
 	}
 	return NULL;
