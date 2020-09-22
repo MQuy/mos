@@ -26,7 +26,7 @@ void init_shell()
 	memcpy(ishell->cwd, ROOT_PATH, sizeof(ROOT_PATH) - 1);
 }
 
-void print_prefix(char *text, char *cwd)
+void print_prefix(char *cwd)
 {
 	char *dir = NULL;
 	char *name = NULL;
@@ -36,7 +36,7 @@ void print_prefix(char *text, char *cwd)
 		strlsplat(cwd, strliof(cwd, "/"), &dir, &name);
 
 	char prefix[200] = {0};
-	sprintf(prefix, text, name);
+	sprintf(prefix, "$ %s ", name);
 
 	if (dir)
 		free(dir);
@@ -49,7 +49,8 @@ void print_prefix(char *text, char *cwd)
 int main()
 {
 	init_shell();
-	print_prefix("$ %s ", ishell->cwd);
+	write(1, "\21", 1);
+	print_prefix(ishell->cwd);
 
 	char line[CHARACTERS_PER_LINE];
 	struct command_line *cmd = calloc(1, sizeof(struct command_line));
@@ -77,7 +78,8 @@ int main()
 		else
 		{
 			waitid(P_PID, fd, infop, WEXITED);
-			print_prefix("\n$ %s ", ishell->cwd);
+			write(1, "\n\21", 2);
+			print_prefix(ishell->cwd);
 		}
 	}
 }
