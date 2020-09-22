@@ -1,5 +1,5 @@
-#ifndef WINDOW_SERVER_LAYOUT
-#define WINDOW_SERVER_LAYOUT
+#ifndef WINDOW_MANAGER_H
+#define WINDOW_MANAGER_H
 
 #include <libc/gui/event.h>
 #include <libc/gui/layout.h>

@@ -1,6 +1,7 @@
 #include "terminal.h"
 
 #include <include/cdefs.h>
+#include <include/ioctls.h>
 #include <libc/gui/layout.h>
 #include <libc/gui/psf.h>
 #include <libc/math.h>
@@ -59,6 +60,7 @@ static void init_terminal_tab_dev(struct terminal_tab *tab)
 		dup2(fds, 2);
 
 		setsid();
+		ioctl(fds, TIOCSCTTY, 0);
 		execve("/bin/shell", NULL, NULL);
 	}
 	else
@@ -234,7 +236,7 @@ static void handle_x11_event(struct xevent *evt)
 		struct xkey_event *kevt = (struct xkey_event *)evt->data;
 		if (kevt->action == XKEY_RELEASE)
 		{
-			int nbuf;
+			int nbuf = 0;
 			unsigned char buf[100] = {0};
 			convert_keycode_to_ascii(kevt->key, kevt->state, buf, &nbuf);
 
@@ -300,6 +302,10 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			else
 				cursor_line->content[tab->cursor_column--] = 0;
 		}
+		else if (ch == '\r')
+		{
+			tab->cursor_column = 0;
+		}
 		else if (ch == '\n')
 		{
 			struct terminal_line *first_line = list_first_entry(&tab->lines, struct terminal_line, sibling);
@@ -309,7 +315,7 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 				last_line->seconds = time(NULL);
 
 			struct terminal_line *line = alloc_terminal_line();
-			list_add_tail(&tab->lines, &line->sibling);
+			list_add_tail(&line->sibling, &tab->lines);
 
 			if (tab->row_count == iterm->max_rows)
 			{
@@ -325,7 +331,9 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			}
 
 			if (tab->scroll_line == last_line)
-				tab->scroll_line == line;
+				tab->scroll_line = line;
+			if (tab->cursor_line == last_line)
+				tab->cursor_line = line;
 		}
 		// printable characters
 		else
