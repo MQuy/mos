@@ -284,6 +284,7 @@ struct process *process_fork(struct process *parent)
 	proc->name = strdup(parent->name);
 	proc->parent = parent;
 	proc->tty = parent->tty;
+	INIT_LIST_HEAD(&proc->wait_chld.list);
 	proc->mm = clone_mm_struct(parent);
 	memcpy(&proc->sighand, &parent->sighand, sizeof(parent->sighand));
 
