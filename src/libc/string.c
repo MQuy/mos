@@ -3,6 +3,25 @@
 #include <include/ctype.h>
 #include <libc/stdlib.h>
 
+//! copies count bytes from src to dest
+void *memcpy(void *dest, const void *src, size_t len)
+{
+	char *d = dest;
+	const char *s = src;
+	while (len--)
+		*d++ = *s++;
+	return dest;
+}
+
+//! sets count bytes of dest to val
+void *memset(void *dest, char val, size_t len)
+{
+	unsigned char *ptr = dest;
+	while (len-- > 0)
+		*ptr++ = val;
+	return dest;
+}
+
 int memcmp(const void *vl, const void *vr, size_t n)
 {
 	const unsigned char *l = vl;
