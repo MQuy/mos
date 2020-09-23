@@ -1,7 +1,7 @@
 TOPDIR  := $(shell if [ "$$PWD" != "" ] ; then echo $$PWD ; else pwd ; fi)
 INCLUDE = $(TOPDIR)/../
 
-C_SOURCES = $(wildcard main.c *.c ../include/*.c utils/*.c memory/*.c cpu/*.c devices/*.c devices/**/*.c system/*.c fs/*.c fs/**/*.c proc/*.c locking/*.c ipc/*.c net/*.c net/devices/*.c)
+C_SOURCES = $(wildcard main.c *.c ../include/*.c utils/*.c utils/**/*.c memory/*.c cpu/*.c devices/*.c devices/**/*.c system/*.c fs/*.c fs/**/*.c proc/*.c locking/*.c ipc/*.c net/*.c net/devices/*.c)
 HEADERS = $(wildcard *.h ../include/*.h utils/*.h memory/*.h cpu/*.h devices/*.h devices/**/*.h system/*.h fs/*.h fs/**/*.h proc/*.h locking/*.h ipc/*.h net/*.h net/devices/*.h)
 
 # Nice syntax for file extension replacement

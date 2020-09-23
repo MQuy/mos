@@ -96,6 +96,8 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
 {
 	char *dir, *name;
 	strlsplat(path, strliof(path, "/"), &dir, &name);
+	if (!dir)
+		dir = "/";
 
 	struct vfs_file_system_type *fs = *find_filesystem(fstype);
 	struct vfs_mount *mnt = fs->mount(fs, fstype, name);
