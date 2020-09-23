@@ -5,7 +5,7 @@
 
 mOS is the hobby operating system which is developed from scratch
 
-[![](http://i3.ytimg.com/vi/-I3gCIqPkuU/maxresdefault.jpg)](https://www.youtube.com/watch?v=-I3gCIqPkuU "mOS demo")
+[![](https://i.imgur.com/NSjjGzV.png)](https://www.youtube.com/watch?v=tLBV7whW_dM "mOS")
 
 ### Work-in-process features
 
@@ -15,7 +15,7 @@ mOS is the hobby operating system which is developed from scratch
 - [x] Log
 - [x] Networking
 - [x] Signal
-- [ ] Terminal
+- [x] Terminal
 - [ ] POSIX compliant
 - [ ] Port GCC (the GNU Compiler Collection)
 - [ ] Sound
@@ -27,6 +27,8 @@ mOS is the hobby operating system which is developed from scratch
 - [ ] Dynamic linker
 
 ### Get started
+
+**Setup**
 
 ```
 $ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
@@ -41,8 +43,17 @@ in `build.sh`, adding `-s -S` right after `qemu` to switch to debug mode. Curren
 
 **Monitoring**
 
+by default mOS log outputs to terminal. If you want to monitor via file, doing following steps
+
 ```
-tail -f serial.log | while read line ; do echo $line ; done
+# src/build.sh#L71
+-serial stdio
+↓
+-serial file:logs/uart1.log
+```
+
+```
+$ tail -f serial.log | while read line ; do echo $line ; done
 ```
 
 ✍🏻 Using `tail` in pipe way to color the output (like above) causes a delay -> have to manually saving in ide to get latest changes
