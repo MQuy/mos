@@ -6,11 +6,13 @@
 struct command_line
 {
 	char *program;
+	char **args;
 	bool is_builtin;
 };
 
-int parse_text(char *text, struct command_line *cmd);
+int parse_text(char *text, int len, struct command_line *cmd);
 int pwd(char *cwd);
 int ls(char *path);
+int cd(struct command_line *cmd);
 
 #endif

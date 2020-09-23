@@ -1,3 +1,5 @@
+#include "shell.h"
+
 #include <include/ioctls.h>
 #include <include/mman.h>
 #include <libc/stdlib.h>
@@ -6,15 +8,6 @@
 #include <stdbool.h>
 
 #include "src/command_line.h"
-
-#define ROOT_PATH "/"
-#define CHARACTERS_PER_LINE 256
-#define MAX_PATH_LENGTH 256
-
-struct shell
-{
-	char cwd[MAX_PATH_LENGTH];
-};
 
 struct shell *ishell;
 
@@ -63,17 +56,27 @@ int main()
 		if (ret < 0)
 			continue;
 
-		ret = parse_text(line, cmd);
+		ret = parse_text(line, ret, cmd);
 		if (ret < 0)
 			continue;
 
 		int fd = fork();
 		if (!fd)
 		{
-			setpgid(0, 0);
-			tcsetpgrp(1, getpid());
-			ls(ishell->cwd);
-			exit(0);
+			if (cmd->is_builtin)
+			{
+				setpgid(0, 0);
+				tcsetpgrp(1, getpid());
+				if (!strcmp(cmd->program, "pwd"))
+					pwd(ishell->cwd);
+				else if (!strcmp(cmd->program, "ls"))
+					ls(ishell->cwd);
+				else if (!strcmp(cmd->program, "cd"))
+					cd(cmd);
+				else
+					write(1, "\ncommand not found", 18);
+				exit(0);
+			}
 		}
 		else
 		{
