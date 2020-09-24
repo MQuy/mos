@@ -73,12 +73,39 @@ struct window *create_window(struct msgui_window *msgwin)
 	if (msgwin->parent && strlen(msgwin->parent))
 	{
 		struct window *parent = find_window_in_root(msgwin->parent);
+		win->parent = parent;
 		list_add_tail(&win->sibling, &parent->children);
 	}
 	else
 		list_add_tail(&win->sibling, &desktop->children);
 
 	return win;
+}
+
+void remove_window(struct window *win)
+{
+	if (!win)
+		return;
+
+	list_del(&win->sibling);
+	struct window *iter, *next;
+	list_for_each_entry_safe(iter, next, &win->children, sibling)
+	{
+		remove_window(iter);
+	}
+
+	int32_t screen_size = win->graphic.height * win->graphic.width * 4;
+	munmap(win->graphic.buf, screen_size);
+	// TODO: MQ 2020-09-24 Close file descriptor and memory which is openned via `shm_open`
+
+	hashmap_destroy(&win->events);
+	free(win);
+}
+
+void handle_window_remove(struct msgui_close *msgclose)
+{
+	struct window *win = find_window_in_root(msgclose->sender);
+	remove_window(win);
 }
 
 static int icon_ini_handler(__unused void *_desktop, const char *section, const char *name,
@@ -374,13 +401,6 @@ void handle_mouse_event(struct mouse_event *mevent)
 		else
 		{
 			struct icon *icon = find_icon_from_mouse_position(mouse->graphic.x, mouse->graphic.y);
-			if (icon)
-			{
-				if (icon->active)
-					posix_spawn(icon->exec_path);
-				else
-					icon->active = true;
-			}
 			struct hashmap_iter *iter = hashmap_iter(&desktop->icons);
 			while (iter)
 			{
@@ -388,6 +408,16 @@ void handle_mouse_event(struct mouse_event *mevent)
 				if (i != icon)
 					i->active = false;
 				iter = hashmap_iter_next(&desktop->icons, iter);
+			}
+			if (icon)
+			{
+				if (icon->active)
+				{
+					icon->active = false;
+					posix_spawn(icon->exec_path);
+				}
+				else
+					icon->active = true;
 			}
 		}
 	}

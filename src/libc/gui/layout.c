@@ -108,6 +108,7 @@ static void gui_create_window(struct window *parent, struct window *win, int32_t
 	win->graphic.height = height;
 	win->style = style;
 	win->add_event_listener = add_event_handler;
+	win->parent = parent;
 
 	INIT_LIST_HEAD(&win->children);
 	hashmap_init(&win->events, hashmap_hash_string, hashmap_compare_string, 0);
@@ -190,6 +191,22 @@ void gui_focus(struct window *win)
 	free(msgui);
 }
 
+void gui_close(struct window *win)
+{
+	struct msgui *msgui = calloc(1, sizeof(struct msgui));
+	msgui->type = MSGUI_CLOSE;
+	struct msgui_close *msgclose = (struct msgui_close *)msgui->data;
+	memcpy(msgclose->sender, win->name, WINDOW_NAME_LENGTH);
+
+	int32_t sfd = mq_open(WINDOW_SERVER_QUEUE, O_WRONLY, &(struct mq_attr){
+															 .mq_msgsize = sizeof(struct msgui),
+															 .mq_maxmsg = 32,
+														 });
+	mq_send(sfd, (char *)msgui, 0, sizeof(struct msgui));
+	mq_close(sfd);
+	free(msgui);
+}
+
 char *load_bmp(char *path)
 {
 	int32_t fd = open(path, 0, 0);
@@ -220,6 +237,8 @@ void set_background_color(struct window *win, uint32_t bg)
 
 void close_window(struct window *btn_win)
 {
+	struct window *app = get_top_level_window(btn_win);
+	gui_close(app);
 	exit(0);
 }
 
