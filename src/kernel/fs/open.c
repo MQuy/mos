@@ -205,3 +205,27 @@ int vfs_ftruncate(int32_t fd, int32_t length)
 	struct vfs_file *f = current_process->files->fd[fd];
 	return do_truncate(f->f_dentry, length);
 }
+
+int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count)
+{
+	struct vfs_dentry *dentry = file->f_dentry;
+	int entries_size = 0;
+
+	struct dirent *idrent = dirent;
+	struct vfs_dentry *iter;
+	list_for_each_entry(iter, &dentry->d_subdirs, d_sibling)
+	{
+		int len = strlen(iter->d_name);
+		int total_len = sizeof(struct dirent) + len + 1;
+
+		if (entries_size + total_len > count)
+			break;
+
+		memcpy(idrent->d_name, iter->d_name, len);
+		idrent->d_reclen = sizeof(struct dirent) + len + 1;
+
+		entries_size += idrent->d_reclen;
+		idrent = (struct dirent *)((char *)idrent + idrent->d_reclen);
+	}
+	return entries_size;
+}

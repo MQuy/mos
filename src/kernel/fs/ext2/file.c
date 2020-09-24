@@ -140,7 +140,7 @@ int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int coun
 		struct ext2_dir_entry *entry = (struct ext2_dir_entry *)ibuf;
 		idirent->d_ino = entry->ino;
 		idirent->d_off = 0;
-		idirent->d_reclen = sizeof(struct dirent) + entry->name_len;
+		idirent->d_reclen = sizeof(struct dirent) + entry->name_len + 1;
 		idirent->d_type = entry->file_type;
 		memcpy(idirent->d_name, entry->name, entry->name_len);
 

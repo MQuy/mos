@@ -30,4 +30,6 @@ struct vfs_file_operations sockfs_file_operations = {
 	.release = sockfs_release_file,
 };
 
-struct vfs_file_operations sockfs_dir_operations = {};
+struct vfs_file_operations sockfs_dir_operations = {
+	.readdir = generic_memory_readdir,
+};

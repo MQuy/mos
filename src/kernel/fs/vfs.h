@@ -230,6 +230,7 @@ struct nameidata *path_walk(const char *path, mode_t mode);
 int vfs_truncate(const char *path, int32_t length);
 int vfs_ftruncate(int32_t fd, int32_t length);
 struct vfs_file *get_empty_filp();
+int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count);
 
 // read_write.c
 char *vfs_read(const char *path);

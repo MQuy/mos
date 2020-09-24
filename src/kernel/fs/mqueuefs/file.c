@@ -39,4 +39,6 @@ struct vfs_file_operations mqueuefs_file_operations = {
 	.open = mqueue_file_open,
 	.poll = mqueue_file_poll};
 
-struct vfs_file_operations mqueuefs_dir_operations = {};
+struct vfs_file_operations mqueuefs_dir_operations = {
+	.readdir = generic_memory_readdir,
+};

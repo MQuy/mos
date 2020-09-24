@@ -112,4 +112,6 @@ struct vfs_file_operations tmpfs_file_operations = {
 	.release = tmpfs_release,
 };
 
-struct vfs_file_operations tmpfs_dir_operations = {};
+struct vfs_file_operations tmpfs_dir_operations = {
+	.readdir = generic_memory_readdir,
+};
