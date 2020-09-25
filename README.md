@@ -3,7 +3,7 @@
 ![license MIT](https://img.shields.io/badge/license-MIT-blue>)
 [![By Vietnamese](https://raw.githubusercontent.com/webuild-community/badge/master/svg/by.svg)](https://webuild.community)
 
-mOS is the hobby operating system which is developed from scratch
+mOS is the unix-like operating system developed from scratch and aims to POSIX compliant.
 
 [![](https://i.imgur.com/NSjjGzV.png)](https://www.youtube.com/watch?v=tLBV7whW_dM "mOS")
 
@@ -16,15 +16,16 @@ mOS is the hobby operating system which is developed from scratch
 - [x] Networking
 - [x] Signal
 - [x] Terminal
-- [ ] POSIX compliant
+- [ ] Dynamic linker
 - [ ] Port GCC (the GNU Compiler Collection)
+- [ ] Browser
 - [ ] Sound
 - [ ] Symmetric multiprocessing
 
 🍀 Optional features
 
+- [ ] POSIX compliant
 - [ ] Setup 2-level paging in boot.asm
-- [ ] Dynamic linker
 
 ### Get started
 
