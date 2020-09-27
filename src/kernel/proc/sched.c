@@ -186,7 +186,7 @@ void schedule()
 #define SLICE_THRESHOLD 8
 int32_t irq_schedule_handler(struct interrupt_registers *regs)
 {
-	if (current_thread->policy != THREAD_APP_POLICY)
+	if (current_thread->policy != THREAD_APP_POLICY && current_thread->state != THREAD_RUNNING)
 		return IRQ_HANDLER_CONTINUE;
 
 	lock_scheduler();
@@ -201,22 +201,20 @@ int32_t irq_schedule_handler(struct interrupt_registers *regs)
 		if (nt)
 		{
 			// 1. if next thread to run is not app policy -> step 4
-			// 2. if all threads have the same priority -> increase its priorty -> step 4
-			// 3. otherwise -> swap each element and move current to the last
-			// 4. update thread
+			// 2. scale them to zero and set current thead to last + 1
+			// 3. update thread
 			if (nt->policy == THREAD_APP_POLICY)
 			{
 				struct thread *first_thd = plist_first_entry(&app_ready_list, struct thread, sched_sibling);
 				struct thread *last_thd = plist_last_entry(&app_ready_list, struct thread, sched_sibling);
+				int scale = first_thd->sched_sibling.prio;
 
-				if (last_thd->sched_sibling.prio == first_thd->sched_sibling.prio && last_thd->sched_sibling.prio == current_thread->sched_sibling.prio)
-					current_thread->sched_sibling.prio++;
-				else
+				struct thread *iter;
+				plist_for_each_entry(iter, &app_ready_list, sched_sibling)
 				{
-					int32_t swap = last_thd->sched_sibling.prio;
-					last_thd->sched_sibling.prio = current_thread->sched_sibling.prio;
-					current_thread->sched_sibling.prio = swap;
+					iter->sched_sibling.prio -= scale;
 				}
+				current_thread->sched_sibling.prio = last_thd->sched_sibling.prio + 1;
 			}
 			update_thread(current_thread, THREAD_READY);
 			is_schedulable = true;
