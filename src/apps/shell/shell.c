@@ -85,6 +85,8 @@ int main()
 				ls(ishell->cwd);
 			else if (!strcmp(cmd->program, "cd"))
 				cd(cmd);
+			else if (!strcmp(cmd->program, "uname"))
+				execute_program(cmd->program, cmd);
 			else
 				write(1, "command not found", 18);
 			exit(0);

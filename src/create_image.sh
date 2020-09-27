@@ -20,6 +20,8 @@ cd apps/terminal && make clean && make
 cd ../..
 cd apps/shell && make clean && make
 cd ../..
+cd apps/uname && make clean && make
+cd ../..
 cd apps/calculator && make clean && make
 cd ../..
 
@@ -27,6 +29,7 @@ mkdir "/Volumes/${VOLUME_NAME}/bin"
 cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
 cp apps/terminal/terminal "/Volumes/${VOLUME_NAME}/bin"
 cp apps/shell/shell "/Volumes/${VOLUME_NAME}/bin"
+cp apps/uname/uname "/Volumes/${VOLUME_NAME}/bin"
 cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
 
 mkdir "/Volumes/${VOLUME_NAME}/etc"
