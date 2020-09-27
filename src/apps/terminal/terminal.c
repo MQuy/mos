@@ -240,7 +240,8 @@ static void handle_x11_event(struct xevent *evt)
 			unsigned char buf[100] = {0};
 			convert_keycode_to_ascii(kevt->key, kevt->state, buf, &nbuf);
 
-			write(active_ptm, (const char *)buf, nbuf);
+			if (nbuf > 0)
+				write(active_ptm, (const char *)buf, nbuf);
 		}
 	}
 }

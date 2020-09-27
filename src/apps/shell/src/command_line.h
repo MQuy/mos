@@ -7,7 +7,6 @@ struct command_line
 {
 	char *program;
 	char **args;
-	bool is_builtin;
 };
 
 int parse_text(char *text, int len, struct command_line *cmd);

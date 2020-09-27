@@ -63,20 +63,18 @@ int main()
 		int fd = fork();
 		if (!fd)
 		{
-			if (cmd->is_builtin)
-			{
-				setpgid(0, 0);
-				tcsetpgrp(1, getpid());
-				if (!strcmp(cmd->program, "pwd"))
-					pwd(ishell->cwd);
-				else if (!strcmp(cmd->program, "ls"))
-					ls(ishell->cwd);
-				else if (!strcmp(cmd->program, "cd"))
-					cd(cmd);
-				else
-					write(1, "\ncommand not found", 18);
-				exit(0);
-			}
+			setpgid(0, 0);
+			tcsetpgrp(1, getpid());
+			write(1, "\n", 1);
+			if (!strcmp(cmd->program, "pwd"))
+				pwd(ishell->cwd);
+			else if (!strcmp(cmd->program, "ls"))
+				ls(ishell->cwd);
+			else if (!strcmp(cmd->program, "cd"))
+				cd(cmd);
+			else
+				write(1, "command not found", 18);
+			exit(0);
 		}
 		else
 		{

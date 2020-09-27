@@ -5,8 +5,6 @@
 
 int pwd(char *cwd)
 {
-	char text[256] = {0};
-	sprintf(text, "\n%s", cwd);
-	write(1, text, strlen(text));
+	write(1, cwd, strlen(cwd));
 	return 0;
 }

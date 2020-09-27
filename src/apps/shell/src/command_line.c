@@ -17,6 +17,7 @@ char *clean_text(char *text, int len)
 	for (; pend >= 0; pend--)
 	{
 		char ch = text[pend];
+		// TODO: MQ 2020-09-27 Multiple spaces like "hello   world"
 		if (!isspace(ch))
 			break;
 	}
@@ -30,8 +31,8 @@ int parse_args(char *args, struct command_line *cmd)
 	if (!args)
 		return -1;
 
-	int argc = 1;
 	int len = strlen(args);
+	int argc = len > 0 ? 2 : 1;
 	for (int i = 0; i < len; ++i)
 	{
 		if (isspace(args[i]))
@@ -79,7 +80,6 @@ int parse_text(char *text, int len, struct command_line *cmd)
 		program = ct;
 
 	cmd->program = program;
-	cmd->is_builtin = true;
 	parse_args(args, cmd);
 
 	return 0;
