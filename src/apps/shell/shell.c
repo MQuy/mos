@@ -39,6 +39,19 @@ void print_prefix(char *cwd)
 	write(1, prefix, strlen(prefix));
 }
 
+void execute_program(char *name, struct command_line *cmd)
+{
+	char *path = calloc(MAX_PATH_LENGTH, sizeof(char));
+	if (name[0] != '/')
+	{
+		strcat(path, "/bin/");
+		strcat(path, name);
+	}
+	else
+		strcpy(path, name);
+	execve(path, cmd->args, NULL);
+}
+
 int main()
 {
 	init_shell();
