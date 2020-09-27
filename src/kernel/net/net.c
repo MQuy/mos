@@ -285,11 +285,6 @@ void net_rx_loop()
 			skb_free(prev_skb);
 		}
 
-		if (backup_thread)
-		{
-			update_thread(backup_thread, THREAD_READY);
-			backup_thread = NULL;
-		}
 		update_thread(net_thread, THREAD_WAITING);
 		unlock_scheduler();
 		schedule();
@@ -302,18 +297,15 @@ void net_switch()
 		return;
 	if (net_thread != current_thread)
 	{
-		if (current_thread->state == THREAD_RUNNING)
-		{
-			backup_thread = current_thread;
-			update_thread(current_thread, THREAD_WAITING);
-		}
-		else
-			backup_thread = NULL;
 		update_thread(net_thread, THREAD_READY);
+		if (current_thread->state == THREAD_RUNNING)
+			update_thread(current_thread, THREAD_READY);
 		schedule();
 	}
 	else
+	{
 		update_thread(net_thread, THREAD_READY);
+	}
 }
 
 void net_init()
@@ -325,6 +317,6 @@ void net_init()
 	neighbour_init();
 
 	DEBUG &&debug_println(DEBUG_INFO, "[net] - Setup net process");
-	net_process = create_kernel_process("net", net_rx_loop, 0);
+	net_process = create_system_process("net", net_rx_loop, 0);
 	net_thread = net_process->thread;
 }

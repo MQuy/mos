@@ -155,9 +155,7 @@ extern volatile struct hashmap *mprocess;
 
 // task.c
 void task_init();
-struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority);
-struct thread *create_user_thread(struct process *parent, const char *path, enum thread_state state, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
-struct process *create_kernel_process(const char *pname, void *func, int32_t priority);
+struct process *create_system_process(const char *pname, void *func, int32_t priority);
 void process_load(const char *pname, const char *path, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *));
 struct process *process_fork(struct process *parent);
 int32_t process_execve(const char *pathname, char *const argv[], char *const envp[]);

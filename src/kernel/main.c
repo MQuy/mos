@@ -41,6 +41,7 @@ extern struct vfs_file_system_type ext2_fs_type;
 
 void setup_window_server(struct Elf32_Layout *elf_layout)
 {
+	dhcp_setup();
 	struct framebuffer *fb = get_framebuffer();
 	uint32_t screen_size = fb->height * fb->pitch;
 	struct vm_area_struct *area = get_unmapped_area(0, screen_size);
@@ -81,6 +82,9 @@ void kernel_init()
 	/// init keyboard and mouse
 	kkybrd_install();
 	mouse_init();
+
+	net_init();
+	rtl8139_init();
 
 	// init ipc message queue
 	mq_init();

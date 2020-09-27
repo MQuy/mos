@@ -134,13 +134,17 @@ void update_thread(struct thread *th, uint8_t state)
 static void switch_thread(struct thread *nt)
 {
 	if (current_thread == nt)
+	{
+		current_thread->time_slice = 0;
+		update_thread(current_thread, THREAD_RUNNING);
 		return;
+	}
 
 	struct thread *pt = current_thread;
 
 	current_thread = nt;
 	current_thread->time_slice = 0;
-	current_thread->state = THREAD_RUNNING;
+	update_thread(current_thread, THREAD_RUNNING);
 	current_process = current_thread->parent;
 
 	uint32_t paddr_cr3 = vmm_get_physical_address((uint32_t)current_thread->parent->pdir, true);

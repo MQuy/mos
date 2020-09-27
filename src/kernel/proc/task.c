@@ -85,7 +85,7 @@ void thread_sleep(uint32_t ms)
 	schedule();
 }
 
-struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum thread_state state, int priority)
+struct thread *create_thread(struct process *parent, uint32_t eip, enum thread_state state, int policy, int priority)
 {
 	lock_scheduler();
 
@@ -94,7 +94,7 @@ struct thread *create_kernel_thread(struct process *parent, uint32_t eip, enum t
 	th->kernel_stack = (uint32_t)(kcalloc(STACK_SIZE, sizeof(char)) + STACK_SIZE);
 	th->parent = parent;
 	th->state = state;
-	th->policy = THREAD_KERNEL_POLICY;
+	th->policy = policy;
 	th->esp = th->kernel_stack - sizeof(struct trap_frame);
 	plist_node_init(&th->sched_sibling, priority);
 	th->sleep_timer = (struct timer_list)TIMER_INITIALIZER(thread_sleep_timer, UINT32_MAX);
@@ -164,13 +164,13 @@ static struct process *create_process(struct process *parent, const char *name, 
 static void setup_swapper_process()
 {
 	current_process = create_process(NULL, "swapper", NULL);
-	current_thread = create_kernel_thread(current_process, 0, THREAD_RUNNING, 0);
+	current_thread = create_thread(current_process, 0, THREAD_RUNNING, THREAD_KERNEL_POLICY, 0);
 }
 
-struct process *create_kernel_process(const char *pname, void *func, int32_t priority)
+struct process *create_system_process(const char *pname, void *func, int32_t priority)
 {
 	struct process *proc = create_process(current_process, pname, current_process->pdir);
-	create_kernel_thread(proc, (uint32_t)func, THREAD_WAITING, priority);
+	create_thread(proc, (uint32_t)func, THREAD_WAITING, THREAD_SYSTEM_POLICY, priority);
 
 	return proc;
 }
@@ -191,7 +191,7 @@ void task_init(void *func)
 	init->gid = init->pid;
 	init->sid = init->pid;
 
-	struct thread *nt = create_kernel_thread(init, (uint32_t)func, THREAD_WAITING, 1);
+	struct thread *nt = create_thread(init, (uint32_t)func, THREAD_WAITING, THREAD_KERNEL_POLICY, 1);
 	update_thread(current_thread, THREAD_TERMINATED);
 	update_thread(nt, THREAD_READY);
 
