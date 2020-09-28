@@ -107,7 +107,7 @@ void ping(uint32_t dest_ip)
 		struct sk_buff *skb = ping_create_sk_buff(dev->local_ip, dest_ip, ICMP_REQUEST, 0, identifier, ntransmitted);
 		uint64_t sent_time = get_milliseconds(NULL);
 		if (!ntransmitted)
-			DEBUG &&debug_println(DEBUG_INFO, "PING %s: %d data bytes", dest_ip_text, htons(skb->nh.iph->total_length) - skb->nh.iph->ihl);
+			DEBUG &&debug_println(DEBUG_INFO, "Ping %s: %d data bytes", dest_ip_text, htons(skb->nh.iph->total_length) - skb->nh.iph->ihl);
 		sock->ops->sendmsg(sock, skb->nh.iph, skb->len);
 		skb_free(skb);
 

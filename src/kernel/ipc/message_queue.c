@@ -236,9 +236,9 @@ int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize
 
 void mq_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "Message Queue: Initializing");
 
 	hashmap_init(&mq_map, hashmap_hash_string, hashmap_compare_string, 0);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[mq] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "Message Queue: Done");
 }

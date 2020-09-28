@@ -108,7 +108,7 @@ static int32_t rtc_irq_handler(struct interrupt_registers *regs)
 
 void rtc_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[rtc] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "RTC: Initializing");
 
 	uint8_t rate = log2(32768 / RTC_TICKS_PER_SECOND) + 1;
 	disable_interrupts();
@@ -123,5 +123,5 @@ void rtc_init()
 	register_interrupt_handler(IRQ8, rtc_irq_handler);
 	pic_clear_mask(IRQ8);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[rtc] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "RTC: Done");
 }

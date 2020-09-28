@@ -129,5 +129,5 @@ void getaddrinfo(const char *domain, uint32_t *ip)
 	memset(dns, 0, MAX_DNS_LEN);
 	sock->ops->recvmsg(sock, dns, MAX_DNS_LEN);
 	dns_parse_answers(dns, ip);
-	DEBUG &&debug_println(DEBUG_INFO, "[dns]: %s - %d.%d.%d.%d", domain, *ip >> 24, (*ip >> 16) & 0xff, (*ip >> 8) & 0xff, *ip & 0xff);
+	DEBUG &&debug_println(DEBUG_INFO, "DNS: %s - %d.%d.%d.%d", domain, *ip >> 24, (*ip >> 16) & 0xff, (*ip >> 8) & 0xff, *ip & 0xff);
 }

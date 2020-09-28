@@ -30,7 +30,7 @@ void gdt_set_descriptor(uint32_t i, uint64_t base, uint64_t limit, uint8_t acces
 
 void gdt_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[gdt] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "GDT: Initializing");
 
 	_gdtr.limit = (sizeof(struct gdt_descriptor) * MAX_DESCRIPTORS) - 1;
 	_gdtr.base = (uint32_t)&_gdt[0];
@@ -62,5 +62,5 @@ void gdt_init()
 
 	gdt_flush((uint32_t)&_gdtr);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[gdt] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "GDT: Done");
 }

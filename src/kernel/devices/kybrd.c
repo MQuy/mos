@@ -425,11 +425,11 @@ static struct char_device cdev_kybrd = (struct char_device)DECLARE_CHRDEV("kybrd
 
 void kkybrd_install()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[keyboard] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "Keyboard: Initializing");
 	INIT_LIST_HEAD(&nodelist);
 	INIT_LIST_HEAD(&hwait.list);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount kybrd");
+	DEBUG &&debug_println(DEBUG_INFO, "Keyboard: Mount dev");
 	register_chrdev(&cdev_kybrd);
 	vfs_mknod("/dev/input/keyboard", S_IFCHR, cdev_kybrd.dev);
 
@@ -445,7 +445,7 @@ void kkybrd_install()
 	//! shift, ctrl, and alt keys
 	_shift = _alt = _ctrl = false;
 
-	DEBUG &&debug_println(DEBUG_INFO, "[keyboard] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "Keyboard: Done");
 }
 
 //============================================================================

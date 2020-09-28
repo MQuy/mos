@@ -123,28 +123,28 @@ static void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
 // we use device mounted name as identifier https://en.wikibooks.org/wiki/Guide_to_Unix/Explanations/Filesystems_and_Swap#Disk_Partitioning
 void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[vfs] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Initializing");
 
 	INIT_LIST_HEAD(&vfsmntlist);
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tMount ext2");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount ext2");
 	init_ext2_fs();
 	init_rootfs(fs, dev_name);
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tMount devfs");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount devfs");
 	init_devfs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tMount mqueuefs");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount mqueuefs");
 	init_mqueuefs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tMount tmpfs");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount tmpfs");
 	init_tmpfs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tMount sockfs");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount sockfs");
 	init_sockfs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tMount chrdev");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount chrdev");
 	chrdev_init();
 
-	DEBUG &&debug_println(DEBUG_INFO, "[vfs] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "VFS: Done");
 }

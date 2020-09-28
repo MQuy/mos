@@ -7,6 +7,7 @@
 #include <kernel/ipc/signal.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/system/time.h>
+#include <kernel/utils/printf.h>
 
 #include "task.h"
 
@@ -158,8 +159,8 @@ void schedule()
 		return;
 
 	lock_scheduler();
-	struct thread *nt = pop_next_thread_to_run();
 
+	struct thread *nt = pop_next_thread_to_run();
 	if (!nt)
 	{
 		do
@@ -176,7 +177,6 @@ void schedule()
 				nt = current_thread;
 		} while (!nt);
 	}
-
 	switch_thread(nt);
 
 	if (current_thread->pending)
@@ -229,7 +229,10 @@ int32_t irq_schedule_handler(struct interrupt_registers *regs)
 
 	// NOTE: MQ 2019-10-15 If counter is 1, it means that there is not running scheduler
 	if (is_schedulable && !scheduler_lock_counter)
+	{
+		DEBUG &&debug_println(DEBUG_INFO, "Scheduler: Round-robin for %d", current_thread->tid);
 		schedule();
+	}
 
 	return IRQ_HANDLER_CONTINUE;
 }
@@ -242,6 +245,7 @@ int32_t thread_page_fault(struct interrupt_registers *regs)
 
 	if (regs->cs == 0x1B)
 	{
+		DEBUG &&debug_println(DEBUG_INFO, "Page Fault: From userspace at 0x%x", faultAddr);
 		if (faultAddr == PROCESS_TRAPPED_PAGE_FAULT)
 			do_exit(regs->eax);
 		else if (faultAddr == (uint32_t)sigreturn)

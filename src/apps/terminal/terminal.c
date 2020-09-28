@@ -8,6 +8,7 @@
 #include <libc/poll.h>
 #include <libc/stdlib.h>
 #include <libc/string.h>
+#include <libc/time.h>
 #include <libc/unistd.h>
 #include <stdint.h>
 
@@ -313,7 +314,12 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			struct terminal_line *last_line = list_last_entry(&tab->lines, struct terminal_line, sibling);
 
 			if (last_line && last_line->seconds)
+			{
 				last_line->seconds = time(NULL);
+				struct tm *now = localtime(&last_line->seconds);
+				DEBUG &&debug_println(DEBUG_INFO, "Terminal: Line is recorded at %d:%d:%d", now->tm_hour, now->tm_min, now->tm_sec);
+				free(now);
+			}
 
 			struct terminal_line *line = alloc_terminal_line();
 			list_add_tail(&line->sibling, &tab->lines);

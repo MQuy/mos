@@ -15,7 +15,7 @@
 
 extern volatile uint64_t boot_seconds, current_seconds;
 
-volatile uint64_t jiffies = 0;
+volatile uint64_t jiffies = 0;	// in milliseconds
 
 // boot_seconds is only set on the first tick
 // current_seconds are updated each tick in rtc irq handler
@@ -48,7 +48,7 @@ static int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 // pit should only be used for keeping track of time precision
 void pit_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[pit] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "PIT: Initializing");
 
 	int divisor = 1193181 / PIT_TICKS_PER_SECOND;
 
@@ -58,5 +58,5 @@ void pit_init()
 
 	register_interrupt_handler(IRQ0, pit_interrupt_handler);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[pit] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "PIT: Done");
 }

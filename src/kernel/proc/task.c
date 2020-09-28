@@ -177,16 +177,16 @@ struct process *create_system_process(const char *pname, void *func, int32_t pri
 
 void task_init(void *func)
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[task] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "Task: Initializing");
 
 	mprocess = kcalloc(1, sizeof(struct hashmap));
 	hashmap_init(mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
 	sched_init();
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tSetup swapper process");
+	DEBUG &&debug_println(DEBUG_INFO, "Task: Setup swapper process");
 	setup_swapper_process();
 
-	DEBUG &&debug_println(DEBUG_INFO, "\tSetup init process");
+	DEBUG &&debug_println(DEBUG_INFO, "Task: Setup init process");
 	struct process *init = create_process(current_process, "init", current_process->pdir);
 	init->gid = init->pid;
 	init->sid = init->pid;
@@ -198,7 +198,7 @@ void task_init(void *func)
 	register_interrupt_handler(IRQ8, irq_schedule_handler);
 	register_interrupt_handler(14, thread_page_fault);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[task] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "Task: Switch to init process");
 
 	schedule();
 }

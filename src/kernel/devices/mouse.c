@@ -218,11 +218,11 @@ static uint8_t mouse_input(void)
 
 void mouse_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[mouse] - Initializing");
+	DEBUG &&debug_println(DEBUG_INFO, "Mouse: Initializing");
 	INIT_LIST_HEAD(&nodelist);
 	INIT_LIST_HEAD(&hwait.list);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[dev] - Mount mouse");
+	DEBUG &&debug_println(DEBUG_INFO, "Mouse: Mount dev");
 	register_chrdev(&cdev_mouse);
 	vfs_mknod("/dev/input/mouse", S_IFCHR, cdev_mouse.dev);
 
@@ -264,5 +264,5 @@ void mouse_init()
 	mouse_output(0xF4);
 	mouse_input();
 
-	DEBUG &&debug_println(DEBUG_INFO, "[mouse] - Done");
+	DEBUG &&debug_println(DEBUG_INFO, "Mouse: Done");
 }
