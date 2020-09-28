@@ -302,6 +302,20 @@ static int32_t sys_getptsname(int32_t fdm, char *buf)
 	return 0;
 }
 
+static int32_t sys_clock_gettime(clockid_t clk_id, struct timespec *tp)
+{
+	if (clk_id != CLOCK_PROCESS_CPUTIME_ID)
+		return -EINVAL;
+	if (!tp)
+		return -EFAULT;
+
+	uint64_t msec = get_milliseconds_since_epoch();
+	tp->tv_sec = msec / 1000;
+	tp->tv_nsec = (msec % 1000) * 1000;
+
+	return 0;
+}
+
 static int32_t sys_debug_printf(enum debug_level level, const char *out)
 {
 	return debug_printf(level, out);
@@ -355,6 +369,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_getsid 147
 #define __NR_nanosleep 162
 #define __NR_poll 168
+#define __NR_clock_gettime 265
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
 #define __NR_mq_unlink (__NR_mq_open + 2)
@@ -411,6 +426,7 @@ static void *syscalls[] = {
 	[__NR_mq_receive] = sys_mq_receive,
 	[__NR_waitid] = sys_waitid,
 	[__NR_getptsname] = sys_getptsname,
+	[__NR_clock_gettime] = sys_clock_gettime,
 	[__NR_dprintf] = sys_debug_printf,
 	[__NR_dprintln] = sys_debug_println,
 };

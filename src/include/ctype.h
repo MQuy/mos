@@ -22,7 +22,9 @@ typedef int sid_t;
 typedef unsigned long sigset_t;
 typedef int idtype_t;
 typedef int id_t;
-typedef unsigned int time_t;
+typedef long long time_t;
+typedef int clockid_t;
+typedef long long clock_t;
 
 #define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')
@@ -66,8 +68,18 @@ typedef unsigned int time_t;
 
 struct timespec
 {
-	long tv_sec;
+	time_t tv_sec;
 	long tv_nsec;
 };
+#define CLOCK_REALTIME 0
+#define CLOCK_MONOTONIC 1
+#define CLOCK_PROCESS_CPUTIME_ID 2
+#define CLOCK_THREAD_CPUTIME_ID 3
+#define CLOCK_MONOTONIC_RAW 4
+#define CLOCK_REALTIME_COARSE 5
+#define CLOCK_MONOTONIC_COARSE 6
+#define CLOCK_BOOTTIME 7
+#define CLOCK_REALTIME_ALARM 8
+#define CLOCK_BOOTTIME_ALARM 9
 
 #endif

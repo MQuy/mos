@@ -56,6 +56,7 @@
 #define __NR_getsid 147
 #define __NR_nanosleep 162
 #define __NR_poll 168
+#define __NR_clock_gettime 265
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
 #define __NR_mq_unlink (__NR_mq_open + 2)
@@ -373,6 +374,12 @@ _syscall2(getptsname, int32_t, char *);
 static inline int32_t getptsname(int32_t fdm, char *ptsname)
 {
 	return syscall_getptsname(fdm, ptsname);
+}
+
+_syscall2(clock_gettime, clockid_t, struct timespec *);
+static inline int32_t clock_gettime(clockid_t clk_id, struct timespec *tp)
+{
+	return syscall_clock_gettime(clk_id, tp);
 }
 
 _syscall2(dprintf, enum debug_level, const char *);

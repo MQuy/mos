@@ -5,6 +5,14 @@
 extern volatile uint64_t jiffies;
 
 volatile uint64_t boot_seconds, current_seconds;
+struct time epoch_time = {
+	.year = 1970,
+	.month = 1,
+	.day = 1,
+	.hour = 0,
+	.minute = 0,
+	.second = 0,
+};
 struct time current_time;
 
 void set_boot_seconds(uint64_t bs)
@@ -85,4 +93,9 @@ uint64_t get_milliseconds(struct time *t)
 struct time *get_time(int32_t seconds)
 {
 	return seconds == 0 ? &current_time : get_time_from_seconds(seconds);
+}
+
+uint64_t get_milliseconds_since_epoch()
+{
+	return get_milliseconds(NULL) - get_milliseconds(&epoch_time);
 }

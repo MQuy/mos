@@ -1,6 +1,17 @@
 #include "time.h"
 
 #include <libc/stdlib.h>
+#include <libc/unistd.h>
+
+clock_t clock()
+{
+	struct timespec ts;
+
+	if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) == -1)
+		return -1;
+
+	return (ts.tv_sec * CLOCKS_PER_SEC + ts.tv_nsec / (1000000000 / CLOCKS_PER_SEC));
+}
 
 struct tm *localtime(const time_t *timer)
 {

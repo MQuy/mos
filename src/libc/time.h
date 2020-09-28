@@ -18,6 +18,7 @@ struct tm
 	int tm_isdst; /* Daylight saving time */
 };
 
+clock_t clock();
 struct tm *localtime(const time_t *timer);
 time_t mktime(struct tm *timeptr);
 
