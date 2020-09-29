@@ -360,6 +360,7 @@ int32_t process_execve(const char *pathname, char *const argv[], char *const env
 	char *buf = vfs_read(pathname);
 	elf_unload();
 	struct Elf32_Layout *elf_layout = elf_load(buf);
+	strcpy(current_process->name, pathname);
 
 	// copy argv back to userspace
 	char **user_argv = (char **)sys_sbrk(argv_length + 1);
