@@ -367,7 +367,7 @@ int32_t process_execve(const char *pathname, char *const argv[], char *const env
 	for (int i = 0; i < argv_length; ++i)
 	{
 		int ilength = strlen(kernel_argv[i]);
-		user_argv[i] = kcalloc(ilength + 1, sizeof(char));
+		user_argv[i] = (char *)sys_sbrk(ilength + 1);
 		memcpy(user_argv[i], kernel_argv[i], ilength);
 	}
 
@@ -377,7 +377,7 @@ int32_t process_execve(const char *pathname, char *const argv[], char *const env
 	for (int i = 0; i < envp_length; ++i)
 	{
 		int ilength = strlen(kernel_envp[i]);
-		user_envp[i] = kcalloc(ilength + 1, sizeof(char));
+		user_envp[i] = (char *)sys_sbrk(ilength + 1);
 		memcpy(user_envp[i], kernel_envp[i], ilength);
 	}
 
