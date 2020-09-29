@@ -1,6 +1,7 @@
 #include <include/atomic.h>
 #include <kernel/devices/char/tty.h>
 #include <kernel/ipc/signal.h>
+#include <kernel/utils/printf.h>
 
 #include "task.h"
 
@@ -63,12 +64,17 @@ static void exit_notify(struct process *proc)
 
 void do_exit(int32_t code)
 {
+	lock_scheduler();
+
 	exit_mm(current_process);
 	exit_files(current_process);
 	exit_thread(current_process);
 
 	current_process->exit_code = code;
 	exit_notify(current_process);
+
+	debug_println(DEBUG_INFO, "Process: Exit %d", current_process->pid);
+	unlock_scheduler();
 
 	schedule();
 }
@@ -125,6 +131,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 		}
 		ret = 0;
 	}
+	debug_println(DEBUG_INFO, "Process: Waiting done %d", current_process->pid);
 
 	return ret;
 }
