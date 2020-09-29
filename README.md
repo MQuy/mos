@@ -5,7 +5,7 @@
 
 mOS is the unix-like operating system developed from scratch and aims to POSIX compliant.
 
-[![](https://i.imgur.com/NSjjGzV.png)](https://www.youtube.com/watch?v=tLBV7whW_dM "mOS")
+[![](https://i.imgur.com/DZB1mn9.png)](https://www.youtube.com/watch?v=y3h7E1nkaUs "mOS")
 
 ### Work-in-process features
 
