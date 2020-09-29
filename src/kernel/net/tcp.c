@@ -480,6 +480,7 @@ struct proto_ops tcp_proto_ops = {
 	.family = PF_INET,
 	.obj_size = sizeof(struct tcp_sock),
 	.bind = tcp_bind,
+	.ioctl = inet_ioctl,
 	.listen = tcp_listen,
 	.accept = tcp_accept,
 	.connect = tcp_connect,

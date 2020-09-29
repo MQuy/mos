@@ -2,6 +2,7 @@
 
 #include <include/errno.h>
 #include <include/if_ether.h>
+#include <include/sockios.h>
 #include <kernel/fs/sockfs/sockfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/memory/vmm.h>
@@ -161,6 +162,29 @@ char *inet_ntop(uint32_t src, char *dst, uint16_t len)
 		return NULL;
 
 	return strcpy(dst, tmp);
+}
+
+int inet_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct ifreq *ifr = (struct ifreq *)arg;
+	struct sockaddr_in *sin = (struct sockaddr_in *)&ifr->ifr_addr;
+	struct net_device *dev = get_current_net_device();
+
+	switch (cmd)
+	{
+	case SIOCGIFADDR:
+		sin->sin_addr = dev->local_ip;
+		break;
+
+	case SIOCGIFDNSADDR:
+		sin->sin_addr = dev->dns_server_ip;
+		break;
+
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 // 1. Check icmp request to local ip -> send ICMP reply

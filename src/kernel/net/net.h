@@ -61,6 +61,40 @@ struct sockaddr_ll
 	uint8_t sll_addr[6];   /* Physical-layer address */
 };
 
+#define IFNAMSIZ 16
+
+struct ifmap
+{
+	unsigned long mem_start;
+	unsigned long mem_end;
+	unsigned short base_addr;
+	unsigned char irq;
+	unsigned char dma;
+	unsigned char port;
+	/* 3 bytes spare */
+};
+
+struct ifreq
+{
+	char ifr_name[IFNAMSIZ]; /* Interface name */
+	union
+	{
+		struct sockaddr ifr_addr;
+		struct sockaddr ifr_dstaddr;
+		struct sockaddr ifr_broadaddr;
+		struct sockaddr ifr_netmask;
+		struct sockaddr ifr_hwaddr;
+		short ifr_flags;
+		int ifr_ifindex;
+		int ifr_metric;
+		int ifr_mtu;
+		struct ifmap ifr_map;
+		char ifr_slave[IFNAMSIZ];
+		char ifr_newname[IFNAMSIZ];
+		char *ifr_data;
+	};
+};
+
 enum socket_state
 {
 	SS_UNCONNECTED = 1,	  /* unconnected to any socket	*/
@@ -132,6 +166,7 @@ struct proto_ops
 	int (*bind)(struct socket *sock, struct sockaddr *myaddr, int sockaddr_len);
 	int (*connect)(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len);
 	int (*accept)(struct socket *sock, struct sockaddr *addr, int sockaddr_len);
+	int (*ioctl)(struct socket *sock, unsigned int cmd, unsigned long arg);
 	int (*listen)(struct socket *sock, int backlog);
 	int (*shutdown)(struct socket *sock);
 	int (*sendmsg)(struct socket *sock, void *msg, size_t msg_len);
@@ -201,6 +236,7 @@ uint16_t singular_checksum(void *packet, uint16_t size);
 uint32_t packet_checksum_start(void *packet, uint16_t size);
 uint16_t transport_calculate_checksum(void *segment, uint16_t segment_len, uint8_t protocal, uint32_t source_ip, uint32_t dest_ip);
 char *inet_ntop(uint32_t src, char *dst, uint16_t len);
+int inet_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
 
 void register_net_device(struct net_device *);
 struct net_device *get_current_net_device();

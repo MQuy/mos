@@ -101,6 +101,7 @@ int packet_handler(struct socket *sock, struct sk_buff *skb)
 struct proto_ops packet_proto_ops = {
 	.family = PF_PACKET,
 	.obj_size = sizeof(struct packet_sock),
+	.ioctl = inet_ioctl,
 	.connect = packet_connect,
 	.sendmsg = packet_sendmsg,
 	.recvmsg = packet_recvmsg,

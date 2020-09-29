@@ -59,7 +59,7 @@ int raw_recvmsg(struct socket *sock, void *msg, size_t msg_len)
 		return -ESHUTDOWN;
 
 	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
+	struct sk_buff *skb = NULL;
 
 	while (!skb)
 	{
@@ -116,6 +116,7 @@ struct proto_ops raw_proto_ops = {
 	.family = PF_INET,
 	.obj_size = sizeof(struct inet_sock),
 	.bind = raw_bind,
+	.ioctl = inet_ioctl,
 	.connect = raw_connect,
 	.sendmsg = raw_sendmsg,
 	.recvmsg = raw_recvmsg,

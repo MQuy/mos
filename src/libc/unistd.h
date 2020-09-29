@@ -7,6 +7,7 @@
 #include <libc/dirent.h>
 #include <libc/mqueue.h>
 #include <libc/signal.h>
+#include <libc/socket.h>
 #include <libc/stdio.h>
 #include <libc/wait.h>
 #include <stddef.h>
@@ -226,6 +227,37 @@ static inline int32_t poll(struct pollfd *fds, uint32_t nfds)
 {
 	return syscall_poll(fds, nfds);
 }
+
+_syscall3(socket, int32_t, enum socket_type, int32_t);
+static inline int32_t socket(int32_t family, enum socket_type type, int32_t protocal)
+{
+	return syscall_socket(family, type, protocal);
+}
+
+_syscall3(bind, int32_t, struct sockaddr *, uint32_t);
+static inline int32_t bind(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
+{
+	return syscall_bind(sockfd, addr, addrlen);
+}
+
+_syscall3(connect, int32_t, struct sockaddr *, uint32_t);
+static inline int32_t connect(int32_t sockfd, struct sockaddr *addr, uint32_t addrlen)
+{
+	return syscall_connect(sockfd, addr, addrlen);
+}
+
+_syscall3(send, int32_t, void *, size_t);
+static inline int32_t send(int32_t sockfd, void *msg, size_t len)
+{
+	return syscall_send(sockfd, msg, len);
+}
+
+_syscall3(recv, int32_t, void *, size_t);
+static inline int32_t recv(int32_t sockfd, void *msg, size_t len)
+{
+	return syscall_recv(sockfd, msg, len);
+}
+
 _syscall3(mq_open, const char *, int32_t, struct mq_attr *);
 static inline int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {

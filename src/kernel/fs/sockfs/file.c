@@ -2,6 +2,7 @@
 #include <include/errno.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/memory/vmm.h>
+#include <kernel/net/net.h>
 #include <kernel/proc/task.h>
 
 #include "sockfs.h"
@@ -24,10 +25,21 @@ static int sockfs_release_file(struct vfs_inode *inode, struct vfs_file *file)
 	return 0;
 }
 
+int sockfs_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg)
+{
+	struct socket *sock = SOCKET_I(inode);
+
+	if (sock->ops->ioctl)
+		return sock->ops->ioctl(sock, cmd, arg);
+
+	return 0;
+}
+
 struct vfs_file_operations sockfs_file_operations = {
 	.read = sockfs_read_file,
 	.write = sockfs_write_file,
 	.release = sockfs_release_file,
+	.ioctl = sockfs_ioctl,
 };
 
 struct vfs_file_operations sockfs_dir_operations = {
