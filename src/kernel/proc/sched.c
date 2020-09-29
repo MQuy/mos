@@ -190,7 +190,7 @@ void schedule()
 #define SLICE_THRESHOLD 8
 int32_t irq_schedule_handler(struct interrupt_registers *regs)
 {
-	if (current_thread->policy != THREAD_APP_POLICY && current_thread->state != THREAD_RUNNING)
+	if (current_thread->policy != THREAD_APP_POLICY || current_thread->state != THREAD_RUNNING)
 		return IRQ_HANDLER_CONTINUE;
 
 	lock_scheduler();
