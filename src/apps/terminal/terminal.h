@@ -1,8 +1,8 @@
 #ifndef TAB_H
 #define TAB_H
 
-#include <shared/ctype.h>
 #include <shared/list.h>
+#include <sys/types.h>
 
 #define CHARACTERS_PER_LINE 256
 #define MAX_ROWS 400

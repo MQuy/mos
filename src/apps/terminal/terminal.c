@@ -4,7 +4,6 @@
 #include <gui/psf.h>
 #include <math.h>
 #include <poll.h>
-#include <shared/cdefs.h>
 #include <shared/ioctls.h>
 #include <stdint.h>
 #include <stdlib.h>

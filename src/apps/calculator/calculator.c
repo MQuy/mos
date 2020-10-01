@@ -1,8 +1,8 @@
 #include <gui/layout.h>
-#include <shared/cdefs.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/cdefs.h>
 #include <unistd.h>
 
 #define LABEL_ZERO 0

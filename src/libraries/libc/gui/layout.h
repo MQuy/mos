@@ -4,9 +4,9 @@
 #include <gui/msgui.h>
 #include <hashtable/hashmap.h>
 #include <poll.h>
-#include <shared/cdefs.h>
 #include <shared/list.h>
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 #include "event.h"
 #include "framebuffer.h"

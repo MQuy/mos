@@ -17,10 +17,11 @@ https://github.com/benhoyt/inih
 
 #include "ini.h"
 
-#include <shared/ctype.h>
+#include <ctype.h>
 #include <shared/fcntl.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #if !INI_USE_STACK

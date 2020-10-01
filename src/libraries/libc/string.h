@@ -1,10 +1,9 @@
 #ifndef LIBC_STRING_H
 #define LIBC_STRING_H
 
-#include <shared/cdefs.h>
-#include <shared/ctype.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #define op_t unsigned long int
 #define OPSIZ (sizeof(op_t))

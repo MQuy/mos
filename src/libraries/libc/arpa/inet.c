@@ -1,6 +1,7 @@
 #include "inet.h"
 
 #include <stdio.h>
+#include <string.h>
 
 char *inet_ntop(uint32_t src, char *dst, uint16_t len)
 {

@@ -1,9 +1,15 @@
 #ifndef LIBC_STDIO_H
 #define LIBC_STDIO_H
 
-#include <shared/ctype.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <sys/reent.h>
+
+#define EOF (-1)
+
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
 
 enum debug_level
 {

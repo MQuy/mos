@@ -1,7 +1,7 @@
 #ifndef LIBC_DIRENT_H
 #define LIBC_DIRENT_H
 
-#include <shared/ctype.h>
+#include <sys/types.h>
 
 #define MAX_FILENAME_LENGTH 256
 

@@ -3,7 +3,6 @@
 
 #include <dirent.h>
 #include <mqueue.h>
-#include <shared/ctype.h>
 #include <shared/fcntl.h>
 #include <shared/ioctls.h>
 #include <signal.h>
@@ -11,6 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <wait.h>
 
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl

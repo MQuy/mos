@@ -1,8 +1,8 @@
 #ifndef LIBC_WAIT_H
 #define LIBC_WAIT_H
 
-#include <shared/ctype.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #define WNOHANG 0x00000001
 #define WUNTRACED 0x00000002

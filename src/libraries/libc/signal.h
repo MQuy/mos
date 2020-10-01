@@ -1,8 +1,8 @@
-#ifndef IPC_SIGNAL_H
-#define IPC_SIGNAL_H
+#ifndef LIBC_SIGNAL_H
+#define LIBC_SIGNAL_H
 
-#include <shared/ctype.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #define NSIG 32
 

@@ -3,6 +3,7 @@
 #include <bmp.h>
 #include <gui/msgui.h>
 #include <gui/psf.h>
+#include <math.h>
 #include <poll.h>
 #include <shared/fcntl.h>
 #include <shared/mman.h>

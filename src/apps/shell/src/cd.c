@@ -1,3 +1,4 @@
+#include <math.h>
 #include <shared/mman.h>
 #include <stddef.h>
 #include <stdlib.h>

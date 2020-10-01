@@ -1,7 +1,7 @@
 #include "psf.h"
 
+#include <limits.h>
 #include <math.h>
-#include <shared/ctype.h>
 #include <stdlib.h>
 #include <string.h>
 

@@ -1,6 +1,6 @@
 #include "string.h"
 
-#include <shared/ctype.h>
+#include <ctype.h>
 #include <stdlib.h>
 
 static char tbuf[32];
