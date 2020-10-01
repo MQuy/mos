@@ -3,8 +3,8 @@
 #include <cpu/hal.h>
 #include <cpu/idt.h>
 #include <cpu/pic.h>
-#include <shared/ctype.h>
 #include <system/time.h>
+#include <utils/math.h>
 #include <utils/printf.h>
 
 #define CMOS_ADDRESS 0x70

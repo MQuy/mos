@@ -4,10 +4,11 @@
 #include <fs/poll.h>
 #include <locking/semaphore.h>
 #include <shared/atomic.h>
-#include <shared/ctype.h>
 #include <shared/list.h>
+#include <shared/types.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <system/time.h>
 
 // mount
 #define MS_NOUSER (1 << 31)

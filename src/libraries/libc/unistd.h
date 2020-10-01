@@ -2,8 +2,8 @@
 #define LIBC_UNISTD_H
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <mqueue.h>
-#include <shared/fcntl.h>
 #include <shared/ioctls.h>
 #include <signal.h>
 #include <socket.h>

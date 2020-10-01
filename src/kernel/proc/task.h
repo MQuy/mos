@@ -6,7 +6,6 @@
 #include <locking/semaphore.h>
 #include <memory/vmm.h>
 #include <proc/elf.h>
-#include <shared/ctype.h>
 #include <shared/list.h>
 #include <stdint.h>
 #include <system/timer.h>

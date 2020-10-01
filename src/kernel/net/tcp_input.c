@@ -1,6 +1,7 @@
 #include <proc/task.h>
 #include <shared/errno.h>
 #include <system/time.h>
+#include <utils/math.h>
 
 #include "tcp.h"
 

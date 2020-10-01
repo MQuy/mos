@@ -1,14 +1,14 @@
 #include "window_manager.h"
 
 #include <bmp.h>
+#include <fcntl.h>
 #include <gui/psf.h>
 #include <hashtable/hashmap.h>
 #include <ini/ini.h>
-#include <shared/fcntl.h>
-#include <shared/mman.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/cdefs.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 static struct desktop *desktop;

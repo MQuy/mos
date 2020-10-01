@@ -2,7 +2,7 @@
 #define UTILS_STRING_H
 
 #include <shared/cdefs.h>
-#include <shared/ctype.h>
+#include <shared/types.h>
 #include <stddef.h>
 #include <stdint.h>
 

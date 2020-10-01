@@ -8,11 +8,11 @@
 #include "hashmap.h"
 
 #include <ctype.h>
-#include <shared/errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/errno.h>
 #include <sys/types.h>
 
 #define HASHMAP_ASSERT(expr) ((void)0)

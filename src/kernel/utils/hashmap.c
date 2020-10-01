@@ -10,6 +10,7 @@
 #include <memory/vmm.h>
 #include <shared/ctype.h>
 #include <shared/errno.h>
+#include <shared/types.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <utils/string.h>

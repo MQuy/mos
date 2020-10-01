@@ -10,7 +10,6 @@
 #include <net/net.h>
 #include <proc/elf.h>
 #include <proc/task.h>
-#include <shared/ctype.h>
 #include <shared/errno.h>
 #include <shared/fcntl.h>
 #include <system/time.h>

@@ -7,6 +7,7 @@
 #include <proc/task.h>
 #include <shared/errno.h>
 #include <shared/if_ether.h>
+#include <utils/math.h>
 #include <utils/string.h>
 
 int packet_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)

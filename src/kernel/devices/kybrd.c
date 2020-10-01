@@ -6,8 +6,8 @@
 #include <devices/mouse.h>
 #include <fs/char_dev.h>
 #include <proc/task.h>
-#include <shared/ctype.h>
 #include <shared/errno.h>
+#include <shared/types.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 

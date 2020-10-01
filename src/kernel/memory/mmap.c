@@ -1,6 +1,7 @@
 #include <fs/vfs.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
+#include <utils/math.h>
 #include <utils/string.h>
 
 #include "vmm.h"

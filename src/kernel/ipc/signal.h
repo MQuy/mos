@@ -2,7 +2,6 @@
 #define IPC_SIGNAL_H
 
 #include <cpu/idt.h>
-#include <shared/ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <utils/string.h>

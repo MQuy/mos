@@ -1,8 +1,8 @@
 #include <math.h>
-#include <shared/mman.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "../shell.h"

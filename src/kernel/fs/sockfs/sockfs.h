@@ -1,6 +1,7 @@
 #ifndef FS_SOCKFS_H
 #define FS_SOCKFS_H
 
+#include <fs/vfs.h>
 #include <stdint.h>
 
 // super.c

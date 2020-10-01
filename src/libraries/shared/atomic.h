@@ -1,5 +1,5 @@
-#ifndef INCLUDE_ATOMIC_H
-#define INCLUDE_ATOMIC_H
+#ifndef SHARED_ATOMIC_H
+#define SHARED_ATOMIC_H
 
 typedef struct
 {

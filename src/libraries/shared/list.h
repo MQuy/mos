@@ -1,5 +1,5 @@
-#ifndef INCLUDE_LIST_H
-#define INCLUDE_LIST_H
+#ifndef SHARED_LIST_H
+#define SHARED_LIST_H
 
 #include <shared/cdefs.h>
 #include <stdbool.h>

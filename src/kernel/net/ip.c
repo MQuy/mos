@@ -5,7 +5,6 @@
 #include <net/neighbour.h>
 #include <net/net.h>
 #include <net/sk_buff.h>
-#include <shared/ctype.h>
 #include <shared/errno.h>
 #include <shared/if_ether.h>
 #include <utils/math.h>

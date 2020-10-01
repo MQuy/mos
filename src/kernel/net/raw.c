@@ -9,6 +9,7 @@
 #include <proc/task.h>
 #include <shared/errno.h>
 #include <shared/if_ether.h>
+#include <utils/math.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 

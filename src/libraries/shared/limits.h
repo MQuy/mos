@@ -1,5 +1,5 @@
-#ifndef INCLUDE_LIMITS_H
-#define INCLUDE_LIMITS_H
+#ifndef SHARED_LIMITS_H
+#define SHARED_LIMITS_H
 
 #include <stdint.h>
 
@@ -9,5 +9,6 @@
 #define LONG_MAX ((long)(~0UL >> 1))
 #define LONG_MIN (-LONG_MAX - 1)
 #define ULONG_MAX (~0UL)
+#define USHRT_MAX 65535
 
 #endif

@@ -5,7 +5,6 @@
 #include <net/net.h>
 #include <net/sk_buff.h>
 #include <proc/task.h>
-#include <shared/ctype.h>
 #include <shared/if_ether.h>
 #include <utils/string.h>
 

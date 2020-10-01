@@ -1,5 +1,6 @@
 #include <proc/task.h>
 #include <system/time.h>
+#include <utils/math.h>
 
 #include "tcp.h"
 

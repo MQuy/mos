@@ -1,10 +1,10 @@
 #include "shell.h"
 
 #include <shared/ioctls.h>
-#include <shared/mman.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "src/command_line.h"

@@ -1,7 +1,6 @@
 #ifndef LIBC_GUI_EVENT_H
 #define LIBC_GUI_EVENT_H
 
-#include <shared/list.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

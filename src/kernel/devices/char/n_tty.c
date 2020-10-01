@@ -3,6 +3,7 @@
 #include <proc/task.h>
 #include <shared/ctype.h>
 #include <shared/errno.h>
+#include <shared/types.h>
 #include <utils/printf.h>
 
 #include "tty.h"

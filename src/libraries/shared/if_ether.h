@@ -1,5 +1,5 @@
-#ifndef INCLUDE_IF_ETHER
-#define INCLUDE_IF_ETHER
+#ifndef SHARED_IF_ETHER
+#define SHARED_IF_ETHER
 
 #define ETH_ALEN 6		   /* Octets in one ethernet addr	 */
 #define ETH_TLEN 2		   /* Octets in ethernet type field */

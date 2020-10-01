@@ -18,9 +18,10 @@ https://github.com/benhoyt/inih
 #include "ini.h"
 
 #include <ctype.h>
-#include <shared/fcntl.h>
+#include <fcntl.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -110,7 +111,7 @@ int ini_parse_stream(char *buf, ini_handler handler,
 	int max_line = INI_MAX_LINE;
 #else
 	char *line;
-	size_t max_line = INI_INITIAL_ALLOC;
+	size_t __unused max_line = INI_INITIAL_ALLOC;
 #endif
 #if INI_ALLOW_REALLOC && !INI_USE_STACK
 	char *new_line;

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_IOCTL_H
-#define INCLUDE_IOCTL_H
+#ifndef SHARED_IOCTL_H
+#define SHARED_IOCTL_H
 
 #define _IOC_NRBITS 8
 #define _IOC_TYPEBITS 8

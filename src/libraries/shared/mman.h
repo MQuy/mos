@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MMAN_H
-#define INCLUDE_MMAN_H
+#ifndef SHARED_MMAN_H
+#define SHARED_MMAN_H
 
 #define PROT_READ 0x1			  /* page can be read */
 #define PROT_WRITE 0x2			  /* page can be written */

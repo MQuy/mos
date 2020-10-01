@@ -1,14 +1,14 @@
 #include "layout.h"
 
 #include <bmp.h>
+#include <fcntl.h>
 #include <gui/msgui.h>
 #include <gui/psf.h>
 #include <math.h>
 #include <poll.h>
-#include <shared/fcntl.h>
-#include <shared/mman.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 void init_fonts()

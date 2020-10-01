@@ -1,7 +1,7 @@
 #include "psf.h"
 
 #include <memory/vmm.h>
-#include <shared/ctype.h>
+#include <shared/limits.h>
 #include <utils/math.h>
 #include <utils/string.h>
 
