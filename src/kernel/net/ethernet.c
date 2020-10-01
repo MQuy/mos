@@ -1,13 +1,13 @@
 #include "ethernet.h"
 
-#include <include/ctype.h>
-#include <include/if_ether.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/devices/rtl8139.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/devices/rtl8139.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <proc/task.h>
+#include <shared/ctype.h>
+#include <shared/if_ether.h>
+#include <utils/string.h>
 
 void ethernet_build_header(struct ethernet_packet *packet, uint16_t protocal, uint8_t *source_mac, uint8_t *dest_mac)
 {

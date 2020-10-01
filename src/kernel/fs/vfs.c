@@ -1,10 +1,10 @@
 #include "vfs.h"
 
-#include <include/errno.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #include "char_dev.h"
 #include "devfs/devfs.h"

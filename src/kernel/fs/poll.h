@@ -1,8 +1,8 @@
 #ifndef FS_POLL_H
 #define FS_POLL_H
 
-#include <include/list.h>
-#include <kernel/proc/wait.h>
+#include <proc/wait.h>
+#include <shared/list.h>
 #include <stdint.h>
 
 #define POLLIN 0x0001

@@ -1,8 +1,8 @@
 #ifndef PROC_ELF_H
 #define PROC_ELF_H
 
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/vmm.h>
+#include <fs/vfs.h>
+#include <memory/vmm.h>
 #include <stdint.h>
 
 typedef uint16_t Elf32_Half;  // Unsigned half int

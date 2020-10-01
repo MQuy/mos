@@ -1,18 +1,18 @@
 #include "task.h"
 
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/cpu/pic.h>
-#include <kernel/cpu/tss.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/elf.h>
-#include <kernel/system/sysapi.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/hashmap.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/hal.h>
+#include <cpu/idt.h>
+#include <cpu/pic.h>
+#include <cpu/tss.h>
+#include <fs/vfs.h>
+#include <memory/pmm.h>
+#include <memory/vmm.h>
+#include <proc/elf.h>
+#include <system/sysapi.h>
+#include <system/time.h>
+#include <utils/hashmap.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
 extern void return_usermode(struct interrupt_registers *regs);

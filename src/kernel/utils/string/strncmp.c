@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 int strncmp(const char *s1, const char *s2, size_t n)
 {

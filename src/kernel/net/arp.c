@@ -1,12 +1,12 @@
 #include "arp.h"
 
-#include <include/errno.h>
-#include <include/if_ether.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/system/sysapi.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <shared/errno.h>
+#include <shared/if_ether.h>
+#include <system/sysapi.h>
+#include <utils/string.h>
 
 int arp_validate_packet(struct arp_packet *ap)
 {

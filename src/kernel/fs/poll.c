@@ -1,7 +1,7 @@
 #include "poll.h"
 
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
 
 static void poll_table_free(struct poll_table *pt)
 {

@@ -1,7 +1,7 @@
 #include "timer.h"
 
-#include <kernel/cpu/idt.h>
-#include <kernel/system/time.h>
+#include <cpu/idt.h>
+#include <system/time.h>
 
 static struct list_head list_of_timer;
 

@@ -1,6 +1,6 @@
-#include <include/errno.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <shared/errno.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #include "vmm.h"
 

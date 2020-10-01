@@ -1,11 +1,11 @@
-#include <include/errno.h>
-#include <kernel/devices/ata.h>
-#include <kernel/fs/buffer.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <devices/ata.h>
+#include <fs/buffer.h>
+#include <fs/vfs.h>
+#include <memory/pmm.h>
+#include <memory/vmm.h>
+#include <shared/errno.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #include "ext2.h"
 

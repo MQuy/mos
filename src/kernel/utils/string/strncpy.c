@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 char *strncpy(char *s1, const char *s2, size_t n)
 {

@@ -1,7 +1,7 @@
 #ifndef NET_NEIGHBOUR_H
 #define NET_NEIGHBOUR_H
 
-#include <include/list.h>
+#include <shared/list.h>
 #include <stdint.h>
 
 #define NUD_INCOMPLETE 0x01

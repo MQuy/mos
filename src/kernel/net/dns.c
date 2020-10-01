@@ -1,11 +1,11 @@
 #include "dns.h"
 
-#include <kernel/memory/vmm.h>
-#include <kernel/net/net.h>
-#include <kernel/system/sysapi.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/net.h>
+#include <system/sysapi.h>
+#include <utils/math.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #define MAX_DNS_LEN 512
 

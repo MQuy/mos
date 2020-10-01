@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 typedef unsigned char byte;
 

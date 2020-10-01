@@ -1,5 +1,5 @@
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 char *strchrnul(const char *s, int c_in)
 {

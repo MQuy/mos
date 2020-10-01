@@ -1,11 +1,11 @@
 #include "rtc.h"
 
-#include <include/ctype.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/cpu/pic.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/printf.h>
+#include <cpu/hal.h>
+#include <cpu/idt.h>
+#include <cpu/pic.h>
+#include <shared/ctype.h>
+#include <system/time.h>
+#include <utils/printf.h>
 
 #define CMOS_ADDRESS 0x70
 #define CMOS_DATA 0x71

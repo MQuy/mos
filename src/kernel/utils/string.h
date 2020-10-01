@@ -1,8 +1,8 @@
 #ifndef UTILS_STRING_H
 #define UTILS_STRING_H
 
-#include <include/cdefs.h>
-#include <include/ctype.h>
+#include <shared/cdefs.h>
+#include <shared/ctype.h>
 #include <stddef.h>
 #include <stdint.h>
 

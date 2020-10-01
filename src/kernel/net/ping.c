@@ -1,13 +1,13 @@
-#include <kernel/memory/vmm.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/neighbour.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/system/sysapi.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/ip.h>
+#include <net/neighbour.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <system/sysapi.h>
+#include <system/time.h>
+#include <utils/math.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #include "icmp.h"
 

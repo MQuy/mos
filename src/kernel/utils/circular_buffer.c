@@ -1,6 +1,6 @@
 #include "circular_buffer.h"
 
-#include <kernel/memory/vmm.h>
+#include <memory/vmm.h>
 #include <stddef.h>
 #include <stdint.h>
 

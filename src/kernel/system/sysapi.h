@@ -1,8 +1,8 @@
 #ifndef SYSTEM_SYSAPI_H
 #define SYSTEM_SYSAPI_H
 
-#include <include/ctype.h>
-#include <kernel/cpu/idt.h>
+#include <cpu/idt.h>
+#include <shared/ctype.h>
 
 enum socket_type;
 

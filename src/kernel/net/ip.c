@@ -1,14 +1,14 @@
 #include "ip.h"
 
-#include <include/ctype.h>
-#include <include/errno.h>
-#include <include/if_ether.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/neighbour.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/utils/math.h>
+#include <memory/vmm.h>
+#include <net/ethernet.h>
+#include <net/neighbour.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <shared/ctype.h>
+#include <shared/errno.h>
+#include <shared/if_ether.h>
+#include <utils/math.h>
 
 #define IP4_TTL 0x80
 

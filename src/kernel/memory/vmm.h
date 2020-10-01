@@ -1,7 +1,7 @@
 #ifndef MEMORY_VMM_H
 #define MEMORY_VMM_H
 
-#include <include/list.h>
+#include <shared/list.h>
 #include <stdint.h>
 
 #include "kernel_info.h"

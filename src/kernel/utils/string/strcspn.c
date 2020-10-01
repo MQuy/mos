@@ -1,5 +1,5 @@
-#include <include/pointer.h>
-#include <kernel/utils/string.h>
+#include <shared/pointer.h>
+#include <utils/string.h>
 
 size_t strcspn(const char *str, const char *reject)
 {

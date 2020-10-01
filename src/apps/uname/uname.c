@@ -1,9 +1,9 @@
-#include <include/ioctls.h>
-#include <include/mman.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <shared/ioctls.h>
+#include <shared/mman.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {

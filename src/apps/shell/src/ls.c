@@ -1,6 +1,6 @@
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "command_line.h"
 

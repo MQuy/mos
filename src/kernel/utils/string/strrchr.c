@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 char *strrchr(const char *s, int c)
 {

@@ -1,15 +1,15 @@
 #include "host.h"
 
-#include <include/if_ether.h>
-#include <include/ioctls.h>
-#include <include/mman.h>
-#include <include/sockios.h>
-#include <libc/arpa/inet.h>
-#include <libc/math.h>
-#include <libc/socket.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <arpa/inet.h>
+#include <math.h>
+#include <shared/if_ether.h>
+#include <shared/ioctls.h>
+#include <shared/mman.h>
+#include <shared/sockios.h>
+#include <socket.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define MAX_DNS_LEN 512
 

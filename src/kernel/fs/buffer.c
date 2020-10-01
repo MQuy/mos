@@ -1,8 +1,8 @@
 #include "buffer.h"
 
-#include <kernel/devices/ata.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/math.h>
+#include <devices/ata.h>
+#include <memory/vmm.h>
+#include <utils/math.h>
 
 // FIXME: MQ 2019-07-16 Is it safe to assume 512 b/s, it's fairly safe for hard disk but CD ROM might use 2048 b/s
 #define BYTES_PER_SECTOR 512

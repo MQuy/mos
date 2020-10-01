@@ -1,10 +1,10 @@
-#include <libc/gui/layout.h>
-#include <libc/gui/msgui.h>
-#include <libc/poll.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <gui/layout.h>
+#include <gui/msgui.h>
+#include <poll.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "src/window_manager.h"
 

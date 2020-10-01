@@ -1,9 +1,9 @@
 #include "psf.h"
 
-#include <include/ctype.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <shared/ctype.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #define PSF_MAGIC 0x864ab572
 

@@ -1,9 +1,9 @@
 #include "exception.h"
 
-#include <include/cdefs.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/utils/printf.h>
+#include <cpu/hal.h>
+#include <cpu/idt.h>
+#include <shared/cdefs.h>
+#include <utils/printf.h>
 
 //! something is wrong--bail out
 static void kernel_panic(const char *fmt, ...)

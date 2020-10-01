@@ -1,8 +1,8 @@
-#include <include/mman.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <shared/mman.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "../shell.h"
 #include "command_line.h"

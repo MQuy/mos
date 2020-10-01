@@ -1,7 +1,7 @@
 #include "command_line.h"
 
-#include <libc/stdlib.h>
-#include <libc/string.h>
+#include <stdlib.h>
+#include <string.h>
 
 char *clean_text(char *text, int len)
 {

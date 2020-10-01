@@ -1,15 +1,15 @@
 #include "window_manager.h"
 
-#include <include/cdefs.h>
-#include <include/fcntl.h>
-#include <include/mman.h>
-#include <libc/bmp.h>
-#include <libc/gui/psf.h>
-#include <libc/hashtable/hashmap.h>
-#include <libc/ini/ini.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <bmp.h>
+#include <gui/psf.h>
+#include <hashtable/hashmap.h>
+#include <ini/ini.h>
+#include <shared/cdefs.h>
+#include <shared/fcntl.h>
+#include <shared/mman.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 static struct desktop *desktop;
 static char *desktop_buf;

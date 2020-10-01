@@ -1,15 +1,15 @@
 #include "kybrd.h"
 
-#include <include/ctype.h>
-#include <include/errno.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/devices/kybrd.h>
-#include <kernel/devices/mouse.h>
-#include <kernel/fs/char_dev.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/hal.h>
+#include <cpu/idt.h>
+#include <devices/kybrd.h>
+#include <devices/mouse.h>
+#include <fs/char_dev.h>
+#include <proc/task.h>
+#include <shared/ctype.h>
+#include <shared/errno.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 static void kybrd_notify_readers(struct key_event *event);
 

@@ -1,16 +1,16 @@
 #include "raw.h"
 
-#include <include/errno.h>
-#include <include/if_ether.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/neighbour.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/ethernet.h>
+#include <net/ip.h>
+#include <net/neighbour.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <shared/if_ether.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #define RAW_HEADER_SIZE (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet))
 

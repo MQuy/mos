@@ -1,11 +1,11 @@
 #include "elf.h"
 
-#include <include/errno.h>
-#include <include/mman.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/string.h>
+#include <memory/pmm.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <shared/mman.h>
+#include <utils/string.h>
 
 #define NO_ERROR 0
 #define ERR_NOT_ELF_FILE 1

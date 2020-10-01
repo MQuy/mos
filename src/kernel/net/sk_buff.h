@@ -1,7 +1,7 @@
 #ifndef NET_SK_BUFF_H
 #define NET_SK_BUFF_H
 
-#include <include/list.h>
+#include <shared/list.h>
 #include <stdint.h>
 
 struct udp_packet;

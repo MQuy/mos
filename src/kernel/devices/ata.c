@@ -1,11 +1,11 @@
 #include "ata.h"
 
-#include <include/errno.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/hal.h>
+#include <cpu/idt.h>
+#include <memory/vmm.h>
+#include <shared/errno.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #define MAX_ATA_DEVICE 4
 

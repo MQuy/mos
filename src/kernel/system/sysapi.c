@@ -1,21 +1,21 @@
 #include "sysapi.h"
 
-#include <include/ctype.h>
-#include <include/errno.h>
-#include <include/fcntl.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/devices/char/tty.h>
-#include <kernel/fs/pipefs/pipe.h>
-#include <kernel/fs/sockfs/sockfs.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/ipc/message_queue.h>
-#include <kernel/ipc/signal.h>
-#include <kernel/net/net.h>
-#include <kernel/proc/elf.h>
-#include <kernel/proc/task.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/hal.h>
+#include <devices/char/tty.h>
+#include <fs/pipefs/pipe.h>
+#include <fs/sockfs/sockfs.h>
+#include <fs/vfs.h>
+#include <ipc/message_queue.h>
+#include <ipc/signal.h>
+#include <net/net.h>
+#include <proc/elf.h>
+#include <proc/task.h>
+#include <shared/ctype.h>
+#include <shared/errno.h>
+#include <shared/fcntl.h>
+#include <system/time.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 static void sys_exit(int32_t code)
 {

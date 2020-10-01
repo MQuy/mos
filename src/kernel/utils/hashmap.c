@@ -7,12 +7,12 @@
 
 #include "hashmap.h"
 
-#include <include/ctype.h>
-#include <include/errno.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <shared/ctype.h>
+#include <shared/errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <utils/string.h>
 
 #define HASHMAP_ASSERT(expr) ((void)0)
 

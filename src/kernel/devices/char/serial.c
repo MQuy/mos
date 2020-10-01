@@ -1,6 +1,6 @@
-#include <kernel/cpu/hal.h>
-#include <kernel/devices/char/tty.h>
-#include <kernel/memory/vmm.h>
+#include <cpu/hal.h>
+#include <devices/char/tty.h>
+#include <memory/vmm.h>
 
 static int serports[] = {0x3f8, 0x2f8, 0x3e8, 0x2e8};
 struct tty_driver *serial_driver;

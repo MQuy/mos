@@ -14,9 +14,9 @@
 #define __DISABLED_CHAR '\0'
 #define SERIAL_MINOR_BASE 64
 
-#include <include/list.h>
-#include <kernel/fs/char_dev.h>
-#include <kernel/proc/wait.h>
+#include <fs/char_dev.h>
+#include <proc/wait.h>
+#include <shared/list.h>
 #include <stdint.h>
 
 #include "termios.h"

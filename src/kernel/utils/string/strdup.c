@@ -1,5 +1,5 @@
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <utils/string.h>
 
 char *strdup(const char *s)
 {

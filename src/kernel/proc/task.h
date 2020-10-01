@@ -1,17 +1,17 @@
 #ifndef PROC_TASK_H
 #define PROC_TASK_H
 
-#include <include/ctype.h>
-#include <include/list.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/ipc/signal.h>
-#include <kernel/locking/semaphore.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/elf.h>
-#include <kernel/system/timer.h>
-#include <kernel/utils/hashmap.h>
-#include <kernel/utils/plist.h>
+#include <cpu/idt.h>
+#include <ipc/signal.h>
+#include <locking/semaphore.h>
+#include <memory/vmm.h>
+#include <proc/elf.h>
+#include <shared/ctype.h>
+#include <shared/list.h>
 #include <stdint.h>
+#include <system/timer.h>
+#include <utils/hashmap.h>
+#include <utils/plist.h>
 
 #define SWAPPER_PID 0
 #define INIT_PID 1

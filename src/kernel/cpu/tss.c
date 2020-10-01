@@ -1,8 +1,8 @@
 #include "tss.h"
 
-#include <kernel/cpu/gdt.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/gdt.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 extern void tss_flush();
 

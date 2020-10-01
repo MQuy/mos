@@ -1,16 +1,16 @@
 #include "terminal.h"
 
-#include <include/cdefs.h>
-#include <include/ioctls.h>
-#include <libc/gui/layout.h>
-#include <libc/gui/psf.h>
-#include <libc/math.h>
-#include <libc/poll.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/time.h>
-#include <libc/unistd.h>
+#include <gui/layout.h>
+#include <gui/psf.h>
+#include <math.h>
+#include <poll.h>
+#include <shared/cdefs.h>
+#include <shared/ioctls.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #define VERTICAL_PADDING 4
 #define HORIZONTAL_PADDING 8

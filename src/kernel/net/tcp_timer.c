@@ -1,5 +1,5 @@
-#include <kernel/proc/task.h>
-#include <kernel/system/time.h>
+#include <proc/task.h>
+#include <system/time.h>
 
 #include "tcp.h"
 

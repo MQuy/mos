@@ -1,11 +1,11 @@
 #ifndef IPC_SIGNAL_H
 #define IPC_SIGNAL_H
 
-#include <include/ctype.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/utils/string.h>
+#include <cpu/idt.h>
+#include <shared/ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <utils/string.h>
 
 #define NSIG 32
 

@@ -1,14 +1,14 @@
 #include "rtl8139.h"
 
-#include <include/if_ether.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/pic.h>
-#include <kernel/devices/pci.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/net.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/hal.h>
+#include <cpu/pic.h>
+#include <devices/pci.h>
+#include <memory/vmm.h>
+#include <net/net.h>
+#include <proc/task.h>
+#include <shared/if_ether.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 static char rx_buffer[RX_PADDING_BUFFER_SIZE] __attribute__((aligned(4)));
 // NOTE: MQ 2020-04-10 The maximum ethernet transmitted packet's size is 1792 -> one page

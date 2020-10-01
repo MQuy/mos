@@ -1,9 +1,9 @@
-#include <include/ctype.h>
-#include <include/errno.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/net.h>
-#include <kernel/proc/task.h>
+#include <fs/vfs.h>
+#include <memory/vmm.h>
+#include <net/net.h>
+#include <proc/task.h>
+#include <shared/ctype.h>
+#include <shared/errno.h>
 
 #include "sockfs.h"
 

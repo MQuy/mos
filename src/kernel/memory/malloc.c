@@ -1,8 +1,8 @@
-#include <include/errno.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <shared/errno.h>
 #include <stdbool.h>
+#include <utils/math.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #include "vmm.h"
 

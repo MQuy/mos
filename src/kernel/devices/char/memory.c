@@ -1,7 +1,7 @@
-#include <include/errno.h>
-#include <kernel/fs/char_dev.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
+#include <fs/char_dev.h>
+#include <shared/errno.h>
+#include <utils/math.h>
+#include <utils/printf.h>
 
 #define MEMORY_MAJOR 1
 #define NULL_DEVICE 3

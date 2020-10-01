@@ -1,7 +1,7 @@
 #include "semaphore.h"
 
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
 
 struct semaphore_waiter
 {

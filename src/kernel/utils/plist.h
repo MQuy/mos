@@ -1,7 +1,7 @@
 #ifndef UTILS_PLIST_H
 #define UTILS_PLIST_H
 
-#include <include/list.h>
+#include <shared/list.h>
 #include <stddef.h>
 #include <stdint.h>
 

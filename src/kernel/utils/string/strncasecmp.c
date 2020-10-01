@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 int strncasecmp(const char *s1, const char *s2, int n)
 {

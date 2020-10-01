@@ -1,6 +1,6 @@
 #include "time.h"
 
-#include <kernel/memory/vmm.h>
+#include <memory/vmm.h>
 
 extern volatile uint64_t jiffies;
 

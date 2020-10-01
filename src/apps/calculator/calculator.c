@@ -1,9 +1,9 @@
-#include <include/cdefs.h>
-#include <libc/gui/layout.h>
-#include <libc/stdlib.h>
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <gui/layout.h>
+#include <shared/cdefs.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define LABEL_ZERO 0
 #define LABEL_ONE 1

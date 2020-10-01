@@ -1,7 +1,7 @@
 #include "gdt.h"
 
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 extern void gdt_flush(uint32_t);
 

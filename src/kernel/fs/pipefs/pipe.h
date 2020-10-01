@@ -1,10 +1,9 @@
 #ifndef FS_PIPE_H
 #define FS_PIPE_H
 
-#include <kernel/locking/semaphore.h>
-#include <kernel/utils/circular_buffer.h>
-
-#include "kernel/fs/vfs.h"
+#include <fs/vfs.h>
+#include <locking/semaphore.h>
+#include <utils/circular_buffer.h>
 
 #define PIPE_SIZE 0x10000
 

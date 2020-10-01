@@ -1,20 +1,20 @@
 #include "net.h"
 
-#include <include/errno.h>
-#include <include/if_ether.h>
-#include <include/sockios.h>
-#include <kernel/fs/sockfs/sockfs.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/arp.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/icmp.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/neighbour.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <fs/sockfs/sockfs.h>
+#include <fs/vfs.h>
+#include <memory/vmm.h>
+#include <net/arp.h>
+#include <net/ethernet.h>
+#include <net/icmp.h>
+#include <net/ip.h>
+#include <net/neighbour.h>
+#include <net/sk_buff.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <shared/if_ether.h>
+#include <shared/sockios.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 extern volatile uint32_t scheduler_lock_counter;
 

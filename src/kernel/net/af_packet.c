@@ -1,13 +1,13 @@
 #include "af_packet.h"
 
-#include <include/errno.h>
-#include <include/if_ether.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/ethernet.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <shared/if_ether.h>
+#include <utils/string.h>
 
 int packet_connect(struct socket *sock, struct sockaddr *vaddr, int sockaddr_len)
 {

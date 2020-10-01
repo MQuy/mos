@@ -1,7 +1,7 @@
 #ifndef SYSTEM_FRAMEBUFFER_H
 #define SYSTEM_FRAMEBUFFER_H
 
-#include <kernel/multiboot2.h>
+#include <multiboot2.h>
 #include <stdarg.h>
 #include <stdint.h>
 

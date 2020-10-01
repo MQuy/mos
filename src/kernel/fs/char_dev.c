@@ -1,7 +1,7 @@
 #include "char_dev.h"
 
-#include <include/errno.h>
-#include <kernel/memory/vmm.h>
+#include <memory/vmm.h>
+#include <shared/errno.h>
 
 struct list_head devlist;
 

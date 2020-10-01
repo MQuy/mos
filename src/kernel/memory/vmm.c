@@ -1,7 +1,7 @@
 #include "vmm.h"
 
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #define PAGE_DIRECTORY_BASE 0xFFFFF000
 #define PAGE_TABLE_BASE 0xFFC00000

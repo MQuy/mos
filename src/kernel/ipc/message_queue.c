@@ -1,13 +1,13 @@
 #include "message_queue.h"
 
-#include <include/errno.h>
-#include <include/fcntl.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/locking/semaphore.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/hashmap.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <fs/vfs.h>
+#include <locking/semaphore.h>
+#include <memory/vmm.h>
+#include <shared/errno.h>
+#include <shared/fcntl.h>
+#include <utils/hashmap.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 static const char defaultdir[] = "/dev/mqueue/";
 struct hashmap mq_map;

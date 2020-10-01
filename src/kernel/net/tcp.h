@@ -1,13 +1,13 @@
 #ifndef NET_TCP_H
 #define NET_TCP_H
 
-#include <kernel/net/ethernet.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/system/timer.h>
-#include <kernel/utils/printf.h>
+#include <net/ethernet.h>
+#include <net/ip.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
 #include <stdint.h>
+#include <system/timer.h>
+#include <utils/printf.h>
 
 #define MAX_OPTION_LEN 40
 #define MAX_TCP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct tcp_packet))

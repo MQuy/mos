@@ -1,8 +1,8 @@
 #include "pmm.h"
 
-#include <kernel/utils/math.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <utils/math.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 static uint32_t *memory_bitmap = 0;
 static uint32_t max_frames = 0;

@@ -1,11 +1,11 @@
 #include "framebuffer.h"
 
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <fs/vfs.h>
+#include <memory/pmm.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #include "psf.h"
 

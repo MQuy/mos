@@ -1,9 +1,9 @@
-#include <include/errno.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <fs/vfs.h>
+#include <memory/vmm.h>
+#include <shared/errno.h>
+#include <system/time.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #include "ext2.h"
 

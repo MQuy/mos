@@ -1,7 +1,7 @@
-#include <include/atomic.h>
-#include <kernel/devices/char/tty.h>
-#include <kernel/ipc/signal.h>
-#include <kernel/utils/printf.h>
+#include <devices/char/tty.h>
+#include <ipc/signal.h>
+#include <shared/atomic.h>
+#include <utils/printf.h>
 
 #include "task.h"
 

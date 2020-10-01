@@ -1,8 +1,8 @@
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/system/time.h>
+#include <fs/vfs.h>
+#include <memory/pmm.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
+#include <system/time.h>
 
 #include "mqueuefs.h"
 

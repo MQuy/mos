@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 char *strcpy(char *dest, const char *src)
 {

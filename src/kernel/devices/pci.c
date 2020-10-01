@@ -1,8 +1,8 @@
 #include "pci.h"
 
-#include <kernel/cpu/hal.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/printf.h>
+#include <cpu/hal.h>
+#include <memory/vmm.h>
+#include <utils/printf.h>
 
 #include "ata.h"
 

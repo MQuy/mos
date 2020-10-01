@@ -1,14 +1,14 @@
 #include "udp.h"
 
-#include <include/errno.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/ethernet.h>
-#include <kernel/net/ip.h>
-#include <kernel/net/net.h>
-#include <kernel/net/sk_buff.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <net/ethernet.h>
+#include <net/ip.h>
+#include <net/net.h>
+#include <net/sk_buff.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #define MAX_UDP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct udp_packet))
 

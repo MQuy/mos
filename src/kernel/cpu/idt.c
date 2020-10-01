@@ -1,9 +1,9 @@
 #include "idt.h"
 
-#include <include/list.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <shared/list.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #include "pic.h"
 

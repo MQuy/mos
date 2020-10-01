@@ -1,7 +1,7 @@
 #ifndef DEVICE_PCI_H
 #define DEVICE_PCI_H
 
-#include <include/list.h>
+#include <shared/list.h>
 #include <stddef.h>
 #include <stdint.h>
 

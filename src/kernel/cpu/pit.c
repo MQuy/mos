@@ -1,10 +1,10 @@
 #include "pit.h"
 
-#include <include/list.h>
-#include <kernel/cpu/rtc.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/printf.h>
+#include <cpu/rtc.h>
+#include <memory/vmm.h>
+#include <shared/list.h>
+#include <system/time.h>
+#include <utils/printf.h>
 
 #include "idt.h"
 #include "pic.h"

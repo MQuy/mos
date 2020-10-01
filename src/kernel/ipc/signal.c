@@ -1,11 +1,11 @@
 #include "signal.h"
 
-#include <include/bitops.h>
-#include <include/errno.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/hashmap.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <proc/task.h>
+#include <shared/bitops.h>
+#include <shared/errno.h>
+#include <utils/hashmap.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 // TODO: MQ 2020-08-21 implement signal jump
 extern void return_usermode(struct interrupt_registers *);

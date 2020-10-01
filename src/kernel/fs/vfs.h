@@ -1,11 +1,11 @@
 #ifndef FS_VFS_H
 #define FS_VFS_H
 
-#include <include/atomic.h>
-#include <include/ctype.h>
-#include <include/list.h>
-#include <kernel/fs/poll.h>
-#include <kernel/locking/semaphore.h>
+#include <fs/poll.h>
+#include <locking/semaphore.h>
+#include <shared/atomic.h>
+#include <shared/ctype.h>
+#include <shared/list.h>
 #include <stddef.h>
 #include <stdint.h>
 

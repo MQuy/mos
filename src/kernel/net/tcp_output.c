@@ -1,8 +1,8 @@
-#include <kernel/net/neighbour.h>
-#include <kernel/proc/task.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/math.h>
-#include <kernel/utils/string.h>
+#include <net/neighbour.h>
+#include <proc/task.h>
+#include <system/time.h>
+#include <utils/math.h>
+#include <utils/string.h>
 
 #include "tcp.h"
 

@@ -1,16 +1,16 @@
 #include "mouse.h"
 
-#include <include/errno.h>
-#include <kernel/cpu/hal.h>
-#include <kernel/cpu/idt.h>
-#include <kernel/cpu/pic.h>
-#include <kernel/fs/char_dev.h>
-#include <kernel/fs/poll.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/printf.h>
-#include <kernel/utils/string.h>
+#include <cpu/hal.h>
+#include <cpu/idt.h>
+#include <cpu/pic.h>
+#include <fs/char_dev.h>
+#include <fs/poll.h>
+#include <fs/vfs.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
+#include <shared/errno.h>
+#include <utils/printf.h>
+#include <utils/string.h>
 
 #define MOUSE_PORT 0x60
 #define MOUSE_STATUS 0x64

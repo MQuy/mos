@@ -1,7 +1,7 @@
 #ifndef MEMORY_PMM_H
 #define MEMORY_PMM_H
 
-#include <kernel/multiboot2.h>
+#include <multiboot2.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

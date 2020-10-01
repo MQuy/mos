@@ -1,4 +1,4 @@
-#include <kernel/utils/string.h>
+#include <utils/string.h>
 
 int strcasecmp(const char *s1, const char *s2)
 {

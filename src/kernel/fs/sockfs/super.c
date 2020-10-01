@@ -1,10 +1,10 @@
-#include <kernel/fs/vfs.h>
-#include <kernel/memory/pmm.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/net/net.h>
-#include <kernel/proc/task.h>
-#include <kernel/system/time.h>
-#include <kernel/utils/string.h>
+#include <fs/vfs.h>
+#include <memory/pmm.h>
+#include <memory/vmm.h>
+#include <net/net.h>
+#include <proc/task.h>
+#include <system/time.h>
+#include <utils/string.h>
 
 #include "sockfs.h"
 

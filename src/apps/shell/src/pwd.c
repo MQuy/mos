@@ -1,5 +1,5 @@
-#include <libc/string.h>
-#include <libc/unistd.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "command_line.h"
 

@@ -1,7 +1,7 @@
-#include <include/limits.h>
-#include <kernel/memory/vmm.h>
-#include <kernel/proc/task.h>
-#include <kernel/utils/string.h>
+#include <memory/vmm.h>
+#include <proc/task.h>
+#include <shared/limits.h>
+#include <utils/string.h>
 
 #include "vfs.h"
 
