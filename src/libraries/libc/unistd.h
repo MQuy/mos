@@ -139,7 +139,7 @@ static inline int32_t fork()
 }
 
 _syscall1(exit, int32_t);
-static inline void exit(int32_t code)
+static inline void _exit(int32_t code)
 {
 	syscall_exit(code);
 }

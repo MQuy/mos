@@ -16,5 +16,6 @@ void *realloc(void *ptr, size_t size);
 int posix_openpt(int flags);
 char *ptsname(int fd);
 void abort(void);
+void exit(int status);
 
 #endif
