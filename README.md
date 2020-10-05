@@ -37,7 +37,7 @@ $ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
 $ cd src && ./create_image.sh && ./build.sh qemu iso
 ```
 
-✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing might help [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/)
+✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/) might help 
 
 **Debuging**
 
