@@ -83,6 +83,8 @@ static ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, lo
 			ext2_read_triply_indirect_block(sb, ei, block, &iter_buf, ppos, &p, count);
 		}
 	}
+
+	file->f_pos = ppos + count;
 	return count;
 }
 
@@ -125,6 +127,8 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 		p += sb->s_blocksize;
 		iter_buf += sb->s_blocksize - pstart - pend;
 	}
+
+	file->f_pos = ppos + count;
 	return count;
 }
 

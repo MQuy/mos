@@ -2,6 +2,7 @@
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <shared/errno.h>
+#include <utils/math.h>
 #include <utils/string.h>
 
 #include "tmpfs.h"
@@ -22,10 +23,8 @@ static ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, l
 	struct vfs_inode *inode = file->f_dentry->d_inode;
 	struct vfs_superblock *sb = inode->i_sb;
 
-	if (ppos + count > inode->i_size)
-		return -1;
-
-	uint32_t p = 0;
+	count = min_t(size_t, ppos + count, inode->i_size) - ppos;
+	uint32_t p = file->f_pos;
 	struct page *iter_page;
 	char *iter_buf = buf;
 	list_for_each_entry(iter_page, &inode->i_data.pages, sibling)
@@ -56,7 +55,7 @@ static ssize_t tmpfs_write_file(struct vfs_file *file, const char *buf, size_t c
 	if (ppos + count > inode->i_size)
 		tmpfs_setsize(inode, ppos + count);
 
-	uint32_t p = 0;
+	uint32_t p = file->f_pos;
 	struct page *iter_page;
 	char *iter_buf = buf;
 	list_for_each_entry(iter_page, &inode->i_data.pages, sibling)
