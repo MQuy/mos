@@ -97,6 +97,17 @@ static int tiocspgrp(struct tty_struct *tty, int arg)
 	return 0;
 }
 
+static int tcgets(struct tty_struct *tty, int arg)
+{
+	struct termios *term = (struct termios *)arg;
+	if (current_process->tty)
+	{
+		memcpy(t, current_process->tty->termios, sizeof(struct termios));
+		return 0;
+	}
+	return -EFAULT;
+}
+
 static int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	int index = get_next_pty_number();
@@ -182,6 +193,8 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 
 	switch (cmd)
 	{
+	case TCGETS:
+		return tcgets(tty, arg);
 	case TIOCSCTTY:
 		return tiocsctty(tty, arg);
 	case TIOCGPGRP:

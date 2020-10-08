@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <termios.h>
 #include <wait.h>
 
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
@@ -453,6 +454,17 @@ static int tcsetpgrp(int fd, pid_t pid)
 static pid_t tcgetpgrp(int fd)
 {
 	return ioctl(fd, TIOCGPGRP, 0);
+}
+
+static int tcgetattr(int fd, struct termios *term)
+{
+	return ioctl(fd, TCGETS, &term);
+}
+
+static int isatty(int fd)
+{
+	struct termios term;
+	return tcgetattr(fd, &term) == 0;
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);

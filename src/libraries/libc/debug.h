@@ -15,4 +15,6 @@ enum debug_level
 int debug_printf(enum debug_level level, const char *fmt, ...);
 int debug_println(enum debug_level level, const char *fmt, ...);
 
+#define assert(statement) ((statement) ? (void)0 : (void)({ debug_println(DEBUG_ERROR, "%s:%d %s", __FILE__, __LINE__, __FUNCTION__); __asm__ __volatile("int $0x01"); }))
+
 #endif
