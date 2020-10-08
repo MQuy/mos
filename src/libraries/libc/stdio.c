@@ -1,6 +1,8 @@
 #include "stdio.h"
 
 #include <errno.h>
+#include <libc-pointer-arith.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -136,7 +138,7 @@ FILE *fdopen(int fd, const char *mode)
 	if (mode[0] == 'a')
 	{
 		stream->flags |= _IO_IS_APPENDING;
-		stream->offset = lseek(fd, 0, SEEK_END);
+		stream->pos = lseek(fd, 0, SEEK_END);
 	}
 
 	// fill in blksize and mode
@@ -146,7 +148,7 @@ FILE *fdopen(int fd, const char *mode)
 
 	if (S_ISREG(stat.mode))
 		stream->flags |= _IO_FULLY_BUF;
-	else if (S_ISCHR(stat.mode))
+	else if (isatty(fd))
 		stream->flags |= _IO_LINE_BUF;
 
 	stream->blksize = stat.blksize;
@@ -177,4 +179,103 @@ void clearerr(FILE *stream)
 
 int fgetc(FILE *stream)
 {
+	assert(stream->read_ptr <= stream->read_end);
+
+	if (stream->read_ptr == stream->read_end)
+	{
+		int count = (stream->flags & _IO_FULLY_BUF) ? max(stream->blksize, 1) : 1;
+		char *buf = calloc(count, sizeof(char));
+
+		count = read(stream->fd, buf, count);
+		// end of file
+		if (!count)
+		{
+			stream->flags |= _IO_EOF_SEEN;
+			free(buf);
+			return EOF;
+		}
+
+		free(stream->read_base);
+		stream->read_base = stream->read_ptr = buf;
+		stream->read_end = buf + count;
+	}
+
+	stream->pos++;
+	return (unsigned char)*stream->read_ptr++;
+}
+
+char *fgets(char *s, int n, FILE *stream)
+{
+	assert(stream->read_ptr <= stream->read_end);
+
+	int i;
+	for (i = 0; i < n; ++i)
+	{
+		int ch = fgetc(stream);
+
+		if (ch == '\r')
+			break;
+		if (ch == EOF)
+			return NULL;
+	}
+
+	s[i] = 0;
+	return s;
+}
+
+size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream)
+{
+	int i;
+	for (i = 0; i < nitems; ++i)
+	{
+		char *buf = calloc(size, sizeof(char));
+		int ret = fgets(buf, size, stream);
+
+		if (!ret)
+		{
+			free(buf);
+			break;
+		}
+
+		memcpy((char *)ptr + i * size, buf, size);
+		free(buf);
+	}
+	return i;
+}
+
+long int ftell(FILE *stream)
+{
+	return stream->pos;
+}
+
+off_t ftello(FILE *stream)
+{
+	return stream->pos;
+}
+
+int getchar()
+{
+	return getc(stdin);
+}
+
+int ungetc(int c, FILE *stream)
+{
+	if (c == EOF)
+		return EOF;
+
+	if (stream->read_ptr == stream->read_base)
+	{
+		int size = stream->read_end - stream->read_base + 1;
+		char *buf = calloc(size, sizeof(char));
+
+		memcpy(buf + 1, stream->read_base, size - 1);
+		free(stream->read_base);
+
+		stream->read_base = buf;
+		stream->read_ptr = buf + 1;
+		stream->read_end = buf + size;
+	}
+	stream->pos--;
+	*--stream->read_ptr = (unsigned char)c;
+	return (unsigned char)c;
 }

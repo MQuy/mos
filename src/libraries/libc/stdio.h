@@ -27,7 +27,7 @@ struct __FILE
 {
 	int fd;
 	int flags;
-	int offset;
+	int pos;
 	char *read_ptr, *read_base, *read_end;
 	char *write_ptr, *write_base, *write_end;
 	char *save_ptr;	 // for ungetc
@@ -48,25 +48,25 @@ int ferror(FILE *stream);
 int fileno(FILE *stream);
 void clearerr(FILE *stream);
 int fgetc(FILE *stream);
+char *fgets(char *s, int n, FILE *stream);
+size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream);
+long int ftell(FILE *stream);
+off_t ftello(FILE *stream);
+#define getc(stream) fgetc(stream)
+int getchar();
+int ungetc(int c, FILE *stream);
 
 // int fflush(FILE *);
-// int fgetc(FILE *);
 // int fgetpos(FILE *, fpos_t *);
-// char *fgets(char *, int, FILE *);
 // int fprintf(FILE *, const char *, ...);
 // int fputc(int, FILE *);
 // int fputs(const char *, FILE *);
-// size_t fread(void *, size_t, size_t, FILE *);
 // FILE *freopen(const char *, const char *, FILE *);
 // int fscanf(FILE *, const char *, ...);
 // int fseek(FILE *, long int, int);
 // int fseeko(FILE *, off_t, int);
 // int fsetpos(FILE *, const fpos_t *);
-// long int ftell(FILE *);
-// off_t ftello(FILE *);
 // size_t fwrite(const void *, size_t, size_t, FILE *);
-// int getc(FILE *);
-// int getchar(void);
 // int getopt(int, char *const[], const char);
 // int getw(FILE *);
 // int pclose(FILE *);
@@ -88,7 +88,6 @@ int fgetc(FILE *stream);
 // char *tempnam(const char *, const char *);
 // FILE *tmpfile(void);
 // char *tmpnam(char *);
-// int ungetc(int, FILE *);
 // int vfprintf(FILE *, const char *, va_list);
 // int vprintf(const char *, va_list);
 // int vsnprintf(char *, size_t, const char *, va_list);
