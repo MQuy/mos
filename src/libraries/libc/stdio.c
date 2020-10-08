@@ -7,6 +7,8 @@
 #include <string.h>
 #include <unistd.h>
 
+FILE *stdin, *stdout, *stderr;
+
 int vsprintf(char *buffer, const char *fmt, va_list args)
 {
 	if (!fmt)
@@ -96,11 +98,42 @@ int sprintf(char *buffer, const char *fmt, ...)
 	va_list args;
 	va_start(args, fmt);
 
-	int size = vsprintf(buffer, fmt, args);
+	int nwritten = vsprintf(buffer, fmt, args);
 
 	va_end(args);
 
-	return size;
+	return nwritten;
+}
+
+int vsnprintf(char *buffer, size_t n, const char *fmt, va_list args)
+{
+	char *tmp = calloc(4096, sizeof(char));
+	int nwritten = vsprintf(tmp, fmt, args);
+
+	size_t len = min_t(size_t, nwritten + 1, n);
+	memcpy(buffer, tmp, len - 1);
+	buffer[len] = 0;
+
+	free(tmp);
+
+	return nwritten;
+}
+
+int snprintf(char *buffer, size_t n, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	int nwritten = vsnprintf(buffer, n, fmt, args);
+
+	va_end(args);
+
+	return nwritten;
+}
+
+int sscanf(const char *s, const char *format, ...)
+{
+	return 0;
 }
 
 bool valid_stream(FILE *stream)
@@ -129,6 +162,7 @@ FILE *fdopen(int fd, const char *mode)
 	FILE *stream = calloc(1, sizeof(FILE));
 	stream->fd = fd;
 	stream->flags |= _IO_UNBUFFERED;
+	stream->bkup_chr = -1;
 
 	if (mode[0] == 'r' && mode[1] != '+')
 		stream->flags |= _IO_NO_WRITES;
@@ -142,8 +176,7 @@ FILE *fdopen(int fd, const char *mode)
 	}
 
 	// fill in blksize and mode
-	struct stat stat;
-	memset(&stat, 0, sizeof(struct stat));
+	struct stat stat = {0};
 	fstat(fd, &stat);
 
 	if (S_ISREG(stat.mode))
@@ -183,7 +216,7 @@ int fgetc(FILE *stream)
 
 	if (stream->read_ptr == stream->read_end)
 	{
-		int count = (stream->flags & _IO_FULLY_BUF) ? max(stream->blksize, 1) : 1;
+		int count = (stream->flags & _IO_FULLY_BUF) ? ALIGN_UP(stream->pos + 1, max(stream->blksize, 1)) - stream->pos : 1;
 		char *buf = calloc(count, sizeof(char));
 
 		count = read(stream->fd, buf, count);
@@ -225,13 +258,11 @@ char *fgets(char *s, int n, FILE *stream)
 
 size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < nitems; ++i)
 	{
 		char *buf = calloc(size, sizeof(char));
-		int ret = fgets(buf, size, stream);
-
-		if (!ret)
+		if (!fgets(buf, size, stream))
 		{
 			free(buf);
 			break;
@@ -253,6 +284,12 @@ off_t ftello(FILE *stream)
 	return stream->pos;
 }
 
+void rewind(FILE *stream)
+{
+	fseek(stream, 0, SEEK_SET);
+	stream->flags &= ~_IO_ERR_SEEN;
+}
+
 int getchar()
 {
 	return getc(stdin);
@@ -260,7 +297,7 @@ int getchar()
 
 int ungetc(int c, FILE *stream)
 {
-	if (c == EOF)
+	if (c == EOF || stream->bkup_chr != -1)
 		return EOF;
 
 	if (stream->read_ptr == stream->read_base)
@@ -276,6 +313,34 @@ int ungetc(int c, FILE *stream)
 		stream->read_end = buf + size;
 	}
 	stream->pos--;
-	*--stream->read_ptr = (unsigned char)c;
+	stream->bkup_chr = *stream->read_ptr--;
+	*stream->read_ptr = (unsigned char)c;
+	stream->flags &= ~_IO_EOF_SEEN;
 	return (unsigned char)c;
+}
+
+int fseek(FILE *stream, long int off, int whence)
+{
+	struct stat stat = {0};
+	fstat(stream->fd, &stat);
+
+	loff_t offset = off;
+	if (whence == SEEK_CUR)
+		offset = stream->pos + off;
+	else if (whence == SEEK_END)
+		offset = stat.size + off;
+	stream->pos = offset;
+	lseek(stream->fd, offset, SEEK_SET);
+
+	free(stream->read_base);
+	stream->read_base = stream->read_end = stream->read_ptr = NULL;
+	stream->bkup_chr = -1;
+
+	stream->flags &= ~_IO_EOF_SEEN;
+	return 0;
+}
+
+int fseeko(FILE *stream, off_t offset, int whence)
+{
+	return fseek(stream, offset, whence);
 }

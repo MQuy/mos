@@ -102,7 +102,7 @@ static int tcgets(struct tty_struct *tty, int arg)
 	struct termios *term = (struct termios *)arg;
 	if (current_process->tty)
 	{
-		memcpy(t, current_process->tty->termios, sizeof(struct termios));
+		memcpy(term, current_process->tty->termios, sizeof(struct termios));
 		return 0;
 	}
 	return -EFAULT;

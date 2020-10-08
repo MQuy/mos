@@ -458,7 +458,7 @@ static pid_t tcgetpgrp(int fd)
 
 static int tcgetattr(int fd, struct termios *term)
 {
-	return ioctl(fd, TCGETS, &term);
+	return ioctl(fd, TCGETS, (unsigned long)term);
 }
 
 static int isatty(int fd)
