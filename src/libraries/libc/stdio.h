@@ -1,28 +1,96 @@
 #ifndef LIBC_STDIO_H
 #define LIBC_STDIO_H
 
+#include <shared/fcntl.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <sys/reent.h>
 
 #define EOF (-1)
+
+#define _IO_USER_BUF 0x0001 /* Don't deallocate buffer on close. */
+#define _IO_UNBUFFERED 0x0002
+#define _IO_NO_READS 0x0004	 /* Reading not allowed.  */
+#define _IO_NO_WRITES 0x0008 /* Writing not allowed.  */
+#define _IO_EOF_SEEN 0x0010
+#define _IO_ERR_SEEN 0x0020
+#define _IO_DELETE_DONT_CLOSE 0x0040 /* Don't call close(_fileno) on close.  */
+#define _IO_LINKED 0x0080			 /* In the list of all open files.  */
+#define _IO_IN_BACKUP 0x0100
+#define _IO_LINE_BUF 0x0200
+#define _IO_TIED_PUT_GET 0x0400 /* Put and get pointer move in unison.  */
+#define _IO_CURRENTLY_PUTTING 0x0800
+#define _IO_IS_APPENDING 0x1000
+#define _IO_IS_FILEBUF 0x2000
+#define _IO_FULLY_BUF 0x4000
+
+struct __FILE
+{
+	int fd;
+	int flags;
+	int offset;
+	char *read_ptr, *read_base, *read_end;
+	char *write_ptr, *write_base, *write_end;
+	char *save_ptr;	 // for ungetc
+	int blksize;
+};
+typedef struct __FILE FILE;
 
 extern FILE *stdin;
 extern FILE *stdout;
 extern FILE *stderr;
 
-enum debug_level
-{
-	DEBUG_TRACE = 0,
-	DEBUG_INFO = 1,
-	DEBUG_WARNING = 2,
-	DEBUG_ERROR = 3,
-	DEBUG_FATAL = 4,
-};
+FILE *fopen(const char *filename, const char *mode);
+int sprintf(char *buffer, const char *fmt, ...);
+int vsprintf(char *buffer, const char *fmt, va_list args);
+FILE *fdopen(int fd, const char *mode);
+int feof(FILE *stream);
+int ferror(FILE *stream);
+int fileno(FILE *stream);
+void clearerr(FILE *stream);
+int fgetc(FILE *stream);
 
-size_t vsprintf(char *buffer, const char *fmt, va_list args);
-size_t sprintf(char *buffer, const char *fmt, ...);
-int debug_printf(enum debug_level level, const char *fmt, ...);
-int debug_println(enum debug_level level, const char *fmt, ...);
+// int fflush(FILE *);
+// int fgetc(FILE *);
+// int fgetpos(FILE *, fpos_t *);
+// char *fgets(char *, int, FILE *);
+// int fprintf(FILE *, const char *, ...);
+// int fputc(int, FILE *);
+// int fputs(const char *, FILE *);
+// size_t fread(void *, size_t, size_t, FILE *);
+// FILE *freopen(const char *, const char *, FILE *);
+// int fscanf(FILE *, const char *, ...);
+// int fseek(FILE *, long int, int);
+// int fseeko(FILE *, off_t, int);
+// int fsetpos(FILE *, const fpos_t *);
+// long int ftell(FILE *);
+// off_t ftello(FILE *);
+// size_t fwrite(const void *, size_t, size_t, FILE *);
+// int getc(FILE *);
+// int getchar(void);
+// int getopt(int, char *const[], const char);
+// int getw(FILE *);
+// int pclose(FILE *);
+// void perror(const char *);
+// FILE *popen(const char *, const char *);
+// int printf(const char *, ...);
+// int putc(int, FILE *);
+// int putchar(int);
+// int puts(const char *);
+// int putw(int, FILE *);
+// int remove(const char *);
+// int rename(const char *, const char *);
+// void rewind(FILE *);
+// int scanf(const char *, ...);
+// void setbuf(FILE *, char *);
+// int setvbuf(FILE *, char *, int, size_t);
+// int snprintf(char *, size_t, const char *, ...);
+// int sscanf(const char *, const char *, ...);
+// char *tempnam(const char *, const char *);
+// FILE *tmpfile(void);
+// char *tmpnam(char *);
+// int ungetc(int, FILE *);
+// int vfprintf(FILE *, const char *, va_list);
+// int vprintf(const char *, va_list);
+// int vsnprintf(char *, size_t, const char *, va_list);
 
 #endif
