@@ -1,6 +1,7 @@
 #ifndef LIBC_UNISTD_H
 #define LIBC_UNISTD_H
 
+#include <debug.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <mqueue.h>
@@ -24,6 +25,7 @@
 #define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
+#define __NR_lseek 19
 #define __NR_getpid 20
 #define __NR_kill 37
 #define __NR_pipe 42
@@ -178,6 +180,12 @@ _syscall1(close, uint32_t);
 static inline int32_t close(uint32_t fd)
 {
 	return syscall_close(fd);
+}
+
+_syscall3(lseek, int, off_t, int);
+static inline int32_t lseek(int fd, off_t offset, int whence)
+{
+	return syscall_lseek(fd, offset, whence);
 }
 
 _syscall3(getdents, unsigned int, struct dirent *, unsigned int);

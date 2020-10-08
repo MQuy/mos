@@ -64,6 +64,11 @@ static int32_t sys_close(uint32_t fd)
 	return vfs_close(fd);
 }
 
+static int32_t sys_lseek(int fd, off_t offset, int whence)
+{
+	return vfs_flseek(fd, offset, whence);
+}
+
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
@@ -335,6 +340,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
+#define __NR_lseek 19
 #define __NR_getpid 20
 #define __NR_kill 37
 #define __NR_pipe 42
@@ -389,6 +395,7 @@ static void *syscalls[] = {
 	[__NR_stat] = sys_stat,
 	[__NR_fstat] = sys_fstat,
 	[__NR_close] = sys_close,
+	[__NR_lseek] = sys_lseek,
 	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,
 	[__NR_dup2] = sys_dup2,

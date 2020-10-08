@@ -7,17 +7,6 @@
 
 #include "ext2.h"
 
-static loff_t ext2_llseek_file(struct vfs_file *file, loff_t ppos)
-{
-	struct vfs_inode *inode = file->f_dentry->d_inode;
-
-	if (ppos > inode->i_size || ppos < 0)
-		return -EINVAL;
-
-	file->f_pos = ppos;
-	return ppos;
-}
-
 static void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
 {
 	char *block_buf = ext2_bread_block(sb, block);
@@ -156,7 +145,7 @@ int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int coun
 }
 
 struct vfs_file_operations ext2_file_operations = {
-	.llseek = ext2_llseek_file,
+	.llseek = generic_file_llseek,
 	.read = ext2_read_file,
 	.write = ext2_write_file,
 };

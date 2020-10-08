@@ -4,6 +4,7 @@
 #include <fs/poll.h>
 #include <locking/semaphore.h>
 #include <shared/atomic.h>
+#include <shared/fcntl.h>
 #include <shared/list.h>
 #include <shared/types.h>
 #include <stddef.h>
@@ -12,24 +13,6 @@
 
 // mount
 #define MS_NOUSER (1 << 31)
-
-// file
-#define S_IFMT 00170000
-#define S_IFIFO 0010000
-#define S_IFSOCK 0140000
-#define S_IFLNK 0120000
-#define S_IFREG 0100000
-#define S_IFBLK 0060000
-#define S_IFDIR 0040000
-#define S_IFCHR 0020000
-
-#define S_ISLNK(m) (((m)&S_IFMT) == S_IFLNK)
-#define S_ISREG(m) (((m)&S_IFMT) == S_IFREG)
-#define S_ISDIR(m) (((m)&S_IFMT) == S_IFDIR)
-#define S_ISCHR(m) (((m)&S_IFMT) == S_IFCHR)
-#define S_ISBLK(m) (((m)&S_IFMT) == S_IFBLK)
-#define S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
-#define S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
 
 struct vm_area_struct;
 struct vfs_superblock;
@@ -194,7 +177,7 @@ struct vfs_file
 
 struct vfs_file_operations
 {
-	loff_t (*llseek)(struct vfs_file *file, loff_t ppos);
+	loff_t (*llseek)(struct vfs_file *file, loff_t ppos, int);
 	ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
 	ssize_t (*write)(struct vfs_file *file, const char *buf, size_t count, loff_t ppos);
 	int (*readdir)(struct vfs_file *file, struct dirent *dirent, unsigned int count);
@@ -238,6 +221,7 @@ char *vfs_read(const char *path);
 ssize_t vfs_fread(int32_t fd, char *buf, size_t count);
 int vfs_write(const char *path, const char *buf, size_t count);
 ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count);
-loff_t vfs_flseek(int32_t fd, loff_t offset);
+loff_t generic_file_llseek(struct vfs_file *file, loff_t offset, int whence);
+loff_t vfs_flseek(int32_t fd, loff_t offset, int whence);
 
 #endif

@@ -7,17 +7,6 @@
 
 #include "tmpfs.h"
 
-static loff_t tmpfs_llseek_file(struct vfs_file *file, loff_t ppos)
-{
-	struct vfs_inode *inode = file->f_dentry->d_inode;
-
-	if (ppos > inode->i_size || ppos < 0)
-		return -EINVAL;
-
-	file->f_pos = ppos;
-	return ppos;
-}
-
 static ssize_t tmpfs_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
 {
 	struct vfs_inode *inode = file->f_dentry->d_inode;
@@ -103,7 +92,7 @@ static int tmpfs_release(struct vfs_inode *inode, struct vfs_file *file)
 }
 
 struct vfs_file_operations tmpfs_file_operations = {
-	.llseek = tmpfs_llseek_file,
+	.llseek = generic_file_llseek,
 	.read = tmpfs_read_file,
 	.write = tmpfs_write_file,
 	.mmap = tmpfs_mmap_file,

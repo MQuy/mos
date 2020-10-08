@@ -19,7 +19,7 @@ static int null_release(struct vfs_inode *inode, struct vfs_file *filp)
 	return 0;
 }
 
-static loff_t null_llseek(struct vfs_file *file, loff_t ppos)
+static loff_t null_llseek(struct vfs_file *file, loff_t ppos, int whence)
 {
 	return 0;
 }
@@ -52,7 +52,7 @@ static int random_release(struct vfs_inode *inode, struct vfs_file *filp)
 	return 0;
 }
 
-static loff_t random_llseek(struct vfs_file *file, loff_t ppos)
+static loff_t random_llseek(struct vfs_file *file, loff_t ppos, int whence)
 {
 	return ppos;
 }
