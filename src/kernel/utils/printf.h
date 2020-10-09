@@ -1,6 +1,7 @@
 #ifndef UTILS_PRINTF_H
 #define UTILS_PRINTF_H
 
+#include <shared/vsprintf.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -14,8 +15,6 @@ enum debug_level
 	DEBUG_FATAL = 4,
 };
 
-size_t sprintf(char *buffer, const char *fmt, ...);
-size_t vsprintf(char *buffer, const char *fmt, va_list args);
 int debug_printf(enum debug_level level, const char *fmt, ...);
 int debug_println(enum debug_level level, const char *fmt, ...);
 void debug_init();

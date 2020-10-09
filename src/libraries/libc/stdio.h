@@ -2,6 +2,7 @@
 #define LIBC_STDIO_H
 
 #include <shared/fcntl.h>
+#include <shared/vsprintf.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <sys/types.h>
@@ -41,10 +42,6 @@ extern FILE *stdout;
 extern FILE *stderr;
 
 FILE *fopen(const char *filename, const char *mode);
-int sprintf(char *buffer, const char *fmt, ...);
-int snprintf(char *s, size_t n, const char *format, ...);
-int vsprintf(char *buffer, const char *fmt, va_list args);
-int vsnprintf(char *s, size_t n, const char *format, va_list ap);
 FILE *fdopen(int fd, const char *mode);
 int feof(FILE *stream);
 int ferror(FILE *stream);
@@ -61,7 +58,6 @@ int getchar();
 int ungetc(int c, FILE *stream);
 int fseek(FILE *stream, long int offset, int whence);
 int fseeko(FILE *stream, off_t offset, int whence);
-int sscanf(const char *s, const char *format, ...);
 
 // int fflush(FILE *);
 // int fgetpos(FILE *, fpos_t *);
@@ -84,10 +80,8 @@ int sscanf(const char *s, const char *format, ...);
 // int putw(int, FILE *);
 // int remove(const char *);
 // int rename(const char *, const char *);
-// int scanf(const char *, ...);
 // void setbuf(FILE *, char *);
 // int setvbuf(FILE *, char *, int, size_t);
-// int sscanf(const char *, const char *, ...);
 // char *tempnam(const char *, const char *);
 // FILE *tmpfile(void);
 // char *tmpnam(char *);

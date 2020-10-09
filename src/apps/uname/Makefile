@@ -11,7 +11,7 @@ LD = /usr/local/bin/i386-elf-ld
 GDB = /usr/local/bin/i386-elf-gdb
 
 # -g: Use debugging symbols in gcc
-CFLAGS = -g -std=gnu18 -ffreestanding -Wall -Wextra -Wno-unused-parameter -Wno-discarded-qualifiers -Wno-comment -Wno-multichar -Wno-sequence-point -Wno-unused-function -Wno-unused-value -I$(ROOTDIR)/libraries/libc -I$(ROOTDIR)/libraries
+CFLAGS = -g -std=gnu18 -ffreestanding -Wall -Wextra -Wno-unused-parameter -Wno-discarded-qualifiers -Wno-comment -Wno-multichar -Wno-sequence-point -Wno-unused-function -Wno-unused-value -Wno-implicit-fallthrough -I$(ROOTDIR)/libraries/libc -I$(ROOTDIR)/libraries
 
 uname: ${OBJ}
 	${CC} -o $@ -T linker.ld $^ -ffreestanding -nostdlib -lgcc -g
