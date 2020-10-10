@@ -58,12 +58,12 @@ int getchar();
 int ungetc(int c, FILE *stream);
 int fseek(FILE *stream, long int offset, int whence);
 int fseeko(FILE *stream, off_t offset, int whence);
+int fputc(int c, FILE *stream);
+int fputs(const char *s, FILE *stream);
+int fflush(FILE *stream);
 
-// int fflush(FILE *);
 // int fgetpos(FILE *, fpos_t *);
 // int fprintf(FILE *, const char *, ...);
-// int fputc(int, FILE *);
-// int fputs(const char *, FILE *);
 // FILE *freopen(const char *, const char *, FILE *);
 // int fscanf(FILE *, const char *, ...);
 // int fsetpos(FILE *, const fpos_t *);

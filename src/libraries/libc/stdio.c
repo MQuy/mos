@@ -14,6 +14,12 @@ bool valid_stream(FILE *stream)
 	return stream->fd != -1;
 }
 
+void assert_stream(FILE *stream)
+{
+	assert(stream->read_base <= stream->read_ptr && stream->read_ptr <= stream->read_end);
+	assert(stream->write_base <= stream->write_ptr && stream->write_ptr <= stream->write_end);
+}
+
 FILE *fopen(const char *filename, const char *mode)
 {
 	int flags = O_RDWR;
@@ -85,7 +91,7 @@ void clearerr(FILE *stream)
 
 int fgetc(FILE *stream)
 {
-	assert(stream->read_ptr <= stream->read_end);
+	assert_stream(stream);
 
 	if (stream->read_ptr == stream->read_end)
 	{
@@ -112,8 +118,6 @@ int fgetc(FILE *stream)
 
 char *fgets(char *s, int n, FILE *stream)
 {
-	assert(stream->read_ptr <= stream->read_end);
-
 	int i;
 	for (i = 0; i < n; ++i)
 	{
@@ -157,12 +161,6 @@ off_t ftello(FILE *stream)
 	return stream->pos;
 }
 
-void rewind(FILE *stream)
-{
-	fseek(stream, 0, SEEK_SET);
-	stream->flags &= ~_IO_ERR_SEEN;
-}
-
 int getchar()
 {
 	return getc(stdin);
@@ -170,6 +168,8 @@ int getchar()
 
 int ungetc(int c, FILE *stream)
 {
+	assert_stream(stream);
+
 	if (c == EOF || stream->bkup_chr != -1)
 		return EOF;
 
@@ -192,8 +192,16 @@ int ungetc(int c, FILE *stream)
 	return (unsigned char)c;
 }
 
+void rewind(FILE *stream)
+{
+	fseek(stream, 0, SEEK_SET);
+	stream->flags &= ~_IO_ERR_SEEN;
+}
+
 int fseek(FILE *stream, long int off, int whence)
 {
+	assert_stream(stream);
+
 	struct stat stat = {0};
 	fstat(stream->fd, &stat);
 
@@ -216,4 +224,53 @@ int fseek(FILE *stream, long int off, int whence)
 int fseeko(FILE *stream, off_t offset, int whence)
 {
 	return fseek(stream, offset, whence);
+}
+
+#define MIN_WRITE_BUF_LEN 32
+int fputc(int c, FILE *stream)
+{
+	char ch[] = {(unsigned char)c, 0};
+	fputs(c, stream);
+	return ch;
+}
+
+int fputs(const char *s, FILE *stream)
+{
+	assert_stream(stream);
+
+	int slen = strlen(s);
+	int remaining_len = stream->write_end - stream->write_ptr;
+	int current_len = stream->write_end - stream->write_base;
+
+	if (remaining_len < slen)
+	{
+		int new_len = max(max(slen, current_len * 2), MIN_WRITE_BUF_LEN);
+		char *buf = calloc(new_len, sizeof(char));
+
+		memcpy(buf, stream->write_base, current_len);
+		free(stream->write_base);
+
+		stream->write_base = buf;
+		stream->write_ptr = buf + current_len - remaining_len;
+		stream->write_end = buf + new_len;
+	}
+	memcpy(stream->write_ptr, s, slen);
+	stream->write_ptr += slen;
+	stream->pos += slen;
+	return slen;
+}
+
+int fflush(FILE *stream)
+{
+	assert_stream(stream);
+
+	int unwritten_len = stream->write_ptr - stream->write_base;
+
+	if (!unwritten_len)
+		return 0;
+
+	write(stream->fd, stream->write_base, unwritten_len);
+	free(stream->write_base);
+
+	stream->write_base = stream->write_ptr = stream->write_end = NULL;
 }

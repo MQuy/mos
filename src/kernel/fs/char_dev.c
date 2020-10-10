@@ -125,10 +125,23 @@ static int chrdev_release(struct vfs_inode *inode, struct vfs_file *file)
 	return -EINVAL;
 }
 
+loff_t chrdev_llseek(struct vfs_file *file, loff_t ppos, int whence)
+{
+	struct char_device *cdev = get_chrdev(file->f_dentry->d_inode->i_rdev);
+	if (cdev == NULL)
+		return -ENODEV;
+
+	if (cdev->f_ops->llseek)
+		return cdev->f_ops->llseek(file, ppos, whence);
+
+	return -EINVAL;
+}
+
 struct vfs_file_operations def_chr_fops = {
 	.open = chrdev_open,
 	.read = chrdev_read,
 	.write = chrdev_write,
+	.llseek = chrdev_llseek,
 	.poll = chrdev_poll,
 	.ioctl = chrdev_ioctl,
 	.release = chrdev_release,
