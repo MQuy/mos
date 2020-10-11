@@ -61,21 +61,25 @@ int fseeko(FILE *stream, off_t offset, int whence);
 int fputc(int c, FILE *stream);
 int fputs(const char *s, FILE *stream);
 int fflush(FILE *stream);
+int fclose(FILE *stream);
+int fgetpos(FILE *stream, fpos_t *pos);
+int fsetpos(FILE *stream, const fpos_t *pos);
+#define putc(c, stream) fputc(c, stream)
+int putchar(int c);
+int fprintf(FILE *stream, const char *format, ...);
+int printf(const char *format, ...);
+int vfprintf(FILE *stream, const char *format, va_list ap);
+int vprintf(const char *format, va_list ap);
+size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
+int fscanf(FILE *stream, const char *format, ...);
+int scanf(const char *format, ...);
 
-// int fgetpos(FILE *, fpos_t *);
-// int fprintf(FILE *, const char *, ...);
 // FILE *freopen(const char *, const char *, FILE *);
-// int fscanf(FILE *, const char *, ...);
-// int fsetpos(FILE *, const fpos_t *);
-// size_t fwrite(const void *, size_t, size_t, FILE *);
 // int getopt(int, char *const[], const char);
 // int getw(FILE *);
 // int pclose(FILE *);
 // void perror(const char *);
 // FILE *popen(const char *, const char *);
-// int printf(const char *, ...);
-// int putc(int, FILE *);
-// int putchar(int);
 // int puts(const char *);
 // int putw(int, FILE *);
 // int remove(const char *);
@@ -85,7 +89,5 @@ int fflush(FILE *stream);
 // char *tempnam(const char *, const char *);
 // FILE *tmpfile(void);
 // char *tmpnam(char *);
-// int vfprintf(FILE *, const char *, va_list);
-// int vprintf(const char *, va_list);
 
 #endif
