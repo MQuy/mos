@@ -2,6 +2,7 @@
 #define LIBC_STDIO_H
 
 #include <shared/fcntl.h>
+#include <shared/list.h>
 #include <shared/vsprintf.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -34,6 +35,7 @@ struct __FILE
 	char *write_ptr, *write_base, *write_end;
 	int bkup_chr;  // for ungetc
 	int blksize;
+	struct list_head sibling;
 };
 typedef struct __FILE FILE;
 

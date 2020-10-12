@@ -9,10 +9,14 @@
 
 #define MAX_BUF_LEN 4096
 
+struct list_head lstream;
+
 FILE *stdin, *stdout, *stderr;
 
 void _stdio_init()
 {
+	INIT_LIST_HEAD(&lstream);
+
 	stdin = fdopen(0, "r");
 	stdout = fdopen(1, "w");
 	stderr = fdopen(2, "w");
@@ -51,6 +55,7 @@ FILE *fdopen(int fd, const char *mode)
 	stream->fd = fd;
 	stream->flags |= _IO_UNBUFFERED;
 	stream->bkup_chr = -1;
+	list_add_tail(&stream->sibling, &lstream);
 
 	// TODO: MQ 2020-10-11 Support mode `b`
 	if (mode[0] == 'r' && mode[1] != '+')
@@ -302,8 +307,18 @@ size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream)
 
 int fflush(FILE *stream)
 {
-	assert_stream(stream);
+	if (!stream)
+	{
+		FILE *iter;
+		list_for_each_entry(iter, &lstream, sibling)
+		{
+			if (!(iter->flags & _IO_NO_WRITES))
+				fflush(iter);
+		}
+		return 0;
+	}
 
+	assert_stream(stream);
 	if (!valid_stream(stream))
 		return -EBADF;
 
@@ -322,6 +337,8 @@ int fflush(FILE *stream)
 int fclose(FILE *stream)
 {
 	assert_stream(stream);
+	if (!valid_stream(stream))
+		return -EBADF;
 
 	fflush(stream);
 	free(stream->read_base);

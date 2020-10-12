@@ -7,6 +7,6 @@
 
 int main(int argc, char *argv[])
 {
-	write(1, "mOS 0.0.1", 9);
+	printf("mOS %s", "0.0.1");
 	return 0;
 }

@@ -10,7 +10,7 @@
 
 int main(int argc, char **argv)
 {
-	struct framebuffer *fb = argv[0];
+	struct framebuffer *fb = (struct framebuffer *)argv[0];
 	int32_t ws_fd = mq_open(WINDOW_SERVER_QUEUE, O_RDONLY, &(struct mq_attr){
 															   .mq_msgsize = sizeof(struct msgui),
 															   .mq_maxmsg = 32,
