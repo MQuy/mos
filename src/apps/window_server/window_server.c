@@ -8,8 +8,9 @@
 
 #include "src/window_manager.h"
 
-int main(struct framebuffer fb)
+int main(int argc, char **argv)
 {
+	struct framebuffer *fb = argv[0];
 	int32_t ws_fd = mq_open(WINDOW_SERVER_QUEUE, O_RDONLY, &(struct mq_attr){
 															   .mq_msgsize = sizeof(struct msgui),
 															   .mq_maxmsg = 32,
@@ -27,7 +28,7 @@ int main(struct framebuffer fb)
 	struct mouse_event mouse_event;
 	struct key_event krb_event;
 
-	init_layout(&fb);
+	init_layout(fb);
 	draw_layout();
 
 	while (true)

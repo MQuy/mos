@@ -363,7 +363,7 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 	gui_render(app_win);
 }
 
-int main(void)
+int main()
 {
 	app_win = init_window(50, 50, 600, 400);
 	container_win = list_last_entry(&app_win->children, struct window, sibling);

@@ -160,6 +160,7 @@ struct process *process_fork(struct process *parent);
 int32_t process_execve(const char *pathname, char *const argv[], char *const envp[]);
 void thread_sleep(uint32_t ms);
 struct process *find_process_by_pid(pid_t pid);
+void setup_user_thread_stack(struct Elf32_Layout *layout, int argc, char *const argv[], char *const envp[]);
 
 // sched.c
 void update_thread(struct thread *thread, uint8_t state);

@@ -11,6 +11,13 @@
 
 FILE *stdin, *stdout, *stderr;
 
+void _stdio_init()
+{
+	stdin = fdopen(0, "r");
+	stdout = fdopen(1, "w");
+	stderr = fdopen(2, "w");
+}
+
 bool valid_stream(FILE *stream)
 {
 	return stream->fd != -1;

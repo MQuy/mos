@@ -42,6 +42,8 @@ extern struct vfs_file_system_type ext2_fs_type;
 void setup_window_server(struct Elf32_Layout *elf_layout)
 {
 	dhcp_setup();
+
+	// map framebuffer to userspace
 	struct framebuffer *fb = get_framebuffer();
 	uint32_t screen_size = fb->height * fb->pitch;
 	struct vm_area_struct *area = get_unmapped_area(0, screen_size);
@@ -57,6 +59,13 @@ void setup_window_server(struct Elf32_Layout *elf_layout)
 	struct framebuffer *ws_fb = (struct framebuffer *)elf_layout->stack;
 	memcpy(ws_fb, fb, sizeof(struct framebuffer));
 	ws_fb->addr = area->vm_start;
+
+	// setup argv
+	elf_layout->stack -= 4;
+	*(uint32_t *)elf_layout->stack = (uint32_t)ws_fb;
+	char **argv = (char **)elf_layout->stack;
+
+	setup_user_thread_stack(elf_layout, 1, argv, NULL);
 }
 
 void kernel_init()

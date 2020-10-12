@@ -209,10 +209,15 @@ static int32_t sys_kill(pid_t pid, int sig)
 	return do_kill(pid, sig);
 }
 
+static void posix_spawn_setup_stack(struct Elf32_Layout *layout)
+{
+	setup_user_thread_stack(layout, 0, NULL, NULL);
+};
+
 static int32_t sys_posix_spawn(char *path)
 {
 	int top = get_top_priority_from_list(THREAD_READY, THREAD_SYSTEM_POLICY);
-	process_load(path, path, THREAD_APP_POLICY, top - 1, NULL);
+	process_load(path, path, THREAD_APP_POLICY, top - 1, posix_spawn_setup_stack);
 	return 0;
 }
 

@@ -265,6 +265,20 @@ struct thread *create_user_thread(struct process *parent, const char *path, enum
 	return th;
 }
 
+void setup_user_thread_stack(struct Elf32_Layout *layout, int argc, char *const argv[], char *const envp[])
+{
+	assert((uint32_t)argv < 0xC0000000 && (uint32_t)envp < 0xC0000000);
+
+	layout->stack -= 4;
+	*(uint32_t *)layout->stack = (uint32_t)envp;
+
+	layout->stack -= 4;
+	*(uint32_t *)layout->stack = (uint32_t)argv;
+
+	layout->stack -= 4;
+	*(uint32_t *)layout->stack = (uint32_t)argc;
+}
+
 void process_load(const char *pname, const char *path, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *))
 {
 	struct process *proc = create_process(current_process, pname, current_process->pdir);
