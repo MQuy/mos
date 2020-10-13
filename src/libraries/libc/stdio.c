@@ -53,7 +53,6 @@ FILE *fdopen(int fd, const char *mode)
 {
 	FILE *stream = calloc(1, sizeof(FILE));
 	stream->fd = fd;
-	stream->flags |= _IO_UNBUFFERED;
 	stream->bkup_chr = -1;
 	list_add_tail(&stream->sibling, &lstream);
 
@@ -77,6 +76,8 @@ FILE *fdopen(int fd, const char *mode)
 		stream->flags |= _IO_FULLY_BUF;
 	else if (isatty(fd))
 		stream->flags |= _IO_LINE_BUF;
+	else
+		stream->flags |= _IO_UNBUFFERED;
 
 	stream->blksize = stat.blksize;
 	return stream;
@@ -113,7 +114,9 @@ int fgetc(FILE *stream)
 		if (stream->flags & _IO_EOF_SEEN)
 			return EOF;
 
-		int count = (stream->flags & _IO_FULLY_BUF) ? ALIGN_UP(stream->pos + 1, max(stream->blksize, 1)) - stream->pos : 1;
+		int count = (stream->flags & _IO_FULLY_BUF || stream->flags & _IO_LINE_BUF)
+						? ALIGN_UP(stream->pos + 1, max(stream->blksize, 1)) - stream->pos
+						: 1;
 		char *buf = calloc(count, sizeof(char));
 
 		count = read(stream->fd, buf, count);
@@ -141,10 +144,12 @@ char *fgets(char *s, int n, FILE *stream)
 	{
 		int ch = fgetc(stream);
 
-		if (ch == '\r')
+		if (ch == '\n')
 			break;
 		if (ch == EOF)
 			return NULL;
+
+		s[i] = ch;
 	}
 
 	s[i] = 0;
