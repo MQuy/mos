@@ -15,6 +15,7 @@ src/apps/shell/shell
 src/apps/uname/uname
 src/apps/host/host
 src/apps/calculator/calculator
+src/apps/ld/ld
 src/ports
 src/isodir
 src/logs

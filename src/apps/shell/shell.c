@@ -89,6 +89,8 @@ int main()
 				execute_program(cmd->program, cmd);
 			else if (!strcmp(cmd->program, "host"))
 				execute_program(cmd->program, cmd);
+			else if (!strcmp(cmd->program, "ld"))
+				execute_program(cmd->program, cmd);
 			else
 				write(1, "command not found", 18);
 			exit(0);

@@ -26,6 +26,8 @@ cd apps/host && make clean && make
 cd ../..
 cd apps/calculator && make clean && make
 cd ../..
+cd apps/ld && make clean && make
+cd ../..
 
 mkdir "/Volumes/${VOLUME_NAME}/bin"
 cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
@@ -34,6 +36,7 @@ cp apps/shell/shell "/Volumes/${VOLUME_NAME}/bin"
 cp apps/uname/uname "/Volumes/${VOLUME_NAME}/bin"
 cp apps/host/host "/Volumes/${VOLUME_NAME}/bin"
 cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
+cp apps/ld/ld "/Volumes/${VOLUME_NAME}/bin"
 
 mkdir "/Volumes/${VOLUME_NAME}/etc"
 cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"
