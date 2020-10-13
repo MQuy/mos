@@ -129,12 +129,12 @@ static struct process *create_process(struct process *parent, const char *name, 
 
 	struct process *proc = kcalloc(1, sizeof(struct process));
 	proc->pid = next_pid++;
-	proc->name = strdup(name);
 	if (pdir)
 		proc->pdir = vmm_create_address_space(pdir);
 	else
 		proc->pdir = vmm_get_directory();
 	proc->parent = parent;
+	strcpy(proc->name, name);
 	proc->files = clone_file_descriptor_table(parent);
 	proc->fs = kcalloc(1, sizeof(struct fs_struct));
 	proc->mm = kcalloc(1, sizeof(struct mm_struct));
@@ -295,9 +295,9 @@ struct process *process_fork(struct process *parent)
 	proc->pid = next_pid++;
 	proc->gid = parent->gid;
 	proc->sid = parent->sid;
-	proc->name = strdup(parent->name);
 	proc->parent = parent;
 	proc->tty = parent->tty;
+	strcpy(proc->name, parent->name);
 	INIT_LIST_HEAD(&proc->wait_chld.list);
 	proc->mm = clone_mm_struct(parent);
 	memcpy(&proc->sighand, &parent->sighand, sizeof(parent->sighand));
@@ -370,11 +370,11 @@ int32_t process_execve(const char *pathname, char *const argv[], char *const env
 		kernel_envp[i] = kcalloc(ilength + 1, sizeof(char));
 		memcpy(kernel_envp[i], envp[i], ilength);
 	}
+	strcpy(current_process->name, pathname);
 
 	char *buf = vfs_read(pathname);
 	elf_unload();
 	struct Elf32_Layout *elf_layout = elf_load(buf);
-	strcpy(current_process->name, pathname);
 
 	// copy argv back to userspace
 	char **user_argv = (char **)sys_sbrk(argv_length + 1);
