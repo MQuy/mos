@@ -1,11 +1,11 @@
 #ifndef LIBC_UNISTD_H
 #define LIBC_UNISTD_H
 
-#include <debug.h>
 #include <dirent.h>
+#include <dprint.h>
 #include <fcntl.h>
+#include <ioctls.h>
 #include <mqueue.h>
-#include <shared/ioctls.h>
 #include <signal.h>
 #include <socket.h>
 #include <stddef.h>
@@ -468,5 +468,7 @@ static int isatty(int fd)
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);
+int execv(const char *, char *const[]);
+int execvp(const char *, char *const[]);
 
 #endif

@@ -1,7 +1,7 @@
 #include "printf.h"
 
 #include <devices/char/tty.h>
-#include <shared/ctype.h>
+#include <include/ctype.h>
 #include <utils/string.h>
 
 #define SERIAL_PORT_A 0x3f8

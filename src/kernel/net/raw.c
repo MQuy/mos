@@ -1,5 +1,7 @@
 #include "raw.h"
 
+#include <include/errno.h>
+#include <include/if_ether.h>
 #include <memory/vmm.h>
 #include <net/ethernet.h>
 #include <net/ip.h>
@@ -7,8 +9,6 @@
 #include <net/net.h>
 #include <net/sk_buff.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/if_ether.h>
 #include <utils/math.h>
 #include <utils/printf.h>
 #include <utils/string.h>

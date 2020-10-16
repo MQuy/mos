@@ -1,5 +1,5 @@
-#ifndef SHARED_BITOPS_H
-#define SHARED_BITOPS_H
+#ifndef INCLUDE_BITOPS_H
+#define INCLUDE_BITOPS_H
 
 #define ADDR (*(volatile long*)addr)
 

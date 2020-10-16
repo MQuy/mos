@@ -3,8 +3,8 @@
 
 #include <gui/msgui.h>
 #include <hashtable/hashmap.h>
+#include <list.h>
 #include <poll.h>
-#include <shared/list.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
 

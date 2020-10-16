@@ -1,10 +1,10 @@
 #include "elf.h"
 
+#include <include/errno.h>
+#include <include/mman.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/mman.h>
 #include <utils/string.h>
 
 #define NO_ERROR 0

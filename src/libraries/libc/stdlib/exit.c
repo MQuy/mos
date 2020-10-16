@@ -1,5 +1,5 @@
-#include <libc/stdlib.h>
-#include <libc/unistd.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 extern struct list_head lstream;
 

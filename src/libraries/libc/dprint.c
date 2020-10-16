@@ -1,4 +1,4 @@
-#include "debug.h"
+#include "dprint.h"
 
 #include <stdio.h>
 #include <unistd.h>

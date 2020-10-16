@@ -1,7 +1,7 @@
 #ifndef DEVICES_MOUSE_H
 #define DEVICES_MOUSE_H
 
-#include <shared/list.h>
+#include <include/list.h>
 #include <stdbool.h>
 #include <stdint.h>
 

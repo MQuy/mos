@@ -1,6 +1,6 @@
 #include <devices/char/tty.h>
+#include <include/atomic.h>
 #include <ipc/signal.h>
-#include <shared/atomic.h>
 #include <utils/printf.h>
 
 #include "task.h"

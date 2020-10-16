@@ -1,5 +1,5 @@
 #include <fs/char_dev.h>
-#include <shared/errno.h>
+#include <include/errno.h>
 #include <utils/math.h>
 #include <utils/printf.h>
 

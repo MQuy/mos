@@ -1,5 +1,5 @@
-#ifndef SHARED_FCNTL_H
-#define SHARED_FCNTL_H
+#ifndef INCLUDE_FCNTL_H
+#define INCLUDE_FCNTL_H
 
 #define SEEK_SET 0 /* Seek from beginning of file.  */
 #define SEEK_CUR 1 /* Seek from current position.  */

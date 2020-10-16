@@ -2,6 +2,9 @@
 
 #include <fs/sockfs/sockfs.h>
 #include <fs/vfs.h>
+#include <include/errno.h>
+#include <include/if_ether.h>
+#include <include/sockios.h>
 #include <memory/vmm.h>
 #include <net/arp.h>
 #include <net/ethernet.h>
@@ -10,9 +13,6 @@
 #include <net/neighbour.h>
 #include <net/sk_buff.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/if_ether.h>
-#include <shared/sockios.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 

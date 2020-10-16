@@ -1,8 +1,8 @@
 #ifndef PROC_WAIT_H
 #define PROC_WAIT_H
 
-#include <shared/list.h>
-#include <shared/types.h>
+#include <include/list.h>
+#include <include/types.h>
 #include <stdint.h>
 
 #define WNOHANG 0x00000001

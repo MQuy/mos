@@ -1,5 +1,5 @@
-#ifndef SHARED_TYPES_H
-#define SHARED_TYPES_H
+#ifndef INCLUDE_TYPES_H
+#define INCLUDE_TYPES_H
 
 typedef unsigned int __kernel_dev_t;
 typedef __kernel_dev_t dev_t;

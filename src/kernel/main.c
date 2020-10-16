@@ -1,4 +1,4 @@
-#include <shared/mman.h>
+#include <include/mman.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -41,7 +41,11 @@ extern struct vfs_file_system_type ext2_fs_type;
 
 void setup_window_server(struct Elf32_Layout *elf_layout)
 {
-	dhcp_setup();
+	// setup stdin, stdiout and stderr
+	int fd = vfs_open("/dev/null", O_RDWR);
+	sys_dup2(fd, 0);
+	sys_dup2(fd, 1);
+	sys_dup2(fd, 2);
 
 	// map framebuffer to userspace
 	struct framebuffer *fb = get_framebuffer();
@@ -91,9 +95,6 @@ void kernel_init()
 	/// init keyboard and mouse
 	kkybrd_install();
 	mouse_init();
-
-	net_init();
-	rtl8139_init();
 
 	// init ipc message queue
 	mq_init();

@@ -1,7 +1,7 @@
-#ifndef SHARED_LIST_H
-#define SHARED_LIST_H
+#ifndef INCLUDE_LIST_H
+#define INCLUDE_LIST_H
 
-#include <shared/cdefs.h>
+#include <include/cdefs.h>
 #include <stdbool.h>
 #include <stddef.h>
 

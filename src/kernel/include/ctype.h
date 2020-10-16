@@ -1,5 +1,5 @@
-#ifndef SHARED_CTYPE_H
-#define SHARED_CTYPE_H
+#ifndef INCLUDE_CTYPE_H
+#define INCLUDE_CTYPE_H
 
 #define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')

@@ -1,5 +1,5 @@
-#ifndef SHARED_SOCKIOS_H
-#define SHARED_SOCKIOS_H
+#ifndef LIBC_SOCKIOS_H
+#define LIBC_SOCKIOS_H
 
 #define SIOCGIFDNSADDR 0x8900
 

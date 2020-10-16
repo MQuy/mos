@@ -1,8 +1,8 @@
 #include "tcp.h"
 
+#include <include/errno.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
 #include <system/time.h>
 #include <utils/math.h>
 #include <utils/string.h>

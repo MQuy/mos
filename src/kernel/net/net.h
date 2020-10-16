@@ -2,8 +2,8 @@
 #define NET_H
 
 #include <fs/vfs.h>
-#include <shared/if_ether.h>
-#include <shared/list.h>
+#include <include/if_ether.h>
+#include <include/list.h>
 
 #define AF_INET 2 /* Internet IP Protocol 	*/
 #define PF_INET AF_INET

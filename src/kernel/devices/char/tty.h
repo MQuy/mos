@@ -15,8 +15,8 @@
 #define SERIAL_MINOR_BASE 64
 
 #include <fs/char_dev.h>
+#include <include/list.h>
 #include <proc/wait.h>
-#include <shared/list.h>
 #include <stdint.h>
 
 #include "termios.h"

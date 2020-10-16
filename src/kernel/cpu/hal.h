@@ -1,7 +1,7 @@
 #ifndef CPU_HAL_H
 #define CPU_HAL_H
 
-#include <shared/cdefs.h>
+#include <include/cdefs.h>
 #include <stddef.h>
 #include <stdint.h>
 

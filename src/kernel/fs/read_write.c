@@ -1,7 +1,7 @@
+#include <include/errno.h>
+#include <include/fcntl.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/fcntl.h>
 #include <utils/string.h>
 
 #include "vfs.h"

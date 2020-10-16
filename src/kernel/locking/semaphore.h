@@ -1,7 +1,7 @@
 #ifndef LOCKING_SEMAPHORE_H
 #define LOCKING_SEMAPHORE_H
 
-#include <shared/list.h>
+#include <include/list.h>
 #include <stdint.h>
 
 #include "spinlock.h"

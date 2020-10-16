@@ -292,7 +292,8 @@ struct multiboot_tag_framebuffer
 {
 	struct multiboot_tag_framebuffer_common common;
 
-	union {
+	union
+	{
 		struct
 		{
 			multiboot_uint16_t framebuffer_palette_num_colors;

@@ -2,8 +2,8 @@
 #define IPC_MESSAGE_QUEUE_H
 
 #include <fs/poll.h>
+#include <include/list.h>
 #include <proc/task.h>
-#include <shared/list.h>
 #include <stddef.h>
 #include <stdint.h>
 

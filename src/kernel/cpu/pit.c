@@ -1,8 +1,8 @@
 #include "pit.h"
 
 #include <cpu/rtc.h>
+#include <include/list.h>
 #include <memory/vmm.h>
-#include <shared/list.h>
 #include <system/time.h>
 #include <utils/printf.h>
 

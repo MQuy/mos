@@ -1,7 +1,7 @@
 #include "queue.h"
 
+#include <include/list.h>
 #include <memory/vmm.h>
-#include <shared/list.h>
 
 struct qelement
 {

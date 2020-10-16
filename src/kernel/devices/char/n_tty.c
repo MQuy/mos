@@ -1,9 +1,9 @@
+#include <include/ctype.h>
+#include <include/errno.h>
+#include <include/types.h>
 #include <ipc/signal.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/ctype.h>
-#include <shared/errno.h>
-#include <shared/types.h>
 #include <utils/printf.h>
 
 #include "tty.h"

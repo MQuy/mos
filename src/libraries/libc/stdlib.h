@@ -17,5 +17,8 @@ int posix_openpt(int flags);
 char *ptsname(int fd);
 void abort(void);
 void exit(int status);
+int atexit(void (*)(void));
+int atoi(const char *);
+char *getenv(const char *);
 
 #endif

@@ -1,10 +1,10 @@
 #ifndef UTILS_PRINTF_H
 #define UTILS_PRINTF_H
 
-#include <shared/vsprintf.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <utils/vsprintf.h>
 
 enum debug_level
 {

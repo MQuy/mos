@@ -1,5 +1,5 @@
-#ifndef SHARED_LIMITS_H
-#define SHARED_LIMITS_H
+#ifndef INCLUDE_LIMITS_H
+#define INCLUDE_LIMITS_H
 
 #include <stdint.h>
 

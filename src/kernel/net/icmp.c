@@ -1,10 +1,10 @@
 #include "icmp.h"
 
+#include <include/errno.h>
 #include <memory/vmm.h>
 #include <net/ip.h>
 #include <net/net.h>
 #include <net/sk_buff.h>
-#include <shared/errno.h>
 #include <system/sysapi.h>
 #include <utils/string.h>
 

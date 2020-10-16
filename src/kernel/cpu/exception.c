@@ -2,7 +2,7 @@
 
 #include <cpu/hal.h>
 #include <cpu/idt.h>
-#include <shared/cdefs.h>
+#include <include/cdefs.h>
 #include <utils/printf.h>
 
 //! something is wrong--bail out

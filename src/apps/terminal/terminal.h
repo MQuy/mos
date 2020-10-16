@@ -1,7 +1,7 @@
 #ifndef TAB_H
 #define TAB_H
 
-#include <shared/list.h>
+#include <list.h>
 #include <sys/types.h>
 
 #define CHARACTERS_PER_LINE 256

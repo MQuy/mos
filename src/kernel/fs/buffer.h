@@ -1,7 +1,7 @@
 #ifndef FS_BUFFER_H
 #define FS_BUFFER_H
 
-#include <shared/types.h>
+#include <include/types.h>
 #include <stdint.h>
 
 char *bread(char *dev_name, sector_t block, uint32_t size);

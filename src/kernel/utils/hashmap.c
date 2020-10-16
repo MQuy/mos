@@ -7,10 +7,10 @@
 
 #include "hashmap.h"
 
+#include <include/ctype.h>
+#include <include/errno.h>
+#include <include/types.h>
 #include <memory/vmm.h>
-#include <shared/ctype.h>
-#include <shared/errno.h>
-#include <shared/types.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <utils/string.h>

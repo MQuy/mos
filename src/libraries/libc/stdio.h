@@ -1,12 +1,12 @@
 #ifndef LIBC_STDIO_H
 #define LIBC_STDIO_H
 
-#include <shared/fcntl.h>
-#include <shared/list.h>
-#include <shared/vsprintf.h>
+#include <fcntl.h>
+#include <list.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <vsprintf.h>
 
 #define EOF (-1)
 
@@ -75,6 +75,7 @@ int vprintf(const char *format, va_list ap);
 size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 int fscanf(FILE *stream, const char *format, ...);
 int scanf(const char *format, ...);
+void setbuf(FILE *, char *);
 
 // FILE *freopen(const char *, const char *, FILE *);
 // int getopt(int, char *const[], const char);
@@ -86,7 +87,6 @@ int scanf(const char *format, ...);
 // int putw(int, FILE *);
 // int remove(const char *);
 // int rename(const char *, const char *);
-// void setbuf(FILE *, char *);
 // int setvbuf(FILE *, char *, int, size_t);
 // char *tempnam(const char *, const char *);
 // FILE *tmpfile(void);

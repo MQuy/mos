@@ -1,11 +1,11 @@
 #include "pipe.h"
 
 #include <fs/vfs.h>
+#include <include/errno.h>
+#include <include/fcntl.h>
 #include <locking/semaphore.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/fcntl.h>
 #include <system/time.h>
 
 // TODO: MQ 2019-01-03 Implement empty for read and full for write (http://man7.org/linux/man-pages/man7/pipe.7.html)

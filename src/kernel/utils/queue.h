@@ -1,7 +1,7 @@
 #ifndef UTILS_QUEUE_H
 #define UTILS_QUEUE_H
 
-#include <shared/list.h>
+#include <include/list.h>
 #include <stdint.h>
 
 struct queue

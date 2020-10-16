@@ -2,11 +2,11 @@
 #define PROC_TASK_H
 
 #include <cpu/idt.h>
+#include <include/list.h>
 #include <ipc/signal.h>
 #include <locking/semaphore.h>
 #include <memory/vmm.h>
 #include <proc/elf.h>
-#include <shared/list.h>
 #include <stdint.h>
 #include <system/timer.h>
 #include <utils/hashmap.h>

@@ -2,11 +2,11 @@
 #define FS_VFS_H
 
 #include <fs/poll.h>
+#include <include/atomic.h>
+#include <include/fcntl.h>
+#include <include/list.h>
+#include <include/types.h>
 #include <locking/semaphore.h>
-#include <shared/atomic.h>
-#include <shared/fcntl.h>
-#include <shared/list.h>
-#include <shared/types.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <system/time.h>

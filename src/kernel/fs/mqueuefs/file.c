@@ -1,6 +1,6 @@
 #include <fs/vfs.h>
+#include <include/errno.h>
 #include <ipc/message_queue.h>
-#include <shared/errno.h>
 
 #include "mqueuefs.h"
 

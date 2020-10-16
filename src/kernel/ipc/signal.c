@@ -1,8 +1,8 @@
 #include "signal.h"
 
+#include <include/bitops.h>
+#include <include/errno.h>
 #include <proc/task.h>
-#include <shared/bitops.h>
-#include <shared/errno.h>
 #include <utils/hashmap.h>
 #include <utils/printf.h>
 #include <utils/string.h>

@@ -3,9 +3,9 @@
 #include <cpu/pic.h>
 #include <cpu/tss.h>
 #include <fs/poll.h>
+#include <include/limits.h>
 #include <ipc/signal.h>
 #include <memory/vmm.h>
-#include <shared/limits.h>
 #include <system/time.h>
 #include <utils/printf.h>
 

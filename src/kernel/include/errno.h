@@ -1,5 +1,5 @@
-#ifndef SHARED_ERRNO_H
-#define SHARED_ERRNO_H
+#ifndef INCLUDE_ERRNO_H
+#define INCLUDE_ERRNO_H
 
 // RedHat 7.3
 

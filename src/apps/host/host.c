@@ -1,11 +1,11 @@
 #include "host.h"
 
 #include <arpa/inet.h>
+#include <if_ether.h>
+#include <ioctls.h>
 #include <math.h>
-#include <shared/if_ether.h>
-#include <shared/ioctls.h>
-#include <shared/sockios.h>
 #include <socket.h>
+#include <sockios.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>

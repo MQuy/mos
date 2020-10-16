@@ -14,7 +14,8 @@ struct __attribute__((packed)) icmp_packet
 	uint8_t type;
 	uint8_t code;
 	uint16_t checksum;
-	union {
+	union
+	{
 		struct
 		{
 			uint16_t id;

@@ -5,13 +5,13 @@
 #include <fs/pipefs/pipe.h>
 #include <fs/sockfs/sockfs.h>
 #include <fs/vfs.h>
+#include <include/errno.h>
+#include <include/fcntl.h>
 #include <ipc/message_queue.h>
 #include <ipc/signal.h>
 #include <net/net.h>
 #include <proc/elf.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/fcntl.h>
 #include <system/time.h>
 #include <utils/printf.h>
 #include <utils/string.h>
@@ -95,7 +95,7 @@ static int32_t sys_execve(const char *pathname, char *const argv[], char *const 
 	return process_execve(pathname, argv, envp);
 }
 
-static int32_t sys_dup2(int oldfd, int newfd)
+int32_t sys_dup2(int oldfd, int newfd)
 {
 	current_process->files->fd[newfd] = current_process->files->fd[oldfd];
 	return newfd;

@@ -1,8 +1,8 @@
 #include <fs/vfs.h>
+#include <include/errno.h>
 #include <ipc/message_queue.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
 #include <system/time.h>
 
 #include "mqueuefs.h"

@@ -1,6 +1,6 @@
 #include "shell.h"
 
-#include <shared/ioctls.h>
+#include <ioctls.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

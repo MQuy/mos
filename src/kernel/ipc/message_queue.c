@@ -1,10 +1,10 @@
 #include "message_queue.h"
 
 #include <fs/vfs.h>
+#include <include/errno.h>
+#include <include/fcntl.h>
 #include <locking/semaphore.h>
 #include <memory/vmm.h>
-#include <shared/errno.h>
-#include <shared/fcntl.h>
 #include <utils/hashmap.h>
 #include <utils/printf.h>
 #include <utils/string.h>

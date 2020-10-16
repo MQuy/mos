@@ -1,7 +1,7 @@
 #ifndef SYSTEM_TIME_H
 #define SYSTEM_TIME_H
 
-#include <shared/types.h>
+#include <include/types.h>
 #include <stdint.h>
 
 struct timespec

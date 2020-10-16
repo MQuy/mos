@@ -2,9 +2,9 @@
 
 #include <gui/layout.h>
 #include <gui/psf.h>
+#include <ioctls.h>
 #include <math.h>
 #include <poll.h>
-#include <shared/ioctls.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

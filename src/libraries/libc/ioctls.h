@@ -1,5 +1,5 @@
-#ifndef SHARED_IOCTLS_H
-#define SHARED_IOCTLS_H
+#ifndef LIBC_IOCTLS_H
+#define LIBC_IOCTLS_H
 
 /* 0x54 is just a magic number to make these relatively unique ('T') */
 

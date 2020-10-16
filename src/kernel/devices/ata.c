@@ -2,8 +2,8 @@
 
 #include <cpu/hal.h>
 #include <cpu/idt.h>
+#include <include/errno.h>
 #include <memory/vmm.h>
-#include <shared/errno.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 

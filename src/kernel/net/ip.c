@@ -1,12 +1,12 @@
 #include "ip.h"
 
+#include <include/errno.h>
+#include <include/if_ether.h>
 #include <memory/vmm.h>
 #include <net/ethernet.h>
 #include <net/neighbour.h>
 #include <net/net.h>
 #include <net/sk_buff.h>
-#include <shared/errno.h>
-#include <shared/if_ether.h>
 #include <utils/math.h>
 
 #define IP4_TTL 0x80

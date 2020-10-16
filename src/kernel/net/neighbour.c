@@ -1,9 +1,9 @@
 #include "neighbour.h"
 
+#include <include/if_ether.h>
 #include <memory/vmm.h>
 #include <net/arp.h>
 #include <net/net.h>
-#include <shared/if_ether.h>
 #include <system/sysapi.h>
 #include <utils/string.h>
 

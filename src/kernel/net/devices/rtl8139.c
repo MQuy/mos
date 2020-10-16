@@ -3,10 +3,10 @@
 #include <cpu/hal.h>
 #include <cpu/pic.h>
 #include <devices/pci.h>
+#include <include/if_ether.h>
 #include <memory/vmm.h>
 #include <net/net.h>
 #include <proc/task.h>
-#include <shared/if_ether.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 

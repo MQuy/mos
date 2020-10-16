@@ -1,7 +1,7 @@
 #include <fs/vfs.h>
+#include <include/errno.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
 #include <system/time.h>
 
 #include "tmpfs.h"

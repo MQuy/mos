@@ -2,7 +2,7 @@
 #ifndef _KKYBRD_DRIVER_H
 #define _KKYBRD_DRIVER_H
 
-#include <shared/list.h>
+#include <include/list.h>
 #include <stdbool.h>
 #include <stdint.h>
 

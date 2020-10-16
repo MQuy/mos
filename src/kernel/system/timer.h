@@ -1,8 +1,8 @@
 #ifndef SYSTEM_TIMER_H
 #define SYSTEM_TIMER_H
 
+#include <include/list.h>
 #include <locking/spinlock.h>
-#include <shared/list.h>
 #include <stdint.h>
 
 #define TIMER_MAGIC 0x4b87ad6e

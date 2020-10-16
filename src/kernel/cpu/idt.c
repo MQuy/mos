@@ -1,7 +1,7 @@
 #include "idt.h"
 
+#include <include/list.h>
 #include <memory/vmm.h>
-#include <shared/list.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 

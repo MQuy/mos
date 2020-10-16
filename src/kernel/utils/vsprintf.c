@@ -1,8 +1,8 @@
 #include "vsprintf.h"
 
-#include <shared/cdefs.h>
-#include <shared/ctype.h>
-#include <shared/limits.h>
+#include <include/cdefs.h>
+#include <include/ctype.h>
+#include <include/limits.h>
 
 #define PAGE_SHIFT 12
 #define PAGE_SIZE (1UL << PAGE_SHIFT)

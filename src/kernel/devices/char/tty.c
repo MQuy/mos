@@ -1,10 +1,10 @@
 #include "tty.h"
 
 #include <fs/vfs.h>
+#include <include/errno.h>
+#include <include/ioctls.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <shared/errno.h>
-#include <shared/ioctls.h>
 #include <utils/printf.h>
 #include <utils/string.h>
 
