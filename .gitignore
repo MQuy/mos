@@ -8,6 +8,16 @@
 *.iso
 *.log
 
+src/toolchain/*
+!src/toolchain/build.sh
+!src/toolchain/binutils-2.32.patch
+!src/toolchain/gcc-9.1.0.patch
+
+src/libraries/libc/libc.a
+src/ports
+src/isodir
+src/logs
+
 # ignored apps
 src/apps/window_server/window_server
 src/apps/terminal/terminal
@@ -16,6 +26,3 @@ src/apps/uname/uname
 src/apps/host/host
 src/apps/calculator/calculator
 src/apps/ld/ld
-src/ports
-src/isodir
-src/logs

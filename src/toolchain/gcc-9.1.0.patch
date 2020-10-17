@@ -1,0 +1,126 @@
+diff --git a/config.sub b/config.sub
+index 75bb6a313..e6e663c90 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1363,7 +1363,7 @@ case $os in
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+ 	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+-	     | midnightbsd* | amdhsa* | unleashed* | emscripten*)
++	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | mos*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	qnx*)
+diff --git a/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
+index 0f9648608..9dbf47dc9 100755
+--- a/fixincludes/mkfixinc.sh
++++ b/fixincludes/mkfixinc.sh
+@@ -11,6 +11,7 @@ target=fixinc.sh
+ 
+ # Check for special fix rules for particular targets
+ case $machine in
++    *-mos* | \
+     i?86-*-cygwin* | \
+     i?86-*-mingw32* | \
+     x86_64-*-mingw32* | \
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 09fb9ecd2..10ea6b787 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -675,6 +675,12 @@ x86_cpus="generic intel"
+ 
+ # Common parts for widely ported systems.
+ case ${target} in
++*-*-mos*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  use_gcc_stdint=wrap
++  ;;
+ *-*-darwin*)
+   tmake_file="t-darwin ${cpu_type}/t-darwin"
+   tm_file="${tm_file} darwin.h"
+@@ -978,6 +984,12 @@ case ${target} in
+ esac
+ 
+ case ${target} in
++i[34567]86-*-mos*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h mos.h"
++    ;;
++x86_64-*-mos*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h mos.h"
++    ;;
+ aarch64*-*-elf | aarch64*-*-fuchsia* | aarch64*-*-rtems*)
+ 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h"
+ 	tm_file="${tm_file} aarch64/aarch64-elf.h aarch64/aarch64-elf-raw.h"
+diff --git a/gcc/config/mos.h b/gcc/config/mos.h
+new file mode 100644
+index 000000000..3878cbec0
+--- /dev/null
++++ b/gcc/config/mos.h
+@@ -0,0 +1,29 @@
++/* Useful if you wish to make target-specific GCC changes. */
++#undef TARGET_MOS
++#define TARGET_MOS 1
++
++/* Default arguments you want when running your
++   i686-mos-gcc/x86_64-mos-gcc toolchain */
++#undef LIB_SPEC
++#define LIB_SPEC "-lc" /* link against C standard library */
++
++/* Files that are linked before user code.
++   The %s tells GCC to look for these files in the library directory. */
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
++
++/* Files that are linked after user code. */
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++
++/* Additional predefined macros. */
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()        \
++	do                                  \
++	{                                   \
++		builtin_define("__mos__");      \
++		builtin_define("__unix__");     \
++		builtin_assert("system=mos");   \
++		builtin_assert("system=unix");  \
++		builtin_assert("system=posix"); \
++	} while (0);
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 91abc84da..f7985d251 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -343,6 +343,14 @@ i[34567]86-*-cygwin* | x86_64-*-cygwin*)
+ esac
+ 
+ case ${host} in
++i[34567]86-*-mos*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
++x86_64-*-mos*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ aarch64*-*-elf | aarch64*-*-rtems*)
+ 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
+ 	extra_parts="$extra_parts crtfastmath.o"
+diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
+index 344eec09d..907fe2c47 100644
+--- a/libstdc++-v3/crossconfig.m4
++++ b/libstdc++-v3/crossconfig.m4
+@@ -5,6 +5,12 @@ dnl
+ AC_DEFUN([GLIBCXX_CROSSCONFIG],[
+ # Base decisions on target environment.
+ case "${host}" in
++  *-mos*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
+   arm*-*-symbianelf*)
+     # This is a freestanding configuration; there is nothing to do here.
+     ;;
