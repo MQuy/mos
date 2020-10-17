@@ -1,24 +1,5 @@
-ROOTDIR := $(shell cd ../.. && pwd)
+OUTPUT=uname
 
-C_SOURCES = $(wildcard uname.c src/*.c $(ROOTDIR)/libraries/**/*.c $(ROOTDIR)/libraries/**/**/*.c)
-HEADERS = $(wildcard *.h src/*.h $(ROOTDIR)/libraries/**/*.h $(ROOTDIR)/libraries/**/**/*.h)
-
-# Nice syntax for file extension replacement
-OBJ = ${C_SOURCES:.c=.o}
-
-CC = /usr/local/bin/i386-elf-gcc
-LD = /usr/local/bin/i386-elf-ld
-GDB = /usr/local/bin/i386-elf-gdb
-
-# -g: Use debugging symbols in gcc
-CFLAGS = -g -std=gnu18 -ffreestanding -Wall -Wextra -Wno-unused-parameter -Wno-discarded-qualifiers -Wno-comment -Wno-multichar -Wno-sequence-point -Wno-unused-function -Wno-unused-value -Wno-sign-compare -Wno-implicit-fallthrough -I$(ROOTDIR)/libraries/libc -I$(ROOTDIR)/libraries
-
-uname: ${OBJ}
-	${CC} -o $@ -T linker.ld $^ -ffreestanding -nostdlib -lgcc -g
-
-%.o: %.c ${HEADERS}
-	${CC} ${CFLAGS} -c $< -o $@
-
-clean:
-	rm -rf *.bin *.o *.elf
-	rm -rf *.o **/*.o
+include ../../rules/platform.mk
+include ../../rules/variables.mk
+include ../../rules/targets.mk

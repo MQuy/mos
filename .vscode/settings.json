@@ -2,6 +2,7 @@
   "files.associations": {
     "*.c": "c",
     "*.h": "c",
+    "*.json": "json",
     "errno.h": "c",
     "pmm.h": "c",
     "kernel_info.h": "c",
@@ -94,8 +95,9 @@
     "hal.h": "c",
     "__nullptr": "cpp",
     "streambuf": "c",
-    "*.txt": "log"
-  },
+    "*.txt": "log",
+    "cstdint": "c"
+},
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"
 }

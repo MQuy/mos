@@ -30,14 +30,31 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 
 ### Get started
 
-**Setup**
+**MacOS**
 
-```
-$ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
-$ cd src && ./create_image.sh && ./build.sh qemu iso
-```
+- install packages
 
-✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/) might help 
+  ```
+  $ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
+  ```
+
+- open your bash config and add lines below. Depends on your bash, config file might be different. I use `ohmyzsh`, so it is `.zshrc`
+
+  ```
+  # .zshrc
+  alias grub-file=i386-elf-grub-file
+  alias grub-mkrescue=i386-elf-grub-mkrescue
+  ```
+
+- run emulator
+
+  ```
+  $ cd src && ./create_image.sh && ./build.sh qemu iso
+  ```
+
+✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/) might help
+
+**Ubuntu**
 
 **Debuging**
 

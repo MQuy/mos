@@ -12,7 +12,7 @@ fi
 
 cd kernel && make clean && make && cp kernel.bin ../mos.bin && cd ../
 
-if i386-elf-grub-file --is-x86-multiboot mos.bin; then
+if grub-file --is-x86-multiboot mos.bin; then
   echo multiboot confirmed
 else
   echo the file is not multiboot
@@ -23,7 +23,7 @@ then
   mkdir -p isodir/boot/grub
   cp mos.bin isodir/boot/mos.bin && rm mos.bin
   cp grub.cfg isodir/boot/grub/grub.cfg
-  i386-elf-grub-mkrescue -o mos.iso isodir
+  grub-mkrescue -o mos.iso isodir
 else
   # https://wiki.osdev.org/GRUB#HDD_Image_Instructions_for_OS_X_users
   dd if=/dev/zero of=mos.img count=163840 bs=512
