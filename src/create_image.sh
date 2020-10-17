@@ -28,7 +28,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
   cd ../..
   cd apps/calculator && make clean && make
   cd ../..
-  cd apps/ld && make clean && make
+  cd apps/ld && rm -f ld && i386-mos-gcc -g ld.c -o ld
   cd ../..
 
   sudo mkdir "/mnt/${DISK_NAME}/bin"

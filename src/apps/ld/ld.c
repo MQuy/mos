@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-	printf("what is your name: ");
+	printf("hi, what is your name? ");
 	fflush(stdout);
 
 	char name[100] = {0};
