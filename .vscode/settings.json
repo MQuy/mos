@@ -96,7 +96,8 @@
     "__nullptr": "cpp",
     "streambuf": "c",
     "*.txt": "log",
-    "cstdint": "c"
+    "cstdint": "c",
+    "*.tcc": "c"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

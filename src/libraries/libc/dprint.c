@@ -1,5 +1,4 @@
-#include "dprint.h"
-
+#include <dprint.h>
 #include <stdio.h>
 #include <unistd.h>
 

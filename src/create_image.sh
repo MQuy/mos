@@ -2,6 +2,9 @@
 set -Eeuo pipefail
 
 unamestr=`uname`
+
+cd libraries/libc && make clean && make && cd ../..
+
 if [[ "$unamestr" == 'Linux' ]]; then
   dd if=/dev/zero of=hdd.img count=20480 bs=512
   DISK_NAME=mos

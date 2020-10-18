@@ -5,10 +5,9 @@
  * it under the terms of the MIT license. See LICENSE for details.
  */
 
-#include "hashmap.h"
-
 #include <ctype.h>
 #include <errno.h>
+#include <hashtable/hashmap.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>

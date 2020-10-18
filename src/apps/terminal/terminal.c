@@ -2,12 +2,11 @@
 
 #include <gui/layout.h>
 #include <gui/psf.h>
-#include <ioctls.h>
 #include <math.h>
-#include <poll.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
 

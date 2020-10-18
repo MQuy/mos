@@ -1,5 +1,4 @@
-#include "psf.h"
-
+#include <gui/psf.h>
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>

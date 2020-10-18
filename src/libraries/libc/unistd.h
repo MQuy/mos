@@ -3,8 +3,6 @@
 
 #include <dirent.h>
 #include <dprint.h>
-#include <fcntl.h>
-#include <ioctls.h>
 #include <mqueue.h>
 #include <signal.h>
 #include <socket.h>
@@ -406,7 +404,7 @@ static inline int32_t nanosleep(const struct timespec *req, struct timespec *rem
 }
 
 _syscall3(ioctl, int, unsigned int, unsigned long);
-static inline int32_t ioctl(int32_t fd, unsigned int cmd, unsigned long arg)
+static inline int32_t _ioctl(int32_t fd, unsigned int cmd, unsigned long arg)
 {
 	return syscall_ioctl(fd, cmd, arg);
 }
@@ -448,17 +446,17 @@ static inline int32_t sleep(uint32_t sec)
 
 static int tcsetpgrp(int fd, pid_t pid)
 {
-	return ioctl(fd, TIOCSPGRP, (unsigned long)&pid);
+	return syscall_ioctl(fd, TIOCSPGRP, (unsigned long)&pid);
 }
 
 static pid_t tcgetpgrp(int fd)
 {
-	return ioctl(fd, TIOCGPGRP, 0);
+	return syscall_ioctl(fd, TIOCGPGRP, 0);
 }
 
 static int tcgetattr(int fd, struct termios *term)
 {
-	return ioctl(fd, TCGETS, (unsigned long)term);
+	return syscall_ioctl(fd, TCGETS, (unsigned long)term);
 }
 
 static int isatty(int fd)
@@ -468,7 +466,9 @@ static int isatty(int fd)
 }
 
 int32_t shm_open(const char *name, int32_t flags, int32_t mode);
-int execv(const char *, char *const[]);
-int execvp(const char *, char *const[]);
+
+int getopt(int argc, char *const argv[], const char *optstring);
+extern char *optarg;
+extern int opterr, optind, optopt;
 
 #endif

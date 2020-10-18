@@ -1,6 +1,7 @@
 #ifndef LIBC_STDLIB_H
 #define LIBC_STDLIB_H
 
+#include <alloca.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,7 +16,7 @@ void free(void *ptr);
 void *realloc(void *ptr, size_t size);
 int posix_openpt(int flags);
 char *ptsname(int fd);
-void abort(void);
+void abort();
 void exit(int status);
 int atexit(void (*)(void));
 int atoi(const char *);

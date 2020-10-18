@@ -15,10 +15,9 @@ https://github.com/benhoyt/inih
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include "ini.h"
-
 #include <ctype.h>
 #include <fcntl.h>
+#include <ini/ini.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/cdefs.h>

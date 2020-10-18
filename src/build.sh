@@ -11,7 +11,6 @@ then
 fi
 
 cd kernel && make clean && make && cp kernel.bin ../mos.bin && cd ../
-cd libraries/libc && make clean && make && cd ../..
 
 if grub-file --is-x86-multiboot mos.bin; then
   echo multiboot confirmed

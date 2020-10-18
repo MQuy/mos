@@ -1,8 +1,7 @@
-#include "stdio.h"
-
 #include <errno.h>
 #include <libc-pointer-arith.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -298,6 +297,12 @@ int fputs(const char *s, FILE *stream)
 	return fnput(s, slen, stream);
 }
 
+int puts(const char *s)
+{
+	fputs(s, stdout);
+	return fputc('\n', stdout);
+}
+
 size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream)
 {
 	int i;
@@ -437,4 +442,14 @@ int scanf(const char *fmt, ...)
 
 	va_end(args);
 	return ret;
+}
+
+FILE *tmpfile()
+{
+	static int tmpfile_num = 1;
+
+	char tmp[100];
+	sprintf(tmp, "/tmp/tmp%d.%d", getpid(), tmpfile_num++);
+
+	return fopen(tmp, "w+");
 }

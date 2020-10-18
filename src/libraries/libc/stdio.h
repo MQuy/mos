@@ -62,6 +62,7 @@ int fseek(FILE *stream, long int offset, int whence);
 int fseeko(FILE *stream, off_t offset, int whence);
 int fputc(int c, FILE *stream);
 int fputs(const char *s, FILE *stream);
+int puts(const char *);
 int fflush(FILE *stream);
 int fclose(FILE *stream);
 int fgetpos(FILE *stream, fpos_t *pos);
@@ -76,20 +77,6 @@ size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 int fscanf(FILE *stream, const char *format, ...);
 int scanf(const char *format, ...);
 void setbuf(FILE *, char *);
-
-// FILE *freopen(const char *, const char *, FILE *);
-// int getopt(int, char *const[], const char);
-// int getw(FILE *);
-// int pclose(FILE *);
-// void perror(const char *);
-// FILE *popen(const char *, const char *);
-// int puts(const char *);
-// int putw(int, FILE *);
-// int remove(const char *);
-// int rename(const char *, const char *);
-// int setvbuf(FILE *, char *, int, size_t);
-// char *tempnam(const char *, const char *);
-// FILE *tmpfile(void);
-// char *tmpnam(char *);
+FILE *tmpfile();
 
 #endif

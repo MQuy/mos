@@ -1,15 +1,14 @@
 #ifndef LIBC_GUI_LAYOUT_H
 #define LIBC_GUI_LAYOUT_H
 
+#include <gui/event.h>
+#include <gui/framebuffer.h>
 #include <gui/msgui.h>
 #include <hashtable/hashmap.h>
 #include <list.h>
 #include <poll.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
-
-#include "event.h"
-#include "framebuffer.h"
 
 struct window;
 

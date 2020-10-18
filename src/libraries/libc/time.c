@@ -1,6 +1,5 @@
-#include "time.h"
-
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 clock_t clock()

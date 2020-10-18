@@ -1,7 +1,6 @@
-#include "layout.h"
-
 #include <bmp.h>
 #include <fcntl.h>
+#include <gui/layout.h>
 #include <gui/msgui.h>
 #include <gui/psf.h>
 #include <math.h>
