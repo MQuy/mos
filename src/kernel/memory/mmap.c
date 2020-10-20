@@ -2,6 +2,7 @@
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <utils/math.h>
+#include <utils/printf.h>
 #include <utils/string.h>
 
 #include "vmm.h"
@@ -16,7 +17,7 @@ struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
 
 	if (!addr || addr < mm->end_brk)
 		addr = max(mm->free_area_cache, mm->end_brk);
-	addr = PAGE_ALIGN(addr);
+	assert(addr == PAGE_ALIGN(addr));
 	len = PAGE_ALIGN(len);
 
 	uint32_t found_addr = addr;
@@ -62,7 +63,7 @@ struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len)
 	return vma;
 }
 
-struct vm_area_struct *find_vma(struct mm_struct *mm, uint32_t addr)
+static struct vm_area_struct *find_vma(struct mm_struct *mm, uint32_t addr)
 {
 	struct vm_area_struct *iter = NULL;
 	list_for_each_entry(iter, &mm->mmap, vm_sibling)
@@ -72,6 +73,31 @@ struct vm_area_struct *find_vma(struct mm_struct *mm, uint32_t addr)
 	}
 
 	return NULL;
+}
+
+static int expand_area(struct vm_area_struct *vma, uint32_t address, bool fixed)
+{
+	address = PAGE_ALIGN(address);
+	if (address <= vma->vm_end)
+		return 0;
+
+	if (list_is_last(&vma->vm_sibling, &current_process->mm->mmap))
+		vma->vm_end = address;
+	else
+	{
+		struct vm_area_struct *next = list_next_entry(vma, vm_sibling);
+		if (address <= next->vm_start)
+			vma->vm_end = address;
+		else
+		{
+			assert(!fixed);
+			list_del(&vma->vm_sibling);
+			struct vm_area_struct *vma_expand = get_unmapped_area(0, address - vma->vm_start);
+			memcpy(vma, vma_expand, sizeof(struct vm_area_struct));
+			kfree(vma_expand);
+		}
+	}
+	return 0;
 }
 
 // NOTE: MQ 2020-01-25 We only support unmap in one area
@@ -95,7 +121,13 @@ int32_t do_mmap(uint32_t addr,
 				uint32_t flag, int32_t fd)
 {
 	struct vfs_file *file = fd >= 0 ? current_process->files->fd[fd] : NULL;
-	struct vm_area_struct *vma = get_unmapped_area(addr, len);
+	uint32_t aligned_addr = ALIGN_DOWN(addr, PMM_FRAME_SIZE);
+	struct vm_area_struct *vma = find_vma(current_process->mm, aligned_addr);
+
+	if (!vma)
+		vma = get_unmapped_area(aligned_addr, len);
+	else if (vma->vm_end < addr + len)
+		expand_area(vma, addr + len, true);
 
 	if (file)
 	{
@@ -109,61 +141,7 @@ int32_t do_mmap(uint32_t addr,
 			vmm_map_address(current_process->pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 		}
 
-	return vma->vm_start;
-}
-
-int expand_area(struct vm_area_struct *vma, uint32_t address)
-{
-	address = PAGE_ALIGN(address);
-	if (address <= vma->vm_end)
-		return 0;
-
-	if (list_is_last(&vma->vm_sibling, &current_process->mm->mmap))
-		vma->vm_end = address;
-	else
-	{
-		struct vm_area_struct *next = list_next_entry(vma, vm_sibling);
-		if (address <= next->vm_start)
-			vma->vm_end = address;
-		else
-		{
-			list_del(&vma->vm_sibling);
-			struct vm_area_struct *vma_expand = get_unmapped_area(0, address - vma->vm_start);
-			memcpy(vma, vma_expand, sizeof(struct vm_area_struct));
-			kfree(vma_expand);
-		}
-	}
-	return 0;
-}
-
-void shift_area(struct vm_area_struct *vma, struct vm_area_struct *new_vma)
-{
-	if (vma->vm_start == new_vma->vm_start)
-	{
-		if (new_vma->vm_end > vma->vm_end)
-		{
-			uint32_t nframes = (new_vma->vm_end - vma->vm_end) / PMM_FRAME_SIZE;
-			uint32_t paddr = (uint32_t)pmm_alloc_blocks(nframes);
-			for (uint32_t vaddr = vma->vm_end; vaddr < new_vma->vm_end; vaddr += PMM_FRAME_SIZE, paddr += PMM_FRAME_SIZE)
-				vmm_map_address(current_process->pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-		}
-		else if (new_vma->vm_end < vma->vm_end)
-			for (uint32_t addr = new_vma->vm_end; addr < vma->vm_end; addr += PMM_FRAME_SIZE)
-				vmm_unmap_address(current_process->pdir, addr);
-	}
-	else
-	{
-		uint32_t old_length = vma->vm_end - vma->vm_start;
-		uint32_t new_length = new_vma->vm_end - new_vma->vm_start;
-		for (uint32_t vaddr = 0; vaddr < new_length; vaddr += PMM_FRAME_SIZE)
-		{
-			uint32_t paddr = vaddr < old_length ? vmm_get_physical_address(vma->vm_start + vaddr, false) : (uint32_t)pmm_alloc_block();
-			vmm_map_address(current_process->pdir,
-							new_vma->vm_start + vaddr,
-							paddr,
-							I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
-		};
-	}
+	return addr ? addr : vma->vm_start;
 }
 
 // FIXME: MQ 2019-01-16 Currently, we assume that start_brk is not changed
@@ -180,14 +158,25 @@ uint32_t do_brk(uint32_t addr, size_t len)
 	struct vm_area_struct *new_vma = kcalloc(1, sizeof(struct vm_area_struct));
 	memcpy(new_vma, vma, sizeof(struct vm_area_struct));
 	if (new_brk > mm->brk)
-		expand_area(new_vma, new_brk);
+		expand_area(new_vma, new_brk, true);
 	else
 		new_vma->vm_end = new_brk;
 
 	if (vma->vm_file)
 		vma->vm_file->f_op->mmap(vma->vm_file, new_vma);
 	else
-		shift_area(vma, new_vma);
+	{
+		if (new_vma->vm_end > vma->vm_end)
+		{
+			uint32_t nframes = (new_vma->vm_end - vma->vm_end) / PMM_FRAME_SIZE;
+			uint32_t paddr = (uint32_t)pmm_alloc_blocks(nframes);
+			for (uint32_t vaddr = vma->vm_end; vaddr < new_vma->vm_end; vaddr += PMM_FRAME_SIZE, paddr += PMM_FRAME_SIZE)
+				vmm_map_address(current_process->pdir, vaddr, paddr, I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+		}
+		else if (new_vma->vm_end < vma->vm_end)
+			for (uint32_t addr = new_vma->vm_end; addr < vma->vm_end; addr += PMM_FRAME_SIZE)
+				vmm_unmap_address(current_process->pdir, addr);
+	}
 	memcpy(vma, new_vma, sizeof(struct vm_area_struct));
 
 	return 0;
