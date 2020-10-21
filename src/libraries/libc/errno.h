@@ -132,4 +132,6 @@
 #define EMEDIUMTYPE 124 /* Wrong medium type */
 #define ERESTARTSYS 512
 
+extern volatile int errno;
+
 #endif
