@@ -97,7 +97,8 @@
     "streambuf": "c",
     "*.txt": "log",
     "cstdint": "c",
-    "*.tcc": "c"
+    "*.tcc": "c",
+    "climits": "c"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

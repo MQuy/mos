@@ -13,8 +13,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo mount -o loop hdd.img "/mnt/${DISK_NAME}"
 
   sudo mkdir "/mnt/${DISK_NAME}/dev"
-  sudo mkdir "/mnt/${DISK_NAME}/usr"
-  sudo mkdir "/mnt/${DISK_NAME}/usr/share"
+  sudo mkdir -p "/mnt/${DISK_NAME}/usr/share"
 
   sudo cp -R assets/fonts "/mnt/${DISK_NAME}/usr/share"
   sudo cp -R assets/images "/mnt/${DISK_NAME}/usr/share"
@@ -42,6 +41,9 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo cp apps/host/host "/mnt/${DISK_NAME}/bin"
   sudo cp apps/calculator/calculator "/mnt/${DISK_NAME}/bin"
   sudo cp apps/ld/ld "/mnt/${DISK_NAME}/bin"
+
+  # ports
+  cd ports/figlet && ./package.sh && cd ../..
 
   sudo mkdir "/mnt/${DISK_NAME}/etc"
   sudo cp apps/window_server/desktop.ini "/mnt/${DISK_NAME}/etc"

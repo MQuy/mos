@@ -14,9 +14,11 @@ src/toolchain/*
 !src/toolchain/gcc-9.1.0.patch
 
 src/libraries/libc/libc.a
-src/ports
 src/isodir
 src/logs
+src/ports/*/*
+!src/ports/*/package.sh
+!src/ports/*/*.patch
 
 # ignored apps
 src/apps/window_server/window_server

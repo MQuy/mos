@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index 5a51d51..f34d3ac 100644
+--- a/Makefile
++++ b/Makefile
+@@ -26,7 +26,7 @@ LDFLAGS =
+ 
+ # Feature flags:
+ #   define TLF_FONTS to use TOIlet TLF fonts
+-XCFLAGS	= -DTLF_FONTS
++# XCFLAGS	= -DTLF_FONTS
+ 
+ # Where to install files
+ prefix	= /usr/local
