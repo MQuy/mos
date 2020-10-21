@@ -66,7 +66,7 @@ int atoi(const char *s)
 }
 
 // Not libc standard
-static char *skip_spaces(const char *str)
+char *skip_spaces(const char *str)
 {
 	while (isspace(*str))
 		++str;

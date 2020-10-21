@@ -156,3 +156,10 @@ void *realloc(void *ptr, size_t size)
 	memcpy(newptr, ptr, size);
 	return newptr;
 }
+
+void *reallocarray(void *ptr, size_t nmemb, size_t size)
+{
+	if (size && nmemb && SIZE_MAX / size < nmemb)
+		return errno = ENOMEM, (void *)NULL;
+	return realloc(ptr, nmemb * size);
+}

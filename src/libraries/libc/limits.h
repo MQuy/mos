@@ -11,5 +11,6 @@
 #define ULONG_MAX (~0UL)
 #define USHRT_MAX 65535
 #define SHRT_MAX 32767
+#define ULLONG_MAX (~0ULL)
 
 #endif

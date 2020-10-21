@@ -160,15 +160,13 @@ size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream)
 	size_t i;
 	for (i = 0; i < nitems; ++i)
 	{
-		char *buf = calloc(size, sizeof(char));
-		if (!fgets(buf, size, stream))
+		for (int j = 0; j < size; ++j)
 		{
-			free(buf);
-			break;
+			int ch = fgetc(stream);
+			if (ch == EOF)
+				return i;
+			*((char *)ptr + i * size + j) = ch;
 		}
-
-		memcpy((char *)ptr + i * size, buf, size);
-		free(buf);
 	}
 	return i;
 }

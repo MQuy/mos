@@ -38,6 +38,7 @@ char *strreplace(char *s, char old, char new);
 int32_t striof(const char *s1, const char *s2);
 int32_t strliof(const char *s1, const char *s2);
 int32_t strlsplat(const char *s1, int32_t pos, char **sf, char **sl);
+char *skip_spaces(const char *str);
 
 void *memcpy(void *dest, const void *src, size_t len);
 void *memset(void *dest, char val, size_t len);
