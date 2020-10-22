@@ -104,18 +104,18 @@ void clearerr(FILE *stream)
 	stream->flags &= ~_IO_ERR_SEEN & ~_IO_EOF_SEEN;
 }
 
-int fgetc(FILE *stream)
+static size_t fnget(void *ptr, size_t size, FILE *stream)
 {
 	assert_stream(stream);
 
-	if (stream->read_ptr > stream->read_end || !stream->read_end)
+	if (stream->read_ptr + size > stream->read_end || !stream->read_end)
 	{
 		if (stream->flags & _IO_EOF_SEEN)
 			return EOF;
 
 		int count = (stream->flags & _IO_FULLY_BUF || stream->flags & _IO_LINE_BUF)
-						? ALIGN_UP(stream->pos + 1, max(stream->blksize, 1)) - stream->pos
-						: 1;
+						? ALIGN_UP(stream->pos + size, max(stream->blksize, 1)) - stream->pos
+						: size;
 		char *buf = calloc(count, sizeof(char));
 
 		count = read(stream->fd, buf, count);
@@ -132,8 +132,17 @@ int fgetc(FILE *stream)
 		stream->read_end = buf + count;
 	}
 
-	stream->pos++;
-	return (unsigned char)*stream->read_ptr++;
+	memcpy(ptr, stream->read_ptr, size);
+	stream->pos += size;
+	stream->read_ptr += size;
+	return size;
+}
+
+int fgetc(FILE *stream)
+{
+	char ch;
+	int ret = fnget(&ch, 1, stream);
+	return ret == EOF ? ret : (unsigned char)ch;
 }
 
 char *fgets(char *s, int n, FILE *stream)
@@ -160,13 +169,9 @@ size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream)
 	size_t i;
 	for (i = 0; i < nitems; ++i)
 	{
-		for (int j = 0; j < size; ++j)
-		{
-			int ch = fgetc(stream);
-			if (ch == EOF)
-				return i;
-			*((char *)ptr + i * size + j) = ch;
-		}
+		int count = fnget((char *)ptr + i * size, size, stream);
+		if (count == EOF)
+			return i;
 	}
 	return i;
 }
@@ -250,7 +255,7 @@ int fseeko(FILE *stream, off_t offset, int whence)
 
 #define MIN_WRITE_BUF_LEN 32
 
-int fnput(const char *s, int size, FILE *stream)
+static int fnput(const char *s, int size, FILE *stream)
 {
 	assert_stream(stream);
 
