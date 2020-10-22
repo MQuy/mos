@@ -275,8 +275,8 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 		}
 		else if (ch == '\21')
 		{
-			// if ch is Device Control 1 and cursor line content is empty -> record timestamp
-			if (strlen(tab->cursor_line->content) == 0)
+			// if ch is Device Control 1 and previous character is new line -> record timestamp
+			if (i >= 0 && input[i - 1] == '\n')
 				tab->cursor_line->seconds = time(NULL);
 		}
 		else if (ch == '\177')

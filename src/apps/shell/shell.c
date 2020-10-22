@@ -78,7 +78,7 @@ int main()
 		{
 			setpgid(0, 0);
 			tcsetpgrp(1, getpid());
-			write(1, "\n", 1);
+			write(1, "\n\21", 2);
 			if (!strcmp(cmd->program, "pwd"))
 				pwd(ishell->cwd);
 			else if (!strcmp(cmd->program, "ls"))
@@ -100,7 +100,6 @@ int main()
 		else
 		{
 			waitid(P_PID, fd, infop, WEXITED);
-			write(1, "\n\21", 2);
 			print_prefix(ishell->cwd);
 		}
 	}

@@ -2,6 +2,6 @@
 
 int main(int argc, char *argv[])
 {
-	printf("mOS %s", "0.0.1");
+	printf("mOS %s\n", "0.0.1");
 	return 0;
 }

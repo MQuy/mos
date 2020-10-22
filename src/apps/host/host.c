@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
 	char text_ip[16] = {0};
 	inet_ntop(ip, text_ip, sizeof(text_ip));
 	write(1, text_ip, sizeof(text_ip) - 1);
+	write(1, "\n", 1);
 
 	return 0;
 }

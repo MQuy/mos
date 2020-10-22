@@ -69,16 +69,14 @@ int parse_args(char *args, struct command_line *cmd)
 
 int parse_text(char *text, int len, struct command_line *cmd)
 {
-	char *program = NULL;
-	char *args = NULL;
-
 	char *ct = clean_text(text, len);
 	int psep = striof(ct, " ");
 
+	char *program = ct;
+	char *args = "";
+
 	if (psep != -1)
 		strlsplat(ct, psep, &program, &args);
-	else
-		program = ct;
 
 	cmd->program = program;
 	parse_args(args, cmd);

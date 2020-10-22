@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 
 	char name[100] = {0};
 	scanf("%s", name);
-	printf("\nyour name is %s", name);
+	printf("\nyour name is %s\n", name);
 
 	return 0;
 }
