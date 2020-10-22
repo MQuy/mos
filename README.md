@@ -16,7 +16,8 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 - [x] Networking
 - [x] Signal
 - [x] Terminal
-- [ ] Port figlet, fortune
+- [x] mOS toolchain
+- [x] Port figlet
 - [ ] Dynamic linker
 - [ ] Port GCC (the GNU Compiler Collection)
 - [ ] Browser
