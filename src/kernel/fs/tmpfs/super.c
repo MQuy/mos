@@ -1,3 +1,4 @@
+#include <fs/char_dev.h>
 #include <fs/vfs.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
@@ -7,6 +8,8 @@
 #include "tmpfs.h"
 
 #define TMPFS_MAGIC 0x01021994
+#define TMPFS_ROOT "/dev/shm"
+#define TMP_MINOR 24
 
 struct vfs_inode *tmpfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 {
@@ -97,7 +100,8 @@ struct vfs_file_system_type tmpfs_fs_type = {
 void init_tmpfs()
 {
 	register_filesystem(&tmpfs_fs_type);
-	do_mount("tmpfs", MS_NOUSER, "/dev/shm");
+	vfs_mknod(TMPFS_ROOT, O_RDWR, MKDEV(0, TMP_MINOR));
+	do_mount("tmpfs", MS_NOUSER, TMPFS_ROOT);
 }
 
 void exit_tmpfs()

@@ -27,59 +27,32 @@ char *clean_text(char *text, int len)
 	return ct;
 }
 
-int parse_args(char *args, struct command_line *cmd)
+int parse_text(char *text, int len, struct command_line *cmd)
 {
-	if (!args)
-		return -1;
-
-	int len = strlen(args);
-	int argc = len > 0 ? 2 : 1;
-	for (int i = 0; i < len; ++i)
+	char *input = clean_text(text, len);
+	int input_len = strlen(input);
+	int argc = 1;
+	for (int i = 0; i < input_len; ++i)
 	{
-		if (isspace(args[i]))
+		if (isspace(input[i]))
 			argc++;
 	}
 	char **argv = calloc(argc + 1, sizeof(char *));
 
-	char *filename = NULL;
-	char *path = NULL;
-	strlsplat(cmd->program, strliof(cmd->program, "/"), &path, &filename);
-	if (!filename)
-		filename = cmd->program;
-	argv[0] = filename;
-
-	int pstart = 0;
-	int iargv = 1;
-	for (int i = 0; i < len; ++i)
+	for (int i = 0, iargv = 0, pstart = 0; i < input_len; ++i)
 	{
-		if (isspace(args[i]))
+		if (isspace(input[i]) || i == input_len - 1)
 		{
-			argv[iargv] = calloc(i - pstart + 1, sizeof(char));
-			memcpy(argv[iargv], args + pstart, i - pstart);
+			int iargv_len = i == input_len - 1 ? i - pstart + 1 : i - pstart;
+			argv[iargv] = calloc(iargv_len + 1, sizeof(char));
+			memcpy(argv[iargv], input + pstart, iargv_len);
 			pstart = i + 1;
 			iargv++;
 		}
 	}
-	argv[iargv] = calloc(len - pstart + 1, sizeof(char));
-	memcpy(argv[iargv], args + pstart, len - pstart);
 
+	cmd->program = argv[0];
 	cmd->args = argv;
-	return 0;
-}
-
-int parse_text(char *text, int len, struct command_line *cmd)
-{
-	char *ct = clean_text(text, len);
-	int psep = striof(ct, " ");
-
-	char *program = ct;
-	char *args = "";
-
-	if (psep != -1)
-		strlsplat(ct, psep, &program, &args);
-
-	cmd->program = program;
-	parse_args(args, cmd);
 
 	return 0;
 }

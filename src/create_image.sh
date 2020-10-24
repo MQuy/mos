@@ -62,8 +62,7 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
   hdiutil attach hdd.img -mountpoint /Volumes/$VOLUME_NAME
   mkdir "/Volumes/${VOLUME_NAME}/dev"
 
-  mkdir "/Volumes/${VOLUME_NAME}/usr"
-  mkdir "/Volumes/${VOLUME_NAME}/usr/share"
+  mkdir -p "/Volumes/${VOLUME_NAME}/usr/share"
   cp -R assets/fonts "/Volumes/${VOLUME_NAME}/usr/share"
   cp -R assets/images "/Volumes/${VOLUME_NAME}/usr/share"
 

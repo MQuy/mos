@@ -11,10 +11,10 @@
 int main(int argc, char **argv)
 {
 	struct framebuffer *fb = (struct framebuffer *)argv[0];
-	int32_t ws_fd = mq_open(WINDOW_SERVER_QUEUE, O_RDONLY, &(struct mq_attr){
-															   .mq_msgsize = sizeof(struct msgui),
-															   .mq_maxmsg = 32,
-														   });
+	int32_t ws_fd = mq_open(WINDOW_SERVER_QUEUE, O_RDONLY | O_CREAT, &(struct mq_attr){
+																		 .mq_msgsize = sizeof(struct msgui),
+																		 .mq_maxmsg = 32,
+																	 });
 	int32_t mouse_fd = open("/dev/input/mouse", O_RDONLY, 0);
 	int32_t krb_fd = open("/dev/input/keyboard", O_RDONLY, 0);
 
@@ -51,10 +51,10 @@ int main(int argc, char **argv)
 				{
 					struct msgui_window *msgwin = (struct msgui_window *)ws_buf.data;
 					struct window *win = create_window(msgwin);
-					int32_t wfd = mq_open(msgwin->sender, O_WRONLY, &(struct mq_attr){
-																		.mq_msgsize = WINDOW_NAME_LENGTH,
-																		.mq_maxmsg = 32,
-																	});
+					int32_t wfd = mq_open(msgwin->sender, O_WRONLY | O_CREAT, &(struct mq_attr){
+																				  .mq_msgsize = WINDOW_NAME_LENGTH,
+																				  .mq_maxmsg = 32,
+																			  });
 					mq_send(wfd, win->name, 0, WINDOW_NAME_LENGTH);
 					mq_close(wfd);
 				}

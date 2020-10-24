@@ -14,6 +14,13 @@
 // mount
 #define MS_NOUSER (1 << 31)
 
+// mode
+#define FMODE_READ 0x1
+#define FMODE_WRITE 0x2
+#define FMODE_CAN_READ 0x20000
+#define FMODE_CAN_WRITE 0x40000
+#define OPEN_FMODE(flag) ((flag + 1) & O_ACCMODE)
+
 struct vm_area_struct;
 struct vfs_superblock;
 
@@ -171,7 +178,7 @@ struct vfs_file
 	size_t f_maxcount;
 	unsigned int f_flags;
 	void *private_data;
-	mode_t f_mode;
+	fmode_t f_mode;
 	loff_t f_pos;
 };
 
@@ -210,7 +217,7 @@ int32_t vfs_close(int32_t fd);
 int vfs_stat(const char *path, struct kstat *stat);
 int vfs_fstat(int32_t fd, struct kstat *stat);
 int vfs_mknod(const char *path, int mode, dev_t dev);
-struct nameidata *path_walk(const char *path, mode_t mode);
+int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode);
 int vfs_truncate(const char *path, int32_t length);
 int vfs_ftruncate(int32_t fd, int32_t length);
 struct vfs_file *get_empty_filp();
@@ -219,7 +226,6 @@ int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigne
 // read_write.c
 char *vfs_read(const char *path);
 ssize_t vfs_fread(int32_t fd, char *buf, size_t count);
-int vfs_write(const char *path, const char *buf, size_t count);
 ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count);
 loff_t generic_file_llseek(struct vfs_file *file, loff_t offset, int whence);
 loff_t vfs_flseek(int32_t fd, loff_t offset, int whence);

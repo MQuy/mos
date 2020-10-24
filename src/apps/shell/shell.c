@@ -13,7 +13,7 @@ struct shell *ishell;
 
 void init_shell()
 {
-	int32_t fd = shm_open("shell", 0, 0);
+	int32_t fd = shm_open("shell", O_RDWR | O_CREAT, 0);
 	ftruncate(fd, sizeof(struct shell));
 	ishell = (struct shell *)mmap(NULL, sizeof(struct shell), PROT_WRITE | PROT_READ, MAP_SHARED, fd);
 	memcpy(ishell->cwd, ROOT_PATH, sizeof(ROOT_PATH) - 1);
@@ -94,7 +94,11 @@ int main()
 			else if (!strcmp(cmd->program, "figlet"))
 				execute_program(cmd->program, cmd);
 			else
-				write(1, "command not found", 18);
+			{
+				char msg[100] = {0};
+				sprintf(msg, "command %s not found", cmd->program);
+				write(1, msg, strlen(msg));
+			}
 			exit(0);
 		}
 		else

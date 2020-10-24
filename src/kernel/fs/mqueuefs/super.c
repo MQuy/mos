@@ -1,3 +1,4 @@
+#include <fs/char_dev.h>
 #include <fs/vfs.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
@@ -7,6 +8,8 @@
 #include "mqueuefs.h"
 
 #define MQUEUEFS_MAGIC 0xC01D03F2
+#define MQUEUEFS_ROOT "/dev/mqueue"
+#define MQUEUE_MINOR 19
 
 struct vfs_inode *mqueuefs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 {
@@ -84,7 +87,8 @@ struct vfs_file_system_type mqueuefs_fs_type = {
 void init_mqueuefs()
 {
 	register_filesystem(&mqueuefs_fs_type);
-	do_mount("mqueuefs", MS_NOUSER, "/dev/mqueue");
+	vfs_mknod(MQUEUEFS_ROOT, O_RDWR, MKDEV(0, MQUEUE_MINOR));
+	do_mount("mqueuefs", MS_NOUSER, MQUEUEFS_ROOT);
 }
 
 void exit_mqueuefs()

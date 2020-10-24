@@ -85,6 +85,8 @@ void init_devfs()
 {
 	register_filesystem(&devfs_fs_type);
 	do_mount("devfs", MS_NOUSER, "/dev");
+	vfs_mknod("/dev/input", S_IFDIR, 0);
+	vfs_mknod("/dev/pts", S_IFDIR, 0);
 }
 
 void exit_devfs()

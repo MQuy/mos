@@ -54,8 +54,8 @@ static struct window *find_window_in_root(char *name)
 struct window *create_window(struct msgui_window *msgwin)
 {
 	char *window_name = get_window_name();
-	int32_t fd = shm_open(window_name, O_RDWR | O_CREAT, 0);
 	uint32_t screen_size = msgwin->height * msgwin->width * 4;
+	int32_t fd = shm_open(window_name, O_RDWR | O_CREAT, 0);
 	ftruncate(fd, screen_size);
 
 	struct window *win = calloc(1, sizeof(struct window));

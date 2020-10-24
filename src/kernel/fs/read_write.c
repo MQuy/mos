@@ -9,6 +9,9 @@
 char *vfs_read(const char *path)
 {
 	int32_t fd = vfs_open(path, O_RDWR);
+	if (fd < 0)
+		return NULL;
+
 	struct kstat *stat = kcalloc(1, sizeof(struct kstat));
 	vfs_fstat(fd, stat);
 	char *buf = kcalloc(stat->size, sizeof(char));
@@ -19,19 +22,23 @@ char *vfs_read(const char *path)
 ssize_t vfs_fread(int32_t fd, char *buf, size_t count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
-	return file->f_op->read(file, buf, count, file->f_pos);
-}
 
-int vfs_write(const char *path, const char *buf, size_t count)
-{
-	int32_t fd = vfs_open(path, O_RDWR);
-	return vfs_fwrite(fd, buf, count);
+	if (file->f_mode & FMODE_CAN_READ)
+		return file->f_op->read(file, buf, count, file->f_pos);
+	return -EBADF;
 }
 
 ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
-	return file->f_op->write(file, buf, count, file->f_pos);
+	loff_t ppos = file->f_pos;
+
+	if (file->f_flags & O_APPEND)
+		ppos = file->f_dentry->d_inode->i_size;
+
+	if (file->f_mode & FMODE_CAN_WRITE)
+		return file->f_op->write(file, buf, count, ppos);
+	return -EBADF;
 }
 
 loff_t generic_file_llseek(struct vfs_file *file, loff_t offset, int whence)

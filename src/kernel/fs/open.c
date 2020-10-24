@@ -1,3 +1,4 @@
+#include <include/errno.h>
 #include <include/limits.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
@@ -8,7 +9,7 @@
 struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name)
 {
 	struct vfs_dentry *d = kcalloc(1, sizeof(struct vfs_dentry));
-	d->d_name = name;
+	d->d_name = strdup(name);
 	d->d_parent = parent;
 	INIT_LIST_HEAD(&d->d_subdirs);
 
@@ -18,16 +19,15 @@ struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name)
 	return d;
 }
 
-struct nameidata *path_walk(const char *path, mode_t mode)
+int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode)
 {
-	struct nameidata *nd = kcalloc(1, sizeof(struct nameidata));
 	nd->dentry = current_process->fs->d_root;
 	nd->mnt = current_process->fs->mnt_root;
 
+	char part_name[256] = {0};
 	for (int i = 1, length = strlen(path); i < length; ++i)
 	{
-		char *part_name = kcalloc(length, sizeof(char));
-
+		memset(part_name, 0, sizeof(part_name));
 		for (int j = 0; path[i] != '/' && i < length; ++i, ++j)
 			part_name[j] = path[i];
 
@@ -35,7 +35,7 @@ struct nameidata *path_walk(const char *path, mode_t mode)
 		struct vfs_dentry *d_child = NULL;
 		list_for_each_entry(iter, &nd->dentry->d_subdirs, d_sibling)
 		{
-			if (strcmp(part_name, iter->d_name) == 0)
+			if (!strcmp(part_name, iter->d_name))
 			{
 				d_child = iter;
 				break;
@@ -43,20 +43,28 @@ struct nameidata *path_walk(const char *path, mode_t mode)
 		}
 
 		if (d_child)
+		{
 			nd->dentry = d_child;
+			if (i == length && flags & O_CREAT && flags & O_EXCL)
+				return -EEXIST;
+		}
 		else
 		{
-			d_child = alloc_dentry(nd->dentry, part_name);
 			struct vfs_inode *inode = NULL;
 			if (nd->dentry->d_inode->i_op->lookup)
-				inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, d_child->d_name);
+				inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, part_name);
+
 			if (inode == NULL)
 			{
-				uint32_t part_mode = S_IFDIR;
-				if (i == length)
-					part_mode = mode;
-				inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child->d_name, part_mode);
+				if (i == length && flags & O_CREAT)
+					inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, part_name, i == length ? mode : S_IFDIR);
+				else
+					return -EACCES;
 			}
+			else if (i == length && flags & O_CREAT && flags & O_EXCL)
+				return -EEXIST;
+
+			d_child = alloc_dentry(nd->dentry, part_name);
 			d_child->d_inode = inode;
 			list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
 			nd->dentry = d_child;
@@ -66,7 +74,8 @@ struct nameidata *path_walk(const char *path, mode_t mode)
 		if (mnt)
 			nd->mnt = mnt;
 	};
-	return nd;
+
+	return 0;
 }
 
 struct vfs_file *get_empty_filp()
@@ -79,17 +88,35 @@ struct vfs_file *get_empty_filp()
 
 int32_t vfs_open(const char *path, int32_t flags)
 {
+	int ret;
 	int fd = find_unused_fd_slot();
-	struct nameidata *nd = path_walk(path, S_IFREG);
+
+	struct nameidata nd;
+	ret = path_walk(&nd, path, flags, S_IFREG);
+	if (ret < 0)
+		return ret;
 
 	struct vfs_file *file = get_empty_filp();
-	file->f_dentry = nd->dentry;
-	file->f_vfsmnt = nd->mnt;
+	file->f_dentry = nd.dentry;
+	file->f_vfsmnt = nd.mnt;
 	file->f_flags = flags;
-	file->f_op = nd->dentry->d_inode->i_fop;
+	file->f_mode = OPEN_FMODE(flags);
+	file->f_op = nd.dentry->d_inode->i_fop;
+
+	if (file->f_mode & FMODE_READ)
+		file->f_mode |= FMODE_CAN_READ;
+	if (file->f_mode & FMODE_WRITE)
+		file->f_mode |= FMODE_CAN_WRITE;
 
 	if (file->f_op && file->f_op->open)
-		file->f_op->open(nd->dentry->d_inode, file);
+	{
+		ret = file->f_op->open(nd.dentry->d_inode, file);
+		if (ret < 0)
+		{
+			kfree(file);
+			return ret;
+		}
+	}
 
 	current_process->files->fd[fd] = file;
 	return fd;
@@ -97,18 +124,18 @@ int32_t vfs_open(const char *path, int32_t flags)
 
 int32_t vfs_close(int32_t fd)
 {
+	int ret = 0;
 	struct files_struct *files = current_process->files;
-
 	acquire_semaphore(&files->lock);
 
 	struct vfs_file *f = files->fd[fd];
 	atomic_dec(&f->f_count);
 	if (!atomic_read(&f->f_count) && f->f_op->release)
-		f->f_op->release(f->f_dentry->d_inode, f);
+		ret = f->f_op->release(f->f_dentry->d_inode, f);
 	files->fd[fd] = NULL;
 
 	release_semaphore(&files->lock);
-	return 0;
+	return ret;
 }
 
 static void generic_fillattr(struct vfs_inode *inode, struct kstat *stat)
@@ -148,8 +175,12 @@ static int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct k
 
 int vfs_stat(const char *path, struct kstat *stat)
 {
-	struct nameidata *nd = path_walk(path, S_IFREG);
-	return do_getattr(nd->mnt, nd->dentry, stat);
+	struct nameidata nd;
+	int ret = path_walk(&nd, path, 0, S_IFREG);
+	if (ret < 0)
+		return ret;
+
+	return do_getattr(nd.mnt, nd.dentry, stat);
 }
 
 int vfs_fstat(int32_t fd, struct kstat *stat)
@@ -163,10 +194,17 @@ int vfs_mknod(const char *path, int mode, dev_t dev)
 	char *dir, *name;
 	strlsplat(path, strliof(path, "/"), &dir, &name);
 
-	struct nameidata *nd = path_walk(dir, S_IFDIR);
-	struct vfs_dentry *d_child = alloc_dentry(nd->dentry, name);
-	int ret = nd->dentry->d_inode->i_op->mknod(nd->dentry->d_inode, d_child, mode, dev);
-	list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
+	struct nameidata nd;
+	int ret = path_walk(&nd, dir, 0, S_IFDIR);
+	if (ret < 0)
+		return ret;
+
+	struct vfs_dentry *d_child = alloc_dentry(nd.dentry, name);
+	ret = nd.dentry->d_inode->i_op->mknod(nd.dentry->d_inode, d_child, mode, dev);
+	if (ret < 0)
+		return ret;
+
+	list_add_tail(&d_child->d_sibling, &nd.dentry->d_subdirs);
 
 	return ret;
 }
@@ -188,16 +226,20 @@ static int do_truncate(struct vfs_dentry *dentry, int32_t length)
 	attrs->ia_size = length;
 
 	if (inode->i_op->setattr)
-		inode->i_op->setattr(dentry, attrs);
+		return inode->i_op->setattr(dentry, attrs);
 	else
-		simple_setattr(dentry, attrs);
-	return 0;
+		return simple_setattr(dentry, attrs);
 }
 
 int vfs_truncate(const char *path, int32_t length)
 {
-	struct nameidata *nd = path_walk(path, S_IFREG);
-	return do_truncate(nd->dentry, length);
+	struct nameidata nd;
+
+	int ret = path_walk(&nd, path, 0, S_IFREG);
+	if (ret < 0)
+		return ret;
+
+	return do_truncate(nd.dentry, length);
 }
 
 int vfs_ftruncate(int32_t fd, int32_t length)

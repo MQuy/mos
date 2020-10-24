@@ -1,3 +1,4 @@
+#include <fs/char_dev.h>
 #include <fs/vfs.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
@@ -11,6 +12,7 @@
 #define SOCKFS_MAGIC 0x534F434B
 #define SOCKFS_ROOT "/dev/sockfs"
 #define SOCK_NUMBER_LENGTH 11
+#define SOCK_MINOR 15
 
 static uint32_t nsock;
 
@@ -114,6 +116,7 @@ void init_sockfs()
 {
 	nsock = 0;
 	register_filesystem(&sockfs_fs_type);
+	vfs_mknod(SOCKFS_ROOT, O_RDWR, MKDEV(0, SOCK_MINOR));
 	do_mount("sockfs", MS_NOUSER, SOCKFS_ROOT);
 }
 

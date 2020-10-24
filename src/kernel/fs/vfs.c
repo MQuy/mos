@@ -94,17 +94,31 @@ struct vfs_mount *lookup_mnt(struct vfs_dentry *d)
 
 struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
 {
-	char *dir, *name;
+	char *dir = NULL;
+	char *name = NULL;
 	strlsplat(path, strliof(path, "/"), &dir, &name);
 	if (!dir)
 		dir = "/";
 
 	struct vfs_file_system_type *fs = *find_filesystem(fstype);
 	struct vfs_mount *mnt = fs->mount(fs, fstype, name);
-	struct nameidata *nd = path_walk(dir, S_IFDIR);
 
-	mnt->mnt_mountpoint->d_parent = nd->dentry;
-	list_add_tail(&mnt->mnt_mountpoint->d_sibling, &nd->dentry->d_subdirs);
+	struct nameidata nd;
+	path_walk(&nd, dir, O_RDONLY, S_IFDIR);
+
+	struct vfs_dentry *iter, *next;
+	list_for_each_entry_safe(iter, next, &nd.dentry->d_subdirs, d_sibling)
+	{
+		if (!strcmp(iter->d_name, name))
+		{
+			// TODO: MQ 2020-10-24 Make sure path is empty folder
+			list_del(&iter->d_sibling);
+			kfree(iter);
+		}
+	}
+
+	mnt->mnt_mountpoint->d_parent = nd.dentry;
+	list_add_tail(&mnt->mnt_mountpoint->d_sibling, &nd.dentry->d_subdirs);
 	list_add_tail(&mnt->sibling, &vfsmntlist);
 
 	return mnt;
@@ -112,6 +126,8 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *path)
 
 static void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
 {
+	init_ext2_fs();
+
 	struct vfs_mount *mnt = fs_type->mount(fs_type, dev_name, "/");
 	list_add_tail(&mnt->sibling, &vfsmntlist);
 
@@ -128,7 +144,6 @@ void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 	INIT_LIST_HEAD(&vfsmntlist);
 
 	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount ext2");
-	init_ext2_fs();
 	init_rootfs(fs, dev_name);
 
 	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount devfs");

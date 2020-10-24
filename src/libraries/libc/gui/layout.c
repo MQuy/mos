@@ -12,7 +12,7 @@
 
 void init_fonts()
 {
-	uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", 0, 0);
+	uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", O_RDONLY, 0);
 
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
@@ -116,15 +116,15 @@ static void gui_create_window(struct window *parent, struct window *win, int32_t
 	if (parent)
 		list_add_tail(&win->sibling, &parent->children);
 
-	int32_t wfd = mq_open(msgwin->sender, O_RDONLY, &(struct mq_attr){
-														.mq_msgsize = WINDOW_NAME_LENGTH,
-														.mq_maxmsg = 32,
-													});
+	int32_t wfd = mq_open(msgwin->sender, O_RDONLY | O_CREAT, &(struct mq_attr){
+																  .mq_msgsize = WINDOW_NAME_LENGTH,
+																  .mq_maxmsg = 32,
+															  });
 	mq_receive(wfd, win->name, 0, WINDOW_NAME_LENGTH);
 	mq_close(wfd);
 
 	uint32_t buf_size = width * height * 4;
-	int32_t fd = shm_open(win->name, O_RDWR | O_CREAT, 0);
+	int32_t fd = shm_open(win->name, O_RDWR, 0);
 	win->graphic.buf = (char *)mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd);
 }
 
@@ -209,7 +209,7 @@ void gui_close(struct window *win)
 
 char *load_bmp(char *path)
 {
-	int32_t fd = open(path, 0, 0);
+	int32_t fd = open(path, O_RDONLY, 0);
 
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
@@ -286,10 +286,10 @@ void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *
 	gui_focus(win);
 
 	struct xevent *event = calloc(1, sizeof(struct xevent));
-	int32_t wfd = mq_open(win->name, O_RDONLY, &(struct mq_attr){
-												   .mq_msgsize = sizeof(struct xevent),
-												   .mq_maxmsg = 32,
-											   });
+	int32_t wfd = mq_open(win->name, O_RDONLY | O_CREAT, &(struct mq_attr){
+															 .mq_msgsize = sizeof(struct xevent),
+															 .mq_maxmsg = 32,
+														 });
 	memset(event, 0, sizeof(struct xevent));
 
 	struct pollfd pfds[MAX_FD] = {

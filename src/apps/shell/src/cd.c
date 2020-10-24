@@ -10,7 +10,7 @@
 
 int cd(struct command_line *cmd)
 {
-	int fd = shm_open("shell", 0, 0);
+	int fd = shm_open("shell", O_RDWR, 0);
 	struct shell *ishell = (struct shell *)mmap(NULL, sizeof(struct shell), PROT_WRITE | PROT_READ, MAP_SHARED, fd);
 
 	char *path = cmd->args[1];

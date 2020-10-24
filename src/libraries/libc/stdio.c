@@ -41,7 +41,10 @@ FILE *fopen(const char *filename, const char *mode)
 	else if ((mode[0] == 'w' || mode[0] == 'a') && mode[1] != '+')
 		flags = O_WRONLY;
 
-	int fd = open(filename, flags, 0);
+	if ((mode[0] == 'w' && mode[1] == '+') || mode[0] == 'a')
+		flags |= O_CREAT;
+
+	int fd = open(filename, flags | O_CREAT, 0);
 	if (fd < 0)
 		return NULL;
 

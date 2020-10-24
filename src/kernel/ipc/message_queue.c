@@ -25,8 +25,9 @@ static char *mq_normalize_path(char *name)
 int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
 	char *fname = mq_normalize_path(name);
-	int32_t fd = vfs_open(fname, flags);
-	int32_t ret = fd;
+	int32_t ret = vfs_open(fname, flags);
+	if (ret < 0)
+		return ret;
 
 	struct message_queue *mq = hashmap_get(&mq_map, name);
 	// TODO: MQ 2020-09-20 Implement oflag to get rid of attr checking
@@ -43,7 +44,6 @@ int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 		ret = -EINVAL;
 
 	kfree(fname);
-
 	return ret;
 }
 
@@ -140,7 +140,7 @@ int32_t mq_send(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize)
 	struct vfs_file *file = current_thread->parent->files->fd[fd];
 	struct message_queue *mq = (struct message_queue *)file->private_data;
 
-	if (!mq)
+	if (!mq || !(file->f_mode & FMODE_CAN_WRITE))
 		return -EBADF;
 	else if (msize > mq->attr->mq_msgsize)
 		return -EMSGSIZE;
@@ -191,7 +191,7 @@ int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize
 	struct vfs_file *file = current_thread->parent->files->fd[fd];
 	struct message_queue *mq = (struct message_queue *)file->private_data;
 
-	if (!mq)
+	if (!mq || !(file->f_mode & FMODE_CAN_READ))
 		return -EINVAL;
 	else if (msize < mq->attr->mq_msgsize)
 		return -EMSGSIZE;

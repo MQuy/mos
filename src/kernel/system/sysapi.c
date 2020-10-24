@@ -224,7 +224,7 @@ static int32_t sys_posix_spawn(char *path)
 int32_t sys_socket(int32_t family, enum socket_type type, int32_t protocal)
 {
 	char *path = get_next_socket_path();
-	int32_t fd = vfs_open(path, O_RDWR);
+	int32_t fd = vfs_open(path, O_RDWR | O_CREAT);
 	socket_setup(family, type, protocal, current_process->files->fd[fd]);
 	return fd;
 }

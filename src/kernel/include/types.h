@@ -23,5 +23,6 @@ typedef long long time_t;
 typedef int clockid_t;
 typedef long long clock_t;
 typedef int fpos_t;
+typedef unsigned int fmode_t;
 
 #endif
