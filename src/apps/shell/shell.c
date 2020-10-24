@@ -96,7 +96,7 @@ int main()
 			else
 			{
 				char msg[100] = {0};
-				sprintf(msg, "command %s not found", cmd->program);
+				sprintf(msg, "command %s not found\n", cmd->program);
 				write(1, msg, strlen(msg));
 			}
 			exit(0);

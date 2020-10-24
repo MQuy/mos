@@ -132,7 +132,7 @@ static void gui_label_set_text(struct ui_label *label, char *text)
 {
 	memset(label->window.graphic.buf, 0, label->window.graphic.width * label->window.graphic.height * 4);
 
-	label->text = text;
+	label->text = strdup(text);
 	uint32_t scanline = label->window.graphic.width * 4;
 	psf_puts(label->text, label->window.style->padding_left, label->window.style->padding_top, 0xffffffff, 0x00, label->window.graphic.buf, scanline);
 }

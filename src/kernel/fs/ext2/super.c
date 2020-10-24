@@ -156,7 +156,7 @@ static struct vfs_mount *ext2_mount(struct vfs_file_system_type *fs_type,
 {
 	struct vfs_superblock *sb = (struct vfs_superblock *)kcalloc(1, sizeof(struct vfs_superblock));
 	sb->s_blocksize = EXT2_MIN_BLOCK_SIZE;
-	sb->mnt_devname = dev_name;
+	sb->mnt_devname = strdup(dev_name);
 	sb->s_type = fs_type;
 	ext2_fill_super(sb);
 
@@ -173,7 +173,7 @@ static struct vfs_mount *ext2_mount(struct vfs_file_system_type *fs_type,
 	struct vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
 	mnt->mnt_sb = sb;
 	mnt->mnt_mountpoint = mnt->mnt_root = sb->s_root;
-	mnt->mnt_devname = dev_name;
+	mnt->mnt_devname = sb->mnt_devname;
 
 	return mnt;
 }

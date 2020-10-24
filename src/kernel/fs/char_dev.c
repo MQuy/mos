@@ -2,13 +2,14 @@
 
 #include <include/errno.h>
 #include <memory/vmm.h>
+#include <utils/string.h>
 
 struct list_head devlist;
 
 struct char_device *alloc_chrdev(const char *name, uint32_t major, uint32_t minor, int32_t minorct, struct vfs_file_operations *ops)
 {
 	struct char_device *cdev = kcalloc(1, sizeof(struct char_device));
-	cdev->name = name;
+	cdev->name = strdup(name);
 	cdev->major = major;
 	cdev->baseminor = minor;
 	cdev->minorct = minorct;

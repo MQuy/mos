@@ -98,7 +98,9 @@
     "*.txt": "log",
     "cstdint": "c",
     "*.tcc": "c",
-    "climits": "c"
+    "climits": "c",
+    "*.x": "c",
+    "*.def": "c"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

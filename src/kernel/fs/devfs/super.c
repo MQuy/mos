@@ -3,6 +3,7 @@
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <system/time.h>
+#include <utils/string.h>
 
 #include "devfs.h"
 
@@ -57,7 +58,7 @@ static struct vfs_mount *devfs_mount(struct vfs_file_system_type *fs_type,
 {
 	struct vfs_superblock *sb = kcalloc(1, sizeof(struct vfs_superblock));
 	sb->s_blocksize = PMM_FRAME_SIZE;
-	sb->mnt_devname = dev_name;
+	sb->mnt_devname = strdup(dev_name);
 	sb->s_type = fs_type;
 	devfs_fill_super(sb);
 
@@ -71,7 +72,7 @@ static struct vfs_mount *devfs_mount(struct vfs_file_system_type *fs_type,
 	struct vfs_mount *mnt = kcalloc(1, sizeof(struct vfs_mount));
 	mnt->mnt_sb = sb;
 	mnt->mnt_mountpoint = mnt->mnt_root = sb->s_root;
-	mnt->mnt_devname = dev_name;
+	mnt->mnt_devname = sb->mnt_devname;
 
 	return mnt;
 }
