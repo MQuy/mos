@@ -18,6 +18,8 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 - [x] Terminal
 - [x] mOS toolchain
 - [x] Port figlet
+- [ ] Unit testing
+- [ ] Port GNU Bash
 - [ ] Dynamic linker
 - [ ] Port GCC (the GNU Compiler Collection)
 - [ ] Browser
@@ -56,6 +58,19 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 ✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/) might help
 
 **Ubuntu**
+
+- install gcc cross compilier via https://wiki.osdev.org/GCC_Cross-Compiler#The_Build
+- install mos toolchain
+
+  ```
+  $ cd src/toolchain
+  $ ./build
+  ```
+
+- run emulator
+  ```
+  $ cd src && ./create_image.sh && ./build.sh qemu iso
+  ```
 
 **Debuging**
 
