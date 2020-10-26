@@ -74,14 +74,14 @@ FILE *fdopen(int fd, const char *mode)
 	struct stat stat = {0};
 	fstat(fd, &stat);
 
-	if (S_ISREG(stat.mode))
+	if (S_ISREG(stat.st_mode))
 		stream->flags |= _IO_FULLY_BUF;
 	else if (isatty(fd))
 		stream->flags |= _IO_LINE_BUF;
 	else
 		stream->flags |= _IO_UNBUFFERED;
 
-	stream->blksize = stat.blksize;
+	stream->blksize = stat.st_blksize;
 	return stream;
 }
 
@@ -239,7 +239,7 @@ int fseek(FILE *stream, long int off, int whence)
 	if (whence == SEEK_CUR)
 		offset = stream->pos + off;
 	else if (whence == SEEK_END)
-		offset = stat.size + off;
+		offset = stat.st_size + off;
 	stream->pos = offset;
 	lseek(stream->fd, offset, SEEK_SET);
 

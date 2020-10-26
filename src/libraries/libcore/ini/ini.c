@@ -270,8 +270,8 @@ int ini_parse_file(int32_t fd, ini_handler handler, void *user)
 {
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
-	char *buf = calloc(stat->size, sizeof(char));
-	read(fd, buf, stat->size);
+	char *buf = calloc(stat->st_size, sizeof(char));
+	read(fd, buf, stat->st_size);
 	return ini_parse_stream(buf, handler, user);
 }
 

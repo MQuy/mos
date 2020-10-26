@@ -140,19 +140,19 @@ int32_t vfs_close(int32_t fd)
 
 static void generic_fillattr(struct vfs_inode *inode, struct kstat *stat)
 {
-	stat->dev = inode->i_sb->s_dev;
-	stat->ino = inode->i_ino;
-	stat->mode = inode->i_mode;
-	stat->nlink = inode->i_nlink;
-	stat->uid = inode->i_uid;
-	stat->gid = inode->i_gid;
-	stat->rdev = inode->i_rdev;
-	stat->atime = inode->i_atime;
-	stat->mtime = inode->i_mtime;
-	stat->ctime = inode->i_ctime;
-	stat->size = inode->i_size;
-	stat->blocks = inode->i_blocks;
-	stat->blksize = inode->i_blksize;
+	stat->st_dev = inode->i_sb->s_dev;
+	stat->st_ino = inode->i_ino;
+	stat->st_mode = inode->i_mode;
+	stat->st_nlink = inode->i_nlink;
+	stat->st_uid = inode->i_uid;
+	stat->st_gid = inode->i_gid;
+	stat->st_rdev = inode->i_rdev;
+	stat->st_atim = inode->i_atime;
+	stat->st_mtim = inode->i_mtime;
+	stat->st_ctim = inode->i_ctime;
+	stat->st_size = inode->i_size;
+	stat->st_blocks = inode->i_blocks;
+	stat->st_blksize = inode->i_blksize;
 }
 
 static int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct kstat *stat)
@@ -162,13 +162,13 @@ static int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct k
 		return inode->i_op->getattr(mnt, dentry, stat);
 
 	generic_fillattr(inode, stat);
-	if (!stat->blksize)
+	if (!stat->st_blksize)
 	{
 		struct vfs_superblock *s = inode->i_sb;
 		unsigned blocks;
-		blocks = (stat->size + s->s_blocksize - 1) >> s->s_blocksize_bits;
-		stat->blocks = (s->s_blocksize / 512) * blocks;
-		stat->blksize = s->s_blocksize;
+		blocks = (stat->st_size + s->s_blocksize - 1) >> s->s_blocksize_bits;
+		stat->st_blocks = (s->s_blocksize / 512) * blocks;
+		stat->st_blksize = s->s_blocksize;
 	}
 	return 0;
 }

@@ -14,8 +14,8 @@ char *vfs_read(const char *path)
 
 	struct kstat *stat = kcalloc(1, sizeof(struct kstat));
 	vfs_fstat(fd, stat);
-	char *buf = kcalloc(stat->size, sizeof(char));
-	vfs_fread(fd, buf, stat->size);
+	char *buf = kcalloc(stat->st_size, sizeof(char));
+	vfs_fread(fd, buf, stat->st_size);
 	return buf;
 }
 

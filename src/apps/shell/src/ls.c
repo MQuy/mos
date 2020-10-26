@@ -15,7 +15,7 @@ int ls(char *path)
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
 
-	int size = stat->size ? stat->size : MAX_FOLDER_SIZE;
+	int size = stat->st_size ? stat->st_size : MAX_FOLDER_SIZE;
 	struct dirent *dirent = calloc(size, sizeof(char));
 	int count = getdents(fd, dirent, size);
 	char filename[MAX_FILENAME_LENGTH];

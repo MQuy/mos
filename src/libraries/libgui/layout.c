@@ -17,9 +17,9 @@ void init_fonts()
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
 
-	char *buf = calloc(stat->size, sizeof(char));
-	read(fd, buf, stat->size);
-	psf_init(buf, stat->size);
+	char *buf = calloc(stat->st_size, sizeof(char));
+	read(fd, buf, stat->st_size);
+	psf_init(buf, stat->st_size);
 
 	free(stat);
 	close(fd);
@@ -214,8 +214,8 @@ char *load_bmp(char *path)
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
 
-	char *buf = calloc(stat->size, sizeof(char));
-	read(fd, buf, stat->size);
+	char *buf = calloc(stat->st_size, sizeof(char));
+	read(fd, buf, stat->st_size);
 	close(fd);
 	free(stat);
 
