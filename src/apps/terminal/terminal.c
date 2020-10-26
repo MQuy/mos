@@ -1,7 +1,7 @@
 #include "terminal.h"
 
-#include <gui/layout.h>
-#include <gui/psf.h>
+#include <libgui/layout.h>
+#include <libgui/psf.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
-#include <gui/layout.h>
-#include <gui/msgui.h>
+#include <libgui/layout.h>
+#include <libgui/msgui.h>
 #include <poll.h>
 #include <stdint.h>
 #include <stdlib.h>

@@ -17,7 +17,7 @@ https://github.com/benhoyt/inih
 
 #include <ctype.h>
 #include <fcntl.h>
-#include <ini/ini.h>
+#include <libcore/ini/ini.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/cdefs.h>

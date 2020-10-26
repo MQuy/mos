@@ -1,10 +1,10 @@
 #ifndef LIBC_GUI_LAYOUT_H
 #define LIBC_GUI_LAYOUT_H
 
-#include <gui/event.h>
-#include <gui/framebuffer.h>
-#include <gui/msgui.h>
-#include <hashtable/hashmap.h>
+#include <libcore/hashtable/hashmap.h>
+#include <libgui/event.h>
+#include <libgui/framebuffer.h>
+#include <libgui/msgui.h>
 #include <list.h>
 #include <poll.h>
 #include <stdint.h>

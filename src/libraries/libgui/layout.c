@@ -1,8 +1,8 @@
-#include <bmp.h>
 #include <fcntl.h>
-#include <gui/layout.h>
-#include <gui/msgui.h>
-#include <gui/psf.h>
+#include <libgui/bmp.h>
+#include <libgui/layout.h>
+#include <libgui/msgui.h>
+#include <libgui/psf.h>
 #include <math.h>
 #include <poll.h>
 #include <stdlib.h>

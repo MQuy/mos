@@ -1,9 +1,9 @@
 #ifndef WINDOW_MANAGER_H
 #define WINDOW_MANAGER_H
 
-#include <gui/event.h>
-#include <gui/layout.h>
-#include <gui/msgui.h>
+#include <libgui/event.h>
+#include <libgui/layout.h>
+#include <libgui/msgui.h>
 
 struct mouse_event
 {

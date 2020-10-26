@@ -1,10 +1,10 @@
 #include "window_manager.h"
 
-#include <bmp.h>
 #include <fcntl.h>
-#include <gui/psf.h>
-#include <hashtable/hashmap.h>
-#include <ini/ini.h>
+#include <libcore/hashtable/hashmap.h>
+#include <libcore/ini/ini.h>
+#include <libgui/bmp.h>
+#include <libgui/psf.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/cdefs.h>

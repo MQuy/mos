@@ -1,4 +1,4 @@
-#include <bmp.h>
+#include <libgui/bmp.h>
 
 static void bmp_bi_bitfields_draw(
 	struct graphic *dgraph,

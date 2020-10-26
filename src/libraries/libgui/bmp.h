@@ -1,7 +1,7 @@
 #ifndef LIBC_BMP_H
 #define LIBC_BMP_H
 
-#include <gui/layout.h>
+#include <libgui/layout.h>
 #include <stddef.h>
 #include <stdint.h>
 

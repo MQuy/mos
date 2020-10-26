@@ -1,4 +1,4 @@
-#include <gui/event.h>
+#include <libgui/event.h>
 #include <stdlib.h>
 #include <string.h>
 

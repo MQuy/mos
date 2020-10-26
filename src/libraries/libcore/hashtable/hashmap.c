@@ -7,7 +7,7 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <hashtable/hashmap.h>
+#include <libcore/hashtable/hashmap.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
