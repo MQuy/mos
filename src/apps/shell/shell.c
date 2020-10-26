@@ -49,7 +49,16 @@ void execute_program(char *name, struct command_line *cmd)
 	}
 	else
 		strcpy(path, name);
-	execve(path, cmd->args, NULL);
+	int ret = open(path, O_RDONLY, 0);
+	if (ret >= 0)
+		execve(path, cmd->args, NULL);
+	else
+	{
+		char msg[100] = {0};
+		sprintf(msg, "command %s not found\n", cmd->program);
+		write(1, msg, strlen(msg));
+		free(path);
+	}
 }
 
 int main()
@@ -85,20 +94,8 @@ int main()
 				ls(ishell->cwd);
 			else if (!strcmp(cmd->program, "cd"))
 				cd(cmd);
-			else if (!strcmp(cmd->program, "uname"))
-				execute_program(cmd->program, cmd);
-			else if (!strcmp(cmd->program, "host"))
-				execute_program(cmd->program, cmd);
-			else if (!strcmp(cmd->program, "ld"))
-				execute_program(cmd->program, cmd);
-			else if (!strcmp(cmd->program, "figlet"))
-				execute_program(cmd->program, cmd);
 			else
-			{
-				char msg[100] = {0};
-				sprintf(msg, "command %s not found\n", cmd->program);
-				write(1, msg, strlen(msg));
-			}
+				execute_program(cmd->program, cmd);
 			exit(0);
 		}
 		else
