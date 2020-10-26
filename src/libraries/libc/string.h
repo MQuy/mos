@@ -30,6 +30,8 @@ char *strpbrk(const char *s, const char *accept);
 char *strrchr(const char *s, int c);
 char *strsep(char **stringp, const char *delim);
 
+char *strerror(int errnum);
+
 // Not libc standard
 char *strim(char *s);
 char *strrstr(char *string, char *find);

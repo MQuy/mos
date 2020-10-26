@@ -28,5 +28,6 @@ typedef int fpos_t;
 typedef unsigned int nlink_t;
 typedef int blksize_t;
 typedef int blkcnt_t;
+typedef unsigned int u_int;
 
 #endif

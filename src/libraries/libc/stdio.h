@@ -8,6 +8,11 @@
 #include <sys/types.h>
 #include <vsprintf.h>
 
+#define BUFSIZ 512
+#define _IOFBF 0 /* Fully buffered. */
+#define _IOLBF 1 /* Line buffered. */
+#define _IONBF 2 /* No buffering. */
+
 #define EOF (-1)
 
 #define _IO_USER_BUF 0x0001 /* Don't deallocate buffer on close. */
@@ -76,7 +81,8 @@ int vprintf(const char *format, va_list ap);
 size_t fwrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 int fscanf(FILE *stream, const char *format, ...);
 int scanf(const char *format, ...);
-void setbuf(FILE *, char *);
+int setvbuf(FILE *stream, char *buf, int mode, size_t size);
+void setbuf(FILE *stream, char *buf);
 FILE *tmpfile();
 
 #endif

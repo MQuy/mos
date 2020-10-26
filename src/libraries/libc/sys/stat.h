@@ -22,4 +22,6 @@ struct stat
 	struct timespec st_ctim; /* Time of last status change */
 };
 
+int fstat(int fildes, struct stat *buf);
+
 #endif

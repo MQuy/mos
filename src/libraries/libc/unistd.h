@@ -164,7 +164,7 @@ static inline int32_t open(const char *path, int32_t flag, int32_t mode)
 }
 
 _syscall2(fstat, int32_t, struct stat *);
-static inline int32_t fstat(int32_t fd, struct stat *buf)
+static inline int32_t _fstat(int32_t fd, struct stat *buf)
 {
 	return syscall_fstat(fd, buf);
 }
