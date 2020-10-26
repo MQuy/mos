@@ -13,6 +13,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo mount -o loop hdd.img "/mnt/${DISK_NAME}"
 
   sudo mkdir "/mnt/${DISK_NAME}/dev"
+  sudo mkdir "/mnt/${DISK_NAME}/bin"
   sudo mkdir -p "/mnt/${DISK_NAME}/usr/share"
 
   sudo cp -R assets/fonts "/mnt/${DISK_NAME}/usr/share"
@@ -33,7 +34,14 @@ if [[ "$unamestr" == 'Linux' ]]; then
   cd apps/ld && rm -f ld && i386-mos-gcc -g ld.c -o ld
   cd ../..
 
-  sudo mkdir "/mnt/${DISK_NAME}/bin"
+  for dir in apps/cmd/*
+  do
+    name=$(basename $dir)
+    rm -f $dir/$name 
+    i386-mos-gcc -g $dir/$name.c -o $dir/$name
+    sudo cp $dir/$name "/mnt/${DISK_NAME}/bin"
+  done
+
   sudo cp apps/window_server/window_server "/mnt/${DISK_NAME}/bin"
   sudo cp apps/terminal/terminal "/mnt/${DISK_NAME}/bin"
   sudo cp apps/shell/shell "/mnt/${DISK_NAME}/bin"
@@ -50,6 +58,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
 
   sudo mkdir "/mnt/${DISK_NAME}/tmp"
   sudo cp assets/book.txt "/mnt/${DISK_NAME}/tmp"
+  sudo cp assets/sample.txt "/mnt/${DISK_NAME}/tmp"
 
   sudo umount "/mnt/${DISK_NAME}"
   sudo rm -rf "/mnt/${DISK_NAME}"

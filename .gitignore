@@ -30,3 +30,6 @@ src/apps/uname/uname
 src/apps/host/host
 src/apps/calculator/calculator
 src/apps/ld/ld
+
+src/apps/cmd/*/*
+!src/apps/cmd/*/*.c
