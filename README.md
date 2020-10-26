@@ -72,6 +72,13 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   $ cd src && ./create_image.sh && ./build.sh qemu iso
   ```
 
+**Unit Test**
+
+```
+$ cd test && git clone https://github.com/ThrowTheSwitch/Unity.git unity
+$ make clean && make
+```
+
 **Debuging**
 
 in `build.sh`, adding `-s -S` right after `qemu` to switch to debug mode. Currently, I use vscode + [native debuge](https://marketplace.visualstudio.com/items?itemName=webfreak.debug) -> click Run -> choose "Attach to QEMU"

@@ -8,6 +8,8 @@
 *.iso
 *.log
 
+build
+unity
 src/toolchain/*
 !src/toolchain/build.sh
 !src/toolchain/binutils-2.32.patch
