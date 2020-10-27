@@ -3,9 +3,7 @@
 
 #include <sys/cdefs.h>
 
-typedef unsigned int __kernel_dev_t;
-typedef __kernel_dev_t dev_t;
-
+typedef unsigned int dev_t;
 typedef unsigned short umode_t;
 typedef long long loff_t;
 typedef long off_t;
@@ -29,5 +27,10 @@ typedef unsigned int nlink_t;
 typedef int blksize_t;
 typedef int blkcnt_t;
 typedef unsigned int u_int;
+
+typedef unsigned char u_char;
+typedef unsigned short u_short;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
 
 #endif

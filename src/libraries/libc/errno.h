@@ -92,6 +92,6 @@
 #define EOPNOTSUPP ENOTSUP
 #define EWOULDBLOCK EAGAIN
 
-extern volatile int errno;
+extern int errno;
 
 #endif
