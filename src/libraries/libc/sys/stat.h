@@ -1,5 +1,5 @@
-#ifndef LIBC_SYS_STAT_H
-#define LIBC_SYS_STAT_H
+#ifndef _LIBC_SYS_STAT_H
+#define _LIBC_SYS_STAT_H
 
 #include <sys/types.h>
 #include <time.h>

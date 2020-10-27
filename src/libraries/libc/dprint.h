@@ -1,5 +1,5 @@
-#ifndef LIBC_DPRINT_H
-#define LIBC_DPRINT_H
+#ifndef _LIBC_DPRINT_H
+#define _LIBC_DPRINT_H
 
 #include <stdarg.h>
 

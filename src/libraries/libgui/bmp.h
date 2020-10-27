@@ -1,5 +1,5 @@
-#ifndef LIBC_BMP_H
-#define LIBC_BMP_H
+#ifndef LIBGUI_BMP_H
+#define LIBGUI_BMP_H
 
 #include <libgui/layout.h>
 #include <stddef.h>

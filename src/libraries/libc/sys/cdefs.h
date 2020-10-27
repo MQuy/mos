@@ -1,5 +1,5 @@
-#ifndef LIBC_SYS_CDEFS_H
-#define LIBC_SYS_CDEFS_H
+#ifndef _LIBC_SYS_CDEFS_H
+#define _LIBC_SYS_CDEFS_H
 
 #define __unused __attribute__((__unused__))
 #define __inline inline __attribute__((always_inline))

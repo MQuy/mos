@@ -1,5 +1,5 @@
-#ifndef LIBC_IOCTL_H
-#define LIBC_IOCTL_H
+#ifndef _LIBC_IOCTL_H
+#define _LIBC_IOCTL_H
 
 #include <termios.h>
 

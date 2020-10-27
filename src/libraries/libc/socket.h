@@ -1,5 +1,5 @@
-#ifndef LIBC_SOCKET_H
-#define LIBC_SOCKET_H
+#ifndef _LIBC_SOCKET_H
+#define _LIBC_SOCKET_H
 
 #include <stdint.h>
 

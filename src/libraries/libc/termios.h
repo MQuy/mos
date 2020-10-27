@@ -1,5 +1,5 @@
-#ifndef LIBC_TERMIOS_H
-#define LIBC_TERMIOS_H
+#ifndef _LIBC_TERMIOS_H
+#define _LIBC_TERMIOS_H
 
 struct winsize
 {

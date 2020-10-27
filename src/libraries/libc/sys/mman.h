@@ -1,5 +1,5 @@
-#ifndef LIBC_SYS_MMANH_H
-#define LIBC_SYS_MMANH_H
+#ifndef _LIBC_SYS_MMANH_H
+#define _LIBC_SYS_MMANH_H
 
 #define PROT_READ 0x1			  /* page can be read */
 #define PROT_WRITE 0x2			  /* page can be written */

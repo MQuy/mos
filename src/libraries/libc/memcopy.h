@@ -1,5 +1,5 @@
-#ifndef LIBC_MEMCOPY_H
-#define LIBC_MEMCOPY_H
+#ifndef _LIBC_MEMCOPY_H
+#define _LIBC_MEMCOPY_H
 
 #undef OP_T_THRES
 #define OP_T_THRES 8

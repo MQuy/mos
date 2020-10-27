@@ -1,5 +1,5 @@
-#ifndef LIBC_ARPA_INET_H
-#define LIBC_ARPA_INET_H
+#ifndef _LIBC_ARPA_INET_H
+#define _LIBC_ARPA_INET_H
 
 #include <stdint.h>
 

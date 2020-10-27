@@ -1,5 +1,5 @@
-#ifndef LIBC_UNISTD_H
-#define LIBC_UNISTD_H
+#ifndef _LIBC_UNISTD_H
+#define _LIBC_UNISTD_H
 
 #include <dirent.h>
 #include <dprint.h>

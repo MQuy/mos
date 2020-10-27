@@ -1,5 +1,5 @@
-#ifndef LIBC_LIST_H
-#define LIBC_LIST_H
+#ifndef _LIBC_LIST_H
+#define _LIBC_LIST_H
 
 #include <stdbool.h>
 #include <stddef.h>

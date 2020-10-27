@@ -1,5 +1,5 @@
-#ifndef LIBC_GUI_EVENT_H
-#define LIBC_GUI_EVENT_H
+#ifndef LIBGUI_GUI_EVENT_H
+#define LIBGUI_GUI_EVENT_H
 
 #include <stdbool.h>
 #include <stddef.h>

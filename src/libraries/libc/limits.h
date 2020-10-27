@@ -1,5 +1,5 @@
-#ifndef LIBC_LIMITS_H
-#define LIBC_LIMITS_H
+#ifndef _LIBC_LIMITS_H
+#define _LIBC_LIMITS_H
 
 #include <stdint.h>
 

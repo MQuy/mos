@@ -1,5 +1,5 @@
-#ifndef LIBC_GUI_LAYOUT_H
-#define LIBC_GUI_LAYOUT_H
+#ifndef LIBGUI_GUI_LAYOUT_H
+#define LIBGUI_GUI_LAYOUT_H
 
 #include <libcore/hashtable/hashmap.h>
 #include <libgui/event.h>

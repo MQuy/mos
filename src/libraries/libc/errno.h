@@ -1,5 +1,5 @@
-#ifndef LIBC_ERRNO_H
-#define LIBC_ERRNO_H
+#ifndef _LIBC_ERRNO_H
+#define _LIBC_ERRNO_H
 
 #define ENOTBLK 12
 #define ENODEV 13

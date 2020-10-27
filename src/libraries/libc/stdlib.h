@@ -1,5 +1,5 @@
-#ifndef LIBC_STDLIB_H
-#define LIBC_STDLIB_H
+#ifndef _LIBC_STDLIB_H
+#define _LIBC_STDLIB_H
 
 #include <alloca.h>
 #include <stdbool.h>

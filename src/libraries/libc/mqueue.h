@@ -1,5 +1,5 @@
-#ifndef LIBC_MQUEUE_H
-#define LIBC_MQUEUE_H
+#ifndef _LIBC_MQUEUE_H
+#define _LIBC_MQUEUE_H
 
 struct mq_attr
 {

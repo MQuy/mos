@@ -1,5 +1,5 @@
-#ifndef LIBC_POLL_H
-#define LIBC_POLL_H
+#ifndef _LIBC_POLL_H
+#define _LIBC_POLL_H
 
 #include <stdint.h>
 

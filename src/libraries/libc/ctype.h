@@ -1,5 +1,5 @@
-#ifndef LIBC_CTYPE_H
-#define LIBC_CTYPE_H
+#ifndef _LIBC_CTYPE_H
+#define _LIBC_CTYPE_H
 
 #define isspace(c) ((c) == ' ' || ((c) >= '\t' && (c) <= '\r'))
 #define isupper(c) ((c) >= 'A' && (c) <= 'Z')

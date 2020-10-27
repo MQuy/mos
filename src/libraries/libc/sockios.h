@@ -1,5 +1,5 @@
-#ifndef LIBC_SOCKIOS_H
-#define LIBC_SOCKIOS_H
+#ifndef _LIBC_SOCKIOS_H
+#define _LIBC_SOCKIOS_H
 
 #define SIOCGIFDNSADDR 0x8900
 
