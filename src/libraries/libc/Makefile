@@ -1,10 +1,11 @@
 ROOTDIR := $(shell cd .. && pwd)
 
 C_SOURCES = $(filter-out crt0.c, $(wildcard *.c **/*.c))
+A_SOURCES = $(wildcard *.s **/*.s)
 HEADERS = $(wildcard *.h **/*.h)
 
 # Nice syntax for file extension replacement
-LIBC_OBJ = ${C_SOURCES:.c=.o}
+LIBC_OBJ = ${A_SOURCES:.s=.o} ${C_SOURCES:.c=.o}
 
 CC = i386-mos-gcc
 AR = i386-mos-ar
@@ -18,6 +19,9 @@ libc.a: $(LIBC_OBJ)
 	$(AR) rcs $@ $(LIBC_OBJ)
 
 %.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.o: %.s
 	$(CC) $(CFLAGS) -c $< -o $@
 
 crt0.o: crt0.c
