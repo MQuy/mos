@@ -7,9 +7,6 @@
 #include <sys/cdefs.h>
 #include <vsprintf.h>
 
-#define PAGE_SHIFT 12
-#define PAGE_SIZE (1UL << PAGE_SHIFT)
-
 #define do_div(n, base) ({                               \
 	unsigned long __upper, __low, __high, __mod, __base; \
 	__base = (base);                                     \

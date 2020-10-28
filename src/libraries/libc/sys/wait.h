@@ -1,5 +1,5 @@
 #ifndef _LIBC_WAIT_H
-#define _LIBC_WAIT_H
+#define _LIBC_WAIT_H 1
 
 #include <stdint.h>
 #include <sys/types.h>

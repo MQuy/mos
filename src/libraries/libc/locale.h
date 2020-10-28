@@ -18,7 +18,7 @@
  */
 
 #ifndef _LIBC_LOCALE_H
-#define _LIBC_LOCALE_H
+#define _LIBC_LOCALE_H 1
 
 #include <sys/cdefs.h>
 

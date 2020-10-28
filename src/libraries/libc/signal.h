@@ -1,5 +1,5 @@
 #ifndef _LIBC_SIGNAL_H
-#define _LIBC_SIGNAL_H
+#define _LIBC_SIGNAL_H 1
 
 #include <stdint.h>
 #include <sys/types.h>

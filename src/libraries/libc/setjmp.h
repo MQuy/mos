@@ -1,5 +1,5 @@
 #ifndef _LIBC_SETJMP_H
-#define _LIBC_SETJMP_H
+#define _LIBC_SETJMP_H 1
 
 #include <stdbool.h>
 #include <sys/cdefs.h>

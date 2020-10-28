@@ -1,5 +1,5 @@
 #ifndef _LIBC_STDIO_H
-#define _LIBC_STDIO_H
+#define _LIBC_STDIO_H 1
 
 #include <list.h>
 #include <stdarg.h>

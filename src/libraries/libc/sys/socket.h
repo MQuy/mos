@@ -1,13 +1,19 @@
 #ifndef _LIBC_SOCKET_H
-#define _LIBC_SOCKET_H
+#define _LIBC_SOCKET_H 1
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #define AF_INET 2 /* Internet IP Protocol 	*/
 #define PF_INET AF_INET
 #define AF_PACKET 17 /* Packet family		*/
 #define PF_PACKET AF_PACKET
+
+#ifndef __socklen_t_defined
+typedef __socklen_t socklen_t;
+#define __socklen_t_defined
+#endif
 
 /* Standard well-defined IP protocols.  */
 enum

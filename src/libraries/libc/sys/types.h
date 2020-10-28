@@ -1,5 +1,5 @@
 #ifndef _LIBC_SYS_TYPES_H
-#define _LIBC_SYS_TYPES_H
+#define _LIBC_SYS_TYPES_H 1
 
 #include <sys/cdefs.h>
 
@@ -33,5 +33,7 @@ typedef unsigned char u_char;
 typedef unsigned short u_short;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
+
+typedef unsigned int __socklen_t;
 
 #endif

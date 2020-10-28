@@ -1,5 +1,5 @@
 #ifndef _LIBC_DIRENT_H
-#define _LIBC_DIRENT_H
+#define _LIBC_DIRENT_H 1
 
 #include <sys/types.h>
 

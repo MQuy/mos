@@ -1,5 +1,5 @@
 #ifndef _LIBC_INTTYPES_H
-#define _LIBC_INTTYPES_H
+#define _LIBC_INTTYPES_H 1
 
 #define PRId8 "d"
 #define PRId16 "d"

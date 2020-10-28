@@ -1,5 +1,5 @@
 #ifndef _LIBC_POINTER_H
-#define _LIBC_POINTER_H
+#define _LIBC_POINTER_H 1
 
 /* Align a value by rounding down to closest size.
    e.g. Using size of 4096, we get this behavior:

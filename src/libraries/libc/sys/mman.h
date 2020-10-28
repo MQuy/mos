@@ -1,5 +1,5 @@
-#ifndef _LIBC_SYS_MMANH_H
-#define _LIBC_SYS_MMANH_H
+#ifndef _LIBC_SYS_MMAN_H
+#define _LIBC_SYS_MMAN_H 1
 
 #include <stddef.h>
 #include <sys/types.h>

@@ -1,5 +1,5 @@
 #ifndef _LIBC_MATH_H
-#define _LIBC_MATH_H
+#define _LIBC_MATH_H 1
 
 #include <stdint.h>
 
