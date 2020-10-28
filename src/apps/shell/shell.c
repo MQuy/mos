@@ -1,10 +1,13 @@
 #include "shell.h"
 
+#include <fcntl.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "src/command_line.h"
@@ -15,7 +18,7 @@ void init_shell()
 {
 	int32_t fd = shm_open("shell", O_RDWR | O_CREAT, 0);
 	ftruncate(fd, sizeof(struct shell));
-	ishell = (struct shell *)mmap(NULL, sizeof(struct shell), PROT_WRITE | PROT_READ, MAP_SHARED, fd);
+	ishell = (struct shell *)mmap(NULL, sizeof(struct shell), PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
 	memcpy(ishell->cwd, ROOT_PATH, sizeof(ROOT_PATH) - 1);
 }
 

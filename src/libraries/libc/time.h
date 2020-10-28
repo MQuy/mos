@@ -35,8 +35,11 @@ struct tm
 	int tm_isdst; /* Daylight saving time */
 };
 
+time_t time(time_t *tloc);
+int nanosleep(const struct timespec *req, struct timespec *rem);
 clock_t clock();
 struct tm *localtime(const time_t *timer);
 time_t mktime(struct tm *timeptr);
+int clock_gettime(clockid_t clk_id, struct timespec *tp);
 
 #endif

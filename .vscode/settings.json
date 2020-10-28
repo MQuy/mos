@@ -101,7 +101,9 @@
     "climits": "c",
     "*.x": "c",
     "*.def": "c",
-    "*.inc": "c"
+    "*.inc": "c",
+    "local_atomic": "c",
+    "pr44328.C": "cpp"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

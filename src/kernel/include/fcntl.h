@@ -43,4 +43,17 @@
 #define O_DIRECT 02000000	/* direct disk access - should check with OSF/1 */
 #define O_NOATIME 04000000
 
+#define F_DUPFD 0 /* dup */
+#define F_GETFD 1 /* get close_on_exec */
+#define F_SETFD 2 /* set/clear close_on_exec */
+#define F_GETFL 3 /* get file->f_flags */
+#define F_SETFL 4 /* set file->f_flags */
+#define F_GETLK 5
+#define F_SETLK 6
+#define F_SETLKW 7
+#define F_SETOWN 8	/* for sockets. */
+#define F_GETOWN 9	/* for sockets. */
+#define F_SETSIG 10 /* for sockets. */
+#define F_GETSIG 11 /* for sockets. */
+
 #endif

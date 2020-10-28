@@ -1,5 +1,6 @@
 #include "terminal.h"
 
+#include <fcntl.h>
 #include <libgui/layout.h>
 #include <libgui/psf.h>
 #include <math.h>
@@ -7,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <termio.h>
 #include <time.h>
 #include <unistd.h>
 

@@ -44,7 +44,7 @@ static int32_t sys_write(uint32_t fd, char *buf, size_t count)
 	return vfs_fwrite(fd, buf, count);
 }
 
-static int32_t sys_open(const char *path, int32_t flags, int32_t mode)
+static int32_t sys_open(const char *path, int32_t flags, mode_t mode)
 {
 	return vfs_open(path, flags);
 }
@@ -181,6 +181,36 @@ static int32_t sys_setsid()
 	return 0;
 }
 
+static int32_t sys_getuid()
+{
+	return 0;
+}
+
+static int32_t sys_setuid(uid_t uid)
+{
+	return 0;
+}
+
+static int32_t sys_getegid()
+{
+	return 0;
+}
+
+static int32_t sys_geteuid()
+{
+	return 0;
+}
+
+static int32_t sys_getgid()
+{
+	return 0;
+}
+
+static int32_t sys_setgid(gid_t gid)
+{
+	return 0;
+}
+
 static int32_t sys_signal(int signum, __sighandler_t handler)
 {
 	struct sigaction act;
@@ -275,6 +305,11 @@ static int32_t sys_ioctl(int fd, unsigned int cmd, unsigned long arg)
 	return -EINVAL;
 }
 
+static int32_t sys_fcntl(int fd, int cmd, unsigned long arg)
+{
+	return do_fcntl(fd, cmd, arg);
+}
+
 static int32_t sys_mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
 	return mq_open(name, flags, attr);
@@ -347,12 +382,17 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_sbrk 18
 #define __NR_lseek 19
 #define __NR_getpid 20
+#define __NR_setuid 23
+#define __NR_getuid 24
 #define __NR_kill 37
 #define __NR_pipe 42
+#define __NR_setgid 46
 #define __NR_getgid 47
 #define __NR_signal 48
-#define __NR_posix_spawn 49
+#define __NR_geteuid 49
+#define __NR_getegid 50
 #define __NR_ioctl 54
+#define __NR_fcntl 55
 #define __NR_setpgid 57
 #define __NR_dup2 63
 #define __NR_getppid 64
@@ -387,9 +427,12 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
 #define __NR_sendto 369
+// TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
 #define __NR_getptsname 370
+// TODO: MQ 2020-09-16 Replace by writting to /dev/ttyS0
 #define __NR_dprintf 512
 #define __NR_dprintln 513
+#define __NR_posix_spawn 514
 
 static void *syscalls[] = {
 	[__NR_exit] = sys_exit,
@@ -409,6 +452,13 @@ static void *syscalls[] = {
 	[__NR_sbrk] = sys_sbrk,
 	[__NR_kill] = sys_kill,
 	[__NR_ioctl] = sys_ioctl,
+	[__NR_fcntl] = sys_fcntl,
+	[__NR_getuid] = sys_getuid,
+	[__NR_setuid] = sys_setuid,
+	[__NR_getegid] = sys_getegid,
+	[__NR_geteuid] = sys_geteuid,
+	[__NR_getgid] = sys_getgid,
+	[__NR_setgid] = sys_setgid,
 	[__NR_getpid] = sys_getpid,
 	[__NR_getppid] = sys_getppid,
 	[__NR_getpgid] = sys_getpgid,

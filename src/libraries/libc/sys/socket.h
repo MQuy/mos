@@ -1,6 +1,7 @@
 #ifndef _LIBC_SOCKET_H
 #define _LIBC_SOCKET_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define AF_INET 2 /* Internet IP Protocol 	*/
@@ -100,4 +101,11 @@ enum socket_type
 	SOCK_DGRAM = 2,
 	SOCK_RAW = 3,
 };
+
+int socket(int family, enum socket_type type, int protocal);
+int bind(int sockfd, struct sockaddr *addr, unsigned int addrlen);
+int connect(int sockfd, struct sockaddr *addr, unsigned int addrlen);
+int send(int sockfd, void *msg, size_t len);
+int recv(int sockfd, void *msg, size_t len);
+
 #endif

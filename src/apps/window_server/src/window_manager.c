@@ -5,6 +5,7 @@
 #include <libcore/ini/ini.h>
 #include <libgui/bmp.h>
 #include <libgui/psf.h>
+#include <mqueue.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/cdefs.h>
@@ -60,7 +61,7 @@ struct window *create_window(struct msgui_window *msgwin)
 
 	struct window *win = calloc(1, sizeof(struct window));
 	memcpy(win->name, window_name, WINDOW_NAME_LENGTH);
-	win->graphic.buf = (char *)mmap(NULL, screen_size, PROT_WRITE, MAP_SHARED, fd);
+	win->graphic.buf = (char *)mmap(NULL, screen_size, PROT_WRITE, MAP_SHARED, fd, 0);
 	win->graphic.x = msgwin->x;
 	win->graphic.y = msgwin->y;
 	win->graphic.width = msgwin->width;

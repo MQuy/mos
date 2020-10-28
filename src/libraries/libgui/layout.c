@@ -4,10 +4,12 @@
 #include <libgui/msgui.h>
 #include <libgui/psf.h>
 #include <math.h>
+#include <mqueue.h>
 #include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 void init_fonts()
@@ -125,7 +127,7 @@ static void gui_create_window(struct window *parent, struct window *win, int32_t
 
 	uint32_t buf_size = width * height * 4;
 	int32_t fd = shm_open(win->name, O_RDWR, 0);
-	win->graphic.buf = (char *)mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd);
+	win->graphic.buf = (char *)mmap(NULL, buf_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
 }
 
 static void gui_label_set_text(struct ui_label *label, char *text)

@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -11,7 +12,7 @@
 int cd(struct command_line *cmd)
 {
 	int fd = shm_open("shell", O_RDWR, 0);
-	struct shell *ishell = (struct shell *)mmap(NULL, sizeof(struct shell), PROT_WRITE | PROT_READ, MAP_SHARED, fd);
+	struct shell *ishell = (struct shell *)mmap(NULL, sizeof(struct shell), PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
 
 	char *path = cmd->args[1];
 	if (!path)

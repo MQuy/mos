@@ -8,7 +8,7 @@ typedef unsigned short umode_t;
 typedef long long loff_t;
 typedef long off_t;
 typedef unsigned long long ino_t;
-typedef unsigned short mode_t;
+typedef unsigned int mode_t;
 typedef long ssize_t;
 typedef unsigned long sector_t;
 typedef int pid_t;
@@ -27,6 +27,7 @@ typedef unsigned int nlink_t;
 typedef int blksize_t;
 typedef int blkcnt_t;
 typedef unsigned int u_int;
+typedef int suseconds_t;
 
 typedef unsigned char u_char;
 typedef unsigned short u_short;

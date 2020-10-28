@@ -10,4 +10,10 @@ struct mq_attr
                                        (ignored for mq_open()) */
 };
 
+int mq_open(const char *name, int flags, struct mq_attr *attr);
+int mq_close(int fd);
+int mq_unlink(const char *name);
+int mq_send(int fd, char *buf, unsigned int priorty, unsigned int msize);
+int mq_receive(int fd, char *buf, unsigned int priorty, unsigned int msize);
+
 #endif

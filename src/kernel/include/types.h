@@ -8,7 +8,7 @@ typedef unsigned short umode_t;
 typedef long long loff_t;
 typedef long off_t;
 typedef unsigned long long ino_t;
-typedef unsigned short mode_t;
+typedef unsigned int mode_t;
 typedef long ssize_t;
 typedef unsigned long sector_t;
 typedef int pid_t;

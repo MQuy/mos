@@ -30,4 +30,6 @@ struct infop
 	int32_t si_code;
 };
 
+int waitid(idtype_t idtype, id_t id, struct infop *infop, int options);
+
 #endif

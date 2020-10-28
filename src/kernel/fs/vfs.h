@@ -231,4 +231,7 @@ ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count);
 loff_t generic_file_llseek(struct vfs_file *file, loff_t offset, int whence);
 loff_t vfs_flseek(int32_t fd, loff_t offset, int whence);
 
+// fcntl.c
+int do_fcntl(int fd, int cmd, unsigned long arg);
+
 #endif

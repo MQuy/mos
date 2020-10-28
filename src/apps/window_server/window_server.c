@@ -1,7 +1,8 @@
+#include <fcntl.h>
 #include <libgui/layout.h>
 #include <libgui/msgui.h>
+#include <mqueue.h>
 #include <poll.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

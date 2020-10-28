@@ -22,6 +22,7 @@ struct stat
 	struct timespec st_ctim; /* Time of last status change */
 };
 
+int stat(const char *path, struct stat *buf);
 int fstat(int fildes, struct stat *buf);
 
 #endif

@@ -23,4 +23,6 @@ struct pollfd
 	int16_t revents; /* returned events */
 };
 
+int poll(struct pollfd *fds, uint32_t nfds);
+
 #endif

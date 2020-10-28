@@ -3,12 +3,12 @@
 #include <arpa/inet.h>
 #include <if_ether.h>
 #include <math.h>
-#include <socket.h>
 #include <sockios.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #define MAX_DNS_LEN 512

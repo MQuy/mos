@@ -1,9 +1,11 @@
 #include <errno.h>
+#include <fcntl.h>
 #include <libc-pointer-arith.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #define MAX_BUF_LEN 4096
@@ -472,6 +474,7 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 		stream->flags |= ~(_IO_FULLY_BUF | _IO_LINE_BUF) | _IO_UNBUFFERED;
 
 	// TODO: MQ 2020-10-26 Implement customized stream buffer
+	return 0;
 }
 
 void setbuf(FILE *stream, char *buf)
