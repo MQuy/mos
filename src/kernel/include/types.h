@@ -16,7 +16,7 @@ typedef int tid_t;
 typedef int uid_t;
 typedef int gid_t;
 typedef int sid_t;
-typedef unsigned long sigset_t;
+typedef unsigned int sigset_t;
 typedef int idtype_t;
 typedef int id_t;
 typedef long long time_t;
@@ -27,5 +27,7 @@ typedef unsigned int fmode_t;
 typedef unsigned int nlink_t;
 typedef int blksize_t;
 typedef int blkcnt_t;
+typedef int suseconds_t;
+typedef unsigned int useconds_t;
 
 #endif

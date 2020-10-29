@@ -57,6 +57,7 @@
 #define SIG_SETMASK 2 /* for setting the signal mask */
 
 typedef void (*sighandler_t)(int);
+typedef int sig_atomic_t;
 
 #define SIG_DFL ((sighandler_t)0)  /* default signal handling */
 #define SIG_IGN ((sighandler_t)1)  /* ignore signal */

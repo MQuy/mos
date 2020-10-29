@@ -39,6 +39,11 @@
 /* The utilities on GNU systems also correspond to this version.  */
 #define _POSIX2_VERSION __POSIX2_THIS_VERSIO
 
+#define R_OK 4 /* Test for read permission. */
+#define W_OK 2 /* Test for write permission. */
+#define X_OK 1 /* Test for execute permission. */
+#define F_OK 0 /* Test for existence. */
+
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
 #define __NR_fork 2
@@ -56,6 +61,7 @@
 #define __NR_getuid 24
 #define __NR_kill 37
 #define __NR_pipe 42
+#define __NR_times 43
 #define __NR_setgid 46
 #define __NR_getgid 47
 #define __NR_signal 48
@@ -68,6 +74,7 @@
 #define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
+#define __NR_gettimeofday 78
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92

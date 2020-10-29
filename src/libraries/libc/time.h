@@ -1,13 +1,8 @@
 #ifndef _LIBC_TIME_H
 #define _LIBC_TIME_H 1
 
+#include <stddef.h>
 #include <sys/types.h>
-
-struct timespec
-{
-	time_t tv_sec;
-	long tv_nsec;
-};
 
 #define CLOCK_REALTIME 0
 #define CLOCK_MONOTONIC 1
@@ -21,6 +16,12 @@ struct timespec
 #define CLOCK_BOOTTIME_ALARM 9
 
 #define CLOCKS_PER_SEC 1000000
+
+struct timespec
+{
+	time_t tv_sec;
+	long tv_nsec;
+};
 
 struct tm
 {
@@ -41,5 +42,10 @@ clock_t clock();
 struct tm *localtime(const time_t *timer);
 time_t mktime(struct tm *timeptr);
 int clock_gettime(clockid_t clk_id, struct timespec *tp);
+size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *timptr);
+
+extern long timezone;
+extern int daylight;
+extern char *tzname[];
 
 #endif

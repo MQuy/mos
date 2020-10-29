@@ -20,6 +20,10 @@ struct stat
 	struct timespec st_atim; /* Time of last access */
 	struct timespec st_mtim; /* Time of last modification */
 	struct timespec st_ctim; /* Time of last status change */
+
+	time_t st_atime; /* Time of last access.  */
+	time_t st_mtime; /* Time of last modification.  */
+	time_t st_ctime; /* Time of last status change.  */
 };
 
 int stat(const char *path, struct stat *buf);

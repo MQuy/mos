@@ -16,6 +16,8 @@
 #include <utils/printf.h>
 #include <utils/string.h>
 
+extern volatile uint64_t jiffies;
+
 static void sys_exit(int32_t code)
 {
 	do_exit(code & 0xff);
@@ -88,6 +90,24 @@ static int32_t sys_time(time_t *tloc)
 	if (tloc)
 		*tloc = t;
 	return t;
+}
+
+static int32_t sys_times(struct tms *buffer)
+{
+	// TODO: MQ 2020-10-29 How do we calculate these values
+	buffer->tms_stime = buffer->tms_utime = 0;
+	buffer->tms_cstime = buffer->tms_cutime = 0;
+
+	return jiffies;
+}
+
+static int32_t sys_gettimeofday(struct timeval *restrict tp, void *restrict tzp)
+{
+	uint64_t ms = get_milliseconds_since_epoch();
+	tp->tv_sec = ms / 1000;
+	tp->tv_usec = ms * 1000;
+
+	return 0;
 }
 
 static int32_t sys_execve(const char *pathname, char *const argv[], char *const envp[])
@@ -386,6 +406,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_getuid 24
 #define __NR_kill 37
 #define __NR_pipe 42
+#define __NR_times 43
 #define __NR_setgid 46
 #define __NR_getgid 47
 #define __NR_signal 48
@@ -398,6 +419,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
+#define __NR_gettimeofday 78
 #define __NR_mmap 90
 #define __NR_munmap 91
 #define __NR_truncate 92
@@ -448,6 +470,8 @@ static void *syscalls[] = {
 	[__NR_execve] = sys_execve,
 	[__NR_dup2] = sys_dup2,
 	[__NR_time] = sys_time,
+	[__NR_times] = sys_times,
+	[__NR_gettimeofday] = sys_gettimeofday,
 	[__NR_brk] = sys_brk,
 	[__NR_sbrk] = sys_sbrk,
 	[__NR_kill] = sys_kill,

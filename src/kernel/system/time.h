@@ -9,6 +9,21 @@ struct timespec
 	time_t tv_sec;
 	long tv_nsec;
 };
+
+struct tms
+{
+	clock_t tms_utime;
+	clock_t tms_stime;
+	clock_t tms_cutime;
+	clock_t tms_cstime;
+};
+
+struct timeval
+{
+	time_t tv_sec;
+	suseconds_t tv_usec;
+};
+
 #define CLOCK_REALTIME 0
 #define CLOCK_MONOTONIC 1
 #define CLOCK_PROCESS_CPUTIME_ID 2

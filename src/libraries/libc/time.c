@@ -2,6 +2,10 @@
 #include <time.h>
 #include <unistd.h>
 
+long timezone = 0;
+int daylight;
+char *tzname[2];
+
 _syscall1(time, time_t *);
 time_t time(time_t *tloc)
 {
