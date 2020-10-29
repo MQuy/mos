@@ -19,13 +19,13 @@ pid_t tcgetpgrp(int fd)
 	return ioctl(fd, TIOCGPGRP, 0);
 }
 
-int usleep(uint32_t usec)
+int usleep(useconds_t usec)
 {
 	struct timespec req = {.tv_sec = usec / 1000, .tv_nsec = usec * 1000};
 	return nanosleep(&req, NULL);
 }
 
-int sleep(uint32_t sec)
+int sleep(unsigned int sec)
 {
 	return usleep(sec * 1000);
 }
@@ -119,26 +119,14 @@ int posix_spawn(char *path)
 	return syscall_posix_spawn(path);
 }
 
-_syscall2(getptsname, int32_t, char *);
-int getptsname(int32_t fdm, char *ptsname)
+_syscall2(getptsname, int, char *);
+int getptsname(int fdm, char *ptsname)
 {
 	return syscall_getptsname(fdm, ptsname);
 }
 
-_syscall2(dprintf, enum debug_level, const char *);
-int dprintf(enum debug_level level, const char *out)
-{
-	return syscall_dprintf(level, out);
-}
-
-_syscall2(dprintln, enum debug_level, const char *);
-int dprintln(enum debug_level level, const char *out)
-{
-	return syscall_dprintln(level, out);
-}
-
-_syscall2(ftruncate, int32_t, off_t);
-int ftruncate(int32_t fd, off_t length)
+_syscall2(ftruncate, int, off_t);
+int ftruncate(int fd, off_t length)
 {
 	return syscall_ftruncate(fd, length);
 }
@@ -149,20 +137,20 @@ int truncate(const char *name, off_t length)
 	return syscall_truncate(name, length);
 }
 
-_syscall1(pipe, int32_t *);
-int pipe(int32_t *fildes)
+_syscall1(pipe, int *);
+int pipe(int *fildes)
 {
 	return syscall_pipe(fildes);
 }
 
-_syscall1(sbrk, int32_t);
-int sbrk(int32_t increment)
+_syscall1(sbrk, intptr_t);
+int sbrk(intptr_t increment)
 {
 	return syscall_sbrk(increment);
 }
 
-_syscall1(brk, uint32_t);
-int brk(uint32_t increment)
+_syscall1(brk, intptr_t);
+int brk(intptr_t increment)
 {
 	return syscall_brk(increment);
 }
@@ -185,26 +173,26 @@ int lseek(int fd, off_t offset, int whence)
 	return syscall_lseek(fd, offset, whence);
 }
 
-_syscall1(close, uint32_t);
-int close(uint32_t fd)
+_syscall1(close, int);
+int close(int fd)
 {
 	return syscall_close(fd);
 }
 
-_syscall3(write, uint32_t, const char *, uint32_t);
-int write(uint32_t fd, const char *buf, uint32_t size)
+_syscall3(write, int, const char *, size_t);
+int write(int fd, const char *buf, size_t size)
 {
 	return syscall_write(fd, buf, size);
 }
 
-_syscall3(read, uint32_t, char *, uint32_t);
-int read(uint32_t fd, char *buf, uint32_t size)
+_syscall3(read, int, char *, size_t);
+int read(int fd, char *buf, size_t size)
 {
 	return syscall_read(fd, buf, size);
 }
 
-_syscall1(exit, int32_t);
-void _exit(int32_t code)
+_syscall1(exit, int);
+void _exit(int code)
 {
 	syscall_exit(code);
 }

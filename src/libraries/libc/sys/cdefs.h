@@ -13,4 +13,10 @@
 #define __BEGIN_DECLS
 #define __END_DECLS
 
+#undef __P
+#undef __PMT
+
+#define __P(args) args
+#define __PMT(args) arg
+
 #endif

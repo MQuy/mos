@@ -1,5 +1,5 @@
+#include <assert.h>
 #include <ctype.h>
-#include <dprint.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>

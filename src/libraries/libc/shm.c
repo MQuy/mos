@@ -5,7 +5,7 @@
 
 static const char defaultdir[] = "/dev/shm/";
 
-int32_t shm_open(const char *name, int32_t flags, int32_t mode)
+int shm_open(const char *name, int flags, mode_t mode)
 {
 	char *fname;
 	if (name[0] == '/')

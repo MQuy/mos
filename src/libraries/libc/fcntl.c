@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <unistd.h>

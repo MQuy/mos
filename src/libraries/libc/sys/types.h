@@ -28,6 +28,7 @@ typedef int blksize_t;
 typedef int blkcnt_t;
 typedef unsigned int u_int;
 typedef int suseconds_t;
+typedef unsigned int useconds_t;
 
 typedef unsigned char u_char;
 typedef unsigned short u_short;

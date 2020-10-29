@@ -29,3 +29,8 @@ int raise(int32_t sig)
 {
 	return kill(getpid(), sig);
 }
+
+void sigfillset(sigset_t *set)
+{
+	*set = -1;
+}

@@ -1,10 +1,43 @@
 #ifndef _LIBC_UNISTD_H
 #define _LIBC_UNISTD_H 1
 
-#include <dprint.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
+
+#ifdef __USE_XOPEN2K8
+/* POSIX Standard approved as ISO/IEC 9945-1 as of September 2008.  */
+#define _POSIX_VERSION 200809L
+#elif defined __USE_XOPEN2K
+/* POSIX Standard approved as ISO/IEC 9945-1 as of December 2001.  */
+#define _POSIX_VERSION 200112L
+#elif defined __USE_POSIX199506
+/* POSIX Standard approved as ISO/IEC 9945-1 as of June 1995.  */
+#define _POSIX_VERSION 199506L
+#elif defined __USE_POSIX199309
+/* POSIX Standard approved as ISO/IEC 9945-1 as of September 1993.  */
+#define _POSIX_VERSION 199309L
+#else
+/* POSIX Standard approved as ISO/IEC 9945-1 as of September 1990.  */
+#define _POSIX_VERSION 199009L
+#endif
+
+#ifdef __USE_XOPEN2K8
+#define __POSIX2_THIS_VERSION 200809L
+/* The utilities on GNU systems also correspond to this version.  */
+#elif defined __USE_XOPEN2K
+/* The utilities on GNU systems also correspond to this version.  */
+#define __POSIX2_THIS_VERSION 200112L
+#elif defined __USE_POSIX199506
+/* The utilities on GNU systems also correspond to this version.  */
+#define __POSIX2_THIS_VERSION 199506L
+#else
+/* The utilities on GNU systems also correspond to this version.  */
+#define __POSIX2_THIS_VERSION 199209L
+#endif
+
+/* The utilities on GNU systems also correspond to this version.  */
+#define _POSIX2_VERSION __POSIX2_THIS_VERSIO
 
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
@@ -133,18 +166,18 @@
 struct dirent;
 
 int fork();
-void _exit(int32_t code);
-int read(uint32_t fd, char *buf, uint32_t size);
-int write(uint32_t fd, const char *buf, uint32_t size);
-int close(uint32_t fd);
+void _exit(int code);
+int read(int fd, char *buf, size_t size);
+int write(int fd, const char *buf, size_t size);
+int close(int fd);
 int lseek(int fd, off_t offset, int whence);
 int execve(const char *pathname, char *const argv[], char *const envp[]);
 int dup2(int oldfd, int newfd);
-int brk(uint32_t increment);
-int sbrk(int32_t increment);
-int pipe(int32_t *fildes);
+int brk(intptr_t increment);
+int sbrk(intptr_t increment);
+int pipe(int *fildes);
 int truncate(const char *name, off_t length);
-int ftruncate(int32_t fd, off_t length);
+int ftruncate(int fd, off_t length);
 int getpid();
 int getuid();
 int setuid(uid_t uid);
@@ -158,16 +191,15 @@ int setpgid(pid_t pid, pid_t pgid);
 int getsid();
 int setsid();
 int posix_spawn(char *path);
-int getptsname(int32_t fdm, char *ptsname);
-int dprintf(enum debug_level level, const char *out);
-int dprintln(enum debug_level level, const char *out);
+int getptsname(int fdm, char *ptsname);
 int getdents(unsigned int fd, struct dirent *dirent, unsigned int count);
-int usleep(uint32_t usec);
-int sleep(uint32_t sec);
+
+int usleep(useconds_t usec);
+int sleep(unsigned int);
 int tcsetpgrp(int fd, pid_t pid);
 pid_t tcgetpgrp(int fd);
 int isatty(int fd);
-int32_t shm_open(const char *name, int32_t flags, int32_t mode);
+int shm_open(const char *name, int flags, mode_t mode);
 int getpagesize();
 
 int getopt(int argc, char *const argv[], const char *optstring);

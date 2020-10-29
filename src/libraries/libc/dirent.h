@@ -1,6 +1,7 @@
 #ifndef _LIBC_DIRENT_H
 #define _LIBC_DIRENT_H 1
 
+#include <stddef.h>
 #include <sys/types.h>
 
 #define MAX_FILENAME_LENGTH 256
@@ -14,5 +15,14 @@ struct dirent
                                               by all filesystem types */
 	char d_name[];			 /* Null-terminated filename */
 };
+
+struct __DIR
+{
+	struct dirent* entry;
+	size_t size;
+	int fd;
+};
+
+typedef struct __DIR DIR;
 
 #endif
