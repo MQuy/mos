@@ -1,4 +1,5 @@
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 _syscall2(signal, int, sighandler_t);
@@ -33,4 +34,15 @@ int raise(int32_t sig)
 void sigfillset(sigset_t *set)
 {
 	*set = -1;
+}
+
+void sigemptyset(sigset_t *set)
+{
+	memset(set, 0, sizeof(sigset_t));
+}
+
+_syscall1(sigsuspend, const sigset_t *);
+int sigsuspend(const sigset_t *mask)
+{
+	return syscall_sigsuspend(mask);
 }

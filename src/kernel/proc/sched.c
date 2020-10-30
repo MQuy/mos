@@ -179,10 +179,10 @@ void schedule()
 	}
 	switch_thread(nt);
 
-	if (current_thread->pending)
+	if (current_thread->pending & !(current_thread->flags & TIF_SIGNAL_MANUAL))
 	{
 		struct interrupt_registers *regs = (struct interrupt_registers *)(current_thread->kernel_stack - sizeof(struct interrupt_registers));
-		handle_signal(regs);
+		handle_signal(regs, current_thread->blocked);
 	}
 	unlock_scheduler();
 }

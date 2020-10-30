@@ -79,6 +79,20 @@ int do_sigaction(int signum, const struct sigaction *action, struct sigaction *o
 	return 0;
 }
 
+int do_sigsuspend(const sigset_t *set)
+{
+	sigset_t saveset = current_thread->blocked;
+	current_thread->blocked = *set;
+	current_thread->flags |= TIF_SIGNAL_MANUAL;
+
+	while (!current_thread->pending)
+		schedule();
+
+	struct interrupt_registers *regs = (struct interrupt_registers *)(current_thread->kernel_stack - sizeof(struct interrupt_registers));
+	handle_signal(regs, saveset);
+	return 0;
+}
+
 int do_kill(pid_t pid, int32_t signum)
 {
 	if (!valid_signal(signum) || signum < 0)
@@ -164,10 +178,10 @@ void signal_handler(struct interrupt_registers *regs)
 		((uint32_t)regs + sizeof(struct interrupt_registers) != current_thread->kernel_stack))
 		return;
 
-	handle_signal(regs);
+	handle_signal(regs, current_thread->blocked);
 }
 
-void handle_signal(struct interrupt_registers *regs)
+void handle_signal(struct interrupt_registers *regs, sigset_t restored_sig)
 {
 	bool from_syscall = false;
 	bool prev_signaling = current_thread->signaling;
@@ -204,7 +218,7 @@ void handle_signal(struct interrupt_registers *regs)
 		frame->sigreturn = sigreturn;
 		frame->signum = signum;
 		frame->signaling = prev_signaling;
-		frame->blocked = current_thread->blocked;
+		frame->blocked = restored_sig;
 		frame->uregs = current_thread->uregs;
 
 		struct sigaction *sigaction = &current_process->sighand[signum - 1];
@@ -236,4 +250,6 @@ void sigreturn(struct interrupt_registers *regs)
 	current_thread->signaling = frame->signaling;
 	current_thread->blocked = frame->blocked;
 	memcpy(regs, &frame->uregs, sizeof(struct interrupt_registers));
+
+	current_thread->flags &= ~TIF_SIGNAL_MANUAL;
 }

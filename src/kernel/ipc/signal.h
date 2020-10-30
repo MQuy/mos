@@ -175,10 +175,11 @@ static inline void sigfillset(sigset_t *set)
 
 int do_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int do_sigaction(int signum, const struct sigaction *action, struct sigaction *old_action);
+int do_sigsuspend(const sigset_t *set);
 int do_kill(pid_t pid, int32_t signum);
 bool sig_ignored(struct thread *th, int sig);
 void signal_handler(struct interrupt_registers *regs);
-void handle_signal(struct interrupt_registers *regs);
+void handle_signal(struct interrupt_registers *regs, sigset_t restored_sig);
 void sigreturn(struct interrupt_registers *regs);
 
 #endif

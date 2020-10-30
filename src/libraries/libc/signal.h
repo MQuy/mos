@@ -71,6 +71,8 @@ struct sigaction
 };
 
 void sigfillset(sigset_t *set);
+void sigemptyset(sigset_t *set);
+int sigsuspend(const sigset_t *mask);
 int signal(int signum, sighandler_t handler);
 int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
 int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);

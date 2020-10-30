@@ -254,6 +254,11 @@ static int32_t sys_sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 	return do_sigprocmask(how, set, oldset);
 }
 
+static int32_t sys_sigsuspend(const sigset_t *set)
+{
+	return do_sigsuspend(set);
+}
+
 static int32_t sys_kill(pid_t pid, int sig)
 {
 	return do_kill(pid, sig);
@@ -419,6 +424,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_getppid 64
 #define __NR_setsid 66
 #define __NR_sigaction 67
+#define __NR_sigsuspend 72
 #define __NR_gettimeofday 78
 #define __NR_mmap 90
 #define __NR_munmap 91
@@ -492,6 +498,7 @@ static void *syscalls[] = {
 	[__NR_signal] = sys_signal,
 	[__NR_sigaction] = sys_sigaction,
 	[__NR_sigprocmask] = sys_sigprocmask,
+	[__NR_sigsuspend] = sys_sigsuspend,
 	[__NR_pipe] = sys_pipe,
 	[__NR_posix_spawn] = sys_posix_spawn,
 	[__NR_mmap] = sys_mmap,

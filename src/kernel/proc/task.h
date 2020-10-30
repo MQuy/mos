@@ -95,9 +95,12 @@ struct mm_struct
 	uint32_t start_brk, brk, end_brk, start_stack;
 };
 
+#define TIF_SIGNAL_MANUAL 0x1
+
 struct thread
 {
 	tid_t tid;
+	uint32_t flags;
 	enum thread_state state;
 	enum thread_policy policy;
 	int32_t priority;  // input priority, `sched_sibling.prio` is adjusted number based on scheduler
