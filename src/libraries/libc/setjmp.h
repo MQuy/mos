@@ -2,6 +2,7 @@
 #define _LIBC_SETJMP_H 1
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/cdefs.h>
 
 struct __jmp_buf

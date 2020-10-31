@@ -19,4 +19,6 @@
 #define __P(args) args
 #define __PMT(args) arg
 
+#define __STRINGIFY(x) #x
+
 #endif
