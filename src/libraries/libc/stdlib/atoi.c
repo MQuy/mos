@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Jonas 'Sortie' Termansen.
+ * Copyright (c) 2011, 2014 Jonas 'Sortie' Termansen.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,17 +13,35 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * stdlib/strtod.c
- * Converts floating numbers represented as strings to binary representation.
+ * stdlib/atoi.c
+ * Converts integers represented as strings to binary representation.
  */
 
-#define STRTOF_FLOAT double
-#define STRTOF strtod
-#define STRTOF_CHAR char
-#define STRTOF_CTYPE_CHAR unsigned char
-#define STRTOF_L(x) x
-#define STRTOF_ISSPACE isspace
-#define STRTOF_STRNCASECMP strncasecmp
-#define STRTOF_POW pow
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
 
-#include "strtof.c"
+double atof(const char* str)
+{
+	return strtod(str, NULL);
+}
+
+int atoi(const char* str)
+{
+	long long_result = strtol(str, (char**)NULL, 10);
+	if (long_result < INT_MIN)
+		return errno = ERANGE, INT_MIN;
+	if (INT_MAX < long_result)
+		return errno = ERANGE, INT_MAX;
+	return (int)long_result;
+}
+
+long atol(const char* str)
+{
+	return strtol(str, (char**)NULL, 10);
+}
+
+long long atoll(const char* str)
+{
+	return strtoll(str, (char**)NULL, 10);
+}

@@ -63,6 +63,8 @@ typedef int sig_atomic_t;
 #define SIG_IGN ((sighandler_t)1)  /* ignore signal */
 #define SIG_ERR ((sighandler_t)-1) /* error return from signal */
 
+#define sigmask(sig) (1UL << ((sig)-1))
+
 struct sigaction
 {
 	sighandler_t sa_handler;

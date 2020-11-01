@@ -13,3 +13,15 @@ char *ptsname(int fd)
 	getptsname(fd, name);
 	return name;
 }
+
+int grantpt(int fd)
+{
+	(void)fd;
+	return 0;
+}
+
+int unlockpt(int fd)
+{
+	(void)fd;
+	return 0;
+}

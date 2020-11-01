@@ -104,7 +104,9 @@
     "*.inc": "c",
     "local_atomic": "c",
     "pr44328.C": "cpp",
-    "cinttypes": "c"
+    "cinttypes": "c",
+    "scoped_allocator": "c",
+    "pr64411.C": "cpp"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

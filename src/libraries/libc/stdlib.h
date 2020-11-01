@@ -2,9 +2,6 @@
 #define _LIBC_STDLIB_H 1
 
 #include <alloca.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 
 #define _PATH_DEV "/dev/"
 #define _PATH_TMP "/tmp/"
@@ -51,22 +48,44 @@ typedef struct
 	long long rem;
 } lldiv_t;
 
-void *malloc(size_t size);
+void _Exit(int status);
+void abort();
+int abs(int num);
+int atexit(void (*func)(void));
+double atof(const char *str);
+int atoi(const char *str);
+long atol(const char *str);
+long long atoll(const char *str);
+void *bsearch(const void *, const void *, size_t, size_t,
+			  int (*)(const void *, const void *));
 void *calloc(size_t n, size_t size);
+div_t div(int, int);
+void exit(int status);
 void free(void *ptr);
-void *realloc(void *ptr, size_t size);
-void *reallocarray(void *ptr, size_t nmemb, size_t size);
+char *getenv(const char *);
+int grantpt(int fd);
+long labs(long);
+ldiv_t ldiv(long numer, long denom);
+long long int llabs(long long int val);
+lldiv_t lldiv(long long numer, long long denom);
+void *malloc(size_t size);
 int posix_openpt(int flags);
 char *ptsname(int fd);
-void abort();
-void exit(int status);
-int atexit(void (*)(void));
-int atoi(const char *);
-char *getenv(const char *);
-double strtod(const char *restrict nptr, char **restrict endptr);
-
 int rand();
 int rand_r(unsigned *);
 void srand(unsigned seed);
+void *realloc(void *ptr, size_t size);
+double strtod(const char *restrict, char **restrict);
+float strtof(const char *restrict, char **restrict);
+long strtol(const char *restrict, char **restrict, int);
+long double strtold(const char *restrict, char **restrict);
+long long strtoll(const char *restrict, char **restrict, int);
+unsigned long strtoul(const char *restrict, char **restrict, int);
+unsigned long long
+strtoull(const char *restrict, char **restrict, int);
+int unlockpt(int);
+
+void *reallocarray(void *ptr, size_t nmemb, size_t size);
+void _clear_on_exit();
 
 #endif

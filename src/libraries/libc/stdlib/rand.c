@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 
 static uint32_t rseed = 1;

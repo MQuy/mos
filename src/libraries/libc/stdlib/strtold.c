@@ -13,17 +13,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * stdlib/strtod.c
+ * stdlib/strtold.c
  * Converts floating numbers represented as strings to binary representation.
  */
 
-#define STRTOF_FLOAT double
-#define STRTOF strtod
+#define STRTOF_FLOAT long double
+#define STRTOF strtold
 #define STRTOF_CHAR char
 #define STRTOF_CTYPE_CHAR unsigned char
 #define STRTOF_L(x) x
 #define STRTOF_ISSPACE isspace
 #define STRTOF_STRNCASECMP strncasecmp
-#define STRTOF_POW pow
+#define STRTOF_POW pow /* TODO: powl */
 
 #include "strtof.c"

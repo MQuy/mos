@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <stdlib.h>
 #include <termio.h>
 #include <time.h>
 #include <unistd.h>
@@ -164,6 +165,7 @@ int dup2(int oldfd, int newfd)
 _syscall3(execve, const char *, char *const *, char *const *);
 int execve(const char *pathname, char *const argv[], char *const envp[])
 {
+	_clear_on_exit();
 	return syscall_execve(pathname, argv, envp);
 }
 
@@ -192,9 +194,10 @@ int read(int fd, char *buf, size_t size)
 }
 
 _syscall1(exit, int);
-void _exit(int code)
+void __attribute__((noreturn)) _exit(int code)
 {
 	syscall_exit(code);
+	__builtin_unreachable();
 }
 
 _syscall0(fork);

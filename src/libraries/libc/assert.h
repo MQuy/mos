@@ -23,6 +23,9 @@ int debug_println(enum debug_level level, const char *fmt, ...);
 #define assert(ignore) ((void)0)
 #endif
 
-#define assert_not_reached() (__asm__ __volatile__("ud2"))
+#define assert_not_reached() ({                                           \
+	debug_println(DEBUG_ERROR, "%s:%d %s", __FILE__, __LINE__, __func__); \
+	__asm__ __volatile__("ud2");                                          \
+})
 
 #endif

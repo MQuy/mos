@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Jonas 'Sortie' Termansen.
+ * Copyright (c) 2013 Jonas 'Sortie' Termansen.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,17 +13,19 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * stdlib/strtod.c
- * Converts floating numbers represented as strings to binary representation.
+ * stdlib/strtoull.c
+ * Converts integers represented as strings to binary representation.
  */
 
-#define STRTOF_FLOAT double
-#define STRTOF strtod
-#define STRTOF_CHAR char
-#define STRTOF_CTYPE_CHAR unsigned char
-#define STRTOF_L(x) x
-#define STRTOF_ISSPACE isspace
-#define STRTOF_STRNCASECMP strncasecmp
-#define STRTOF_POW pow
+#define STRTOL strtoull
+#define STRTOL_CHAR char
+#define STRTOL_UCHAR unsigned char
+#define STRTOL_L(x) x
+#define STRTOL_ISSPACE isspace
+#define STRTOL_INT unsigned long long
+#define STRTOL_UNSIGNED_INT unsigned long long
+#define STRTOL_INT_MIN 0
+#define STRTOL_INT_MAX ULLONG_MAX
+#define STRTOL_INT_IS_UNSIGNED true
 
-#include "strtof.c"
+#include "strtol.c"
