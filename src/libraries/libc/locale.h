@@ -22,6 +22,11 @@
 
 #include <sys/cdefs.h>
 
+#ifndef NULL
+#define __need_NULL
+#include <stddef.h>
+#endif
+
 struct lconv
 {
 	char* decimal_point;

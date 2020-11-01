@@ -103,7 +103,8 @@
     "*.def": "c",
     "*.inc": "c",
     "local_atomic": "c",
-    "pr44328.C": "cpp"
+    "pr44328.C": "cpp",
+    "cinttypes": "c"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

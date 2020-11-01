@@ -36,5 +36,7 @@ typedef unsigned int u_int;
 typedef unsigned long u_long;
 
 typedef unsigned int __socklen_t;
+typedef int __locale_t;
+typedef __WINT_TYPE__ __wint_t;
 
 #endif

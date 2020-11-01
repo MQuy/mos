@@ -41,7 +41,4 @@
 // -> 60 - 0 / 10 + 60 - 0 % 10 > 10
 #define div_ceil(x, y) ((x) / (y) + ((x) % (y) > 0))
 
-uint32_t rand();
-uint32_t srand(uint32_t seed);
-
 #endif

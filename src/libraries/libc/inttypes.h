@@ -1,6 +1,15 @@
 #ifndef _LIBC_INTTYPES_H
 #define _LIBC_INTTYPES_H 1
 
+#include <stdint.h>
+#include <sys/types.h>
+
+#ifndef __wchar_t_defined
+#define __wchar_t_defined
+#define __need_wchar_t
+#include <stddef.h>
+#endif
+
 #define PRId8 "d"
 #define PRId16 "d"
 #define PRId32 "d"
@@ -38,5 +47,11 @@
 #define SCNdMAX __PRI64_PREFIX "d"
 #define SCNoMAX __PRI64_PREFIX "o"
 #define SCNuMAX __PRI64_PREFIX "u"
+
+typedef struct
+{
+	intmax_t quot;
+	intmax_t rem;
+} imaxdiv_t;
 
 #endif
