@@ -30,18 +30,11 @@
 #define _IO_IS_FILEBUF 0x2000
 #define _IO_FULLY_BUF 0x4000
 
-struct __FILE
-{
-	int fd;
-	int flags;
-	int pos;
-	char *read_ptr, *read_base, *read_end;
-	char *write_ptr, *write_base, *write_end;
-	int bkup_chr;  // for ungetc
-	int blksize;
-	struct list_head sibling;
-};
+#ifndef __FILE_defined
+#define __FILE_defined
+#include <FILE.h>
 typedef struct __FILE FILE;
+#endif
 
 extern FILE *stdin;
 extern FILE *stdout;
