@@ -10,7 +10,6 @@
 
 void itoa(long long i, unsigned base, char *buf);
 void itoa_s(long long i, unsigned base, char *buf);
-int atoi(const char *buf);
 
 int strcasecmp(const char *s1, const char *s2);
 char *strcat(char *dest, const char *src);

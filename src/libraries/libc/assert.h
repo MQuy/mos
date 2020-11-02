@@ -14,18 +14,16 @@ enum debug_level
 
 int debug_printf(enum debug_level level, const char *fmt, ...);
 int debug_println(enum debug_level level, const char *fmt, ...);
+void __assert_debug(char *file, int line, char *func, ...);
 
 #ifndef NDEBUG
-#define assert(statement) ((statement)   \
-							   ? (void)0 \
-							   : (void)({ debug_println(DEBUG_ERROR, "%s:%d %s", __FILE__, __LINE__, __func__); __asm__ __volatile("int $0x01"); }))
+#define assert(statement, ...) ((statement)   \
+									? (void)0 \
+									: (void)({ __assert_debug(__FILE__, __LINE__, __func__, ##__VA_ARGS__); __asm__ __volatile("int $0x01"); }))
 #else
 #define assert(ignore) ((void)0)
 #endif
 
-#define assert_not_reached() ({                                           \
-	debug_println(DEBUG_ERROR, "%s:%d %s", __FILE__, __LINE__, __func__); \
-	__asm__ __volatile__("ud2");                                          \
-})
+#define assert_not_reached(...) ({ __assert_debug(__FILE__, __LINE__, __func__, ##__VA_ARGS__); __asm__ __volatile__("ud2"); })
 
 #endif

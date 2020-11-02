@@ -45,26 +45,6 @@ void itoa_s(long long i, unsigned base, char *buf)
 	itoa(i, base, buf);
 }
 
-int atoi(const char *s)
-{
-	int sign = 1;
-	if (*s == '-')
-	{
-		sign = -1;
-		s++;
-	}
-	else if (*s == '+')
-		s++;
-
-	int res = 0;
-	while (*s && '0' <= *s && *s <= '9')
-	{
-		res = 10 * res + (*s - '0');
-		s++;
-	}
-	return res * sign;
-}
-
 // Not libc standard
 char *skip_spaces(const char *str)
 {

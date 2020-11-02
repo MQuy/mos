@@ -65,3 +65,15 @@ void debug_init()
 {
 	serial_enable(SERIAL_PORT_A);
 }
+
+void __assert_debug(char *file, int line, char *func, ...)
+{
+	va_list args;
+	va_start(args, func);
+	char *message = va_arg(args, char *);
+	va_end(args);
+
+	if (message)
+		debug_println(DEBUG_INFO, "%s", message);
+	debug_println(DEBUG_ERROR, "%s:%d %s", file, line, func);
+}
