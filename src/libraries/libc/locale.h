@@ -21,10 +21,16 @@
 #define _LIBC_LOCALE_H 1
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 #ifndef NULL
 #define __need_NULL
 #include <stddef.h>
+#endif
+
+#ifndef __locale_t_defined
+#define __locale_t_defined
+typedef __locale_t locale_t;
 #endif
 
 struct lconv

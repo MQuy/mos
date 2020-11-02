@@ -1,6 +1,8 @@
 #ifndef _LIBC_POINTER_H
 #define _LIBC_POINTER_H 1
 
+#include <stdint.h>
+
 /* Align a value by rounding down to closest size.
    e.g. Using size of 4096, we get this behavior:
 	{4095, 4096, 4097} = {0, 4096, 4096}.  */

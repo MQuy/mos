@@ -95,7 +95,7 @@ char *strreplace(char *s, char old, char new)
 	return s;
 }
 
-int32_t striof(const char *s1, const char *s2)
+int striof(const char *s1, const char *s2)
 {
 	const char *s = strpbrk(s1, s2);
 	if (s)
@@ -104,7 +104,7 @@ int32_t striof(const char *s1, const char *s2)
 		return -1;
 }
 
-int32_t strliof(const char *s1, const char *s2)
+int strliof(const char *s1, const char *s2)
 {
 	const char *s = strrstr(s1, s2);
 	if (s)
@@ -113,7 +113,7 @@ int32_t strliof(const char *s1, const char *s2)
 		return -1;
 }
 
-int32_t strlsplat(const char *s1, int32_t pos, char **sf, char **sl)
+int strlsplat(const char *s1, int pos, char **sf, char **sl)
 {
 	if (pos < 0)
 		return -1;
@@ -124,7 +124,7 @@ int32_t strlsplat(const char *s1, int32_t pos, char **sf, char **sl)
 		*sf = calloc(pos + 1, sizeof(char));
 		memcpy(*sf, s1, pos);
 	}
-	if (pos < (int32_t)length)
+	if (pos < (int)length)
 	{
 		*sl = calloc(length - pos, sizeof(char));
 		memcpy(*sl, s1 + pos + 1, length - 1 - pos);

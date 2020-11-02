@@ -54,4 +54,11 @@ typedef struct
 	intmax_t rem;
 } imaxdiv_t;
 
+intmax_t imaxabs(intmax_t val);
+imaxdiv_t imaxdiv(intmax_t numer, intmax_t denom);
+intmax_t strtoimax(const char *restrict nptr, char **restrict endptr, int base);
+uintmax_t strtoumax(const char *restrict nptr, char **restrict endptr, int base);
+intmax_t wcstoimax(const wchar_t *restrict nptr, wchar_t **restrict endptr, int base);
+uintmax_t wcstoumax(const wchar_t *restrict nptr, wchar_t **restrict endptr, int base);
+
 #endif

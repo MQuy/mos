@@ -68,4 +68,6 @@
 		(nbytes_left) = (nbytes) % 4;                                                     \
 	} while (0)
 
+#define PAGE_COPY_FWD_MAYBE(dstp, srcp, nbytes_left, nbytes) /* nada */
+
 #endif
