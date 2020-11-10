@@ -217,6 +217,7 @@ void vmm_map_address(struct pdirectory *va_dir, uint32_t virt, uint32_t phys, ui
 	uint32_t tindex = get_page_table_entry_index(virt);
 
 	table[tindex] = phys | flags;
+	vmm_flush_tlb_entry(virt);
 }
 
 void vmm_create_page_table(struct pdirectory *va_dir, uint32_t virt, uint32_t flags)
