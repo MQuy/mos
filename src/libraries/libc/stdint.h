@@ -110,7 +110,7 @@ typedef __INTMAX_TYPE__ intmax_t;
 #define INT64_C(x) x##LL
 #define UINT64_C(x) x##ULL
 
-#define SIZE_MAX ((size_t)-1)
+#define SIZE_MAX INT32_MAX
 
 #define WINT_MIN (0u)
 #define WINT_MAX (4294967295u)

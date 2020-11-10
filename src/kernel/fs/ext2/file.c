@@ -1,6 +1,7 @@
 #include <fs/vfs.h>
 #include <include/errno.h>
 #include <memory/vmm.h>
+#include <proc/task.h>
 #include <system/time.h>
 #include <utils/math.h>
 #include <utils/string.h>
@@ -144,10 +145,36 @@ int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int coun
 	return entries_size;
 }
 
+int ext2_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
+{
+	struct vfs_inode *inode = file->f_dentry->d_inode;
+	struct vfs_superblock *sb = inode->i_sb;
+
+	struct page *iter_page;
+
+	int length = new_vma->vm_end - new_vma->vm_start;
+	kalign_heap(PMM_FRAME_SIZE);
+	char *buf = kcalloc(length, sizeof(char));
+	loff_t pos = file->f_pos;
+	ext2_read_file(file, buf, length, file->f_pos);
+	file->f_pos = pos;
+
+	uint32_t addr = new_vma->vm_start;
+	for (int i = 0; i < length; i += PMM_FRAME_SIZE)
+	{
+		vmm_map_address(current_process->pdir, addr, vmm_get_physical_address(buf + i, false), I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+		addr += PMM_FRAME_SIZE;
+	}
+	int x = *(char *)new_vma->vm_start;
+
+	return 0;
+}
+
 struct vfs_file_operations ext2_file_operations = {
 	.llseek = generic_file_llseek,
 	.read = ext2_read_file,
 	.write = ext2_write_file,
+	.mmap = ext2_mmap_file,
 };
 
 struct vfs_file_operations ext2_dir_operations = {

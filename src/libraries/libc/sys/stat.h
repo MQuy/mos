@@ -46,5 +46,6 @@ struct stat
 
 int stat(const char *path, struct stat *buf);
 int fstat(int fildes, struct stat *buf);
+mode_t umask(mode_t cmask);
 
 #endif

@@ -74,6 +74,7 @@
 #define __NR_ioctl 54
 #define __NR_fcntl 55
 #define __NR_setpgid 57
+#define __NR_umask 60
 #define __NR_dup2 63
 #define __NR_getppid 64
 #define __NR_setsid 66

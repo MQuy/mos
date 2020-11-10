@@ -18,6 +18,8 @@
 #define MAP_FIXED 0x10	   /* Interpret addr exactly */
 #define MAP_ANONYMOUS 0x20 /* don't use a file */
 
+#define MAP_FAILED ((void *)-1)
+
 void *mmap(void *addr, size_t len, int prot, int flags, int fildes, off_t off);
 int munmap(void *addr, size_t len);
 

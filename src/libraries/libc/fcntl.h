@@ -1,6 +1,8 @@
 #ifndef _LIBC_FCNTL_H
 #define _LIBC_FCNTL_H 1
 
+#include <sys/types.h>
+
 #define S_ISUID 04000
 #define S_ISGID 02000
 #define S_ISVTX 01000

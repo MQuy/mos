@@ -12,3 +12,9 @@ int stat(const char *path, struct stat *buf)
 {
 	return syscall_stat(path, buf);
 }
+
+_syscall1(umask, mode_t);
+mode_t umask(mode_t cmask)
+{
+	return syscall_umask(cmask);
+}

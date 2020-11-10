@@ -132,6 +132,11 @@ static int32_t sys_mmap(uint32_t addr, size_t length, uint32_t prot, uint32_t fl
 	return do_mmap(addr, length, prot, flags, fd);
 }
 
+static int32_t sys_munmap(void *addr, size_t len)
+{
+	return do_munmap(current_process->mm, addr, len);
+}
+
 static int32_t sys_truncate(const char *path, int32_t length)
 {
 	return vfs_truncate(path, length);
@@ -335,6 +340,12 @@ static int32_t sys_fcntl(int fd, int cmd, unsigned long arg)
 	return do_fcntl(fd, cmd, arg);
 }
 
+static int32_t sys_umask(mode_t cmask)
+{
+	// TODO: MQ 2020-11-10 Implement umask
+	return 0;
+}
+
 static int32_t sys_mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
 	return mq_open(name, flags, attr);
@@ -420,6 +431,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_ioctl 54
 #define __NR_fcntl 55
 #define __NR_setpgid 57
+#define __NR_umask 60
 #define __NR_dup2 63
 #define __NR_getppid 64
 #define __NR_setsid 66
@@ -483,6 +495,7 @@ static void *syscalls[] = {
 	[__NR_kill] = sys_kill,
 	[__NR_ioctl] = sys_ioctl,
 	[__NR_fcntl] = sys_fcntl,
+	[__NR_umask] = sys_umask,
 	[__NR_getuid] = sys_getuid,
 	[__NR_setuid] = sys_setuid,
 	[__NR_getegid] = sys_getegid,
@@ -502,6 +515,7 @@ static void *syscalls[] = {
 	[__NR_pipe] = sys_pipe,
 	[__NR_posix_spawn] = sys_posix_spawn,
 	[__NR_mmap] = sys_mmap,
+	[__NR_munmap] = sys_munmap,
 	[__NR_truncate] = sys_truncate,
 	[__NR_ftruncate] = sys_ftruncate,
 	[__NR_socket] = sys_socket,
