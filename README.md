@@ -57,6 +57,15 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   $ ./create_image.sh && ./build.sh qemu iso
   ```
 
+- open another terminal
+  ```
+  $ cd src
+  $ gdb isodir/boot/mos.bin
+  # in gdb
+  (gdb) target remote localhost:1234
+  (gdb) c
+  ```
+
 ✍🏻 If you get this error `hdiutil: attach failed - no mountable file systems`, installing [extFS for MAC](https://www.paragon-software.com/home/extfs-mac/) might help
 
 **Ubuntu**
@@ -70,10 +79,29 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   ```
 
 - run emulator
+
   ```
   $ cd src && mkdir logs
   $ ./create_image.sh && ./build.sh qemu iso
   ```
+
+- open another terminal
+  ```
+  $ cd src
+  $ gdb isodir/boot/mos.bin
+  # in gdb
+  (gdb) target remote localhost:1234
+  (gdb) c
+  ```
+
+✍️ To get userspace address for debugging
+
+```
+$ i386-mos-readelf -e program
+# find the line below and copy Addr
+# [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+# [ x] .text             PROGBITS        xxx      xxx    xxx    00 AX   0   0  4
+```
 
 **Unit Test**
 
