@@ -1,0 +1,57 @@
+---
+# Notes:
+# Sample project C code is not presently written to produce a release artifact.
+# As such, release build options are disabled.
+# This sample, therefore, only demonstrates running a collection of unit tests.
+
+:project:
+  :use_exceptions: FALSE
+  :use_test_preprocessor: TRUE
+  :use_auxiliary_dependencies: TRUE
+  :build_root: build
+  # :release_build: TRUE
+  :test_file_prefix: test
+
+#:release_build:
+#  :output: TempSensor.out
+#  :use_assembly: FALSE
+
+:environment: []
+
+:extension:
+  :executable: .out
+
+:paths:
+  :test:
+    - +:test/**
+    - -:test/support
+  :source:
+    - src/apps/**
+    - src/libraries/**
+  :support:
+    - test/support
+
+:defines:
+  :common: &common_defines []
+  :test:
+    - *common_defines
+    - TEST
+  :test_preprocess:
+    - *common_defines
+    - TEST
+
+:cmock:
+  :when_no_prototypes: :warn
+  :enforce_strict_ordering: TRUE
+  :plugins:
+    - :ignore
+  :treat_as:
+    uint8: HEX8
+    uint16: HEX16
+    uint32: UINT32
+    int8: INT8
+    bool: UINT8
+
+:libraries:
+  :system:
+    - m
