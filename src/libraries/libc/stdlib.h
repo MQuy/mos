@@ -71,19 +71,21 @@ lldiv_t lldiv(long long numer, long long denom);
 void *malloc(size_t size);
 int posix_openpt(int flags);
 char *ptsname(int fd);
+int putenv(char *string);
 int rand();
 int rand_r(unsigned *);
 void srand(unsigned seed);
 void *realloc(void *ptr, size_t size);
 double strtod(const char *restrict, char **restrict);
+int setenv(const char *envname, const char *envval, int overwrite);
 float strtof(const char *restrict, char **restrict);
 long strtol(const char *restrict, char **restrict, int);
 long double strtold(const char *restrict, char **restrict);
 long long strtoll(const char *restrict, char **restrict, int);
 unsigned long strtoul(const char *restrict, char **restrict, int);
-unsigned long long
-strtoull(const char *restrict, char **restrict, int);
+unsigned long long strtoull(const char *restrict, char **restrict, int);
 int unlockpt(int);
+int unsetenv(const char *name);
 
 void *reallocarray(void *ptr, size_t nmemb, size_t size);
 void _clear_on_exit();

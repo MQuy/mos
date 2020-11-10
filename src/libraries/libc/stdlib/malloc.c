@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 #include <unistd.h>
 
 #define BLOCK_MAGIC 0x464E
+#define UPPER_LIMIT 0x2000000
 
 static uint32_t user_remaining_from_last_used = 0;
 static uint32_t user_heap_current = 0;
@@ -19,10 +21,22 @@ struct block_meta
 
 static struct block_meta *blocklist = NULL;
 
-void assert_block_valid(struct block_meta *block)
+void assert_block_valid(struct block_meta *block, bool throw)
 {
-	if (block->magic != BLOCK_MAGIC || block->size > 0x2000000)
-		__asm__ __volatile("int $0x01");
+	if (block->magic != BLOCK_MAGIC)
+	{
+		if (throw)
+			__asm__ __volatile("int $0x01");
+		else
+			debug_println(DEBUG_WARNING, "Malloc: 0x%x is not allocated by malloc", block + 1);
+	}
+	else if (block->size > UPPER_LIMIT)
+	{
+		if (throw)
+			__asm__ __volatile("int $0x01");
+		else
+			debug_println(DEBUG_WARNING, "Malloc: block 0x%x is larger than 0x%x", block + 1, UPPER_LIMIT);
+	}
 }
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size)
@@ -32,11 +46,10 @@ struct block_meta *find_free_block(struct block_meta **last, size_t size)
 	while (current && !(current->free && current->size >= size))
 	{
 		bcount++;
-		assert_block_valid(current);
 		*last = current;
 		current = current->next;
 		if (current)
-			assert_block_valid(current);
+			assert_block_valid(current, true);
 	}
 	return current;
 }
@@ -112,7 +125,7 @@ void *malloc(size_t size)
 		blocklist = block;
 	}
 
-	assert_block_valid(block);
+	assert_block_valid(block, true);
 
 	if (block)
 		return block + 1;
@@ -139,7 +152,7 @@ void free(void *ptr)
 		return;
 
 	struct block_meta *block = get_block_ptr(ptr);
-	assert_block_valid(block);
+	assert_block_valid(block, false);
 	block->free = true;
 }
 

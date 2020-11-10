@@ -131,3 +131,14 @@ int strlsplat(const char *s1, int pos, char **sf, char **sl)
 	}
 	return 0;
 }
+
+int count_array_of_pointers(void *arr)
+{
+	if (!arr)
+		return 0;
+
+	const int *a = arr;
+	for (; *a; a++)
+		;
+	return a - (int *)arr;
+}

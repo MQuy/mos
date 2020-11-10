@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 struct __jmp_buf
 {

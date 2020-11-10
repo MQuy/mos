@@ -73,5 +73,6 @@ int striof(const char *s1, const char *s2);
 int strliof(const char *s1, const char *s2);
 int strlsplat(const char *s1, int pos, char **sf, char **sl);
 char *skip_spaces(const char *str);
+int count_array_of_pointers(void *arr);
 
 #endif
