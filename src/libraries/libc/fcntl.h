@@ -52,5 +52,6 @@
 
 int open(const char* path, int oflag, ...);
 int fcntl(int fd, int cmd, ...);
+int creat(const char* path, mode_t mode);
 
 #endif

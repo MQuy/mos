@@ -5,7 +5,6 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <sys/types.h>
-#include <vsprintf.h>
 
 #define BUFSIZ 512
 #define _IOFBF 0 /* Fully buffered. */
@@ -76,5 +75,23 @@ int scanf(const char *format, ...);
 int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 void setbuf(FILE *stream, char *buf);
 FILE *tmpfile();
+
+int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
+int snprintf(char *buf, size_t size, const char *fmt, ...);
+int vsprintf(char *buf, const char *fmt, va_list args);
+int sprintf(char *buf, const char *fmt, ...);
+int vsscanf(const char *buf, const char *fmt, va_list args);
+int sscanf(const char *buf, const char *fmt, ...);
+int asprintf(char **strp, const char *fmt, ...);
+int vasprintf(char **strp, const char *fmt, va_list ap);
+int vcbprintf(void *ctx,
+			  size_t (*callback)(void *, const char *, size_t),
+			  const char *format,
+			  va_list parameters);
+int vcbscanf(void *fp,
+			 int (*fgetc)(void *),
+			 int (*ungetc)(int, void *),
+			 const char *restrict format,
+			 va_list ap);
 
 #endif

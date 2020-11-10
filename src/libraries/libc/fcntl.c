@@ -29,3 +29,8 @@ int fcntl(int fd, int cmd, ...)
 
 	return syscall_fcntl(fd, cmd, arg);
 }
+
+int creat(const char* path, mode_t mode)
+{
+	return open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+}
