@@ -236,6 +236,17 @@ static int32_t sys_setgid(gid_t gid)
 	return 0;
 }
 
+static int32_t sys_alarm(unsigned int seconds)
+{
+	uint64_t current_time = get_milliseconds(NULL);
+	int remain_time = current_process->sig_alarm_timer.expires - current_time;
+	if (seconds)
+		mod_timer(&current_process->sig_alarm_timer, get_milliseconds(NULL) + seconds * 1000);
+	else
+		del_timer(&current_process->sig_alarm_timer);
+	return remain_time;
+}
+
 static int32_t sys_signal(int signum, __sighandler_t handler)
 {
 	struct sigaction act;
@@ -420,6 +431,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_getpid 20
 #define __NR_setuid 23
 #define __NR_getuid 24
+#define __NR_alarm 27
 #define __NR_kill 37
 #define __NR_pipe 42
 #define __NR_times 43
@@ -490,6 +502,7 @@ static void *syscalls[] = {
 	[__NR_time] = sys_time,
 	[__NR_times] = sys_times,
 	[__NR_gettimeofday] = sys_gettimeofday,
+	[__NR_alarm] = sys_alarm,
 	[__NR_brk] = sys_brk,
 	[__NR_sbrk] = sys_sbrk,
 	[__NR_kill] = sys_kill,

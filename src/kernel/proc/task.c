@@ -5,6 +5,7 @@
 #include <cpu/pic.h>
 #include <cpu/tss.h>
 #include <fs/vfs.h>
+#include <ipc/signal.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
 #include <proc/elf.h>
@@ -85,6 +86,13 @@ void thread_sleep(uint32_t ms)
 	schedule();
 }
 
+static void process_sig_alarm_timer(struct timer_list *timer)
+{
+	struct process *proc = from_timer(proc, timer, sig_alarm_timer);
+	list_del(&timer->sibling);
+	do_kill(proc->pid, SIGALRM);
+}
+
 struct thread *create_thread(struct process *parent, uint32_t eip, enum thread_state state, int policy, int priority)
 {
 	lock_scheduler();
@@ -138,6 +146,7 @@ static struct process *create_process(struct process *parent, const char *name, 
 	proc->files = clone_file_descriptor_table(parent);
 	proc->fs = kcalloc(1, sizeof(struct fs_struct));
 	proc->mm = kcalloc(1, sizeof(struct mm_struct));
+	proc->sig_alarm_timer = (struct timer_list)TIMER_INITIALIZER(process_sig_alarm_timer, UINT32_MAX);
 	INIT_LIST_HEAD(&proc->wait_chld.list);
 	INIT_LIST_HEAD(&proc->mm->mmap);
 
@@ -301,6 +310,7 @@ struct process *process_fork(struct process *parent)
 	INIT_LIST_HEAD(&proc->wait_chld.list);
 	proc->mm = clone_mm_struct(parent);
 	memcpy(&proc->sighand, &parent->sighand, sizeof(parent->sighand));
+	proc->sig_alarm_timer = (struct timer_list)TIMER_INITIALIZER(process_sig_alarm_timer, UINT32_MAX);
 
 	INIT_LIST_HEAD(&proc->children);
 

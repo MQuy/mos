@@ -63,6 +63,7 @@
 #define __NR_getpid 20
 #define __NR_setuid 23
 #define __NR_getuid 24
+#define __NR_alarm 27
 #define __NR_kill 37
 #define __NR_pipe 42
 #define __NR_times 43

@@ -145,6 +145,7 @@ struct process
 
 	struct list_head sibling;
 	struct list_head children;
+	struct timer_list sig_alarm_timer;
 };
 
 extern volatile struct thread *current_thread;

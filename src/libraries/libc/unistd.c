@@ -205,3 +205,9 @@ int fork()
 {
 	return syscall_fork();
 }
+
+_syscall1(alarm, unsigned int);
+int alarm(unsigned int seconds)
+{
+	return syscall_alarm(seconds);
+}
