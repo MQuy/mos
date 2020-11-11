@@ -1,6 +1,7 @@
 #ifndef _LIBC_DIRENT_H
 #define _LIBC_DIRENT_H 1
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -18,11 +19,23 @@ struct dirent
 
 struct __DIR
 {
-	struct dirent* entry;
-	size_t size;
 	int fd;
+	bool owned_fd;
+	int len;	/* buffer length */
+	int size;	/* amount of data in buffer */
+	char *buf;	/* buffer */
+	loff_t pos; /* position in buffer */
 };
 
 typedef struct __DIR DIR;
+
+int closedir(DIR *dirp);
+int dirfd(DIR *dirp);
+DIR *opendir(const char *name);
+struct dirent *readdir(DIR *dirp);
+int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
+void rewinddir(DIR *dirp);
+void seekdir(DIR *dirp, long int loc);
+long int telldir(DIR *dirp);
 
 #endif

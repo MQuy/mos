@@ -125,7 +125,7 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count)
 {
 	char *buf = kcalloc(count, sizeof(char));
-	count = ext2_read_file(file, buf, count, 0);
+	count = ext2_read_file(file, buf, count, file->f_pos);
 
 	int entries_size = 0;
 	struct dirent *idirent = dirent;

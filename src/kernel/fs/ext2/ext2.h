@@ -155,12 +155,11 @@ struct ext2_inode
 
 struct ext2_dir_entry
 {
-	uint32_t ino;
-	// NOTE: 2019-07-28 rec_len has to be calculated by EXT2_DIR_REC_LEN
-	uint16_t rec_len;
-	uint8_t name_len;
+	uint32_t ino;	  /* Inode number */
+	uint16_t rec_len; /* Directory entry length */
+	uint8_t name_len; /* Name length */
 	uint8_t file_type;
-	char name[EXT2_NAME_LEN];
+	char name[];
 };
 
 enum
