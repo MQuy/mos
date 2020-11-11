@@ -12,4 +12,11 @@ struct passwd
 	char *pw_shell;	 // Program to use as shell.
 };
 
+struct passwd *getpwuid(uid_t uid);
+int getpwuid_r(uid_t uid,
+			   struct passwd *restrict ret,
+			   char *restrict buf,
+			   size_t buflen,
+			   struct passwd **restrict ret_ptr)
+
 #endif

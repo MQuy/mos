@@ -72,6 +72,15 @@ void *malloc(size_t size);
 int posix_openpt(int flags);
 char *ptsname(int fd);
 int putenv(char *string);
+void qsort(void *base_ptr,
+		   size_t num_elements,
+		   size_t element_size,
+		   int (*compare)(const void *, const void *));
+void qsort_r(void *base_ptr,
+			 size_t num_elements,
+			 size_t element_size,
+			 int (*compare)(const void *, const void *, void *),
+			 void *arg);
 int rand();
 int rand_r(unsigned *);
 void srand(unsigned seed);
