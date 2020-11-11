@@ -46,3 +46,20 @@ int sigsuspend(const sigset_t *mask)
 {
 	return syscall_sigsuspend(mask);
 }
+
+int sigismember(sigset_t *set, int sig)
+{
+	return 1 & (*set >> (sig - 1));
+}
+
+int sigaddset(sigset_t *set, int sig)
+{
+	*set |= 1 << (sig - 1);
+	return 0;
+}
+
+int sigdelset(sigset_t *set, int sig)
+{
+	*set &= ~(1 << (sig - 1));
+	return 0;
+}

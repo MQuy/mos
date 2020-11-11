@@ -72,13 +72,16 @@ struct sigaction
 	sigset_t sa_mask;
 };
 
-void sigfillset(sigset_t *set);
-void sigemptyset(sigset_t *set);
-int sigsuspend(const sigset_t *mask);
-int signal(int signum, sighandler_t handler);
-int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
-int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 int kill(pid_t pid, int sig);
 int raise(int32_t sig);
+int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+int sigaddset(sigset_t *set, int signo);
+int sigdelset(sigset_t *set, int sig);
+void sigemptyset(sigset_t *set);
+void sigfillset(sigset_t *set);
+int sigismember(sigset_t *set, int sig);
+int sigsuspend(const sigset_t *mask);
+int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+int signal(int signum, sighandler_t handler);
 
 #endif
