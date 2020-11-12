@@ -44,9 +44,17 @@
 #define X_OK 1 /* Test for execute permission. */
 #define F_OK 0 /* Test for existence. */
 
+#ifndef SEEK_SET
 #define SEEK_SET 0 /* Seek from beginning of file.  */
+#endif
+
+#ifndef SEEK_CUR
 #define SEEK_CUR 1 /* Seek from current position.  */
+#endif
+
+#ifndef SEEK_END
 #define SEEK_END 2 /* Seek from end of file.  */
+#endif
 
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1

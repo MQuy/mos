@@ -29,6 +29,18 @@
 #define _IO_IS_FILEBUF 0x2000
 #define _IO_FULLY_BUF 0x4000
 
+#ifndef SEEK_SET
+#define SEEK_SET 0 /* Seek from beginning of file.  */
+#endif
+
+#ifndef SEEK_CUR
+#define SEEK_CUR 1 /* Seek from current position.  */
+#endif
+
+#ifndef SEEK_END
+#define SEEK_END 2 /* Seek from end of file.  */
+#endif
+
 #ifndef __FILE_defined
 #define __FILE_defined
 #include <FILE.h>
@@ -93,5 +105,8 @@ int vcbscanf(void *fp,
 			 int (*ungetc)(int, void *),
 			 const char *restrict format,
 			 va_list ap);
+
+void flockfile(FILE *fp);
+void funlockfile(FILE *fp);
 
 #endif
