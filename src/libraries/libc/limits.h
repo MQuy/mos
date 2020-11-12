@@ -51,4 +51,6 @@
 
 #define SSIZE_MAX 2147483647
 
+#define TTY_NAME_MAX 32
+
 #endif

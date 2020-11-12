@@ -265,6 +265,7 @@ int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigne
 
 		memcpy(idrent->d_name, iter->d_name, len);
 		idrent->d_reclen = sizeof(struct dirent) + len + 1;
+		idrent->d_ino = iter->d_inode->i_ino;
 
 		entries_size += idrent->d_reclen;
 		idrent = (struct dirent *)((char *)idrent + idrent->d_reclen);

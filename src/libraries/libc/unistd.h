@@ -220,6 +220,8 @@ int usleep(useconds_t usec);
 int sleep(unsigned int);
 int tcsetpgrp(int fd, pid_t pid);
 pid_t tcgetpgrp(int fd);
+char *ttyname(int fildes);
+int ttyname_r(int fildes, char *name, size_t namesize);
 int isatty(int fd);
 int shm_open(const char *name, int flags, mode_t mode);
 int getpagesize();
