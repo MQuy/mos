@@ -485,8 +485,10 @@ void setbuf(FILE *stream, char *buf)
 
 void flockfile(FILE *fp)
 {
+	assert_not_implemented();
 }
 
 void funlockfile(FILE *fp)
 {
+	assert_not_implemented();
 }
