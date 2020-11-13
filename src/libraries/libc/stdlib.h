@@ -69,6 +69,7 @@ ldiv_t ldiv(long numer, long denom);
 long long int llabs(long long int val);
 lldiv_t lldiv(long long numer, long long denom);
 void *malloc(size_t size);
+int mblen(const char *s, size_t n);
 int posix_openpt(int flags);
 char *ptsname(int fd);
 int putenv(char *string);
