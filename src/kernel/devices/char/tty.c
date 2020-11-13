@@ -202,6 +202,7 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 	case TIOCSPGRP:
 		return tiocspgrp(tty, arg);
 	default:
+		debug_println(DEBUG_INFO, "%s:%d %s cmd %d is not supported", __FILE__, __LINE__, __func__, cmd);
 		break;
 	}
 	return 0;

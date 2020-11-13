@@ -254,4 +254,7 @@ struct termios
 
 #define TIOCSER_TEMT 0x01 /* Transmitter physically empty */
 
+int tcsetattr(int fd, int opts, const struct termios *tp);
+int tcflow(int fd, int action);
+
 #endif

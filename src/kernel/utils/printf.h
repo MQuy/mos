@@ -24,5 +24,6 @@ void __assert_debug(char *file, int line, char *func, ...);
 									? (void)0 \
 									: (void)({ __assert_debug(__FILE__, __LINE__, __func__, ##__VA_ARGS__); __asm__ __volatile("int $0x01"); }))
 #define assert_not_reached(...) ({ __assert_debug(__FILE__, __LINE__, __func__, ##__VA_ARGS__); __asm__ __volatile__("ud2"); })
+#define assert_not_implemented() debug_println(DEBUG_INFO, "%s:%d %s is not implemented", __FILE__, __LINE__, __func__)
 
 #endif
