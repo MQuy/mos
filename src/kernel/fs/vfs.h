@@ -154,6 +154,7 @@ struct vfs_inode_operations
 	struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
 	struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
 	int (*mkdir)(struct vfs_inode *, char *, int);
+	int (*unlink)(struct vfs_inode *dir, struct vfs_dentry *dentry);
 	int (*mknod)(struct vfs_inode *, struct vfs_dentry *, int, dev_t);
 	void (*truncate)(struct vfs_inode *);
 	int (*setattr)(struct vfs_dentry *, struct iattr *);
@@ -188,7 +189,7 @@ struct vfs_file_operations
 	loff_t (*llseek)(struct vfs_file *file, loff_t ppos, int);
 	ssize_t (*read)(struct vfs_file *file, char *buf, size_t count, loff_t ppos);
 	ssize_t (*write)(struct vfs_file *file, const char *buf, size_t count, loff_t ppos);
-	int (*readdir)(struct vfs_file *file, struct dirent *dirent, unsigned int count);
+	int (*readdir)(struct vfs_file *dir, struct dirent *dirent, unsigned int count);
 	unsigned int (*poll)(struct vfs_file *file, struct poll_table *pt);
 	int (*ioctl)(struct vfs_inode *inode, struct vfs_file *file, unsigned int cmd, unsigned long arg);
 	int (*mmap)(struct vfs_file *file, struct vm_area_struct *vm);
@@ -224,6 +225,7 @@ int vfs_ftruncate(int32_t fd, int32_t length);
 struct vfs_file *get_empty_filp();
 int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count);
 void vfs_build_path_backward(struct vfs_dentry *dentry, char *path);
+int vfs_unlink(const char *path, int flag);
 
 // read_write.c
 char *vfs_read(const char *path);

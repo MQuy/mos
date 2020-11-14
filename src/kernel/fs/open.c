@@ -88,11 +88,10 @@ struct vfs_file *get_empty_filp()
 
 int32_t vfs_open(const char *path, int32_t flags)
 {
-	int ret;
 	int fd = find_unused_fd_slot();
 
 	struct nameidata nd;
-	ret = path_walk(&nd, path, flags, S_IFREG);
+	int ret = path_walk(&nd, path, flags, S_IFREG);
 	if (ret < 0)
 		return ret;
 
@@ -118,22 +117,32 @@ int32_t vfs_open(const char *path, int32_t flags)
 		}
 	}
 
+	atomic_inc(&file->f_dentry->d_inode->i_count);
 	current_process->files->fd[fd] = file;
 	return fd;
 }
 
 int32_t vfs_close(int32_t fd)
 {
-	int ret = 0;
 	struct files_struct *files = current_process->files;
 	acquire_semaphore(&files->lock);
 
-	struct vfs_file *f = files->fd[fd];
-	atomic_dec(&f->f_count);
-	if (!atomic_read(&f->f_count) && f->f_op->release)
-		ret = f->f_op->release(f->f_dentry->d_inode, f);
-	files->fd[fd] = NULL;
+	int ret = 0;
+	struct vfs_file *file = files->fd[fd];
+	if (file)
+	{
+		atomic_dec(&file->f_count);
+		if (!atomic_read(&file->f_count))
+		{
+			if (file->f_op && file->f_op->release)
+				ret = file->f_op->release(file->f_dentry->d_inode, file);
+			kfree(file);
+		}
+	}
+	else
+		ret = -EBADF;
 
+	files->fd[fd] = NULL;
 	release_semaphore(&files->lock);
 	return ret;
 }
@@ -281,4 +290,41 @@ void vfs_build_path_backward(struct vfs_dentry *dentry, char *path)
 	vfs_build_path_backward(dentry->d_parent, path);
 	strcat(path, "/");
 	strcat(path, dentry->d_name);
+}
+
+int vfs_unlink(const char *path, int flag)
+{
+	char *abs_path;
+	if (path[0] != '/')
+	{
+		abs_path = kcalloc(MAXPATHLEN, sizeof(char));
+		vfs_build_path_backward(current_process->fs->d_root, abs_path);
+		strcpy(abs_path, "/");
+		strcpy(abs_path, path);
+	}
+	else
+		abs_path = path;
+
+	int ret = vfs_open(abs_path, O_RDONLY);
+	if (ret >= 0)
+	{
+		struct vfs_file *file = current_process->files->fd[ret];
+		if (!file)
+			ret = -EBADF;
+		else if (flag & AT_REMOVEDIR && file->f_dentry->d_inode->i_mode & S_IFREG)
+			ret = -ENOTDIR;
+		else
+		{
+			struct vfs_inode *dir = file->f_dentry->d_parent->d_inode;
+			if (dir->i_op && dir->i_op->unlink)
+				ret = dir->i_op->unlink(dir, file->f_dentry);
+			list_del(&file->f_dentry->d_sibling);
+		}
+		vfs_close(ret);
+	}
+
+	if (abs_path != path)
+		kfree(abs_path);
+
+	return ret;
 }

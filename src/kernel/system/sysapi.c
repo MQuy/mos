@@ -153,21 +153,21 @@ static int32_t sys_access(const char *path, int amode)
 	if (amode & ~(R_OK || W_OK || X_OK || F_OK))
 		return -EINVAL;
 
-	char *fpath;
+	char *abs_path;
 	if (path[0] != '/')
 	{
-		fpath = kcalloc(PATH_MAX, sizeof(char));
-		vfs_build_path_backward(current_process->fs->d_root, fpath);
-		strcpy(fpath, "/");
-		strcpy(fpath, path);
+		abs_path = kcalloc(PATH_MAX, sizeof(char));
+		vfs_build_path_backward(current_process->fs->d_root, abs_path);
+		strcpy(abs_path, "/");
+		strcpy(abs_path, path);
 	}
 	else
-		fpath = path;
+		abs_path = path;
 
 	int fd = vfs_open(path, 0);
 
-	if (fpath != path)
-		kfree(fpath);
+	if (abs_path != path)
+		kfree(abs_path);
 	if (fd < 0)
 		return -ENOENT;
 
@@ -183,7 +183,7 @@ static int32_t sys_faccessat(int fd, const char *path, int amode, int flag)
 	if (flag && flag & ~(AT_SYMLINK_NOFOLLOW || AT_EACCESS))
 		return -EINVAL;
 
-	char *fpath;
+	char *abs_path;
 	if (path[0] != '/' && fd != AT_FDCWD)
 	{
 		struct vfs_file *df = current_process->files->fd[fd];
@@ -192,18 +192,52 @@ static int32_t sys_faccessat(int fd, const char *path, int amode, int flag)
 		if (!(df->f_dentry->d_inode->i_mode & S_IFDIR))
 			return -ENOTDIR;
 
-		fpath = kcalloc(MAXPATHLEN, sizeof(char));
-		vfs_build_path_backward(df->f_dentry, fpath);
-		strcpy(fpath, "/");
-		strcpy(fpath, path);
+		abs_path = kcalloc(MAXPATHLEN, sizeof(char));
+		vfs_build_path_backward(df->f_dentry, abs_path);
+		strcpy(abs_path, "/");
+		strcpy(abs_path, path);
 	}
 	else
-		fpath = path;
+		abs_path = path;
 
-	int ret = sys_access(fpath, amode);
+	int ret = sys_access(abs_path, amode);
 
-	if (fpath != path)
-		kfree(fpath);
+	if (abs_path != path)
+		kfree(abs_path);
+
+	return ret;
+}
+
+static int32_t sys_unlink(const char *path)
+{
+	return vfs_unlink(path, 0);
+}
+
+static int32_t sys_unlinkat(int fd, const char *path, int flag)
+{
+	if (flag && flag & ~AT_REMOVEDIR)
+		return -EINVAL;
+
+	char *abs_path;
+	if (path[0] != '/' && fd != AT_FDCWD)
+	{
+		struct vfs_file *fdir = current_process->files->fd[fd];
+		if (!fdir)
+			return -EBADF;
+		if (!(fdir->f_dentry->d_inode->i_mode & S_IFDIR))
+			return -ENOTDIR;
+
+		abs_path = kcalloc(MAXPATHLEN, sizeof(char));
+		vfs_build_path_backward(fdir->f_dentry, abs_path);
+		strcpy(abs_path, "/");
+		strcpy(abs_path, path);
+	}
+	else
+		abs_path = path;
+
+	int ret = vfs_unlink(abs_path, flag);
+	if (abs_path != path)
+		kfree(abs_path);
 
 	return ret;
 }
@@ -579,6 +613,8 @@ static void *syscalls[] = {
 	[__NR_umask] = sys_umask,
 	[__NR_access] = sys_access,
 	[__NR_faccessat] = sys_faccessat,
+	[__NR_unlink] = sys_unlink,
+	[__NR_unlinkat] = sys_unlinkat,
 	[__NR_getuid] = sys_getuid,
 	[__NR_setuid] = sys_setuid,
 	[__NR_getegid] = sys_getegid,

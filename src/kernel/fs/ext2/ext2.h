@@ -4,6 +4,11 @@
 #include <fs/vfs.h>
 #include <stdint.h>
 
+#define EXT2_INO_UPPER_LEVEL0 12
+#define EXT2_INO_UPPER_LEVEL1 268
+#define EXT2_INO_UPPER_LEVEL2 65804
+#define EXT2_INO_UPPER_LEVEL3 16843020
+
 /*
  * Special struct vfs_inode numbers
  */

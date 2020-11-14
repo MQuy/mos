@@ -8,6 +8,8 @@
 #define MAXPATHLEN PATH_MAX
 #endif
 
+#define NAME_MAX 255
+
 #define INT_MAX ((int)(~0U >> 1))
 #define INT_MIN (-INT_MAX - 1)
 #define UINT_MAX (~0U)

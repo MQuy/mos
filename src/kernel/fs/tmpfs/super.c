@@ -44,7 +44,7 @@ static struct vfs_inode *tmpfs_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *inode = init_inode();
 	inode->i_sb = sb;
-	atomic_set(&inode->i_count, 1);
+	atomic_set(&inode->i_count, 0);
 	INIT_LIST_HEAD(&inode->i_data.pages);
 
 	return inode;

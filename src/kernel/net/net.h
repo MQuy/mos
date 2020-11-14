@@ -5,9 +5,13 @@
 #include <include/if_ether.h>
 #include <include/list.h>
 
-#define AF_INET 2 /* Internet IP Protocol 	*/
-#define PF_INET AF_INET
+#define AF_UNIX 1	 /* Unix domain sockets 		*/
+#define AF_INET 2	 /* Internet IP Protocol 	*/
 #define AF_PACKET 17 /* Packet family		*/
+
+#define PF_UNIX AF_UNIX
+#define PF_INET AF_INET
+
 #define PF_PACKET AF_PACKET
 
 #define WORD_SIZE 4

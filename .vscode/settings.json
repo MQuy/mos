@@ -106,7 +106,9 @@
     "pr44328.C": "cpp",
     "cinttypes": "c",
     "scoped_allocator": "c",
-    "pr64411.C": "cpp"
+    "pr64411.C": "cpp",
+    "internet": "c",
+    "typeindex": "c"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

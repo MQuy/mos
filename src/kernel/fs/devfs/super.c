@@ -23,6 +23,11 @@ struct vfs_inode *devfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 		i->i_op = &devfs_dir_inode_operations;
 		i->i_fop = &devfs_dir_operations;
 	}
+	else if (S_ISREG(i->i_mode))
+	{
+		i->i_op = &devfs_file_inode_operations;
+		i->i_fop = &devfs_file_operations;
+	}
 	else
 	{
 		i->i_op = &devfs_special_inode_operations;
@@ -36,7 +41,7 @@ static struct vfs_inode *devfs_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *inode = init_inode();
 	inode->i_sb = sb;
-	atomic_set(&inode->i_count, 1);
+	atomic_set(&inode->i_count, 0);
 
 	return inode;
 }

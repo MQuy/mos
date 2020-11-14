@@ -5,15 +5,22 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#define AF_INET 2 /* Internet IP Protocol 	*/
-#define PF_INET AF_INET
+#define AF_UNIX 1	 /* Unix domain sockets 		*/
+#define AF_INET 2	 /* Internet IP Protocol 	*/
 #define AF_PACKET 17 /* Packet family		*/
+
+#define PF_UNIX AF_UNIX
+#define PF_INET AF_INET
 #define PF_PACKET AF_PACKET
 
 #ifndef __socklen_t_defined
 typedef __socklen_t socklen_t;
 #define __socklen_t_defined
 #endif
+
+#define SHUT_RD 0	/* shut down the reading side */
+#define SHUT_WR 1	/* shut down the writing side */
+#define SHUT_RDWR 2 /* shut down both sides */
 
 /* Standard well-defined IP protocols.  */
 enum

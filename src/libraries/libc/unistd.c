@@ -226,3 +226,15 @@ int faccessat(int fd, const char *path, int amode, int flag)
 {
 	SYSCALL_RETURN(syscall_faccessat(fd, path, amode, flag));
 }
+
+_syscall1(unlink, const char *);
+int unlink(const char *path)
+{
+	SYSCALL_RETURN(syscall_unlink(path));
+}
+
+_syscall3(unlinkat, int, const char *, int);
+int unlinkat(int fd, const char *path, int flag)
+{
+	SYSCALL_RETURN(syscall_unlinkat(fd, path, flag));
+}

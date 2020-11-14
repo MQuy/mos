@@ -1,12 +1,33 @@
 #include <fs/buffer.h>
 #include <fs/vfs.h>
 #include <include/errno.h>
+#include <include/limits.h>
 #include <memory/vmm.h>
 #include <system/time.h>
 #include <utils/math.h>
+#include <utils/printf.h>
 #include <utils/string.h>
 
 #include "ext2.h"
+
+static int ext2_recursive_block_action(struct vfs_superblock *sb,
+									   int level, uint32_t block,
+									   const char *name,
+									   int (*action)(struct vfs_superblock *, uint32_t, const char *))
+{
+	assert(level <= 3);
+	if (level > 0)
+	{
+		int ret = -ENOTFOUND;
+		uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
+		for (int i = 0, nblocks = sb->s_blocksize / 4; i < nblocks; ++i)
+			if ((ret = ext2_recursive_block_action(sb, level - 1, block_buf[i], name, action)) >= 0)
+				break;
+		return ret;
+	}
+	else
+		return action(sb, block, name);
+}
 
 static uint32_t find_unused_block_number(struct vfs_superblock *sb)
 {
@@ -202,34 +223,50 @@ static struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename
 	return NULL;
 }
 
-// TODO: MQ 2020-09-22 Support 2, 3 and 4 level block
-static struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *filename)
+int ext2_find_ino(struct vfs_superblock *sb, uint32_t block, const char *name)
 {
-	for (int i = 0; i < 11; ++i)
+	char *block_buf = ext2_bread_block(sb, block);
+
+	char tmpname[NAME_MAX];
+	uint32_t size = 0;
+	struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
+	while (size < sb->s_blocksize && entry->ino != 0)
 	{
-		struct ext2_inode *ei = EXT2_INODE(dir);
-		int block = ei->i_block[i];
-		if (!block)
-			continue;
-		char *block_buf = ext2_bread_block(dir->i_sb, block);
+		memcpy(tmpname, entry->name, entry->name_len);
+		tmpname[entry->name_len] = 0;
 
-		uint32_t size = 0;
-		struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
-		while (size < dir->i_sb->s_blocksize && entry->ino != 0)
+		if (strcmp(tmpname, name) == 0)
+			return entry->ino;
+
+		entry = (struct ext2_dir_entry *)((char *)entry + entry->rec_len);
+		size = size + entry->rec_len;
+	}
+	return -ENOENT;
+}
+
+static struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *name)
+{
+	struct ext2_inode *ei = EXT2_INODE(dir);
+	struct vfs_superblock *sb = dir->i_sb;
+
+	for (int i = 0, ino = 0; i < ei->i_blocks; ++i)
+	{
+		if (i < EXT2_INO_UPPER_LEVEL0)
 		{
-			char *name = kcalloc(entry->name_len + 1, sizeof(char));
-			memcpy(name, entry->name, entry->name_len);
-
-			if (strcmp(name, filename) == 0)
-			{
-				struct vfs_inode *inode = dir->i_sb->s_op->alloc_inode(dir->i_sb);
-				inode->i_ino = entry->ino;
-				ext2_read_inode(inode);
-				return inode;
-			}
-
-			entry = (struct ext2_dir_entry *)((char *)entry + entry->rec_len);
-			size = size + entry->rec_len;
+			ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], name, ext2_find_ino);
+		}
+		else
+		{
+		}
+		if ((i < EXT2_INO_UPPER_LEVEL0 && (ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], name, ext2_find_ino)) > 0) ||
+			((EXT2_INO_UPPER_LEVEL0 <= i && i < EXT2_INO_UPPER_LEVEL1) && (ino = ext2_recursive_block_action(sb, 1, ei->i_block[12], name, ext2_find_ino)) > 0) ||
+			((EXT2_INO_UPPER_LEVEL1 <= i && i < EXT2_INO_UPPER_LEVEL2) && (ino = ext2_recursive_block_action(sb, 2, ei->i_block[13], name, ext2_find_ino)) > 0) ||
+			((EXT2_INO_UPPER_LEVEL2 <= i && i < EXT2_INO_UPPER_LEVEL3) && (ino = ext2_recursive_block_action(sb, 3, ei->i_block[14], name, ext2_find_ino)) > 0))
+		{
+			struct vfs_inode *inode = dir->i_sb->s_op->alloc_inode(dir->i_sb);
+			inode->i_ino = ino;
+			ext2_read_inode(inode);
+			return inode;
 		}
 	}
 	return NULL;
@@ -252,6 +289,61 @@ static int ext2_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode
 	return 0;
 }
 
+static int ext2_delete_entry(struct vfs_superblock *sb, uint32_t block, const char *name)
+{
+	char *block_buf = ext2_bread_block(sb, block);
+
+	char tmpname[NAME_MAX];
+	struct ext2_dir_entry *prev = NULL;
+	struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
+	for (uint32_t size = 0; size < sb->s_blocksize && entry->ino != 0; size += entry->rec_len)
+	{
+		memcpy(tmpname, entry->name, entry->name_len);
+		tmpname[entry->name_len] = 0;
+
+		if (strcmp(tmpname, name) == 0)
+		{
+			int ino = entry->ino;
+			entry->ino = 0;
+
+			if (prev)
+				prev->rec_len += entry->rec_len;
+
+			return ino;
+		}
+
+		prev = entry;
+		entry = (struct ext2_dir_entry *)((char *)entry + entry->rec_len);
+	}
+	return -ENOENT;
+}
+
+int ext2_unlink(struct vfs_inode *dir, struct vfs_dentry *dentry)
+{
+	struct ext2_inode *ei = EXT2_INODE(dir);
+	struct vfs_superblock *sb = dir->i_sb;
+
+	for (int i = 0, ino = 0; i < ei->i_blocks; ++i)
+	{
+		if ((i < EXT2_INO_UPPER_LEVEL0 && (ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], dentry->d_name, ext2_delete_entry)) > 0) ||
+			((EXT2_INO_UPPER_LEVEL0 <= i && i < EXT2_INO_UPPER_LEVEL1) && (ino = ext2_recursive_block_action(sb, 1, ei->i_block[12], dentry->d_name, ext2_delete_entry)) > 0) ||
+			((EXT2_INO_UPPER_LEVEL1 <= i && i < EXT2_INO_UPPER_LEVEL2) && (ino = ext2_recursive_block_action(sb, 2, ei->i_block[13], dentry->d_name, ext2_delete_entry)) > 0) ||
+			((EXT2_INO_UPPER_LEVEL2 <= i && i < EXT2_INO_UPPER_LEVEL3) && (ino = ext2_recursive_block_action(sb, 3, ei->i_block[14], dentry->d_name, ext2_delete_entry)) > 0))
+		{
+			struct vfs_inode *inode = dir->i_sb->s_op->alloc_inode(dir->i_sb);
+			inode->i_ino = ino;
+			ext2_read_inode(inode);
+
+			inode->i_nlink -= 1;
+			ext2_write_inode(inode);
+			// TODO: If i_nlink == 0, should we delete ext2 inode?
+
+			break;
+		}
+	}
+	return 0;
+}
+
 struct vfs_inode_operations ext2_file_inode_operations = {
 	.truncate = ext2_truncate_inode,
 };
@@ -260,6 +352,8 @@ struct vfs_inode_operations ext2_dir_inode_operations = {
 	.create = ext2_create_inode,
 	.lookup = ext2_lookup_inode,
 	.mknod = ext2_mknod,
+	.unlink = ext2_unlink,
+
 };
 
 struct vfs_inode_operations ext2_special_inode_operations = {};

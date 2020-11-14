@@ -47,7 +47,7 @@ struct vfs_inode *ext2_alloc_inode(struct vfs_superblock *sb)
 {
 	struct vfs_inode *i = init_inode();
 	i->i_sb = sb;
-	atomic_set(&i->i_count, 1);
+	atomic_set(&i->i_count, 0);
 
 	return i;
 }
@@ -104,6 +104,7 @@ void ext2_write_inode(struct vfs_inode *i)
 	ei->i_mtime = i->i_mtime.tv_sec;
 
 	ei->i_blocks = i->i_blocks;
+	ei->i_links_count = i->i_nlink;
 	ei->i_flags = i->i_flags;
 
 	if (S_ISCHR(i->i_mode))

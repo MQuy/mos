@@ -10,9 +10,11 @@ void exit_devfs();
 
 // inode.c
 extern struct vfs_inode_operations devfs_dir_inode_operations;
+extern struct vfs_inode_operations devfs_file_inode_operations;
 extern struct vfs_inode_operations devfs_special_inode_operations;
 
 // file.c
 extern struct vfs_file_operations devfs_dir_operations;
+extern struct vfs_file_operations devfs_file_operations;
 
 #endif

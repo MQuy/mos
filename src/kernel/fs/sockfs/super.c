@@ -70,7 +70,7 @@ static struct vfs_inode *sockfs_alloc_inode(struct vfs_superblock *sb)
 	ei->inode.i_size = 0;
 	ei->inode.i_sb = sb;
 	sema_init(&ei->inode.i_sem, 1);
-	atomic_set(&ei->inode.i_count, 1);
+	atomic_set(&ei->inode.i_count, 0);
 
 	ei->socket.flags = 0;
 	ei->socket.state = SS_UNCONNECTED;

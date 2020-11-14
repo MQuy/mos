@@ -130,6 +130,7 @@
 
 #define ENOMEDIUM 123	/* No medium found */
 #define EMEDIUMTYPE 124 /* Wrong medium type */
+#define ENOTFOUND 125	/* Not found */
 #define ERESTARTSYS 512
 
 #endif
