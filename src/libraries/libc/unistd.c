@@ -1,8 +1,11 @@
+#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <termio.h>
 #include <time.h>
 #include <unistd.h>
+
+#define SYSCALL_RETURN(ret) ({ if (ret < 0) { return errno = -ret, -1; } return 0; })
 
 int isatty(int fd)
 {
@@ -210,4 +213,16 @@ _syscall1(alarm, unsigned int);
 int alarm(unsigned int seconds)
 {
 	return syscall_alarm(seconds);
+}
+
+_syscall2(access, const char *, int);
+int access(const char *path, int amode)
+{
+	SYSCALL_RETURN(syscall_access(path, amode));
+}
+
+_syscall4(faccessat, int, const char *, int, int);
+int faccessat(int fd, const char *path, int amode, int flag)
+{
+	SYSCALL_RETURN(syscall_faccessat(fd, path, amode, flag));
 }

@@ -52,6 +52,14 @@
 #define F_SETSIG 10 /* for sockets. */
 #define F_GETSIG 11 /* for sockets. */
 
+#define AT_FDCWD -2
+
+/* Flag values for faccessat2) et al. */
+#define AT_EACCESS 1
+#define AT_SYMLINK_NOFOLLOW 2
+#define AT_SYMLINK_FOLLOW 4
+#define AT_REMOVEDIR 8
+
 int open(const char* path, int oflag, ...);
 int fcntl(int fd, int cmd, ...);
 int creat(const char* path, mode_t mode);

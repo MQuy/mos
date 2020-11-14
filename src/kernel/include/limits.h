@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+#define PATH_MAX 4096
+#if !defined MAXPATHLEN && defined PATH_MAX
+#define MAXPATHLEN PATH_MAX
+#endif
+
 #define INT_MAX ((int)(~0U >> 1))
 #define INT_MIN (-INT_MAX - 1)
 #define UINT_MAX (~0U)

@@ -272,3 +272,13 @@ int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigne
 	}
 	return entries_size;
 }
+
+void vfs_build_path_backward(struct vfs_dentry *dentry, char *path)
+{
+	if (!dentry->d_parent)
+		return;
+
+	vfs_build_path_backward(dentry->d_parent, path);
+	strcat(path, "/");
+	strcat(path, dentry->d_name);
+}

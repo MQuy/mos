@@ -147,11 +147,6 @@ int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int coun
 
 int ext2_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 {
-	struct vfs_inode *inode = file->f_dentry->d_inode;
-	struct vfs_superblock *sb = inode->i_sb;
-
-	struct page *iter_page;
-
 	int length = new_vma->vm_end - new_vma->vm_start;
 	kalign_heap(PMM_FRAME_SIZE);
 	char *buf = kcalloc(length, sizeof(char));
@@ -162,10 +157,9 @@ int ext2_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 	uint32_t addr = new_vma->vm_start;
 	for (int i = 0; i < length; i += PMM_FRAME_SIZE)
 	{
-		vmm_map_address(current_process->pdir, addr, vmm_get_physical_address(buf + i, false), I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
+		vmm_map_address(current_process->pdir, addr, vmm_get_physical_address((uint32_t)buf + i, false), I86_PTE_PRESENT | I86_PTE_WRITABLE | I86_PTE_USER);
 		addr += PMM_FRAME_SIZE;
 	}
-	int x = *(char *)new_vma->vm_start;
 
 	return 0;
 }

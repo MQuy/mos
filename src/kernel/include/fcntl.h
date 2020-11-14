@@ -5,6 +5,11 @@
 #define SEEK_CUR 1 /* Seek from current position.  */
 #define SEEK_END 2 /* Seek from end of file.  */
 
+#define R_OK 4 /* Test for read permission. */
+#define W_OK 2 /* Test for write permission. */
+#define X_OK 1 /* Test for execute permission. */
+#define F_OK 0 /* Test for existence. */
+
 // file
 #define S_IFMT 00170000
 #define S_IFIFO 0010000
@@ -71,5 +76,13 @@
 #define F_GETOWN 9	/* for sockets. */
 #define F_SETSIG 10 /* for sockets. */
 #define F_GETSIG 11 /* for sockets. */
+
+#define AT_FDCWD -2
+
+/* Flag values for faccessat2) et al. */
+#define AT_EACCESS 1
+#define AT_SYMLINK_NOFOLLOW 2
+#define AT_SYMLINK_FOLLOW 4
+#define AT_REMOVEDIR 8
 
 #endif

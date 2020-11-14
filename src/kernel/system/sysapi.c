@@ -7,6 +7,7 @@
 #include <fs/vfs.h>
 #include <include/errno.h>
 #include <include/fcntl.h>
+#include <include/limits.h>
 #include <ipc/message_queue.h>
 #include <ipc/signal.h>
 #include <net/net.h>
@@ -134,7 +135,7 @@ static int32_t sys_mmap(uint32_t addr, size_t length, uint32_t prot, uint32_t fl
 
 static int32_t sys_munmap(void *addr, size_t len)
 {
-	return do_munmap(current_process->mm, addr, len);
+	return do_munmap(current_process->mm, (uint32_t)addr, len);
 }
 
 static int32_t sys_truncate(const char *path, int32_t length)
@@ -145,6 +146,66 @@ static int32_t sys_truncate(const char *path, int32_t length)
 static int32_t sys_ftruncate(uint32_t fd, int32_t length)
 {
 	return vfs_ftruncate(fd, length);
+}
+
+static int32_t sys_access(const char *path, int amode)
+{
+	if (amode & ~(R_OK || W_OK || X_OK || F_OK))
+		return -EINVAL;
+
+	char *fpath;
+	if (path[0] != '/')
+	{
+		fpath = kcalloc(PATH_MAX, sizeof(char));
+		vfs_build_path_backward(current_process->fs->d_root, fpath);
+		strcpy(fpath, "/");
+		strcpy(fpath, path);
+	}
+	else
+		fpath = path;
+
+	int fd = vfs_open(path, 0);
+
+	if (fpath != path)
+		kfree(fpath);
+	if (fd < 0)
+		return -ENOENT;
+
+	struct vfs_file *file = current_process->files->fd[fd];
+	if (!(amode & R_OK && file->f_mode & FMODE_CAN_READ) || !(amode & W_OK && file->f_mode & FMODE_CAN_WRITE))
+		return -EACCES;
+
+	return vfs_close(fd);
+}
+
+static int32_t sys_faccessat(int fd, const char *path, int amode, int flag)
+{
+	if (flag && flag & ~(AT_SYMLINK_NOFOLLOW || AT_EACCESS))
+		return -EINVAL;
+
+	char *fpath;
+	if (path[0] != '/' && fd != AT_FDCWD)
+	{
+		struct vfs_file *df = current_process->files->fd[fd];
+		if (!df)
+			return -EBADF;
+		if (!(df->f_dentry->d_inode->i_mode & S_IFDIR))
+			return -ENOTDIR;
+
+		fpath = kcalloc(MAXPATHLEN, sizeof(char));
+		vfs_build_path_backward(df->f_dentry, fpath);
+		strcpy(fpath, "/");
+		strcpy(fpath, path);
+	}
+	else
+		fpath = path;
+
+	int ret = sys_access(fpath, amode);
+
+	if (fpath != path)
+		kfree(fpath);
+
+	return ret;
 }
 
 static int32_t sys_brk(uint32_t brk)
@@ -423,7 +484,9 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_unlink 10
 #define __NR_execve 11
+#define __NR_chdir 12
 #define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
@@ -432,7 +495,9 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_setuid 23
 #define __NR_getuid 24
 #define __NR_alarm 27
+#define __NR_access 33
 #define __NR_kill 37
+#define __NR_dup 41
 #define __NR_pipe 42
 #define __NR_times 43
 #define __NR_setgid 46
@@ -466,6 +531,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_stat 106
 #define __NR_fstat 108
 #define __NR_sigprocmask 126
+#define __NR_fchdir 133
 #define __NR_getpgid 132
 #define __NR_getdents 141
 #define __NR_getsid 147
@@ -478,6 +544,8 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
+#define __NR_unlinkat 301
+#define __NR_faccessat 307
 #define __NR_sendto 369
 // TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
 #define __NR_getptsname 370
@@ -509,6 +577,8 @@ static void *syscalls[] = {
 	[__NR_ioctl] = sys_ioctl,
 	[__NR_fcntl] = sys_fcntl,
 	[__NR_umask] = sys_umask,
+	[__NR_access] = sys_access,
+	[__NR_faccessat] = sys_faccessat,
 	[__NR_getuid] = sys_getuid,
 	[__NR_setuid] = sys_setuid,
 	[__NR_getegid] = sys_getegid,

@@ -56,6 +56,10 @@
 #define SEEK_END 2 /* Seek from end of file.  */
 #endif
 
+#define STDIN_FILENO 0	/* standard input file descriptor */
+#define STDOUT_FILENO 1 /* standard output file descriptor */
+#define STDERR_FILENO 2 /* standard error file descriptor */
+
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
 #define __NR_fork 2
@@ -63,7 +67,9 @@
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_unlink 10
 #define __NR_execve 11
+#define __NR_chdir 12
 #define __NR_time 13
 #define __NR_brk 17
 #define __NR_sbrk 18
@@ -72,7 +78,9 @@
 #define __NR_setuid 23
 #define __NR_getuid 24
 #define __NR_alarm 27
+#define __NR_access 33
 #define __NR_kill 37
+#define __NR_dup 41
 #define __NR_pipe 42
 #define __NR_times 43
 #define __NR_setgid 46
@@ -106,6 +114,7 @@
 #define __NR_stat 106
 #define __NR_fstat 108
 #define __NR_sigprocmask 126
+#define __NR_fchdir 133
 #define __NR_getpgid 132
 #define __NR_getdents 141
 #define __NR_getsid 147
@@ -118,6 +127,8 @@
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
+#define __NR_unlinkat 301
+#define __NR_faccessat 307
 #define __NR_sendto 369
 // TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
 #define __NR_getptsname 370
@@ -230,5 +241,14 @@ int getopt(int argc, char *const argv[], const char *optstring);
 extern char *optarg;
 extern int opterr, optind, optopt;
 extern char **environ;
+
+int access(const char *path, int amode);
+int faccessat(int fd, const char *path, int amode, int flag);
+
+int unlink(const char *path);
+int unlinkat(int fd, const char *path, int flag);
+
+int dup(int);
+int chdir(const char *);
 
 #endif
