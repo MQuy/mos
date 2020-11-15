@@ -242,6 +242,25 @@ static int32_t sys_unlinkat(int fd, const char *path, int flag)
 	return ret;
 }
 
+static int32_t sys_fchdir(int fildes)
+{
+	struct vfs_file *filp = current_process->files->fd[fildes];
+	if (!filp)
+		return -EBADF;
+
+	current_process->fs->d_root = filp->f_dentry;
+	return 0;
+}
+
+static int32_t sys_chdir(const char *path)
+{
+	int ret = vfs_open(path, O_RDONLY);
+	if (ret < 0)
+		return ret;
+
+	return sys_fchdir(ret);
+}
+
 static int32_t sys_brk(uint32_t brk)
 {
 	struct mm_struct *current_mm = current_process->mm;
@@ -615,6 +634,8 @@ static void *syscalls[] = {
 	[__NR_faccessat] = sys_faccessat,
 	[__NR_unlink] = sys_unlink,
 	[__NR_unlinkat] = sys_unlinkat,
+	[__NR_chdir] = sys_chdir,
+	[__NR_fchdir] = sys_fchdir,
 	[__NR_getuid] = sys_getuid,
 	[__NR_setuid] = sys_setuid,
 	[__NR_getegid] = sys_getegid,

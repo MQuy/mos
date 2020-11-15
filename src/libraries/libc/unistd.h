@@ -248,7 +248,8 @@ int faccessat(int fd, const char *path, int amode, int flag);
 int unlink(const char *path);
 int unlinkat(int fd, const char *path, int flag);
 
-int dup(int);
-int chdir(const char *);
+int dup(int fildes);
+int chdir(const char *path);
+int fchdir(int fildes);
 
 #endif

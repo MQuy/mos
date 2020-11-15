@@ -205,7 +205,7 @@ struct nameidata
 
 int register_filesystem(struct vfs_file_system_type *fs);
 int unregister_filesystem(struct vfs_file_system_type *fs);
-int find_unused_fd_slot();
+int find_unused_fd_slot(int lowerlimit);
 struct vfs_mount *lookup_mnt(struct vfs_dentry *d);
 void vfs_init(struct vfs_file_system_type *fs, char *dev_name);
 struct vfs_inode *init_inode();

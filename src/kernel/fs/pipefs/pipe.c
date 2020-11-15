@@ -138,11 +138,11 @@ int32_t do_pipe(int32_t *fd)
 	f2->f_op = &pipe_fops;
 	f2->f_dentry = dentry;
 
-	int32_t ufd1 = find_unused_fd_slot();
+	int32_t ufd1 = find_unused_fd_slot(0);
 	current_process->files->fd[ufd1] = f1;
 	fd[0] = ufd1;
 
-	int32_t ufd2 = find_unused_fd_slot();
+	int32_t ufd2 = find_unused_fd_slot(0);
 	current_process->files->fd[ufd2] = f2;
 	fd[1] = ufd2;
 

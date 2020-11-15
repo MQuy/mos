@@ -52,7 +52,6 @@ static char sccsid[] = "@(#)cat.c    5.15 (Berkeley) 5/23/91";
 #include <string.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 /* Most comments after this one not in the original */
@@ -61,6 +60,7 @@ int rval; /* Program exit code */
 char *filename;
 
 void cook_args(), cook_buf(), raw_args(), raw_cat();
+void err __P((int, const char *, ...));
 
 main(argc, argv) int argc;
 char **argv;

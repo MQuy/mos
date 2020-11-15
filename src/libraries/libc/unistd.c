@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <termio.h>
@@ -237,4 +238,21 @@ _syscall3(unlinkat, int, const char *, int);
 int unlinkat(int fd, const char *path, int flag)
 {
 	SYSCALL_RETURN(syscall_unlinkat(fd, path, flag));
+}
+
+int dup(int fildes)
+{
+	return fcntl(fildes, F_DUPFD, 0);
+}
+
+_syscall1(chdir, const char *);
+int chdir(const char *path)
+{
+	return syscall_chdir(path);
+}
+
+_syscall1(fchdir, int);
+int fchdir(int fildes)
+{
+	return syscall_fchdir(fildes);
 }

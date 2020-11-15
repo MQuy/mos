@@ -1,18 +1,28 @@
 #include <fs/vfs.h>
+#include <include/errno.h>
 #include <proc/task.h>
+#include <utils/printf.h>
 
 int do_fcntl(int fd, int cmd, unsigned long arg)
 {
 	struct vfs_file *filp = current_process->files->fd[fd];
-	int ret = 0;
+	if (!filp)
+		return -EBADF;
 
+	int ret = 0;
 	switch (cmd)
 	{
 	case F_GETFL:
 		ret = filp->f_flags;
 		break;
+	case F_DUPFD:
+		if ((ret = find_unused_fd_slot(arg)) < 0)
+			return -EMFILE;
+		current_process->files->fd[ret] = filp;
+		break;
 
 	default:
+		debug_println(DEBUG_INFO, "%s:%d %s cmd %d is not supported", __FILE__, __LINE__, __func__, cmd);
 		break;
 	}
 

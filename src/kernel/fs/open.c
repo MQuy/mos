@@ -88,7 +88,7 @@ struct vfs_file *get_empty_filp()
 
 int32_t vfs_open(const char *path, int32_t flags)
 {
-	int fd = find_unused_fd_slot();
+	int fd = find_unused_fd_slot(0);
 
 	struct nameidata nd;
 	int ret = path_walk(&nd, path, flags, S_IFREG);

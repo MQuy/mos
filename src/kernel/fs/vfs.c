@@ -51,9 +51,9 @@ int unregister_filesystem(struct vfs_file_system_type *fs)
 	return -EINVAL;
 }
 
-int find_unused_fd_slot()
+int find_unused_fd_slot(int lowerlimit)
 {
-	for (int i = 0; i < 256; ++i)
+	for (int i = lowerlimit; i < 256; ++i)
 		if (!current_process->files->fd[i])
 			return i;
 

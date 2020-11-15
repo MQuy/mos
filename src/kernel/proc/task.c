@@ -37,10 +37,11 @@ static struct files_struct *clone_file_descriptor_table(struct process *parent)
 	{
 		memcpy(files, parent->files, sizeof(struct files_struct));
 		// NOTE: MQ 2019-12-30 Increasing file description usage when forking because child refers to the same one
-		for (uint32_t i = 0; i < MAX_FD; ++i)
+		for (int i = 0; i < MAX_FD; ++i)
 			if (parent->files->fd[i])
 				atomic_inc(&parent->files->fd[i]->f_count);
 	}
+
 	sema_init(&files->lock, 1);
 	return files;
 }
