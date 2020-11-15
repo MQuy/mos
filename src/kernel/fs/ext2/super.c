@@ -201,7 +201,7 @@ char *ext2_bread_block(struct vfs_superblock *sb, uint32_t block)
 
 char *ext2_bread(struct vfs_superblock *sb, uint32_t block, uint32_t size)
 {
-	return bread(sb->mnt_devname, block * (sb->s_blocksize / 512), size);
+	return bread(sb->mnt_devname, block * (sb->s_blocksize / BYTES_PER_SECTOR), size);
 }
 
 void ext2_bwrite_block(struct vfs_superblock *sb, uint32_t block, char *buf)
@@ -211,5 +211,5 @@ void ext2_bwrite_block(struct vfs_superblock *sb, uint32_t block, char *buf)
 
 void ext2_bwrite(struct vfs_superblock *sb, uint32_t block, char *buf, uint32_t size)
 {
-	return bwrite(sb->mnt_devname, block * (sb->s_blocksize / 512), buf, size);
+	return bwrite(sb->mnt_devname, block * (sb->s_blocksize / BYTES_PER_SECTOR), buf, size);
 }

@@ -226,10 +226,10 @@ char *load_bmp(char *path)
 
 void set_background_color(struct window *win, uint32_t bg)
 {
-	for (uint32_t i = 0; i < win->graphic.height; ++i)
+	for (int i = 0; i < win->graphic.height; ++i)
 	{
 		char *ibuf = win->graphic.buf + i * win->graphic.width * 4;
-		for (uint32_t j = 0; j < win->graphic.width; ++j)
+		for (int j = 0; j < win->graphic.width; ++j)
 		{
 			(*(uint32_t *)ibuf) = bg;
 			ibuf += 4;

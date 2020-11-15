@@ -33,7 +33,7 @@ int memory_bitmap_first_free()
 {
 	for (uint32_t i = 0; i < max_frames / 32; ++i)
 		if (memory_bitmap[i] != 0xffffffff)
-			for (uint32_t j = 0; j < 32; ++j)
+			for (int j = 0; j < 32; ++j)
 			{
 				int bit = 1 << j;
 				if (!(memory_bitmap[i] & bit))

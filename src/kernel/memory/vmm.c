@@ -177,7 +177,7 @@ struct pdirectory *vmm_create_address_space(struct pdirectory *current)
 	if (!va_dir)
 		return NULL;
 
-	for (uint32_t i = 768; i < 1023; ++i)
+	for (int i = 768; i < 1023; ++i)
 		va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE, true);
 
 	// NOTE: MQ 2019-11-26 Recursive paging for new page directory
@@ -264,7 +264,7 @@ struct pdirectory *vmm_fork(struct pdirectory *va_dir)
 	uint32_t heap_current = (uint32_t)sbrk(0);
 
 	// NOTE: MQ 2019-12-15 Any heap changes via malloc is forbidden
-	for (uint32_t ipd = 0; ipd < 768; ++ipd)
+	for (int ipd = 0; ipd < 768; ++ipd)
 		if (is_page_enabled(va_dir->m_entries[ipd]))
 		{
 			struct ptable *forked_pt = (struct ptable *)heap_current;
@@ -274,7 +274,7 @@ struct pdirectory *vmm_fork(struct pdirectory *va_dir)
 
 			heap_current += sizeof(struct ptable);
 			struct ptable *pt = (struct ptable *)(PAGE_TABLE_BASE + ipd * PMM_FRAME_SIZE);
-			for (uint32_t ipt = 0; ipt < PAGES_PER_TABLE; ++ipt)
+			for (int ipt = 0; ipt < PAGES_PER_TABLE; ++ipt)
 			{
 				if (is_page_enabled(pt->m_entries[ipt]))
 				{

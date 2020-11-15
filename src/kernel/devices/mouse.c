@@ -180,7 +180,7 @@ static void mouse_wait(uint32_t type)
 {
 	if (type == 0)
 	{
-		for (uint32_t i = 0; i < 100000; i++)
+		for (int i = 0; i < 100000; i++)
 		{
 			if ((inportb(MOUSE_STATUS) & 1) == 1)
 			{
@@ -191,7 +191,7 @@ static void mouse_wait(uint32_t type)
 	}
 	else
 	{
-		for (uint32_t i = 0; i < 100000; i++)
+		for (int i = 0; i < 100000; i++)
 		{
 			if ((inportb(MOUSE_STATUS) & 2) == 0)
 			{

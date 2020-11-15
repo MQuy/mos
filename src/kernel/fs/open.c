@@ -1,3 +1,4 @@
+#include <fs/buffer.h>
 #include <include/errno.h>
 #include <include/limits.h>
 #include <memory/vmm.h>
@@ -176,7 +177,7 @@ static int do_getattr(struct vfs_mount *mnt, struct vfs_dentry *dentry, struct k
 		struct vfs_superblock *s = inode->i_sb;
 		unsigned blocks;
 		blocks = (stat->st_size + s->s_blocksize - 1) >> s->s_blocksize_bits;
-		stat->st_blocks = (s->s_blocksize / 512) * blocks;
+		stat->st_blocks = (s->s_blocksize / BYTES_PER_SECTOR) * blocks;
 		stat->st_blksize = s->s_blocksize;
 	}
 	return 0;

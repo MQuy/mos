@@ -24,9 +24,9 @@ bool pkmap_bitmap_test(uint32_t frame)
 
 int get_pkmap_free()
 {
-	for (uint32_t i = 0; i < LAST_PKMAP; ++i)
+	for (int i = 0; i < LAST_PKMAP; ++i)
 		if (pkmap[i] != 0xffffffff)
-			for (uint32_t j = 0; j < 32; ++j)
+			for (int j = 0; j < 32; ++j)
 			{
 				int bit = 1 << j;
 				if (!(pkmap[i] & bit))
@@ -44,7 +44,7 @@ int get_pkmaps_free(size_t size)
 	if (size == 1)
 		return get_pkmap_free();
 
-	for (uint32_t i = 0; i < LAST_PKMAP; i++)
+	for (int i = 0; i < LAST_PKMAP; i++)
 		if (pkmap[i] != 0xffffffff)
 			for (int j = 0; j < 32; j++)
 			{  //! test each bit in the dword

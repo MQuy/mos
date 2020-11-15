@@ -249,10 +249,10 @@ static void draw_desktop_icons(char *buf)
 		// 4 ------- 24 ----- 4
 		if (icon->active)
 		{
-			for (uint32_t j = 0; j < 56; ++j)
+			for (int j = 0; j < 56; ++j)
 			{
 				char *iblock = box_graphic->buf + j * box_graphic->width * 4 + 16 * 4;
-				for (uint32_t i = 0; i < 56; ++i)
+				for (int i = 0; i < 56; ++i)
 				{
 					iblock[0] = 0xAA;
 					iblock[1] = 0xAA;

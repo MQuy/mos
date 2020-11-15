@@ -1,43 +1,35 @@
+#include <fs/buffer.h>
 #include <fs/vfs.h>
 #include <include/errno.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <system/time.h>
 #include <utils/math.h>
+#include <utils/printf.h>
 #include <utils/string.h>
 
 #include "ext2.h"
 
-static void ext2_read_direct_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
+static void ext2_read_nth_block(struct vfs_superblock *sb, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count, int level)
 {
-	char *block_buf = ext2_bread_block(sb, block);
-	int32_t pstart = (ppos > *p) ? ppos - *p : 0;
-	uint32_t pend = ((ppos + count) < (*p + sb->s_blocksize)) ? (*p + sb->s_blocksize - ppos - count) : 0;
-	memcpy(*iter_buf, block_buf + pstart, sb->s_blocksize - pstart - pend);
-	ext2_bwrite_block(sb, block, block_buf);
-	*p += sb->s_blocksize;
-	*iter_buf += sb->s_blocksize - pstart - pend;
-}
+	assert(level <= 3);
 
-static void ext2_read_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
-{
-	uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
-	for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
-		ext2_read_direct_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
-}
-
-static void ext2_read_doubly_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
-{
-	uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
-	for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
-		ext2_read_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
-}
-
-static void ext2_read_triply_indirect_block(struct vfs_superblock *sb, struct ext2_inode *ei, uint32_t block, char **iter_buf, loff_t ppos, uint32_t *p, size_t count)
-{
-	uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
-	for (uint32_t i = 0; *p < ppos + count && i < 256; ++i)
-		ext2_read_triply_indirect_block(sb, ei, block_buf[i], iter_buf, ppos, p, count);
+	if (level > 0)
+	{
+		uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
+		for (uint32_t i = 0, times = sb->s_blocksize / 4; *p < ppos + count && i < times; ++i)
+			ext2_read_nth_block(sb, block_buf[i], iter_buf, ppos, p, count, level - 1);
+	}
+	else
+	{
+		char *block_buf = ext2_bread_block(sb, block);
+		int32_t pstart = (ppos > *p) ? ppos - *p : 0;
+		uint32_t pend = ((ppos + count) < (*p + sb->s_blocksize)) ? (*p + sb->s_blocksize - ppos - count) : 0;
+		memcpy(*iter_buf, block_buf + pstart, sb->s_blocksize - pstart - pend);
+		ext2_bwrite_block(sb, block, block_buf);
+		*p += sb->s_blocksize;
+		*iter_buf += sb->s_blocksize - pstart - pend;
+	}
 }
 
 static ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
@@ -52,26 +44,14 @@ static ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, lo
 	while (p < ppos + count)
 	{
 		uint32_t relative_block = p / sb->s_blocksize;
-		if (relative_block < 12)
-		{
-			uint32_t block = ei->i_block[relative_block];
-			ext2_read_direct_block(sb, ei, block, &iter_buf, ppos, &p, count);
-		}
-		else if (relative_block < 268)
-		{
-			uint32_t block = ei->i_block[12];
-			ext2_read_indirect_block(sb, ei, block, &iter_buf, ppos, &p, count);
-		}
-		else if (relative_block < 65804)
-		{
-			uint32_t block = ei->i_block[13];
-			ext2_read_doubly_indirect_block(sb, ei, block, &iter_buf, ppos, &p, count);
-		}
-		else if (relative_block < 16843020)
-		{
-			uint32_t block = ei->i_block[14];
-			ext2_read_triply_indirect_block(sb, ei, block, &iter_buf, ppos, &p, count);
-		}
+		if (relative_block < EXT2_INO_UPPER_LEVEL0)
+			ext2_read_nth_block(sb, ei->i_block[relative_block], &iter_buf, ppos, &p, count, 0);
+		else if (relative_block < EXT2_INO_UPPER_LEVEL1)
+			ext2_read_nth_block(sb, ei->i_block[12], &iter_buf, ppos, &p, count, 1);
+		else if (relative_block < EXT2_INO_UPPER_LEVEL2)
+			ext2_read_nth_block(sb, ei->i_block[13], &iter_buf, ppos, &p, count, 2);
+		else if (relative_block < EXT2_INO_UPPER_LEVEL3)
+			ext2_read_nth_block(sb, ei->i_block[14], &iter_buf, ppos, &p, count, 3);
 	}
 
 	file->f_pos = ppos + count;
@@ -87,7 +67,7 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 	if (ppos + count > inode->i_size)
 	{
 		inode->i_size = ppos + count;
-		inode->i_blocks = div_ceil(ppos + count, 512);
+		inode->i_blocks = div_ceil(ppos + count, BYTES_PER_SECTOR);
 		sb->s_op->write_inode(inode);
 	}
 
@@ -122,7 +102,7 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 	return count;
 }
 
-int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count)
+static int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count)
 {
 	char *buf = kcalloc(count, sizeof(char));
 	count = ext2_read_file(file, buf, count, file->f_pos);
@@ -145,7 +125,7 @@ int ext2_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int coun
 	return entries_size;
 }
 
-int ext2_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
+static int ext2_mmap_file(struct vfs_file *file, struct vm_area_struct *new_vma)
 {
 	int length = new_vma->vm_end - new_vma->vm_start;
 	kalign_heap(PMM_FRAME_SIZE);

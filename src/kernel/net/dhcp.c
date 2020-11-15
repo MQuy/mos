@@ -185,7 +185,7 @@ int dhcp_offer_parse_options(uint8_t *options, uint32_t *dhcp_server_ip)
 	uint32_t opt_dhcp_server_ip = 0;
 	uint8_t opt_message_type = 0;
 
-	for (uint32_t i = 0; options[i] != 0xFF;)
+	for (int i = 0; options[i] != 0xFF;)
 	{
 		if (options[i] == 53)
 			dhcp_get_option_value(&options[i + 2], &opt_message_type, 1);
@@ -208,7 +208,7 @@ int dhcp_ack_parse_options(uint8_t *options, uint32_t *subnet_mask, uint32_t *ro
 	uint16_t opt_mtu = ntohs(DEFAULT_MTU);
 	uint8_t opt_message_type = 0;
 
-	for (uint32_t i = 0; options[i] != 0xFF;)
+	for (int i = 0; options[i] != 0xFF;)
 	{
 		if (options[i] == 1)
 			dhcp_get_option_value(&options[i + 2], &opt_subnet_mask, 4);
