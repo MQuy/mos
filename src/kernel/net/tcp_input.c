@@ -328,7 +328,7 @@ void tcp_handler_established(struct socket *sock, struct sk_buff *skb)
 		{
 			// should be combined with above, but I am skeptical
 			if (payload_len != 0 || tsk->snd_wnd != seg_wnd)
-				debug_println(DEBUG_WARNING, "fast retransmit: duplicated ack is in wrong state");
+				log("fast retransmit: duplicated ack is in wrong state");
 
 			tsk->number_of_dup_acks++;
 

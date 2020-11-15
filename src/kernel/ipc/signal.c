@@ -3,8 +3,8 @@
 #include <include/bitops.h>
 #include <include/errno.h>
 #include <proc/task.h>
+#include <utils/debug.h>
 #include <utils/hashmap.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 // TODO: MQ 2020-08-21 implement signal jump

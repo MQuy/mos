@@ -1,4 +1,4 @@
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 size_t strnlen(const char *str, size_t maxlen)

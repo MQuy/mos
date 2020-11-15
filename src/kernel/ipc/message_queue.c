@@ -5,8 +5,8 @@
 #include <include/fcntl.h>
 #include <locking/semaphore.h>
 #include <memory/vmm.h>
+#include <utils/debug.h>
 #include <utils/hashmap.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 static const char defaultdir[] = "/dev/mqueue/";
@@ -236,9 +236,9 @@ int32_t mq_receive(int32_t fd, char *user_buf, uint32_t priority, uint32_t msize
 
 void mq_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "Message Queue: Initializing");
+	log("Message Queue: Initializing");
 
 	hashmap_init(&mq_map, hashmap_hash_string, hashmap_compare_string, 0);
 
-	DEBUG &&debug_println(DEBUG_INFO, "Message Queue: Done");
+	log("Message Queue: Done");
 }

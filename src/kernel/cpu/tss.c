@@ -1,7 +1,7 @@
 #include "tss.h"
 
 #include <cpu/gdt.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 extern void tss_flush();
@@ -16,7 +16,7 @@ void tss_set_stack(uint32_t kernelSS, uint32_t kernelESP)
 
 void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 {
-	DEBUG &&debug_println(DEBUG_INFO, "TSS: Initializing");
+	log("TSS: Initializing");
 
 	//! install TSS descriptor
 	uint32_t base = (uint32_t)&TSS;
@@ -42,5 +42,5 @@ void install_tss(uint32_t idx, uint32_t kernelSS, uint32_t kernelESP)
 
 	tss_flush();
 
-	DEBUG &&debug_println(DEBUG_INFO, "TSS: Done");
+	log("TSS: Done");
 }

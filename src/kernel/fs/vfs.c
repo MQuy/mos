@@ -3,7 +3,7 @@
 #include <include/errno.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #include "char_dev.h"
@@ -139,27 +139,27 @@ static void init_rootfs(struct vfs_file_system_type *fs_type, char *dev_name)
 // we use device mounted name as identifier https://en.wikibooks.org/wiki/Guide_to_Unix/Explanations/Filesystems_and_Swap#Disk_Partitioning
 void vfs_init(struct vfs_file_system_type *fs, char *dev_name)
 {
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Initializing");
+	log("VFS: Initializing");
 
 	INIT_LIST_HEAD(&vfsmntlist);
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount ext2");
+	log("VFS: Mount ext2");
 	init_rootfs(fs, dev_name);
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount devfs");
+	log("VFS: Mount devfs");
 	init_devfs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount mqueuefs");
+	log("VFS: Mount mqueuefs");
 	init_mqueuefs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount tmpfs");
+	log("VFS: Mount tmpfs");
 	init_tmpfs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount sockfs");
+	log("VFS: Mount sockfs");
 	init_sockfs();
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Mount chrdev");
+	log("VFS: Mount chrdev");
 	chrdev_init();
 
-	DEBUG &&debug_println(DEBUG_INFO, "VFS: Done");
+	log("VFS: Done");
 }

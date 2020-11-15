@@ -11,8 +11,8 @@
 #include <proc/elf.h>
 #include <system/sysapi.h>
 #include <system/time.h>
+#include <utils/debug.h>
 #include <utils/hashmap.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 extern void enter_usermode(uint32_t eip, uint32_t esp, uint32_t failed_address);
@@ -187,16 +187,16 @@ struct process *create_system_process(const char *pname, void *func, int32_t pri
 
 void task_init(void *func)
 {
-	DEBUG &&debug_println(DEBUG_INFO, "Task: Initializing");
+	log("Task: Initializing");
 
 	mprocess = kcalloc(1, sizeof(struct hashmap));
 	hashmap_init(mprocess, hashmap_hash_uint32, hashmap_compare_uint32, 0);
 	sched_init();
 
-	DEBUG &&debug_println(DEBUG_INFO, "Task: Setup swapper process");
+	log("Task: Setup swapper process");
 	setup_swapper_process();
 
-	DEBUG &&debug_println(DEBUG_INFO, "Task: Setup init process");
+	log("Task: Setup init process");
 	struct process *init = create_process(current_process, "init", current_process->pdir);
 	init->gid = init->pid;
 	init->sid = init->pid;
@@ -208,7 +208,7 @@ void task_init(void *func)
 	register_interrupt_handler(IRQ8, irq_schedule_handler);
 	register_interrupt_handler(14, thread_page_fault);
 
-	DEBUG &&debug_println(DEBUG_INFO, "Task: Switch to init process");
+	log("Task: Switch to init process");
 
 	schedule();
 }

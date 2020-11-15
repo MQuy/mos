@@ -9,8 +9,8 @@
 #include <net/net.h>
 #include <net/sk_buff.h>
 #include <proc/task.h>
+#include <utils/debug.h>
 #include <utils/math.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 #define RAW_HEADER_SIZE (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet))

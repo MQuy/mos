@@ -1,7 +1,7 @@
 #include <include/errno.h>
 #include <stdbool.h>
+#include <utils/debug.h>
 #include <utils/math.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 #include "vmm.h"

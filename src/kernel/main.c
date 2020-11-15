@@ -34,7 +34,6 @@
 #include "system/time.h"
 #include "system/timer.h"
 #include "utils/math.h"
-#include "utils/printf.h"
 #include "utils/string.h"
 
 extern struct vfs_file_system_type ext2_fs_type;

@@ -5,7 +5,7 @@
 #include <include/ioctls.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 static struct list_head tty_drivers;
@@ -202,7 +202,7 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 	case TIOCSPGRP:
 		return tiocspgrp(tty, arg);
 	default:
-		debug_println(DEBUG_INFO, "%s:%d %s cmd %d is not supported", __FILE__, __LINE__, __func__, cmd);
+		assert_not_implemented("cmd %d is not supported", cmd);
 		break;
 	}
 	return 0;

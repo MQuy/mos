@@ -4,7 +4,7 @@
 #include <ipc/signal.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
 #include "tty.h"
 

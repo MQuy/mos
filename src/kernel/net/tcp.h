@@ -7,7 +7,7 @@
 #include <net/sk_buff.h>
 #include <stdint.h>
 #include <system/timer.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
 #define MAX_OPTION_LEN 40
 #define MAX_TCP_HEADER (sizeof(struct ethernet_packet) + sizeof(struct ip4_packet) + sizeof(struct tcp_packet))

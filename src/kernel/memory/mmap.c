@@ -1,8 +1,8 @@
 #include <fs/vfs.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
+#include <utils/debug.h>
 #include <utils/math.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 #include "vmm.h"

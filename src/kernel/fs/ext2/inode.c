@@ -4,8 +4,8 @@
 #include <include/limits.h>
 #include <memory/vmm.h>
 #include <system/time.h>
+#include <utils/debug.h>
 #include <utils/math.h>
-#include <utils/printf.h>
 #include <utils/string.h>
 
 #include "ext2.h"

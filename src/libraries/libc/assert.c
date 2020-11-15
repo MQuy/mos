@@ -32,14 +32,19 @@ int debug_println(enum debug_level level, const char *fmt, ...)
 	return out;
 }
 
-void __assert_debug(char *file, int line, char *func, ...)
+void __dbg(enum debug_level level, bool prefix, const char *file, int line, const char *func, ...)
 {
 	va_list args;
 	va_start(args, func);
-	char *message = va_arg(args, char *);
-	va_end(args);
+	const char *fmt = va_arg(args, const char *);
 
-	if (message)
-		debug_println(DEBUG_INFO, "%s", message);
-	debug_println(DEBUG_ERROR, "%s:%d %s", file, line, func);
+	char msg[1024];
+	if (prefix)
+		sprintf(msg, "%s on %s:%d %s\n", func, file, line, fmt);
+	else
+		sprintf(msg, "%s\n", fmt);
+	vsprintf(debug_buffer, msg, args);
+	syscall_dprintf(level, debug_buffer);
+
+	va_end(args);
 }

@@ -1,7 +1,7 @@
 #include <fs/vfs.h>
 #include <include/errno.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
 int do_fcntl(int fd, int cmd, unsigned long arg)
 {
@@ -22,7 +22,7 @@ int do_fcntl(int fd, int cmd, unsigned long arg)
 		break;
 
 	default:
-		debug_println(DEBUG_INFO, "%s:%d %s cmd %d is not supported", __FILE__, __LINE__, __func__, cmd);
+		assert_not_implemented("cmd %d is not supported", cmd);
 		break;
 	}
 

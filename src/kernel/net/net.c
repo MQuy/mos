@@ -13,7 +13,7 @@
 #include <net/neighbour.h>
 #include <net/sk_buff.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 extern volatile uint32_t scheduler_lock_counter;
@@ -211,13 +211,13 @@ int net_default_rx_handler(struct sk_buff *skb)
 			if (skb->h.icmph->code == ICMP_ECHO && skb->h.icmph->type == ICMP_REQUEST &&
 				skb->nh.iph->dest_ip == htonl(current_netdev->local_ip))
 			{
-				if (DEBUG)
+				if (KERNEL_DEBUG)
 				{
 					char dest_ip_text[sizeof "255.255.255.255"];
 					inet_ntop(htonl(skb->nh.iph->dest_ip), dest_ip_text, sizeof(dest_ip_text));
 					char source_ip_text[sizeof "255.255.255.255"];
 					inet_ntop(htonl(skb->nh.iph->source_ip), source_ip_text, sizeof(source_ip_text));
-					debug_println(DEBUG_INFO, "Ping: %s <-> %s", dest_ip_text, source_ip_text);
+					log("Ping: %s <-> %s", dest_ip_text, source_ip_text);
 				}
 
 				uint32_t payload_len = ntohs(skb->nh.iph->total_length) - sizeof(struct ip4_packet) - sizeof(struct icmp_packet);
@@ -238,31 +238,30 @@ int net_default_rx_handler(struct sk_buff *skb)
 
 		if (skb->nh.arph->tpa == htonl(current_netdev->local_ip))
 		{
-			if (DEBUG)
+			if (KERNEL_DEBUG)
 			{
 				char dest_ip_text[sizeof "255.255.255.255"];
 				inet_ntop(htonl(skb->nh.arph->tpa), dest_ip_text, sizeof(dest_ip_text));
 				char source_ip_text[sizeof "255.255.255.255"];
 				inet_ntop(htonl(skb->nh.arph->spa), source_ip_text, sizeof(source_ip_text));
-				debug_println(DEBUG_INFO,
-							  "ARP: %s at %x:%x:%x:%x:%x:%x, tell %s",
-							  dest_ip_text,
-							  current_netdev->dev_addr[0], current_netdev->dev_addr[1], current_netdev->dev_addr[2], current_netdev->dev_addr[3], current_netdev->dev_addr[4], current_netdev->dev_addr[5],
-							  source_ip_text);
+				log(
+					"ARP: %s at %x:%x:%x:%x:%x:%x, tell %s",
+					dest_ip_text,
+					current_netdev->dev_addr[0], current_netdev->dev_addr[1], current_netdev->dev_addr[2], current_netdev->dev_addr[3], current_netdev->dev_addr[4], current_netdev->dev_addr[5],
+					source_ip_text);
 			}
 
 			arp_send(current_netdev->dev_addr, current_netdev->local_ip, skb->nh.arph->sha, ntohl(skb->nh.arph->spa), ARP_REPLY);
 		}
 		else if (skb->nh.arph->tpa == skb->nh.arph->spa && is_broadcast_mac_address(skb->nh.arph->tha))
 		{
-			if (DEBUG)
+			if (KERNEL_DEBUG)
 			{
 				char source_ip_text[sizeof "255.255.255.255"];
 				inet_ntop(htonl(skb->nh.arph->spa), source_ip_text, sizeof(source_ip_text));
-				debug_println(DEBUG_INFO,
-							  "ARP: %s at %x:%x:%x:%x:%x:%x",
-							  source_ip_text,
-							  current_netdev->dev_addr[0], current_netdev->dev_addr[1], current_netdev->dev_addr[2], current_netdev->dev_addr[3], current_netdev->dev_addr[4], current_netdev->dev_addr[5]);
+				log("ARP: %s at %x:%x:%x:%x:%x:%x",
+					source_ip_text,
+					current_netdev->dev_addr[0], current_netdev->dev_addr[1], current_netdev->dev_addr[2], current_netdev->dev_addr[3], current_netdev->dev_addr[4], current_netdev->dev_addr[5]);
 			}
 
 			neighbour_update_mapping(skb->nh.arph->sha, skb->nh.arph->spa);
@@ -336,10 +335,10 @@ void net_init()
 	INIT_LIST_HEAD(&lsocket);
 	INIT_LIST_HEAD(&lrx_skb);
 
-	DEBUG &&debug_println(DEBUG_INFO, "Net: Setup neighbour");
+	log("Net: Setup neighbour");
 	neighbour_init();
 
-	DEBUG &&debug_println(DEBUG_INFO, "Net: Setup net process");
+	log("Net: Setup net process");
 	net_process = create_system_process("net", net_rx_loop, 0);
 	net_thread = net_process->thread;
 }

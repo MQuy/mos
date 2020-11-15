@@ -4,7 +4,7 @@
 #include <cpu/idt.h>
 #include <include/errno.h>
 #include <memory/vmm.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #define MAX_ATA_DEVICE 4
@@ -141,7 +141,7 @@ static struct ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8
 
 	if (ata_identify(device) == ATA_IDENTIFY_SUCCESS)
 	{
-		DEBUG &&debug_println(DEBUG_INFO, "ATA: Identified %s", dev_name);
+		log("ATA: Identified %s", dev_name);
 		device->is_harddisk = true;
 		device->dev_name = dev_name;
 		devices[number_of_actived_devices++] = *device;
@@ -149,7 +149,7 @@ static struct ata_device *ata_detect(uint16_t io_addr1, uint16_t io_addr2, uint8
 	}
 	else if (atapi_identify(device) == ATA_IDENTIFY_SUCCESS)
 	{
-		DEBUG &&debug_println(DEBUG_INFO, "ATAPI: Identified %s", dev_name);
+		log("ATAPI: Identified %s", dev_name);
 		device->is_harddisk = false;
 		device->dev_name = "/dev/cdrom";
 		devices[number_of_actived_devices++] = *device;
@@ -258,7 +258,7 @@ struct ata_device *get_ata_device(char *dev_name)
 
 uint8_t ata_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "ATA: Initializing");
+	log("ATA: Initializing");
 
 	register_interrupt_handler(IRQ14, ata_irq);
 	register_interrupt_handler(IRQ15, ata_irq);
@@ -268,6 +268,6 @@ uint8_t ata_init()
 	ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, true, "/dev/hdc");
 	ata_detect(ATA1_IO_ADDR1, ATA1_IO_ADDR2, ATA1_IRQ, false, "/dev/hdd");
 
-	DEBUG &&debug_println(DEBUG_INFO, "ATA: DONE");
+	log("ATA: DONE");
 	return 0;
 }

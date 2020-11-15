@@ -3,22 +3,9 @@
 #include <cpu/hal.h>
 #include <cpu/idt.h>
 #include <include/cdefs.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
-//! something is wrong--bail out
-static void kernel_panic(const char *fmt, ...)
-{
-	disable_interrupts();
-
-	va_list args;
-	va_start(args, fmt);
-	va_end(args);
-
-	DEBUG &&debug_println(DEBUG_FATAL, fmt, args);
-
-	for (;;)
-		;
-}
+#define kernel_panic(fmt, ...) ({ disable_interrupts(); err(fmt, ##__VA_ARGS__); while(true); })
 
 static int32_t divide_by_zero_fault(struct interrupt_registers *regs)
 {
@@ -146,7 +133,7 @@ static int32_t simd_fpu_fault(struct interrupt_registers *regs)
 
 void exception_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "[exception] - Initializing");
+	log("[exception] - Initializing");
 
 	register_interrupt_handler(0, (I86_IRQ_HANDLER)divide_by_zero_fault);
 	register_interrupt_handler(1, (I86_IRQ_HANDLER)single_step_trap);
@@ -167,5 +154,5 @@ void exception_init()
 	register_interrupt_handler(18, (I86_IRQ_HANDLER)machine_check_abort);
 	register_interrupt_handler(19, (I86_IRQ_HANDLER)simd_fpu_fault);
 
-	DEBUG &&debug_println(DEBUG_INFO, "[exception] - Done");
+	log("[exception] - Done");
 }

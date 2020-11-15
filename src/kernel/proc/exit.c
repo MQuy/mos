@@ -1,7 +1,7 @@
 #include <devices/char/tty.h>
 #include <include/atomic.h>
 #include <ipc/signal.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
 #include "task.h"
 
@@ -73,7 +73,7 @@ void do_exit(int32_t code)
 	current_process->exit_code = code;
 	exit_notify(current_process);
 
-	debug_println(DEBUG_INFO, "Process: Exit %d", current_process->pid);
+	log("Process: Exit %d", current_process->pid);
 	unlock_scheduler();
 
 	schedule();
@@ -131,7 +131,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 		}
 		ret = 0;
 	}
-	debug_println(DEBUG_INFO, "Process: Waiting done %d", current_process->pid);
+	log("Process: Waiting done %d", current_process->pid);
 
 	return ret;
 }

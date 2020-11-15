@@ -14,7 +14,7 @@
 #include <proc/elf.h>
 #include <proc/task.h>
 #include <system/time.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 extern volatile uint64_t jiffies;

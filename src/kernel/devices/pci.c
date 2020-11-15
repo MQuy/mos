@@ -2,7 +2,7 @@
 
 #include <cpu/hal.h>
 #include <memory/vmm.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
 #include "ata.h"
 
@@ -186,10 +186,10 @@ struct pci_device *get_pci_device(int32_t vendorID, int32_t deviceID)
 
 void pci_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "PCI: Initializing");
+	log("PCI: Initializing");
 
 	INIT_LIST_HEAD(&ldevs);
 	pci_scan_buses();
 
-	DEBUG &&debug_println(DEBUG_INFO, "PCI: Done");
+	log("PCI: Done");
 }

@@ -317,7 +317,7 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			{
 				last_line->seconds = time(NULL);
 				struct tm *now = localtime(&last_line->seconds);
-				debug_println(DEBUG_INFO, "Terminal: Line is recorded at %d:%d:%d", now->tm_hour, now->tm_min, now->tm_sec);
+				log("Terminal: Line is recorded at %d:%d:%d", now->tm_hour, now->tm_min, now->tm_sec);
 				free(now);
 			}
 

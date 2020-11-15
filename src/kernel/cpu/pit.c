@@ -4,7 +4,7 @@
 #include <include/list.h>
 #include <memory/vmm.h>
 #include <system/time.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 
 #include "idt.h"
 #include "pic.h"
@@ -48,7 +48,7 @@ static int32_t pit_interrupt_handler(struct interrupt_registers *regs)
 // pit should only be used for keeping track of time precision
 void pit_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "PIT: Initializing");
+	log("PIT: Initializing");
 
 	int divisor = 1193181 / PIT_TICKS_PER_SECOND;
 
@@ -58,5 +58,5 @@ void pit_init()
 
 	register_interrupt_handler(IRQ0, pit_interrupt_handler);
 
-	DEBUG &&debug_println(DEBUG_INFO, "PIT: Done");
+	log("PIT: Done");
 }

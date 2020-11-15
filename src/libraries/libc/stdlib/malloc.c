@@ -28,14 +28,14 @@ void assert_block_valid(struct block_meta *block, bool throw)
 		if (throw)
 			__asm__ __volatile("int $0x01");
 		else
-			debug_println(DEBUG_WARNING, "Malloc: 0x%x is not allocated by malloc", block + 1);
+			log("Malloc: 0x%x is not allocated by malloc", block + 1);
 	}
 	else if (block->size > UPPER_LIMIT)
 	{
 		if (throw)
 			__asm__ __volatile("int $0x01");
 		else
-			debug_println(DEBUG_WARNING, "Malloc: block 0x%x is larger than 0x%x", block + 1, UPPER_LIMIT);
+			log("Malloc: block 0x%x is larger than 0x%x", block + 1, UPPER_LIMIT);
 	}
 }
 

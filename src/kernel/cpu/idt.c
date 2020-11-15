@@ -2,7 +2,7 @@
 
 #include <include/list.h>
 #include <memory/vmm.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #include "pic.h"
@@ -50,21 +50,21 @@ static void idt_default_handler(struct interrupt_registers *regs)
 
 	uint8_t int_no = regs->int_no & 0xff;
 
-	DEBUG &&debug_println(DEBUG_ERROR, "IDT: unhandled exception %d", int_no);
+	err("IDT: unhandled exception %d", int_no);
 
 	halt();
 }
 
 void idt_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "IDT: Initializing");
+	log("IDT: Initializing");
 
 	_idtr.limit = sizeof(struct idt_descriptor) * I86_MAX_INTERRUPTS - 1;
 	_idtr.base = (uint32_t)_idt;
 
 	memset(_idt, 0, sizeof(_idt));
 
-	DEBUG &&debug_println(DEBUG_INFO, "IDT: Install x86 default handler for 256 idt vectors");
+	log("IDT: Install x86 default handler for 256 idt vectors");
 	for (int i = 0; i < 256; ++i)
 	{
 		setvect(i, idt_default_handler);
@@ -72,7 +72,7 @@ void idt_init()
 	}
 
 	// Install the ISRs
-	DEBUG &&debug_println(DEBUG_INFO, "IDT: Install ISRs");
+	log("IDT: Install ISRs");
 	setvect(0, (I86_IVT)isr0);
 	setvect(1, (I86_IVT)isr1);
 	setvect(2, (I86_IVT)isr2);
@@ -107,7 +107,7 @@ void idt_init()
 	setvect(31, (I86_IVT)isr31);
 
 	// Install the IRQs
-	DEBUG &&debug_println(DEBUG_INFO, "IDT: Install IRQs");
+	log("IDT: Install IRQs");
 	setvect(32, (I86_IVT)irq0);
 	setvect(33, (I86_IVT)irq1);
 	setvect(34, (I86_IVT)irq2);
@@ -129,9 +129,9 @@ void idt_init()
 
 	idt_flush((uint32_t)&_idtr);
 
-	DEBUG &&debug_println(DEBUG_INFO, "IDT: Remapping PIC");
+	log("IDT: Remapping PIC");
 	pic_remap();
-	DEBUG &&debug_println(DEBUG_INFO, "IDT: Done");
+	log("IDT: Done");
 }
 
 void register_interrupt_handler(uint32_t n, I86_IRQ_HANDLER handler)
@@ -157,7 +157,7 @@ static void handle_interrupt(struct interrupt_registers *regs)
 	}
 	else
 	{
-		DEBUG &&debug_println(DEBUG_ERROR, "IDT: unhandled interrupt %d", int_no);
+		err("IDT: unhandled interrupt %d", int_no);
 	}
 }
 

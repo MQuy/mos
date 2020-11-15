@@ -9,7 +9,7 @@
 #include <include/errno.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #define MOUSE_PORT 0x60
@@ -218,11 +218,11 @@ static uint8_t mouse_input(void)
 
 void mouse_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "Mouse: Initializing");
+	log("Mouse: Initializing");
 	INIT_LIST_HEAD(&nodelist);
 	INIT_LIST_HEAD(&hwait.list);
 
-	DEBUG &&debug_println(DEBUG_INFO, "Mouse: Mount dev");
+	log("Mouse: Mount dev");
 	register_chrdev(&cdev_mouse);
 	vfs_mknod("/dev/input/mouse", S_IFCHR, cdev_mouse.dev);
 
@@ -264,5 +264,5 @@ void mouse_init()
 	mouse_output(0xF4);
 	mouse_input();
 
-	DEBUG &&debug_println(DEBUG_INFO, "Mouse: Done");
+	log("Mouse: Done");
 }

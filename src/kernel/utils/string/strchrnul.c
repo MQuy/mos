@@ -1,4 +1,4 @@
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 char *strchrnul(const char *s, int c_in)

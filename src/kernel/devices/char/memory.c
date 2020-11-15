@@ -1,7 +1,7 @@
 #include <fs/char_dev.h>
 #include <include/errno.h>
+#include <utils/debug.h>
 #include <utils/math.h>
-#include <utils/printf.h>
 
 #define MEMORY_MAJOR 1
 #define NULL_DEVICE 3
@@ -82,11 +82,11 @@ static struct char_device cdev_random = (struct char_device)DECLARE_CHRDEV("rand
 
 void chrdev_memory_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "Devfs: Mount null");
+	log("Devfs: Mount null");
 	register_chrdev(&cdev_null);
 	vfs_mknod("/dev/null", S_IFCHR, cdev_null.dev);
 
-	DEBUG &&debug_println(DEBUG_INFO, "Devfs: Mount random");
+	log("Devfs: Mount random");
 	register_chrdev(&cdev_random);
 	vfs_mknod("/dev/random", S_IFCHR, cdev_random.dev);
 }

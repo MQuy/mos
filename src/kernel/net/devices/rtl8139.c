@@ -7,7 +7,7 @@
 #include <memory/vmm.h>
 #include <net/net.h>
 #include <proc/task.h>
-#include <utils/printf.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 static char rx_buffer[RX_PADDING_BUFFER_SIZE] __attribute__((aligned(4)));
@@ -39,7 +39,7 @@ void rtl8139_receive_packet(struct interrupt_registers *regs)
 
 		if (rx_header->status & (RX_PACKET_HEADER_FAE | RX_PACKET_HEADER_CRC | RX_PACKET_HEADER_RUNT | RX_PACKET_HEADER_LONG))
 		{
-			DEBUG &&debug_println(DEBUG_ERROR, "rtl8139 rx packet header error 0x%x", rx_header->status);
+			err("rtl8139 rx packet header error 0x%x", rx_header->status);
 		}
 		else
 		{
@@ -76,7 +76,7 @@ int32_t rtl8139_irq_handler(struct interrupt_registers *regs)
 
 void rtl8139_init()
 {
-	DEBUG &&debug_println(DEBUG_INFO, "RTL8139: Initializing");
+	log("RTL8139: Initializing");
 
 	struct pci_device *dev = get_pci_device(RTL8139_VENDOR_ID, RTL8139_DEVICE_ID);
 	uint32_t ioaddr = dev->bar0 & 0xFFFFFFFC;
@@ -140,5 +140,5 @@ void rtl8139_init()
 
 	register_interrupt_handler(32 + interrupt_line, rtl8139_irq_handler);
 	pic_clear_mask(interrupt_line);
-	DEBUG &&debug_println(DEBUG_INFO, "RTL8139: Done");
+	log("RTL8139: Done");
 }
