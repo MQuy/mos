@@ -265,10 +265,14 @@ void tty_init()
 {
 	INIT_LIST_HEAD(&tty_drivers);
 
+	log("TTY: Mount ptmx");
 	struct char_device *ptmx_cdev = alloc_chrdev("ptmx", TTYAUX_MAJOR, 2, 1, &ptmx_fops);
 	register_chrdev(ptmx_cdev);
 	vfs_mknod("/dev/ptmx", S_IFCHR, ptmx_cdev->dev);
 
+	log("TTY: Init pty");
 	pty_init();
+
+	log("TTY: Init serial");
 	serial_init();
 }

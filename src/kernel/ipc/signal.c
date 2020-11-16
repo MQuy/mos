@@ -95,6 +95,7 @@ int do_sigsuspend(const sigset_t *set)
 
 int do_kill(pid_t pid, int32_t signum)
 {
+	log("Signal: Kill with pid=%d signum=%d", pid, signum);
 	if (!valid_signal(signum) || signum < 0)
 		return -EINVAL;
 
@@ -183,6 +184,7 @@ void signal_handler(struct interrupt_registers *regs)
 
 void handle_signal(struct interrupt_registers *regs, sigset_t restored_sig)
 {
+	log("Signal: Handle %s(p%d)", current_process->name, current_process->pid);
 	bool from_syscall = false;
 	bool prev_signaling = current_thread->signaling;
 
@@ -231,6 +233,7 @@ void handle_signal(struct interrupt_registers *regs, sigset_t restored_sig)
 
 void sigreturn(struct interrupt_registers *regs)
 {
+	log("Signal: Return from signal handler %s(p%d)", current_process->name, current_process->pid);
 	// NOTE: MQ 2020-08-26
 	/*
     |_________________________| <- original esp

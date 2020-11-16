@@ -232,7 +232,11 @@ static void user_thread_elf_entry(struct thread *th, const char *path, void (*se
 	th->user_stack = elf_layout->stack;
 	tss_set_stack(0x10, th->kernel_stack);
 	if (setup)
+	{
+		log("ELF: Setup user stack for %s", path);
 		setup(elf_layout);
+	}
+	log("Kernel: Enter with usermode with stack=0x%x and entry=0x%x", elf_layout->stack, elf_layout->entry);
 	enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
 }
 
@@ -291,6 +295,7 @@ void setup_user_thread_stack(struct Elf32_Layout *layout, int argc, char *const 
 
 void process_load(const char *pname, const char *path, enum thread_policy policy, int priority, void (*setup)(struct Elf32_Layout *))
 {
+	log("Process: Load %s at %s", pname, path);
 	struct process *proc = create_process(current_process, pname, current_process->pdir);
 	struct thread *th = create_user_thread(proc, path, THREAD_READY, policy, priority, setup);
 	queue_thread(th);
@@ -298,6 +303,7 @@ void process_load(const char *pname, const char *path, enum thread_policy policy
 
 struct process *process_fork(struct process *parent)
 {
+	log("Task: Fork from %s(p%d)", parent->name, parent->pid);
 	lock_scheduler();
 
 	// fork process
@@ -364,6 +370,7 @@ struct process *process_fork(struct process *parent)
 
 int32_t process_execve(const char *pathname, char *const argv[], char *const envp[])
 {
+	log("Task: Exec %s", pathname);
 	int argv_length = count_array_of_pointers(argv);
 	char **kernel_argv = kcalloc(argv_length, sizeof(char *));
 	for (int i = 0; i < argv_length; ++i)
@@ -417,6 +424,7 @@ int32_t process_execve(const char *pathname, char *const argv[], char *const env
 	*(uint32_t *)elf_layout->stack = argv_length;
 
 	tss_set_stack(0x10, current_thread->kernel_stack);
+	log("Kernel: Enter with usermode with stack=0x%x and entry=0x%x", elf_layout->stack, elf_layout->entry);
 	enter_usermode(elf_layout->stack, elf_layout->entry, PROCESS_TRAPPED_PAGE_FAULT);
 	return 0;
 }

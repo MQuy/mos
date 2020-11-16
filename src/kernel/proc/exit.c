@@ -64,6 +64,7 @@ static void exit_notify(struct process *proc)
 
 void do_exit(int32_t code)
 {
+	log("Process: Exit %s(p%d)", current_process->name, current_process->pid);
 	lock_scheduler();
 
 	exit_mm(current_process);
@@ -73,7 +74,6 @@ void do_exit(int32_t code)
 	current_process->exit_code = code;
 	exit_notify(current_process);
 
-	log("Process: Exit %d", current_process->pid);
 	unlock_scheduler();
 
 	schedule();
@@ -85,6 +85,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 	DEFINE_WAIT(wait);
 	list_add_tail(&wait.sibling, &current_process->wait_chld.list);
 
+	log("Process: Wait %s(p%d) with idtype=%d id=%d", current_process->name, current_process->pid, idtype, id);
 	struct process *pchild = NULL;
 	while (true)
 	{
@@ -131,7 +132,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 		}
 		ret = 0;
 	}
-	log("Process: Waiting done %d", current_process->pid);
+	log("Process: Wait %s(p%d) done", current_process->name, current_process->pid);
 
 	return ret;
 }

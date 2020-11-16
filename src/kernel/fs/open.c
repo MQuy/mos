@@ -3,6 +3,7 @@
 #include <include/limits.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #include "vfs.h"
@@ -22,6 +23,7 @@ struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name)
 
 int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode)
 {
+	log("Kernel: Path walk %s with flags=%d mode=%d", path, flags, mode);
 	nd->dentry = current_process->fs->d_root;
 	nd->mnt = current_process->fs->mnt_root;
 
@@ -89,6 +91,7 @@ struct vfs_file *get_empty_filp()
 
 int32_t vfs_open(const char *path, int32_t flags)
 {
+	log("File system: Open %s", path);
 	int fd = find_unused_fd_slot(0);
 
 	struct nameidata nd;
@@ -125,6 +128,7 @@ int32_t vfs_open(const char *path, int32_t flags)
 
 int32_t vfs_close(int32_t fd)
 {
+	log("File system: Close with fd=%d", fd);
 	struct files_struct *files = current_process->files;
 	acquire_semaphore(&files->lock);
 
@@ -201,6 +205,7 @@ int vfs_fstat(int32_t fd, struct kstat *stat)
 
 int vfs_mknod(const char *path, int mode, dev_t dev)
 {
+	log("File system: Create a node for %s with mode=%d dev=%d", path, mode, dev);
 	char *dir, *name;
 	strlsplat(path, strliof(path, "/"), &dir, &name);
 
@@ -243,6 +248,7 @@ static int do_truncate(struct vfs_dentry *dentry, int32_t length)
 
 int vfs_truncate(const char *path, int32_t length)
 {
+	log("File system: Truncate %s with length=%d", path, length);
 	struct nameidata nd;
 
 	int ret = path_walk(&nd, path, 0, S_IFREG);
@@ -254,6 +260,7 @@ int vfs_truncate(const char *path, int32_t length)
 
 int vfs_ftruncate(int32_t fd, int32_t length)
 {
+	log("File system: Truncate %d with length=%d", fd, length);
 	struct vfs_file *f = current_process->files->fd[fd];
 	return do_truncate(f->f_dentry, length);
 }
@@ -295,6 +302,7 @@ void vfs_build_path_backward(struct vfs_dentry *dentry, char *path)
 
 int vfs_unlink(const char *path, int flag)
 {
+	log("File system: Unlink %s with flag=%d", path, flag);
 	char *abs_path;
 	if (path[0] != '/')
 	{
