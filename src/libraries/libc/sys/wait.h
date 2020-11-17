@@ -22,6 +22,21 @@
 #define P_PID 1
 #define P_PGID 2
 
+#define WSEXITED 0x0001
+#define WSSIGNALED 0x0002
+#define WSCOREDUMP 0x0004
+#define WSSTOPPED 0x0008
+#define WSCONTINUED 0x0010
+
+#define WIFEXITED(wstatus) (wstatus & WSEXITED)
+#define WEXITSTATUS(wstatus) (WIFEXITED(wstatus) && (wstatus >> 8) & 0xff)
+#define WIFSIGNALED(wstatus) (wstatus & WSSIGNALED)
+#define WTERMSIG(wstatus) (WIFSIGNALED(wstatus) && (wstatus >> 8) & 0xff)
+#define WCOREDUMP(wstatus) (WIFSIGNALED(wstatus) && wstatus && WSCOREDUMP)
+#define WIFSTOPPED(wstatus) (wstatus & WSSTOPPED)
+#define WSTOPSIG(wstatus) (WIFSTOPPED(wstatus) && (wstatus >> 8) & 0xff))
+#define WIFCONTINUED(wstatus) (wstatus & WSCONTINUED)
+
 struct infop
 {
 	pid_t si_pid;
@@ -30,6 +45,8 @@ struct infop
 	int32_t si_code;
 };
 
+pid_t wait(int *wstatus);
+pid_t waitpid(pid_t pid, int *wstatus, int options);
 int waitid(idtype_t idtype, id_t id, struct infop *infop, int options);
 
 #endif

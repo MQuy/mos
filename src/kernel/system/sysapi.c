@@ -72,6 +72,48 @@ static int32_t sys_lseek(int fd, off_t offset, int whence)
 	return vfs_flseek(fd, offset, whence);
 }
 
+static int32_t sys_waitpid(pid_t pid, int *wstatus, int options)
+{
+	idtype_t idtype;
+	if (pid < -1)
+	{
+		idtype = P_PGID;
+		pid = -pid;
+	}
+	else if (pid == -1)
+		idtype = P_ALL;
+	else if (pid == 0)
+	{
+		idtype = P_PGID;
+		pid = current_process->gid;
+	}
+	else
+		idtype = P_PID;
+
+	struct infop ifp;
+	do_wait(idtype, pid, &ifp, options);
+
+	if (!wstatus)
+	{
+		if (ifp.si_code & CLD_EXITED)
+			*wstatus = WSEXITED | (ifp.si_status << 8);
+		else if (ifp.si_code & CLD_KILLED || ifp.si_code & CLD_DUMPED)
+		{
+			*wstatus = WSSIGNALED;
+			if (ifp.si_code & CLD_KILLED)
+				*wstatus |= (ifp.si_status << 8);
+			if (ifp.si_code & CLD_DUMPED)
+				*wstatus |= WSCOREDUMP;
+		}
+		else if (ifp.si_code & CLD_STOPPED)
+			*wstatus = WSSTOPPED | (ifp.si_status << 8);
+		else if (ifp.si_code & CLD_CONTINUED)
+			*wstatus = WSCONTINUED;
+	}
+
+	return ifp.si_pid;
+}
+
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
@@ -537,6 +579,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_write 4
 #define __NR_open 5
 #define __NR_close 6
+#define __NR_waitpid 7
 #define __NR_unlink 10
 #define __NR_execve 11
 #define __NR_chdir 12
@@ -617,6 +660,7 @@ static void *syscalls[] = {
 	[__NR_fstat] = sys_fstat,
 	[__NR_close] = sys_close,
 	[__NR_lseek] = sys_lseek,
+	[__NR_waitpid] = sys_waitpid,
 	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,
 	[__NR_dup2] = sys_dup2,

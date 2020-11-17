@@ -23,6 +23,12 @@
 #define P_PID 1
 #define P_PGID 2
 
+#define WSEXITED 0x0001
+#define WSSIGNALED 0x0002
+#define WSCOREDUMP 0x0004
+#define WSSTOPPED 0x0008
+#define WSCONTINUED 0x0010
+
 struct infop
 {
 	pid_t si_pid;
