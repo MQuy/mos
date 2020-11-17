@@ -7,6 +7,7 @@
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <system/time.h>
+#include <utils/debug.h>
 
 // TODO: MQ 2019-01-03 Implement empty for read and full for write (http://man7.org/linux/man-pages/man7/pipe.7.html)
 static ssize_t pipe_read(struct vfs_file *file, char *buf, size_t count, loff_t ppos)
@@ -49,6 +50,10 @@ static int pipe_open(struct vfs_inode *inode, struct vfs_file *file)
 	case O_WRONLY:
 		p->writers++;
 		break;
+
+	default:
+		assert_not_implemented();
+		break;
 	}
 	release_semaphore(&p->mutex);
 	return 0;
@@ -68,6 +73,10 @@ static int pipe_release(struct vfs_inode *inode, struct vfs_file *file)
 
 	case O_WRONLY:
 		p->writers--;
+		break;
+
+	default:
+		assert_not_implemented();
 		break;
 	}
 	release_semaphore(&p->mutex);
@@ -122,6 +131,7 @@ static struct vfs_inode *get_pipe_inode()
 	return inode;
 }
 
+// TODO: MQ 2020-11-17 Support unidirectional data channel
 int32_t do_pipe(int32_t *fd)
 {
 	struct vfs_inode *inode = get_pipe_inode();

@@ -11,7 +11,7 @@
 static void put_tty_queue(struct tty_struct *tty, char ch)
 {
 	if (tty->read_count >= N_TTY_BUF_SIZE)
-		return;
+		assert_not_reached();
 
 	if (tty->read_count)
 		tty->read_tail = N_TTY_BUF_ALIGN(tty->read_tail + 1);

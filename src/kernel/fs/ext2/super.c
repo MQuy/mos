@@ -4,6 +4,7 @@
 #include <include/errno.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
+#include <utils/debug.h>
 #include <utils/math.h>
 #include <utils/string.h>
 
@@ -108,9 +109,7 @@ void ext2_write_inode(struct vfs_inode *i)
 	ei->i_flags = i->i_flags;
 
 	if (S_ISCHR(i->i_mode))
-	{
 		ei->i_block[0] = i->i_rdev;
-	}
 
 	uint32_t group = get_group_from_inode(ext2_sb, i->i_ino);
 	struct ext2_group_desc *gdp = ext2_get_group_desc(i->i_sb, group);

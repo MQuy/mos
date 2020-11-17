@@ -4,6 +4,7 @@
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <system/time.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #include "mqueuefs.h"
@@ -31,6 +32,8 @@ struct vfs_inode *mqueuefs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 		i->i_op = &mqueuefs_file_inode_operations;
 		i->i_fop = &mqueuefs_file_operations;
 	}
+	else
+		assert_not_implemented();
 
 	return i;
 }

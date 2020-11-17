@@ -166,7 +166,7 @@ struct Elf32_Layout
 	uint32_t entry;
 };
 
-struct Elf32_Layout *elf_load(char *);
+struct Elf32_Layout *elf_load(const char *path);
 void elf_unload();
 
 #endif

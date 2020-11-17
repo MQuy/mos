@@ -52,6 +52,8 @@ static ssize_t ext2_read_file(struct vfs_file *file, char *buf, size_t count, lo
 			ext2_read_nth_block(sb, ei->i_block[13], &iter_buf, ppos, &p, count, 2);
 		else if (relative_block < EXT2_INO_UPPER_LEVEL3)
 			ext2_read_nth_block(sb, ei->i_block[14], &iter_buf, ppos, &p, count, 3);
+		else
+			assert_not_reached();
 	}
 
 	file->f_pos = ppos + count;
@@ -89,6 +91,8 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 				sb->s_op->write_inode(inode);
 			}
 		}
+		else
+			assert_not_implemented("Only support direct blocks, fail writing at %d-nth block", relative_block);
 		char *block_buf = ext2_bread_block(sb, block);
 		uint32_t pstart = (ppos > p) ? ppos - p : 0;
 		uint32_t pend = ((ppos + count) < (p + sb->s_blocksize)) ? (p + sb->s_blocksize - ppos - count) : 0;

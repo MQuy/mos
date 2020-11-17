@@ -174,9 +174,6 @@ struct pdirectory *vmm_create_address_space(struct pdirectory *current)
 	if (aligned_object)
 		kfree(aligned_object);
 
-	if (!va_dir)
-		return NULL;
-
 	for (int i = 768; i < 1023; ++i)
 		va_dir->m_entries[i] = vmm_get_physical_address(PAGE_TABLE_BASE + i * PMM_FRAME_SIZE, true);
 
@@ -210,6 +207,9 @@ struct pdirectory *vmm_get_directory()
 */
 void vmm_map_address(struct pdirectory *va_dir, uint32_t virt, uint32_t phys, uint32_t flags)
 {
+	if (virt != PAGE_ALIGN(virt))
+		dlog("0x%x is not page aligned", virt);
+
 	if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
 		vmm_create_page_table(va_dir, virt, flags);
 
@@ -235,6 +235,9 @@ void vmm_create_page_table(struct pdirectory *va_dir, uint32_t virt, uint32_t fl
 
 void vmm_unmap_address(struct pdirectory *va_dir, uint32_t virt)
 {
+	if (virt != PAGE_ALIGN(virt))
+		dlog("0x%x is not page aligned", virt);
+
 	if (!is_page_enabled(va_dir->m_entries[get_page_directory_index(virt)]))
 		return;
 

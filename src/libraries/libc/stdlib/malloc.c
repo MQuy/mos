@@ -26,16 +26,16 @@ void assert_block_valid(struct block_meta *block, bool throw)
 	if (block->magic != BLOCK_MAGIC)
 	{
 		if (throw)
-			__asm__ __volatile("int $0x01");
+			assert_not_reached();
 		else
-			log("Malloc: 0x%x is not allocated by malloc", block + 1);
+			dlog("0x%x is not allocated by malloc", block + 1);
 	}
 	else if (block->size > UPPER_LIMIT)
 	{
 		if (throw)
-			__asm__ __volatile("int $0x01");
+			assert_not_reached();
 		else
-			log("Malloc: block 0x%x is larger than 0x%x", block + 1, UPPER_LIMIT);
+			dlog("0x%x is larger than 0x%x", block + 1, UPPER_LIMIT);
 	}
 }
 

@@ -5,6 +5,7 @@
 #include <net/net.h>
 #include <proc/task.h>
 #include <system/time.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #include "sockfs.h"
@@ -58,6 +59,8 @@ struct vfs_inode *sockfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 		i->i_op = &sockfs_dir_inode_operations;
 		i->i_fop = &sockfs_dir_operations;
 	}
+	else
+		assert_not_implemented();
 
 	return i;
 }

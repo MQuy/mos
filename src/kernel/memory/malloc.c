@@ -24,7 +24,7 @@ void assert_kblock_valid(struct block_meta *block)
 {
 	// NOTE: MQ 2020-06-06 if a block's size > 32 MiB -> might be an corrupted block
 	if (block->magic != BLOCK_MAGIC || block->size > 0x2000000)
-		__asm__ __volatile("int $0x01");
+		assert_not_reached();
 }
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size)

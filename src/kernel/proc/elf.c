@@ -5,6 +5,7 @@
 #include <memory/pmm.h>
 #include <memory/vmm.h>
 #include <proc/task.h>
+#include <utils/debug.h>
 #include <utils/string.h>
 
 #define NO_ERROR 0
@@ -59,13 +60,18 @@ static int elf_verify(struct Elf32_Ehdr *elf_header)
 * 	+---------------+
 */
 
-struct Elf32_Layout *elf_load(char *buf)
+struct Elf32_Layout *elf_load(const char *path)
 {
+	const char *buf = vfs_read(path);
 	struct Elf32_Ehdr *elf_header = (struct Elf32_Ehdr *)buf;
 
 	if (elf_verify(elf_header) != NO_ERROR || elf_header->e_phoff == 0)
+	{
+		log("ELF: %s is not correct format", path);
 		return NULL;
+	}
 
+	log("ELF: Load %s", path);
 	struct mm_struct *mm = current_process->mm;
 	struct Elf32_Layout *layout = kcalloc(1, sizeof(struct Elf32_Layout));
 	layout->entry = elf_header->e_entry;

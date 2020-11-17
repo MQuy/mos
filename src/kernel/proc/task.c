@@ -5,6 +5,7 @@
 #include <cpu/pic.h>
 #include <cpu/tss.h>
 #include <fs/vfs.h>
+#include <include/limits.h>
 #include <ipc/signal.h>
 #include <memory/pmm.h>
 #include <memory/vmm.h>
@@ -219,6 +220,7 @@ static void user_thread_entry(struct thread *th)
 	unlock_scheduler();
 
 	tss_set_stack(0x10, th->kernel_stack);
+	log("Kernel: Return to usermode %s(p%d)", current_process->name, current_process->pid);
 	return_usermode(&th->uregs);
 }
 
@@ -227,13 +229,12 @@ static void user_thread_elf_entry(struct thread *th, const char *path, void (*se
 	// explain in kernel_init#unlock_scheduler
 	unlock_scheduler();
 
-	char *buf = vfs_read(path);
-	struct Elf32_Layout *elf_layout = elf_load(buf);
+	struct Elf32_Layout *elf_layout = elf_load(path);
 	th->user_stack = elf_layout->stack;
 	tss_set_stack(0x10, th->kernel_stack);
 	if (setup)
 	{
-		log("ELF: Setup user stack for %s", path);
+		log("ELF: Setup user stack");
 		setup(elf_layout);
 	}
 	log("Kernel: Enter with usermode with stack=0x%x and entry=0x%x", elf_layout->stack, elf_layout->entry);
@@ -368,9 +369,9 @@ struct process *process_fork(struct process *parent)
 	return proc;
 }
 
-int32_t process_execve(const char *pathname, char *const argv[], char *const envp[])
+int32_t process_execve(const char *path, char *const argv[], char *const envp[])
 {
-	log("Task: Exec %s", pathname);
+	log("Task: Exec %s", path);
 	int argv_length = count_array_of_pointers(argv);
 	char **kernel_argv = kcalloc(argv_length, sizeof(char *));
 	for (int i = 0; i < argv_length; ++i)
@@ -388,11 +389,12 @@ int32_t process_execve(const char *pathname, char *const argv[], char *const env
 		kernel_envp[i] = kcalloc(ilength + 1, sizeof(char));
 		memcpy(kernel_envp[i], envp[i], ilength);
 	}
-	strcpy(current_process->name, pathname);
+	strcpy(current_process->name, path);
 
-	char *buf = vfs_read(pathname);
+	char *tmp_path = strdup(path);
 	elf_unload();
-	struct Elf32_Layout *elf_layout = elf_load(buf);
+	struct Elf32_Layout *elf_layout = elf_load(tmp_path);
+	kfree(tmp_path);
 
 	// copy argv back to userspace
 	char **user_argv = (char **)sys_sbrk(argv_length + 1);

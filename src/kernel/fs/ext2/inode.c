@@ -166,6 +166,8 @@ static struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, char *filename
 
 		ext2_bwrite_block(inode->i_sb, block, block_buf);
 	}
+	else
+		assert_not_implemented();
 	dir->i_sb->s_op->write_inode(inode);
 
 	// FIXME: MQ 2019-07-16 Only support direct blocks
@@ -251,13 +253,6 @@ static struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, char *name)
 
 	for (int i = 0, ino = 0; i < ei->i_blocks; ++i)
 	{
-		if (i < EXT2_INO_UPPER_LEVEL0)
-		{
-			ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], name, ext2_find_ino);
-		}
-		else
-		{
-		}
 		if ((i < EXT2_INO_UPPER_LEVEL0 && (ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], name, ext2_find_ino)) > 0) ||
 			((EXT2_INO_UPPER_LEVEL0 <= i && i < EXT2_INO_UPPER_LEVEL1) && (ino = ext2_recursive_block_action(sb, 1, ei->i_block[12], name, ext2_find_ino)) > 0) ||
 			((EXT2_INO_UPPER_LEVEL1 <= i && i < EXT2_INO_UPPER_LEVEL2) && (ino = ext2_recursive_block_action(sb, 2, ei->i_block[13], name, ext2_find_ino)) > 0) ||
