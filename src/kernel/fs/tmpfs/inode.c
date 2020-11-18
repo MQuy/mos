@@ -45,7 +45,7 @@ static int tmpfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mod
 	return 0;
 }
 
-static struct vfs_inode *tmpfs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
+static struct vfs_inode *tmpfs_create_inode(struct vfs_inode *dir, struct vfs_dentry *dentry, mode_t mode)
 {
 	return tmpfs_get_inode(dir->i_sb, mode | S_IFREG);
 }

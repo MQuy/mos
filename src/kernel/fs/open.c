@@ -52,21 +52,22 @@ int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode
 		}
 		else
 		{
+			d_child = alloc_dentry(nd->dentry, part_name);
+
 			struct vfs_inode *inode = NULL;
 			if (nd->dentry->d_inode->i_op->lookup)
-				inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, part_name);
+				inode = nd->dentry->d_inode->i_op->lookup(nd->dentry->d_inode, d_child);
 
 			if (inode == NULL)
 			{
 				if (i == length && flags & O_CREAT)
-					inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, part_name, i == length ? mode : S_IFDIR);
+					inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child, i == length ? mode : S_IFDIR);
 				else
 					return -EACCES;
 			}
 			else if (i == length && flags & O_CREAT && flags & O_EXCL)
 				return -EEXIST;
 
-			d_child = alloc_dentry(nd->dentry, part_name);
 			d_child->d_inode = inode;
 			list_add_tail(&d_child->d_sibling, &nd->dentry->d_subdirs);
 			nd->dentry = d_child;
@@ -90,7 +91,6 @@ struct vfs_file *get_empty_filp()
 
 int32_t vfs_open(const char *path, int32_t flags)
 {
-	log("File system: Open %s", path);
 	int fd = find_unused_fd_slot(0);
 
 	struct nameidata nd;
@@ -127,7 +127,6 @@ int32_t vfs_open(const char *path, int32_t flags)
 
 int32_t vfs_close(int32_t fd)
 {
-	log("File system: Close with fd=%d", fd);
 	struct files_struct *files = current_process->files;
 	acquire_semaphore(&files->lock);
 
@@ -287,52 +286,4 @@ int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigne
 		idrent = (struct dirent *)((char *)idrent + idrent->d_reclen);
 	}
 	return entries_size;
-}
-
-void vfs_build_path_backward(struct vfs_dentry *dentry, char *path)
-{
-	if (!dentry->d_parent)
-		return;
-
-	vfs_build_path_backward(dentry->d_parent, path);
-	strcat(path, "/");
-	strcat(path, dentry->d_name);
-}
-
-int vfs_unlink(const char *path, int flag)
-{
-	log("File system: Unlink %s with flag=%d", path, flag);
-	char *abs_path;
-	if (path[0] != '/')
-	{
-		abs_path = kcalloc(MAXPATHLEN, sizeof(char));
-		vfs_build_path_backward(current_process->fs->d_root, abs_path);
-		strcpy(abs_path, "/");
-		strcpy(abs_path, path);
-	}
-	else
-		abs_path = path;
-
-	int ret = vfs_open(abs_path, O_RDONLY);
-	if (ret >= 0)
-	{
-		struct vfs_file *file = current_process->files->fd[ret];
-		if (!file)
-			ret = -EBADF;
-		else if (flag & AT_REMOVEDIR && file->f_dentry->d_inode->i_mode & S_IFREG)
-			ret = -ENOTDIR;
-		else
-		{
-			struct vfs_inode *dir = file->f_dentry->d_parent->d_inode;
-			if (dir->i_op && dir->i_op->unlink)
-				ret = dir->i_op->unlink(dir, file->f_dentry);
-			list_del(&file->f_dentry->d_sibling);
-		}
-		vfs_close(ret);
-	}
-
-	if (abs_path != path)
-		kfree(abs_path);
-
-	return ret;
 }

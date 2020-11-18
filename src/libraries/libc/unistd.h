@@ -81,6 +81,7 @@
 #define __NR_alarm 27
 #define __NR_access 33
 #define __NR_kill 37
+#define __NR_rename 38
 #define __NR_dup 41
 #define __NR_pipe 42
 #define __NR_times 43
@@ -129,6 +130,7 @@
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
 #define __NR_unlinkat 301
+#define __NR_renameat 302
 #define __NR_faccessat 307
 #define __NR_sendto 369
 // TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name

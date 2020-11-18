@@ -88,6 +88,12 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 void setbuf(FILE *stream, char *buf);
 FILE *tmpfile();
 
+int rename(const char *oldpath, const char *newpath);
+int renameat(int olddirfd, const char *oldpath,
+			 int newdirfd, const char *newpath);
+int renameat2(int olddirfd, const char *oldpath,
+			  int newdirfd, const char *newpath, unsigned int flags);
+
 int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
 int vsprintf(char *buf, const char *fmt, va_list args);

@@ -151,9 +151,11 @@ struct vfs_inode
 
 struct vfs_inode_operations
 {
-	struct vfs_inode *(*create)(struct vfs_inode *, char *, mode_t mode);
-	struct vfs_inode *(*lookup)(struct vfs_inode *, char *);
+	struct vfs_inode *(*create)(struct vfs_inode *dir, struct vfs_dentry *dentry, mode_t mode);
+	struct vfs_inode *(*lookup)(struct vfs_inode *dir, struct vfs_dentry *dentry);
 	int (*mkdir)(struct vfs_inode *, char *, int);
+	int (*rename)(struct vfs_inode *old_dir, struct vfs_dentry *old_dentry,
+				  struct vfs_inode *new_dir, struct vfs_dentry *new_dentry);
 	int (*unlink)(struct vfs_inode *dir, struct vfs_dentry *dentry);
 	int (*mknod)(struct vfs_inode *, struct vfs_dentry *, int, dev_t);
 	void (*truncate)(struct vfs_inode *);
@@ -224,8 +226,6 @@ int vfs_truncate(const char *path, int32_t length);
 int vfs_ftruncate(int32_t fd, int32_t length);
 struct vfs_file *get_empty_filp();
 int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count);
-void vfs_build_path_backward(struct vfs_dentry *dentry, char *path);
-int vfs_unlink(const char *path, int flag);
 
 // read_write.c
 char *vfs_read(const char *path);
@@ -236,5 +236,10 @@ loff_t vfs_flseek(int32_t fd, loff_t offset, int whence);
 
 // fcntl.c
 int do_fcntl(int fd, int cmd, unsigned long arg);
+
+// namei.c
+void vfs_build_path_backward(struct vfs_dentry *dentry, char *path);
+int vfs_unlink(const char *path, int flag);
+int vfs_rename(const char *oldpath, const char *newpath);
 
 #endif

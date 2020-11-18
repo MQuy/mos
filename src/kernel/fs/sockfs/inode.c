@@ -6,7 +6,7 @@
 
 #include "sockfs.h"
 
-static struct vfs_inode *sockfs_create_inode(struct vfs_inode *dir, char *filename, mode_t mode)
+static struct vfs_inode *sockfs_create_inode(struct vfs_inode *dir, struct vfs_dentry *dentry, mode_t mode)
 {
 	return sockfs_get_inode(dir->i_sb, mode);
 }

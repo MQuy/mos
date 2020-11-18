@@ -492,3 +492,16 @@ void funlockfile(FILE *fp)
 {
 	assert_not_implemented();
 }
+
+_syscall2(rename, const char *, const char *);
+int rename(const char *oldpath, const char *newpath)
+{
+	return syscall_rename(oldpath, newpath);
+}
+
+_syscall4(renameat, int, const char *, int, const char *);
+int renameat(int olddirfd, const char *oldpath,
+			 int newdirfd, const char *newpath)
+{
+	return syscall_renameat(olddirfd, oldpath, newdirfd, newpath);
+}

@@ -19,6 +19,26 @@
 
 extern volatile uint64_t jiffies;
 
+static int absolutize_path_from_fd(int dirfd, const char *path, char **abs_path)
+{
+	if (path[0] == '/')
+		*abs_path = path;
+	else
+	{
+		struct vfs_file *df = current_process->files->fd[dirfd];
+		if (!df)
+			return -EBADF;
+		if (!(df->f_dentry->d_inode->i_mode & S_IFDIR))
+			return -ENOTDIR;
+
+		*abs_path = kcalloc(MAXPATHLEN, sizeof(char));
+		vfs_build_path_backward(df->f_dentry, *abs_path);
+		strcpy(*abs_path, "/");
+		strcpy(*abs_path, path);
+	}
+	return 0;
+}
+
 static void sys_exit(int32_t code)
 {
 	do_exit(code & 0xff);
@@ -112,6 +132,27 @@ static int32_t sys_waitpid(pid_t pid, int *wstatus, int options)
 	}
 
 	return ifp.si_pid;
+}
+
+static int32_t sys_rename(const char *oldpath, const char *newpath)
+{
+	return vfs_rename(oldpath, newpath);
+}
+
+static int32_t sys_renameat(int olddirfd, const char *oldpath,
+							int newdirfd, const char *newpath)
+{
+	int ret;
+	char *abs_oldpath, *abs_newpath;
+	if ((ret = absolutize_path_from_fd(olddirfd, oldpath, &abs_oldpath)) >= 0 &&
+		(ret = absolutize_path_from_fd(newdirfd, newpath, &abs_newpath)) >= 0)
+		ret = vfs_rename(abs_oldpath, abs_newpath);
+
+	if (abs_oldpath != oldpath)
+		kfree(abs_oldpath);
+	if (abs_newpath != newpath)
+		kfree(abs_newpath);
+	return ret;
 }
 
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
@@ -260,24 +301,15 @@ static int32_t sys_unlinkat(int fd, const char *path, int flag)
 	if (flag && flag & ~AT_REMOVEDIR)
 		return -EINVAL;
 
+	int ret;
 	char *abs_path;
 	if (path[0] != '/' && fd != AT_FDCWD)
-	{
-		struct vfs_file *fdir = current_process->files->fd[fd];
-		if (!fdir)
-			return -EBADF;
-		if (!(fdir->f_dentry->d_inode->i_mode & S_IFDIR))
-			return -ENOTDIR;
-
-		abs_path = kcalloc(MAXPATHLEN, sizeof(char));
-		vfs_build_path_backward(fdir->f_dentry, abs_path);
-		strcpy(abs_path, "/");
-		strcpy(abs_path, path);
-	}
+		ret = absolutize_path_from_fd(fd, path, &abs_path);
 	else
 		abs_path = path;
 
-	int ret = vfs_unlink(abs_path, flag);
+	if (ret >= 0)
+		ret = vfs_unlink(abs_path, flag);
 	if (abs_path != path)
 		kfree(abs_path);
 
@@ -593,6 +625,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_alarm 27
 #define __NR_access 33
 #define __NR_kill 37
+#define __NR_rename 38
 #define __NR_dup 41
 #define __NR_pipe 42
 #define __NR_times 43
@@ -641,7 +674,9 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
 #define __NR_unlinkat 301
+#define __NR_renameat 302
 #define __NR_faccessat 307
+#define __NR_renameat2 353
 #define __NR_sendto 369
 // TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
 #define __NR_getptsname 370
@@ -660,6 +695,8 @@ static void *syscalls[] = {
 	[__NR_fstat] = sys_fstat,
 	[__NR_close] = sys_close,
 	[__NR_lseek] = sys_lseek,
+	[__NR_rename] = sys_rename,
+	[__NR_renameat] = sys_renameat,
 	[__NR_waitpid] = sys_waitpid,
 	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,
