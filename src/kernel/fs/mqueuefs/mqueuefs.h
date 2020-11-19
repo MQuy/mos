@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+struct mqueuefs_inode
+{
+	uint32_t key;
+};
+
 // super.c
 void init_mqueuefs();
 void exit_mqueuefs();

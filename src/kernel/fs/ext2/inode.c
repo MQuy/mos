@@ -336,7 +336,7 @@ static int ext2_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode
 	return 0;
 }
 
-int ext2_unlink(struct vfs_inode *dir, struct vfs_dentry *dentry)
+static int ext2_unlink(struct vfs_inode *dir, struct vfs_dentry *dentry)
 {
 	struct ext2_inode *ei = EXT2_INODE(dir);
 	struct vfs_superblock *sb = dir->i_sb;
@@ -361,8 +361,8 @@ int ext2_unlink(struct vfs_inode *dir, struct vfs_dentry *dentry)
 	return 0;
 }
 
-int ext2_rename(struct vfs_inode *old_dir, struct vfs_dentry *old_dentry,
-				struct vfs_inode *new_dir, struct vfs_dentry *new_dentry)
+static int ext2_rename(struct vfs_inode *old_dir, struct vfs_dentry *old_dentry,
+					   struct vfs_inode *new_dir, struct vfs_dentry *new_dentry)
 {
 	new_dentry->d_inode = old_dentry->d_inode;
 	return ext2_create_entry(new_dir->i_sb, new_dir, new_dentry);

@@ -13,6 +13,13 @@
 #define MQUEUEFS_ROOT "/dev/mqueue"
 #define MQUEUE_MINOR 19
 
+static uint32_t mq_number;
+
+int32_t get_unused_mqueue_number()
+{
+	return mq_number++;
+}
+
 struct vfs_inode *mqueuefs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 {
 	struct vfs_inode *i = sb->s_op->alloc_inode(sb);
@@ -21,6 +28,10 @@ struct vfs_inode *mqueuefs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 	i->i_atime.tv_sec = get_seconds(NULL);
 	i->i_ctime.tv_sec = get_seconds(NULL);
 	i->i_mtime.tv_sec = get_seconds(NULL);
+
+	struct mqueuefs_inode *mqi = kcalloc(1, sizeof(struct mqueuefs_inode));
+	mqi->key = get_unused_mqueue_number();
+	i->i_fs_info = mqi;
 
 	if (S_ISDIR(i->i_mode))
 	{

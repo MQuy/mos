@@ -1,5 +1,6 @@
 #include "message_queue.h"
 
+#include <fs/mqueuefs/mqueuefs.h>
 #include <fs/vfs.h>
 #include <include/errno.h>
 #include <include/fcntl.h>
@@ -14,36 +15,54 @@ struct hashmap mq_map;
 
 static char *mq_normalize_path(char *name)
 {
-	char *fname = kcalloc(strlen(name) + sizeof(defaultdir), sizeof(char));
+	if (name[0] == '/')
+	{
+		for (int i = 0, length = sizeof(defaultdir) - 1; i < length; ++i)
+		{
+			if (name[i] != defaultdir[i])
+				assert_not_reached();
+		}
 
-	strcpy(fname, defaultdir);
-	strcat(fname, name);
+		return name;
+	}
+	else
+	{
+		char *fname = kcalloc(strlen(name) + sizeof(defaultdir), sizeof(char));
 
-	return fname;
+		strcpy(fname, defaultdir);
+		strcat(fname, name);
+
+		return fname;
+	}
 }
 
 int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
 	char *fname = mq_normalize_path(name);
 	int32_t ret = vfs_open(fname, flags);
-	if (ret < 0)
-		return ret;
 
-	struct message_queue *mq = hashmap_get(&mq_map, name);
-	// TODO: MQ 2020-09-20 Implement oflag to get rid of attr checking
-	if (!mq->attr)
+	if (ret >= 0)
 	{
-		struct mq_attr *mqattr = kcalloc(1, sizeof(struct mq_attr));
-		mqattr->mq_flags = flags;
-		mqattr->mq_maxmsg = attr ? attr->mq_maxmsg : MAX_NUMBER_OF_MQ_MESSAGES;
-		mqattr->mq_msgsize = attr ? attr->mq_msgsize : MAX_MQ_MESSAGE_SIZE;
+		struct vfs_file *filp = current_process->files->fd[ret];
+		struct mqueuefs_inode *mqi = filp->f_dentry->d_inode->i_fs_info;
+		struct message_queue *mq = hashmap_get(&mq_map, &mqi->key);
+		assert(mq);
 
-		mq->attr = mqattr;
+		if (flags & O_CREAT && !mq->attr)
+		{
+			struct mq_attr *mqattr = kcalloc(1, sizeof(struct mq_attr));
+			mqattr->mq_flags = flags;
+			mqattr->mq_maxmsg = attr ? attr->mq_maxmsg : MAX_NUMBER_OF_MQ_MESSAGES;
+			mqattr->mq_msgsize = attr ? attr->mq_msgsize : MAX_MQ_MESSAGE_SIZE;
+
+			mq->attr = mqattr;
+		}
+		else if (attr && (mq->attr->mq_maxmsg != attr->mq_maxmsg || mq->attr->mq_msgsize != attr->mq_msgsize))
+			ret = -EINVAL;
 	}
-	else if (attr && (mq->attr->mq_maxmsg != attr->mq_maxmsg || mq->attr->mq_msgsize != attr->mq_msgsize))
-		ret = -EINVAL;
 
-	kfree(fname);
+	if (fname != name)
+		kfree(fname);
 	return ret;
 }
 
@@ -54,37 +73,46 @@ int32_t mq_close(int32_t fd)
 
 int32_t mq_unlink(const char *name)
 {
-	struct message_queue *mq = hashmap_get(&mq_map, name);
+	char *fname = mq_normalize_path(name);
+	int32_t ret = vfs_open(fname, O_RDONLY);
 
-	if (!mq)
-		return -EINVAL;
-
-	struct mq_message *miter, *mnext;
-	list_for_each_entry_safe(miter, mnext, &mq->messages, sibling)
+	if (ret >= 0)
 	{
-		list_del(&miter->sibling);
-		kfree(miter);
+		struct vfs_file *filp = current_process->files->fd[ret];
+		struct mqueuefs_inode *mqi = filp->f_dentry->d_inode->i_fs_info;
+		struct message_queue *mq = hashmap_get(&mq_map, &mqi->key);
+		assert(mq);
+
+		struct mq_message *miter, *mnext;
+		list_for_each_entry_safe(miter, mnext, &mq->messages, sibling)
+		{
+			list_del(&miter->sibling);
+			kfree(miter);
+		}
+
+		struct mq_sender *siter, *snext;
+		list_for_each_entry_safe(siter, snext, &mq->senders, sibling)
+		{
+			list_del(&siter->sibling);
+			kfree(siter);
+			update_thread(siter->sender, THREAD_READY);
+		}
+
+		struct mq_receiver *riter, *rnext;
+		list_for_each_entry_safe(riter, rnext, &mq->receivers, sibling)
+		{
+			list_del(&riter->sibling);
+			kfree(riter);
+			update_thread(riter->receiver, THREAD_READY);
+		}
+
+		hashmap_remove(&mq_map, &mqi->key);
+		kfree(mq->attr);
+		kfree(mq);
 	}
 
-	struct mq_sender *siter, *snext;
-	list_for_each_entry_safe(siter, snext, &mq->senders, sibling)
-	{
-		list_del(&siter->sibling);
-		kfree(siter);
-		update_thread(siter->sender, THREAD_READY);
-	}
-
-	struct mq_receiver *riter, *rnext;
-	list_for_each_entry_safe(riter, rnext, &mq->receivers, sibling)
-	{
-		list_del(&riter->sibling);
-		kfree(riter);
-		update_thread(riter->receiver, THREAD_READY);
-	}
-
-	hashmap_remove(&mq_map, name);
-	kfree(mq->attr);
-	kfree(mq);
+	if (fname != name)
+		kfree(fname);
 	return 0;
 }
 
@@ -238,7 +266,7 @@ void mq_init()
 {
 	log("Message Queue: Initializing");
 
-	hashmap_init(&mq_map, hashmap_hash_string, hashmap_compare_string, 0);
+	hashmap_init(&mq_map, hashmap_hash_uint32, hashmap_compare_uint32, 0);
 
 	log("Message Queue: Done");
 }

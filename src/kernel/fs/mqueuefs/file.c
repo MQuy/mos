@@ -6,8 +6,9 @@
 
 static int mqueue_file_open(struct vfs_inode *inode, struct vfs_file *file)
 {
-	char *name = file->f_dentry->d_name;
-	struct message_queue *mq = hashmap_get(&mq_map, name);
+	struct mqueuefs_inode *mqi = inode->i_fs_info;
+	struct message_queue *mq = hashmap_get(&mq_map, &mqi->key);
+
 	if (!mq)
 	{
 		mq = kcalloc(1, sizeof(struct message_queue));
@@ -16,9 +17,10 @@ static int mqueue_file_open(struct vfs_inode *inode, struct vfs_file *file)
 		INIT_LIST_HEAD(&mq->messages);
 		INIT_LIST_HEAD(&mq->wait.list);
 
-		if (!hashmap_put(&mq_map, strdup(name), mq))
+		if (!hashmap_put(&mq_map, &mqi->key, mq))
 			return -EINVAL;
 	}
+
 	file->private_data = mq;
 	return 0;
 }
