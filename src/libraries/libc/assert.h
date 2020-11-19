@@ -32,7 +32,7 @@ void __dbg(enum debug_level level, bool prefix, const char *file, int line, cons
 #define assert(expression, ...) ((expression)  \
 									 ? (void)0 \
 									 : (void)({ __with_fmt(dlog, "expression " #expression " is falsy", ##__VA_ARGS__); __asm__ __volatile("int $0x01"); }))
-#define assert_not_reached(...) ({ __with_fmt(dlog, "should not be reached", ##__VA_ARGS__); __asm__ __volatile__("ud2"); })
+#define assert_not_reached(...) ({ __with_fmt(dlog, "should not be reached", ##__VA_ARGS__); __asm__ __volatile__("int $0x01"); })
 #define assert_not_implemented(...) __with_fmt(dlog, "is not implemented", ##__VA_ARGS__)
 
 #endif
