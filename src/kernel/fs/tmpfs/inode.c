@@ -64,6 +64,7 @@ struct vfs_inode_operations tmpfs_file_inode_operations = {
 struct vfs_inode_operations tmpfs_dir_inode_operations = {
 	.create = tmpfs_create_inode,
 	.mknod = tmpfs_mknod,
+	.rename = generic_memory_rename,
 };
 
 struct vfs_inode_operations tmpfs_special_inode_operations = {};

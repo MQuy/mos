@@ -30,6 +30,7 @@ struct vfs_inode_operations devfs_file_inode_operations = {};
 struct vfs_inode_operations devfs_dir_inode_operations = {
 	.create = devfs_create_inode,
 	.mknod = devfs_mknod,
+	.rename = generic_memory_rename,
 };
 
 struct vfs_inode_operations devfs_special_inode_operations = {};

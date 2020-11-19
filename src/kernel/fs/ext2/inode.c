@@ -115,8 +115,12 @@ static int ext2_add_entry(struct vfs_superblock *sb, uint32_t block, void *arg)
 static int ext2_create_entry(struct vfs_superblock *sb, struct vfs_inode *dir, struct vfs_dentry *dentry)
 {
 	struct ext2_inode *ei = EXT2_INODE(dir);
+	// NOTE: MQ 2020-11-19 support nth-level block
 	for (int i = 0; i < dir->i_blocks; ++i)
 	{
+		if (i >= EXT2_INO_UPPER_LEVEL0)
+			assert_not_reached();
+
 		int block = ei->i_block[i];
 		if (!block)
 		{

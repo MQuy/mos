@@ -15,4 +15,5 @@ struct vfs_inode_operations sockfs_file_inode_operations = {};
 
 struct vfs_inode_operations sockfs_dir_inode_operations = {
 	.create = sockfs_create_inode,
+	.rename = generic_memory_rename,
 };

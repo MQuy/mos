@@ -241,5 +241,7 @@ int do_fcntl(int fd, int cmd, unsigned long arg);
 void vfs_build_path_backward(struct vfs_dentry *dentry, char *path);
 int vfs_unlink(const char *path, int flag);
 int vfs_rename(const char *oldpath, const char *newpath);
+int generic_memory_rename(struct vfs_inode *old_dir, struct vfs_dentry *old_dentry,
+						  struct vfs_inode *new_dir, struct vfs_dentry *new_dentry);
 
 #endif

@@ -127,3 +127,12 @@ int vfs_rename(const char *oldpath, const char *newpath)
 
 	return ret;
 }
+
+int generic_memory_rename(struct vfs_inode *old_dir, struct vfs_dentry *old_dentry,
+						  struct vfs_inode *new_dir, struct vfs_dentry *new_dentry)
+{
+	new_dentry->d_inode = old_dentry->d_inode;
+	list_add_tail(&new_dentry->d_sibling, &new_dentry->d_parent->d_subdirs);
+
+	return 0;
+}

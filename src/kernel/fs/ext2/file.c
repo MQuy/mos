@@ -80,7 +80,7 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 		uint32_t relative_block = p / sb->s_blocksize;
 		uint32_t block = 0;
 		// FIXME: MQ 2019-07-18 Only support direct blocks
-		if (relative_block < 12)
+		if (relative_block < EXT2_INO_UPPER_LEVEL0)
 		{
 			block = ei->i_block[relative_block];
 			if (!block)
@@ -92,7 +92,7 @@ static ssize_t ext2_write_file(struct vfs_file *file, const char *buf, size_t co
 			}
 		}
 		else
-			assert_not_implemented("Only support direct blocks, fail writing at %d-nth block", relative_block);
+			assert_not_reached("Only support direct blocks, fail writing at %d-nth block", relative_block);
 		char *block_buf = ext2_bread_block(sb, block);
 		uint32_t pstart = (ppos > p) ? ppos - p : 0;
 		uint32_t pend = ((ppos + count) < (p + sb->s_blocksize)) ? (p + sb->s_blocksize - ppos - count) : 0;
