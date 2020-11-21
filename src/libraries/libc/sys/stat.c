@@ -18,3 +18,15 @@ mode_t umask(mode_t cmask)
 {
 	return syscall_umask(cmask);
 }
+
+_syscall2(chmod, const char *, mode_t);
+int chmod(const char *path, mode_t mode)
+{
+	return syscall_chmod(path, mode);
+}
+
+_syscall2(fchmod, int, mode_t);
+int fchmod(int fildes, mode_t mode)
+{
+	return syscall_fchmod(fildes, mode);
+}

@@ -34,7 +34,7 @@
 #define WTERMSIG(wstatus) (WIFSIGNALED(wstatus) && (wstatus >> 8) & 0xff)
 #define WCOREDUMP(wstatus) (WIFSIGNALED(wstatus) && wstatus && WSCOREDUMP)
 #define WIFSTOPPED(wstatus) (wstatus & WSSTOPPED)
-#define WSTOPSIG(wstatus) (WIFSTOPPED(wstatus) && (wstatus >> 8) & 0xff))
+#define WSTOPSIG(wstatus) (WIFSTOPPED(wstatus) && (wstatus >> 8) & 0xff)
 #define WIFCONTINUED(wstatus) (wstatus & WSCONTINUED)
 
 struct infop

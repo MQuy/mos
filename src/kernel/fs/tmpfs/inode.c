@@ -33,14 +33,14 @@ int tmpfs_setsize(struct vfs_inode *inode, loff_t new_size)
 
 static int tmpfs_mknod(struct vfs_inode *dir, struct vfs_dentry *dentry, int mode, dev_t dev)
 {
-	struct vfs_inode *i = tmpfs_get_inode(dir->i_sb, mode);
+	struct vfs_inode *inode = tmpfs_get_inode(dir->i_sb, mode);
 	uint32_t current_seconds = get_seconds(NULL);
-	i->i_ctime.tv_sec = current_seconds;
-	i->i_mtime.tv_sec = current_seconds;
-	i->i_atime.tv_sec = current_seconds;
-	i->i_rdev = dev;
+	inode->i_ctime.tv_sec = current_seconds;
+	inode->i_mtime.tv_sec = current_seconds;
+	inode->i_atime.tv_sec = current_seconds;
+	inode->i_rdev = dev;
 
-	dentry->d_inode = i;
+	dentry->d_inode = inode;
 	dir->i_mtime.tv_sec = current_seconds;
 	return 0;
 }
@@ -50,11 +50,13 @@ static struct vfs_inode *tmpfs_create_inode(struct vfs_inode *dir, struct vfs_de
 	return tmpfs_get_inode(dir->i_sb, mode | S_IFREG);
 }
 
-static int tmpfs_setattr(struct vfs_dentry *d, struct iattr *attrs)
+static int tmpfs_setattr(struct vfs_dentry *dentry, struct iattr *attrs)
 {
-	struct vfs_inode *i = d->d_inode;
-	if (attrs->ia_valid & ATTR_SIZE && attrs->ia_size != i->i_size)
-		tmpfs_setsize(i, attrs->ia_size);
+	struct vfs_inode *inode = dentry->d_inode;
+	if (attrs->ia_valid & ATTR_SIZE && attrs->ia_size != inode->i_size)
+		tmpfs_setsize(inode, attrs->ia_size);
+	if (attrs->ia_valid & ATTR_MODE)
+		inode->i_mode = attrs->ia_mode;
 	return 0;
 }
 

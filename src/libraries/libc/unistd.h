@@ -72,6 +72,7 @@
 #define __NR_execve 11
 #define __NR_chdir 12
 #define __NR_time 13
+#define __NR_chmod 15
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_lseek 19
@@ -96,6 +97,7 @@
 #define __NR_umask 60
 #define __NR_dup2 63
 #define __NR_getppid 64
+#define __NR_getpgrp 65
 #define __NR_setsid 66
 #define __NR_sigaction 67
 #define __NR_sigsuspend 72
@@ -104,6 +106,7 @@
 #define __NR_munmap 91
 #define __NR_truncate 92
 #define __NR_ftruncate 93
+#define __NR_fchmod 94
 #define __NR_socket 97
 #define __NR_connect 98
 #define __NR_accept 99
@@ -221,7 +224,8 @@ int getegid();
 int geteuid();
 int getgid();
 int setgid(gid_t gid);
-int getpgid();
+int getpgid(pid_t pid);
+int getpgrp();
 int getppid();
 int setpgid(pid_t pid, pid_t pgid);
 int getsid();

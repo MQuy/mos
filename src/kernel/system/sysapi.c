@@ -155,6 +155,28 @@ static int32_t sys_renameat(int olddirfd, const char *oldpath,
 	return ret;
 }
 
+static int32_t sys_fchmod(int fildes, mode_t mode)
+{
+	struct vfs_file *filp = current_process->files->fd[fildes];
+	if (!filp)
+		return -EBADF;
+
+	struct iattr newattrs;
+	newattrs.ia_mode = (mode & S_IALLUGO) || (filp->f_dentry->d_inode->i_mode & ~S_IALLUGO);
+	newattrs.ia_valid = ATTR_MODE;
+
+	return vfs_setattr(filp->f_dentry, &newattrs);
+}
+
+static int32_t sys_chmod(const char *path, mode_t mode)
+{
+	int ret = vfs_open(path, O_RDONLY);
+	if (ret < 0)
+		return ret;
+
+	return sys_fchmod(ret, mode);
+}
+
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
@@ -352,13 +374,25 @@ int32_t sys_sbrk(intptr_t increment)
 	return brk;
 }
 
+static int32_t sys_getpgrp()
+{
+	return current_process->gid;
+}
+
 static int32_t sys_getpid()
 {
 	return current_process->pid;
 }
 
-static int32_t sys_getpgid()
+static int32_t sys_getpgid(pid_t pid)
 {
+	if (!pid)
+		return current_process->gid;
+
+	struct process *p = find_process_by_pid(pid);
+	if (!p)
+		return -ESRCH;
+
 	return current_process->gid;
 }
 
@@ -616,6 +650,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_execve 11
 #define __NR_chdir 12
 #define __NR_time 13
+#define __NR_chmod 15
 #define __NR_brk 17
 #define __NR_sbrk 18
 #define __NR_lseek 19
@@ -640,6 +675,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_umask 60
 #define __NR_dup2 63
 #define __NR_getppid 64
+#define __NR_getpgrp 65
 #define __NR_setsid 66
 #define __NR_sigaction 67
 #define __NR_sigsuspend 72
@@ -648,6 +684,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_munmap 91
 #define __NR_truncate 92
 #define __NR_ftruncate 93
+#define __NR_fchmod 94
 #define __NR_socket 97
 #define __NR_connect 98
 #define __NR_accept 99
@@ -676,7 +713,6 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_unlinkat 301
 #define __NR_renameat 302
 #define __NR_faccessat 307
-#define __NR_renameat2 353
 #define __NR_sendto 369
 // TODO: MQ 2020-09-05 Use ioctl-FIODGNAME to get pts name
 #define __NR_getptsname 370
@@ -697,6 +733,8 @@ static void *syscalls[] = {
 	[__NR_lseek] = sys_lseek,
 	[__NR_rename] = sys_rename,
 	[__NR_renameat] = sys_renameat,
+	[__NR_chmod] = sys_chmod,
+	[__NR_fchmod] = sys_fchmod,
 	[__NR_waitpid] = sys_waitpid,
 	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,
@@ -717,6 +755,7 @@ static void *syscalls[] = {
 	[__NR_unlinkat] = sys_unlinkat,
 	[__NR_chdir] = sys_chdir,
 	[__NR_fchdir] = sys_fchdir,
+	[__NR_getpgrp] = sys_getpgrp,
 	[__NR_getuid] = sys_getuid,
 	[__NR_setuid] = sys_setuid,
 	[__NR_getegid] = sys_getegid,

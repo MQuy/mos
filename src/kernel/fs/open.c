@@ -222,26 +222,30 @@ int vfs_mknod(const char *path, int mode, dev_t dev)
 	return ret;
 }
 
-static int simple_setattr(struct vfs_dentry *d, struct iattr *attrs)
+int vfs_setattr(struct vfs_dentry *dentry, struct iattr *attrs)
 {
-	struct vfs_inode *inode = d->d_inode;
+	int ret = 0;
+	struct vfs_inode *inode = dentry->d_inode;
 
-	if (attrs->ia_valid & ATTR_SIZE)
-		inode->i_size = attrs->ia_size;
-	return 0;
+	if (inode->i_op->setattr)
+		ret = inode->i_op->setattr(dentry, attrs);
+	else
+	{
+		if (attrs->ia_valid & ATTR_SIZE)
+			inode->i_size = attrs->ia_size;
+		if (attrs->ia_valid & ATTR_MODE)
+			inode->i_mode = attrs->ia_mode;
+	}
+	return ret;
 }
 
 static int do_truncate(struct vfs_dentry *dentry, int32_t length)
 {
-	struct vfs_inode *inode = dentry->d_inode;
 	struct iattr *attrs = kcalloc(1, sizeof(struct iattr));
 	attrs->ia_valid = ATTR_SIZE;
 	attrs->ia_size = length;
 
-	if (inode->i_op->setattr)
-		return inode->i_op->setattr(dentry, attrs);
-	else
-		return simple_setattr(dentry, attrs);
+	return vfs_setattr(dentry, attrs);
 }
 
 int vfs_truncate(const char *path, int32_t length)

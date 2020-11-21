@@ -22,6 +22,22 @@
 #define S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
 #define S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
 
+#define S_IRWXU 0700
+#define S_IRUSR 0400
+#define S_IWUSR 0200
+#define S_IXUSR 0100
+#define S_IRWXG 070
+#define S_IRGRP 040
+#define S_IWGRP 020
+#define S_IXGRP 010
+#define S_IRWXO 07
+#define S_IROTH 04
+#define S_IWOTH 02
+#define S_IXOTH 01
+#define S_ISUID 04000
+#define S_ISGID 02000
+#define S_ISVTX 01000
+
 struct stat
 {
 	dev_t st_dev;		  /* ID of device containing file */
@@ -47,5 +63,7 @@ struct stat
 int stat(const char *path, struct stat *buf);
 int fstat(int fildes, struct stat *buf);
 mode_t umask(mode_t cmask);
+int chmod(const char *path, mode_t mode);
+int fchmod(int fildes, mode_t mode);
 
 #endif

@@ -46,6 +46,12 @@ int getpagesize()
 	return PAGE_SIZE;
 }
 
+_syscall0(getpgrp);
+int getpgrp()
+{
+	return syscall_getpgrp();
+}
+
 _syscall0(getpid);
 int getpid()
 {
@@ -88,10 +94,10 @@ int setgid(gid_t gid)
 	return syscall_setgid(gid);
 }
 
-_syscall0(getpgid);
-int getpgid()
+_syscall1(getpgid, pid_t);
+int getpgid(pid_t pid)
 {
-	return syscall_getpgid();
+	return syscall_getpgid(pid);
 }
 
 _syscall0(getppid);
