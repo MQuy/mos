@@ -30,3 +30,15 @@ int fchmod(int fildes, mode_t mode)
 {
 	return syscall_fchmod(fildes, mode);
 }
+
+_syscall3(mknod, const char *, mode_t, dev_t);
+int mknod(const char *path, mode_t mode, dev_t dev)
+{
+	return syscall_mknod(path, mode, dev);
+}
+
+_syscall4(mknodat, int, const char *, mode_t, dev_t);
+int mknodat(int fd, const char *path, mode_t mode, dev_t dev)
+{
+	return syscall_mknodat(fd, path, mode, dev);
+}

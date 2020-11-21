@@ -89,12 +89,21 @@ struct vfs_file *get_empty_filp()
 	return file;
 }
 
-int32_t vfs_open(const char *path, int32_t flags)
+int32_t vfs_open(const char *path, int32_t flags, ...)
 {
 	int fd = find_unused_fd_slot(0);
 
+	mode_t mode = 0;
+	if (flags & O_CREAT)
+	{
+		va_list ap;
+		va_start(ap, flags);
+		mode = va_arg(ap, mode_t);
+		va_end(ap);
+	}
+
 	struct nameidata nd;
-	int ret = path_walk(&nd, path, flags, S_IFREG);
+	int ret = path_walk(&nd, path, flags, mode);
 	if (ret < 0)
 		return ret;
 

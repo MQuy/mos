@@ -49,7 +49,7 @@ struct vfs_inode *sockfs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 	// The only purpose of mode arugment
 	// -> permission part which is set to i_mode
 	// -> use to decide whether it is dir or file
-	if (S_ISREG(mode))
+	if (S_ISSOCK(mode))
 	{
 		i->i_op = &sockfs_file_inode_operations;
 		i->i_fop = &sockfs_file_operations;

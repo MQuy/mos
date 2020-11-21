@@ -69,7 +69,7 @@ static int32_t sys_write(uint32_t fd, char *buf, size_t count)
 
 static int32_t sys_open(const char *path, int32_t flags, mode_t mode)
 {
-	return vfs_open(path, flags);
+	return vfs_open(path, flags, mode);
 }
 
 static int32_t sys_fstat(int32_t fd, struct kstat *stat)
@@ -177,6 +177,28 @@ static int32_t sys_chmod(const char *path, mode_t mode)
 	return sys_fchmod(ret, mode);
 }
 
+static int32_t sys_mknodat(int fd, const char *path, mode_t mode, dev_t dev)
+{
+	int ret = 0;
+	char *abs_path;
+	if (path[0] != '/')
+		ret = absolutize_path_from_fd(fd, path, &abs_path);
+	else
+		abs_path = path;
+
+	if (ret >= 0)
+		ret = vfs_mknod(abs_path, mode, dev);
+
+	if (abs_path != path)
+		kfree(abs_path);
+	return ret;
+}
+
+static int32_t sys_mknod(const char *path, mode_t mode, dev_t dev)
+{
+	return vfs_mknod(path, mode, dev);
+}
+
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
@@ -269,7 +291,7 @@ static int32_t sys_access(const char *path, int amode)
 	else
 		abs_path = path;
 
-	int fd = vfs_open(path, 0);
+	int fd = vfs_open(path, O_RDWR);
 
 	if (abs_path != path)
 		kfree(abs_path);
@@ -323,7 +345,7 @@ static int32_t sys_unlinkat(int fd, const char *path, int flag)
 	if (flag && flag & ~AT_REMOVEDIR)
 		return -EINVAL;
 
-	int ret;
+	int ret = 0;
 	char *abs_path;
 	if (path[0] != '/' && fd != AT_FDCWD)
 		ret = absolutize_path_from_fd(fd, path, &abs_path);
@@ -332,9 +354,9 @@ static int32_t sys_unlinkat(int fd, const char *path, int flag)
 
 	if (ret >= 0)
 		ret = vfs_unlink(abs_path, flag);
+
 	if (abs_path != path)
 		kfree(abs_path);
-
 	return ret;
 }
 
@@ -517,7 +539,7 @@ static int32_t sys_posix_spawn(char *path)
 int32_t sys_socket(int32_t family, enum socket_type type, int32_t protocal)
 {
 	char *path = get_next_socket_path();
-	int32_t fd = vfs_open(path, O_RDWR | O_CREAT);
+	int32_t fd = vfs_open(path, O_RDWR | O_CREAT, S_IFSOCK);
 	socket_setup(family, type, protocal, current_process->files->fd[fd]);
 	return fd;
 }
@@ -639,6 +661,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 	return debug_println(level, out);
 }
 
+// FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
 #define __NR_fork 2
 #define __NR_read 3
@@ -650,6 +673,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_execve 11
 #define __NR_chdir 12
 #define __NR_time 13
+#define __NR_mknod 14
 #define __NR_chmod 15
 #define __NR_brk 17
 #define __NR_sbrk 18
@@ -710,6 +734,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
+#define __NR_mknodat 297
 #define __NR_unlinkat 301
 #define __NR_renameat 302
 #define __NR_faccessat 307
@@ -735,6 +760,8 @@ static void *syscalls[] = {
 	[__NR_renameat] = sys_renameat,
 	[__NR_chmod] = sys_chmod,
 	[__NR_fchmod] = sys_fchmod,
+	[__NR_mknod] = sys_mknod,
+	[__NR_mknodat] = sys_mknodat,
 	[__NR_waitpid] = sys_waitpid,
 	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,

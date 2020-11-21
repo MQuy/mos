@@ -1,6 +1,7 @@
 #include <fs/vfs.h>
 #include <include/errno.h>
 #include <include/limits.h>
+#include <net/net.h>
 #include <proc/task.h>
 #include <utils/debug.h>
 
@@ -81,16 +82,19 @@ int vfs_rename(const char *oldpath, const char *newpath)
 		struct kstat new_stat;
 		vfs_fstat(newfd, &new_stat);
 		struct vfs_file *newfilp = current_process->files->fd[newfd];
+		struct vfs_dentry *new_dentry = newfilp->f_dentry;
 		mode_t new_mode = newfilp->f_dentry->d_inode->i_mode;
 
 		if (!S_ISDIR(old_mode) && S_ISDIR(new_mode))
 			return -EISDIR;
 		else if (S_ISDIR(old_mode) && !S_ISDIR(new_mode))
 			return -ENOTDIR;
+		else if ((S_ISREG(old_mode) == S_ISREG(new_mode) && old_stat.st_ino == new_stat.st_ino) ||
+				 (S_ISCHR(old_mode) == S_ISCHR(new_mode) && old_stat.st_rdev == new_stat.st_rdev) ||
+				 (S_ISSOCK(old_mode) == S_ISSOCK(new_mode) && SOCKET_I(old_dentry->d_inode) == SOCKET_I(new_dentry->d_inode)))
+			return 0;
 		else if (S_ISDIR(old_mode) && S_ISDIR(new_mode) && new_stat.st_size > 0)
 			return -ENOTEMPTY;
-		else if (S_ISREG(old_mode) && S_ISREG(new_mode) && (old_stat.st_ino == new_stat.st_ino))
-			return 0;
 
 		vfs_unlink(newpath, 0);
 	}

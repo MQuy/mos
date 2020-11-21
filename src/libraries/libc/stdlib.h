@@ -13,6 +13,8 @@
 
 #define MB_CUR_MAX 1
 
+#define FILENAME_CHARSET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-"
+
 #ifndef NULL
 #define __need_NULL
 #include <stddef.h>
@@ -96,6 +98,7 @@ unsigned long strtoul(const char *restrict, char **restrict, int);
 unsigned long long strtoull(const char *restrict, char **restrict, int);
 int unlockpt(int);
 int unsetenv(const char *name);
+char *mktemp(char *template);
 
 void *reallocarray(void *ptr, size_t nmemb, size_t size);
 void _clear_on_exit();

@@ -33,15 +33,15 @@ struct vfs_inode *mqueuefs_get_inode(struct vfs_superblock *sb, uint32_t mode)
 	mqi->key = get_unused_mqueue_number();
 	i->i_fs_info = mqi;
 
-	if (S_ISDIR(i->i_mode))
-	{
-		i->i_op = &mqueuefs_dir_inode_operations;
-		i->i_fop = &mqueuefs_dir_operations;
-	}
-	else if (S_ISREG(i->i_mode))
+	if (S_ISREG(i->i_mode))
 	{
 		i->i_op = &mqueuefs_file_inode_operations;
 		i->i_fop = &mqueuefs_file_operations;
+	}
+	else if (S_ISDIR(i->i_mode))
+	{
+		i->i_op = &mqueuefs_dir_inode_operations;
+		i->i_fop = &mqueuefs_dir_operations;
 	}
 	else
 		assert_not_implemented();

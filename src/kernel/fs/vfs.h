@@ -216,7 +216,7 @@ struct vfs_mount *do_mount(const char *fstype, int flags, const char *name);
 
 // open.c
 struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name);
-int32_t vfs_open(const char *path, int32_t flags);
+int32_t vfs_open(const char *path, int32_t flags, ...);
 int32_t vfs_close(int32_t fd);
 int vfs_stat(const char *path, struct kstat *stat);
 int vfs_fstat(int32_t fd, struct kstat *stat);

@@ -39,7 +39,7 @@ static char *mq_normalize_path(char *name)
 int32_t mq_open(const char *name, int32_t flags, struct mq_attr *attr)
 {
 	char *fname = mq_normalize_path(name);
-	int32_t ret = vfs_open(fname, flags);
+	int32_t ret = vfs_open(fname, flags, S_IFREG);
 
 	if (ret >= 0)
 	{
