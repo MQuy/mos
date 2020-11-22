@@ -7,12 +7,26 @@
 
 void vfs_build_path_backward(struct vfs_dentry *dentry, char *path)
 {
-	if (!dentry->d_parent)
-		return;
+	if (dentry->d_parent)
+	{
+		vfs_build_path_backward(dentry->d_parent, path);
+		int len = strlen(path);
+		int dlen = strlen(dentry->d_name);
 
-	vfs_build_path_backward(dentry->d_parent, path);
-	strcat(path, "/");
-	strcat(path, dentry->d_name);
+		if (path[len - 1] != '/')
+		{
+			memcpy(path + len, "/", 1);
+			memcpy(path + len + 1, dentry->d_name, dlen);
+			path[len + 1 + dlen] = 0;
+		}
+		else
+		{
+			memcpy(path + len, dentry->d_name, dlen);
+			path[len + dlen] = 0;
+		}
+	}
+	else
+		strcpy(path, "/");
 }
 
 static void absolutize_path_from_process(const char *path, char **abs_path)

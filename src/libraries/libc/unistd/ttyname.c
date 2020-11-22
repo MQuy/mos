@@ -39,7 +39,7 @@ int ttyname_r(int fd, char *name, size_t namesize)
 			continue;
 
 		strcpy(entry_path + path_dev_length, entry->d_name);
-		if (stat(entry_path, &esb) || esb.st_dev != sb.st_dev || esb.st_ino != sb.st_ino)
+		if (stat(entry_path, &esb) || esb.st_rdev != sb.st_rdev || esb.st_ino != sb.st_ino)
 			continue;
 
 		closedir(dirp);

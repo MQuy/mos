@@ -262,3 +262,14 @@ int fchdir(int fildes)
 {
 	return syscall_fchdir(fildes);
 }
+
+_syscall2(getcwd, char *, size_t);
+char *getcwd(char *buf, size_t size)
+{
+	if (!size)
+		size = MAXPATHLEN;
+	if (!buf)
+		buf = calloc(size, sizeof(char));
+
+	return (char *)syscall_getcwd(buf, size);
+}

@@ -17,7 +17,7 @@ DIR *opendir(const char *name)
 
 DIR *fdopendir(int fd)
 {
-	DIR *dirp = calloc(1, sizeof(sizeof(DIR)));
+	DIR *dirp = calloc(1, sizeof(DIR));
 	dirp->fd = fd;
 	dirp->owned_fd = false;
 	dirp->size = 0;

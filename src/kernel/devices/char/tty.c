@@ -133,17 +133,18 @@ static int tty_open(struct vfs_inode *inode, struct vfs_file *file)
 	dev_t dev = inode->i_rdev;
 
 	if (MAJOR(dev) == UNIX98_PTY_SLAVE_MAJOR)
-	{
 		tty = find_tty_from_driver(pts_driver, MINOR(dev));
-		tty->driver->tops->open(tty, file);
-	}
+	else if (MAJOR(dev) == TTYAUX_MAJOR && MINOR(dev) == 0)
+		tty = current_process->tty;
 	else if (MAJOR(dev) == TTY_MAJOR && MINOR(dev) >= SERIAL_MINOR_BASE)
 	{
 		tty = find_tty_from_driver(serial_driver, MINOR(dev));
 		if (!tty)
 			tty = create_tty_struct(serial_driver, MINOR(dev) - SERIAL_MINOR_BASE);
-		tty->driver->tops->open(tty, file);
 	}
+
+	if (tty && tty->driver->tops->open)
+		tty->driver->tops->open(tty, file);
 
 	file->private_data = tty;
 	tiocsctty(tty, 0);
@@ -269,6 +270,11 @@ void tty_init()
 	struct char_device *ptmx_cdev = alloc_chrdev("ptmx", TTYAUX_MAJOR, 2, 1, &ptmx_fops);
 	register_chrdev(ptmx_cdev);
 	vfs_mknod("/dev/ptmx", S_IFCHR, ptmx_cdev->dev);
+
+	log("TTY: Mount tty");
+	struct char_device *tty_cdev = alloc_chrdev("tty", TTYAUX_MAJOR, 0, 1, &tty_fops);
+	register_chrdev(tty_cdev);
+	vfs_mknod("/dev/tty", S_IFCHR, tty_cdev->dev);
 
 	log("TTY: Init pty");
 	pty_init();

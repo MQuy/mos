@@ -199,6 +199,15 @@ static int32_t sys_mknod(const char *path, mode_t mode, dev_t dev)
 	return vfs_mknod(path, mode, dev);
 }
 
+static int32_t sys_getcwd(char *buf, size_t size)
+{
+	char *abs_path = kcalloc(MAXPATHLEN, sizeof(char));
+	vfs_build_path_backward(current_process->fs->d_root, abs_path);
+
+	strcpy(buf, abs_path);
+	return (int32_t)buf;
+}
+
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
@@ -727,6 +736,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_getsid 147
 #define __NR_nanosleep 162
 #define __NR_poll 168
+#define __NR_getcwd 183
 #define __NR_clock_gettime 265
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
@@ -762,6 +772,7 @@ static void *syscalls[] = {
 	[__NR_fchmod] = sys_fchmod,
 	[__NR_mknod] = sys_mknod,
 	[__NR_mknodat] = sys_mknodat,
+	[__NR_getcwd] = sys_getcwd,
 	[__NR_waitpid] = sys_waitpid,
 	[__NR_getdents] = sys_getdents,
 	[__NR_execve] = sys_execve,

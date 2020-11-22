@@ -126,6 +126,7 @@
 #define __NR_getsid 147
 #define __NR_nanosleep 162
 #define __NR_poll 168
+#define __NR_getcwd 183
 #define __NR_clock_gettime 265
 #define __NR_mq_open 277
 #define __NR_mq_close (__NR_mq_open + 1)
@@ -219,6 +220,7 @@ int sbrk(intptr_t increment);
 int pipe(int *fildes);
 int truncate(const char *name, off_t length);
 int ftruncate(int fd, off_t length);
+char *getcwd(char *buf, size_t size);
 int getpid();
 int getuid();
 int setuid(uid_t uid);

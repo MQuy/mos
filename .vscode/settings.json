@@ -108,7 +108,8 @@
     "scoped_allocator": "c",
     "pr64411.C": "cpp",
     "internet": "c",
-    "typeindex": "c"
+    "typeindex": "c",
+    "lambda-for.C": "cpp"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

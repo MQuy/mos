@@ -27,8 +27,10 @@ int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode
 	nd->mnt = current_process->fs->mnt_root;
 
 	char part_name[256] = {0};
-	for (int i = 1, length = strlen(path); i < length; ++i)
+	for (int i = 0, length = strlen(path); i < length; ++i)
 	{
+		for (; path[i] == '/'; ++i)
+			;
 		memset(part_name, 0, sizeof(part_name));
 		for (int j = 0; path[i] != '/' && i < length; ++i, ++j)
 			part_name[j] = path[i];

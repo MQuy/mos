@@ -5,6 +5,7 @@
 #include <memory/vmm.h>
 #include <proc/task.h>
 #include <utils/debug.h>
+#include <utils/math.h>
 
 #include "tty.h"
 
@@ -191,24 +192,25 @@ ssize_t ntty_read(struct tty_struct *tty, struct vfs_file *file, char *buf, size
 	}
 	list_del(&wait.sibling);
 
-	if (!length || length > nr || length > tty->read_count)
+	if (!length || length > tty->read_count)
 		return -EFAULT;
 
-	assert_from_read_buf(tty, length);
-	copy_from_read_buf(tty, length, buf);
-	if (length == tty->read_count)
+    int count = min_t(int, length, nr);
+	assert_from_read_buf(tty, count);
+	copy_from_read_buf(tty, count, buf);
+	if (count == tty->read_count)
 	{
 		tty->read_head = tty->read_tail = 0;
 		tty->read_count = 0;
 	}
 	else
 	{
-		tty->read_head = N_TTY_BUF_ALIGN(tty->read_head + length);
-		tty->read_count -= length;
+		tty->read_head = N_TTY_BUF_ALIGN(tty->read_head + count);
+		tty->read_count -= count;
 	}
 	wake_up(&tty->write_wait);
 
-	return length;
+	return count;
 }
 
 ssize_t ntty_write(struct tty_struct *tty, struct vfs_file *file, const char *buf, size_t nr)
