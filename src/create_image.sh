@@ -6,7 +6,7 @@ unamestr=`uname`
 cd libraries/libc && make clean && make && cd ../..
 
 if [[ "$unamestr" == 'Linux' ]]; then
-  dd if=/dev/zero of=hdd.img count=20480 bs=512
+  dd if=/dev/zero of=hdd.img count=819200 bs=512
   DISK_NAME=mos
   mkfs.ext2 hdd.img
   sudo mkdir "/mnt/${DISK_NAME}"
@@ -14,7 +14,10 @@ if [[ "$unamestr" == 'Linux' ]]; then
 
   sudo mkdir "/mnt/${DISK_NAME}/dev"
   sudo mkdir "/mnt/${DISK_NAME}/bin"
+  sudo mkdir -p "/mnt/${DISK_NAME}/usr/local/bin"
+  sudo mkdir -p "/mnt/${DISK_NAME}/usr/local/sbin"
   sudo mkdir -p "/mnt/${DISK_NAME}/usr/share"
+  sudo mkdir -p "/mnt/${DISK_NAME}/var/mail"
 
   sudo cp -R assets/fonts "/mnt/${DISK_NAME}/usr/share"
   sudo cp -R assets/images "/mnt/${DISK_NAME}/usr/share"
@@ -51,10 +54,16 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo cp apps/ld/ld "/mnt/${DISK_NAME}/bin"
 
   # ports
-  cd ports/figlet && ./package.sh && cd ../..
+  # cd ports/figlet && ./package.sh && cd ../..
+  cd ports/bash && ./package.sh && cd ../..
 
   sudo mkdir "/mnt/${DISK_NAME}/etc"
+  sudo cp assets/passwd "/mnt/${DISK_NAME}/etc"
   sudo cp apps/window_server/desktop.ini "/mnt/${DISK_NAME}/etc"
+
+  sudo touch "/mnt/${DISK_NAME}/.bash_history"
+  sudo touch "/mnt/${DISK_NAME}/.bashrc"
+  sudo touch "/mnt/${DISK_NAME}/.inputrc"
 
   sudo mkdir "/mnt/${DISK_NAME}/tmp"
   sudo cp assets/book.txt "/mnt/${DISK_NAME}/tmp"
