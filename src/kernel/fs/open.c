@@ -65,7 +65,10 @@ int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode
 				if (i == length && flags & O_CREAT)
 					inode = nd->dentry->d_inode->i_op->create(nd->dentry->d_inode, d_child, i == length ? mode : S_IFDIR);
 				else
+				{
+					log("%s is not exist", path);
 					return -EACCES;
+				}
 			}
 			else if (i == length && flags & O_CREAT && flags & O_EXCL)
 				return -EEXIST;

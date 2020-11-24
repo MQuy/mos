@@ -142,9 +142,10 @@ static int ext2_delete_entry(struct vfs_superblock *sb, uint32_t block, void *ar
 	char *block_buf = ext2_bread_block(sb, block);
 
 	char tmpname[NAME_MAX];
+	uint32_t size = 0;
 	struct ext2_dir_entry *prev = NULL;
 	struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
-	for (uint32_t size = 0; size < sb->s_blocksize && entry->ino != 0; size += entry->rec_len)
+	while (size < sb->s_blocksize && entry->ino != 0)
 	{
 		memcpy(tmpname, entry->name, entry->name_len);
 		tmpname[entry->name_len] = 0;
@@ -162,6 +163,7 @@ static int ext2_delete_entry(struct vfs_superblock *sb, uint32_t block, void *ar
 		}
 
 		prev = entry;
+		size += entry->rec_len;
 		entry = (struct ext2_dir_entry *)((char *)entry + entry->rec_len);
 	}
 	return -ENOENT;
@@ -183,8 +185,8 @@ static int ext2_find_ino(struct vfs_superblock *sb, uint32_t block, void *arg)
 		if (strcmp(tmpname, name) == 0)
 			return entry->ino;
 
-		entry = (struct ext2_dir_entry *)((char *)entry + entry->rec_len);
 		size = size + entry->rec_len;
+		entry = (struct ext2_dir_entry *)((char *)entry + entry->rec_len);
 	}
 	return -ENOENT;
 }
@@ -309,6 +311,9 @@ static struct vfs_inode *ext2_lookup_inode(struct vfs_inode *dir, struct vfs_den
 
 	for (int i = 0, ino = 0; i < ei->i_blocks; ++i)
 	{
+		if (!ei->i_block[i])
+			continue;
+
 		if ((i < EXT2_INO_UPPER_LEVEL0 && (ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], dentry->d_name, ext2_find_ino)) > 0) ||
 			((EXT2_INO_UPPER_LEVEL0 <= i && i < EXT2_INO_UPPER_LEVEL1) && (ino = ext2_recursive_block_action(sb, 1, ei->i_block[12], dentry->d_name, ext2_find_ino)) > 0) ||
 			((EXT2_INO_UPPER_LEVEL1 <= i && i < EXT2_INO_UPPER_LEVEL2) && (ino = ext2_recursive_block_action(sb, 2, ei->i_block[13], dentry->d_name, ext2_find_ino)) > 0) ||
@@ -343,6 +348,9 @@ static int ext2_unlink(struct vfs_inode *dir, struct vfs_dentry *dentry)
 
 	for (int i = 0, ino = 0; i < ei->i_blocks; ++i)
 	{
+		if (!ei->i_block[i])
+			continue;
+
 		if ((i < EXT2_INO_UPPER_LEVEL0 && (ino = ext2_recursive_block_action(sb, 0, ei->i_block[i], dentry->d_name, ext2_delete_entry)) > 0) ||
 			((EXT2_INO_UPPER_LEVEL0 <= i && i < EXT2_INO_UPPER_LEVEL1) && (ino = ext2_recursive_block_action(sb, 1, ei->i_block[12], dentry->d_name, ext2_delete_entry)) > 0) ||
 			((EXT2_INO_UPPER_LEVEL1 <= i && i < EXT2_INO_UPPER_LEVEL2) && (ino = ext2_recursive_block_action(sb, 2, ei->i_block[13], dentry->d_name, ext2_delete_entry)) > 0) ||

@@ -107,7 +107,7 @@ int fileno(FILE *stream)
 
 void clearerr(FILE *stream)
 {
-	stream->flags &= ~_IO_ERR_SEEN & ~_IO_EOF_SEEN;
+	stream->flags &= ~(_IO_ERR_SEEN || _IO_EOF_SEEN);
 }
 
 static size_t fnget(void *ptr, size_t size, FILE *stream)
@@ -468,11 +468,20 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 	assert_stream(stream);
 
 	if (mode == _IOFBF)
-		stream->flags |= ~(_IO_LINE_BUF | _IO_UNBUFFERED) | _IO_FULLY_BUF;
+	{
+		stream->flags &= ~(_IO_LINE_BUF | _IO_UNBUFFERED);
+		stream->flags |= _IO_FULLY_BUF;
+	}
 	else if (mode == _IOLBF)
-		stream->flags |= ~(_IO_FULLY_BUF | _IO_UNBUFFERED) | _IO_LINE_BUF;
+	{
+		stream->flags &= ~(_IO_FULLY_BUF | _IO_UNBUFFERED);
+		stream->flags |= _IO_LINE_BUF;
+	}
 	else
-		stream->flags |= ~(_IO_FULLY_BUF | _IO_LINE_BUF) | _IO_UNBUFFERED;
+	{
+		stream->flags &= ~(_IO_FULLY_BUF | _IO_LINE_BUF);
+		stream->flags |= _IO_UNBUFFERED;
+	}
 
 	// TODO: MQ 2020-10-26 Implement customized stream buffer
 	return 0;
