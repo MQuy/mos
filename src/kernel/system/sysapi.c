@@ -54,7 +54,8 @@ pid_t sys_fork()
 
 static int32_t sys_waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
 {
-	return do_wait(idtype, id, infop, options);
+	int ret = do_wait(idtype, id, infop, options);
+	return ret >= 0 ? 0 : ret;
 }
 
 static int32_t sys_read(uint32_t fd, char *buf, size_t count)
@@ -110,10 +111,18 @@ static int32_t sys_waitpid(pid_t pid, int *wstatus, int options)
 	else
 		idtype = P_PID;
 
-	struct infop ifp;
-	do_wait(idtype, pid, &ifp, options);
+	if (options & WUNTRACED)
+	{
+		options &= ~WUNTRACED;
+		options |= WEXITED | WSTOPPED;
+	}
 
-	if (!wstatus)
+	struct infop ifp;
+	int ret = do_wait(idtype, pid, &ifp, options);
+	if (ret <= 0)
+		return ret;
+
+	if (wstatus)
 	{
 		if (ifp.si_code & CLD_EXITED)
 			*wstatus = WSEXITED | (ifp.si_status << 8);

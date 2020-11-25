@@ -6,8 +6,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#define SYSCALL_RETURN(ret) ({ if (ret < 0) { return errno = -ret, -1; } return 0; })
-
 int isatty(int fd)
 {
 	struct termios term;

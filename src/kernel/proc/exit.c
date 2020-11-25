@@ -1,5 +1,6 @@
 #include <devices/char/tty.h>
 #include <include/atomic.h>
+#include <include/errno.h>
 #include <ipc/signal.h>
 #include <utils/debug.h>
 
@@ -79,14 +80,20 @@ void do_exit(int32_t code)
 	schedule();
 }
 
+/*
+ * Return:
+ * - 1 if found a child process which status is available
+ * - 0 if found at least one child process which status is unavailable and WNOHANG in options
+ * - < 0 otherwise
+*/
 int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 {
-	int32_t ret = -1;
 	DEFINE_WAIT(wait);
 	list_add_tail(&wait.sibling, &current_process->wait_chld.list);
 
-	log("Process: Wait %s(p%d) with idtype=%d id=%d", current_process->name, current_process->pid, idtype, id);
+	log("Process: Wait %s(p%d) with idtype=%d id=%d options=%d", current_process->name, current_process->pid, idtype, id, options);
 	struct process *pchild = NULL;
+	bool child_exist = false;
 	while (true)
 	{
 		struct process *iter;
@@ -97,6 +104,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 				  idtype == P_ALL))
 				continue;
 
+			child_exist = true;
 			if ((options & WEXITED && (iter->flags & SIGNAL_TERMINATED || iter->flags & EXIT_TERMINATED)) ||
 				(options & WSTOPPED && iter->flags & SIGNAL_STOPED) ||
 				(options & WCONTINUED && iter->flags & SIGNAL_CONTINUED))
@@ -106,7 +114,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 			}
 		}
 
-		if (pchild)
+		if (pchild || options & WNOHANG)
 			break;
 
 		update_thread(current_thread, THREAD_WAITING);
@@ -114,6 +122,7 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 	}
 	list_del(&wait.sibling);
 
+	int32_t ret = -1;
 	if (pchild)
 	{
 		infop->si_pid = pchild->pid;
@@ -130,9 +139,15 @@ int32_t do_wait(idtype_t idtype, id_t id, struct infop *infop, int options)
 			infop->si_code = CLD_EXITED;
 			infop->si_status = pchild->exit_code;
 		}
-		ret = 0;
+		// NOTE: MQ 2020-11-25
+		// After waiting for terminated child, we remove it from parent
+		// the next waiting time, we don't find the same one again
+		list_del(&pchild->sibling);
+		ret = 1;
 	}
-	log("Process: Wait %s(p%d) done", current_process->name, current_process->pid);
+	else
+		ret = child_exist && options & WNOHANG ? 0 : -ECHILD;
 
+	log("Process: Wait %s(p%d) done", current_process->name, current_process->pid);
 	return ret;
 }

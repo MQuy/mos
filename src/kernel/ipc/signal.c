@@ -7,7 +7,6 @@
 #include <utils/hashmap.h>
 #include <utils/string.h>
 
-// TODO: MQ 2020-08-21 implement signal jump
 extern void return_usermode(struct interrupt_registers *);
 
 struct signal_frame
@@ -184,12 +183,17 @@ void signal_handler(struct interrupt_registers *regs)
 
 void handle_signal(struct interrupt_registers *regs, sigset_t restored_sig)
 {
-	log("Signal: Handle %s(p%d)", current_process->name, current_process->pid);
 	bool from_syscall = false;
 	bool prev_signaling = current_thread->signaling;
 
 	if (!current_thread->pending)
 		return;
+
+	int signum = next_signal(current_thread->pending, current_thread->blocked);
+	if (!signum)
+		return;
+
+	log("Signal: Handle %s(p%d) with signum=%d", current_process->name, current_process->pid, signum);
 
 	if (regs->int_no == 0x7F)
 	{
@@ -199,7 +203,6 @@ void handle_signal(struct interrupt_registers *regs, sigset_t restored_sig)
 	current_thread->signaling = true;
 	memcpy(&current_thread->uregs, regs, sizeof(struct interrupt_registers));
 
-	int signum = next_signal(current_thread->pending, current_thread->blocked);
 	sigdelset(&current_thread->pending, signum);
 
 	assert(!sig_ignored(current_thread, signum));

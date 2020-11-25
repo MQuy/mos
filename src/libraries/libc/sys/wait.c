@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -9,11 +10,11 @@ int wait(int *wstatus)
 _syscall3(waitpid, pid_t, int *, int);
 pid_t waitpid(pid_t pid, int *wstatus, int options)
 {
-	return syscall_waitpid(pid, wstatus, options);
+	SYSCALL_RETURN_ORIGINAL(syscall_waitpid(pid, wstatus, options));
 }
 
 _syscall4(waitid, idtype_t, id_t, struct infop *, int);
 int waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
 {
-	return syscall_waitid(idtype, id, infop, options);
+	SYSCALL_RETURN_ORIGINAL(syscall_waitid(idtype, id, infop, options));
 }
