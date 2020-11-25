@@ -53,10 +53,6 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo cp apps/calculator/calculator "/mnt/${DISK_NAME}/bin"
   sudo cp apps/ld/ld "/mnt/${DISK_NAME}/bin"
 
-  # ports
-  # cd ports/figlet && ./package.sh && cd ../..
-  cd ports/bash && ./package.sh && cd ../..
-
   sudo mkdir "/mnt/${DISK_NAME}/etc"
   sudo cp assets/passwd "/mnt/${DISK_NAME}/etc"
   sudo cp apps/window_server/desktop.ini "/mnt/${DISK_NAME}/etc"

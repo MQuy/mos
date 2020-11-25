@@ -62,7 +62,7 @@ static void init_terminal_tab_dev(struct terminal_tab *tab)
 
 		setsid();
 		ioctl(fds, TIOCSCTTY, 0);
-		execve("/bin/shell", NULL, NULL);
+		execve("/bin/bash", NULL, NULL);
 	}
 	else
 	{
