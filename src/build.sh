@@ -67,7 +67,8 @@ else
   if [ "$2" == "iso" ]
   then
     qemu-system-i386 -s -S -boot c -cdrom mos.iso -hda hdd.img \
-      -serial stdio -serial file:logs/uart2.log -serial file:logs/uart3.log -serial file:logs/uart4.log \
+      -chardev stdio,id=char0,logfile=logs/uart1.log \
+      -serial chardev:char0 -serial file:logs/uart2.log -serial file:logs/uart3.log -serial file:logs/uart4.log \
       -rtc driftfix=slew
   else
     qemu-system-i386 -s -drive format=raw,file=mos.img,index=0,media=disk -d guest_errors,int

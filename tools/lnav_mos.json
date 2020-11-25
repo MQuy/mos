@@ -1,0 +1,43 @@
+{
+    "mos_log": {
+        "title": "mOS Logger format",
+        "description": "Log format used by mOS",
+        "url": "",
+        "regex": {
+            "main": {
+                "pattern": "^\\[(?<alert_level>\\w+)\\] (?<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) (?<pid>\\d+) (?<program>\\w+) -- (?<body>.*)$"
+            }
+        },
+        "level-field": "alert_level",
+        "level": {
+            "debug": "DEBUG",
+            "trace": "TRACE",
+            "info": "INFO",
+            "warning": "WARNING",
+            "error": "ERROR",
+            "fatal": "FATAL"
+        },
+        "value": {
+            "alert_level": {
+                "kind": "string",
+                "identifier": true
+            },
+            "pid": {
+                "kind": "integer",
+                "identifier": true
+            },
+            "program": {
+                "kind": "string",
+                "identifier": true
+            },
+            "body": {
+                "kind": "string"
+            }
+        },
+        "sample": [
+            {
+                "line": "[INFO] 2016-07-25 15:38:47 11668 terminal -- Kernel: Init"
+            }
+        ]
+    }
+}

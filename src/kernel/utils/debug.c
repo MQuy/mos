@@ -1,20 +1,26 @@
 #include "debug.h"
 
+#include <cpu/rtc.h>
 #include <devices/char/tty.h>
 #include <include/ctype.h>
+#include <proc/task.h>
+#include <system/time.h>
 #include <utils/string.h>
 
 #define SERIAL_PORT_A 0x3f8
 
+extern struct time current_time;
+
 // LOG
 static char log_buffer[1024];
-static char *tag_opening[] = {
-	[DEBUG_TRACE] = "\\\\033[38;5;14m",
-	[DEBUG_WARNING] = "\\\\033[38;5;11m",
-	[DEBUG_ERROR] = "\\\\033[38;5;9m",
-	[DEBUG_FATAL] = "\\\\033[48;5;9m",
+static char log_body[1024];
+static char *DEBUG_NAME[] = {
+	[DEBUG_TRACE] = "TRACE",
+	[DEBUG_INFO] = "INFO",
+	[DEBUG_WARNING] = "WARNING",
+	[DEBUG_ERROR] = "ERROR",
+	[DEBUG_FATAL] = "FATAL",
 };
-static char tag_closing[] = "\\\\033[m";
 
 static void debug_write(const char *str)
 {
@@ -24,15 +30,37 @@ static void debug_write(const char *str)
 
 static int debug_vsprintf(enum debug_level level, const char *fmt, va_list args)
 {
-	int out = vsprintf(log_buffer, fmt, args);
-	if (level != DEBUG_INFO)
-	{
-		debug_write(tag_opening[level]);
-		debug_write(log_buffer);
-		debug_write(tag_closing);
-	}
+	vsprintf(log_body, fmt, args);
+
+	pid_t pid = current_process ? current_process->pid : 0;
+	char *process_name = current_process ? current_process->name : "swapper";
+
+	int out;
+	// NOTE: MQ 2020-11-25
+	// when executing kernel_main, rtc_irq_handler is not running due to disable interrupt
+	// -> current_time is not setup, we have to manually get time from rtc
+	if (current_time.year)
+		out = sprintf(log_buffer, "[%s] %04d-%02d-%02d %02d:%02d:%02d %d %s -- %s",
+					  DEBUG_NAME[level],
+					  current_time.year, current_time.month, current_time.day,
+					  current_time.hour, current_time.minute, current_time.second,
+					  pid, process_name,
+					  log_body);
 	else
-		debug_write(log_buffer);
+	{
+		uint16_t year;
+		uint8_t month, day, hour, minute, second;
+		rtc_get_datetime(&year, &month, &day, &hour, &minute, &second);
+
+		out = sprintf(log_buffer, "[%s] %04d-%02d-%02d %02d:%02d:%02d %d %s -- %s",
+					  DEBUG_NAME[level],
+					  year, month, day,
+					  hour, minute, second,
+					  pid, process_name,
+					  log_body);
+	}
+
+	debug_write(log_buffer);
 	return out;
 }
 

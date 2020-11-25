@@ -133,7 +133,7 @@ static int32_t simd_fpu_fault(struct interrupt_registers *regs)
 
 void exception_init()
 {
-	log("[exception] - Initializing");
+	log("Exception: Initializing");
 
 	register_interrupt_handler(0, (I86_IRQ_HANDLER)divide_by_zero_fault);
 	register_interrupt_handler(1, (I86_IRQ_HANDLER)single_step_trap);
@@ -154,5 +154,5 @@ void exception_init()
 	register_interrupt_handler(18, (I86_IRQ_HANDLER)machine_check_abort);
 	register_interrupt_handler(19, (I86_IRQ_HANDLER)simd_fpu_fault);
 
-	log("[exception] - Done");
+	log("Exception: Done");
 }
