@@ -108,6 +108,28 @@ static int tcgets(struct tty_struct *tty, int arg)
 	return -EFAULT;
 }
 
+static unsigned int tcsets(struct tty_struct *tty, unsigned int arg)
+{
+	struct termios *term = (struct termios *)arg;
+	if (current_process->tty)
+	{
+		memcpy(current_process->tty->termios, term, sizeof(struct termios));
+		return 0;
+	}
+	return -EFAULT;
+}
+
+static unsigned int fionread(struct tty_struct *tty, unsigned int arg)
+{
+	int *bytes = (int *)arg;
+	if (current_process->tty)
+	{
+		*bytes = current_process->tty->read_count;
+		return 0;
+	}
+	return -EFAULT;
+}
+
 static int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
 {
 	int index = get_next_pty_number();
@@ -196,12 +218,18 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 	{
 	case TCGETS:
 		return tcgets(tty, arg);
+	case TCSETS:
+	case TCSETSW:
+	case TCSETSF:
+		return tcsets(tty, arg);
 	case TIOCSCTTY:
 		return tiocsctty(tty, arg);
 	case TIOCGPGRP:
 		return tiocgpgrp(tty, arg);
 	case TIOCSPGRP:
 		return tiocspgrp(tty, arg);
+	case FIONREAD:
+		return fionread(tty, arg);
 	default:
 		assert_not_implemented("cmd %d is not supported", cmd);
 		break;
