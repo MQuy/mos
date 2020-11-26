@@ -36,6 +36,8 @@
 #define F_SETSIG 10 /* for sockets. */
 #define F_GETSIG 11 /* for sockets. */
 
+#define FD_CLOEXEC 1
+
 #define AT_FDCWD -2
 
 /* Flag values for faccessat2) et al. */

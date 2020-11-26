@@ -176,6 +176,7 @@ struct tty_struct
 	struct tty_ldisc *ldisc;
 	struct tty_struct *link;
 	struct termios *termios;
+	struct winsize winsize;
 
 	pid_t pgrp;
 	pid_t session;

@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -27,7 +28,7 @@ int fcntl(int fd, int cmd, ...)
 	unsigned long arg = va_arg(ap, unsigned long);
 	va_end(ap);
 
-	return syscall_fcntl(fd, cmd, arg);
+	SYSCALL_RETURN_ORIGINAL(syscall_fcntl(fd, cmd, arg));
 }
 
 int creat(const char* path, mode_t mode)

@@ -32,10 +32,10 @@ struct ltchars
 
 struct winsize
 {
-	unsigned short ws_row;
-	unsigned short ws_col;
-	unsigned short ws_xpixel;
-	unsigned short ws_ypixel;
+	unsigned short ws_row;	  /* rows, in characters */
+	unsigned short ws_col;	  /* columns, in characters */
+	unsigned short ws_xpixel; /* horizontal size, pixels - not used */
+	unsigned short ws_ypixel; /* vertical size, pixels - not used */
 };
 
 typedef unsigned char cc_t;

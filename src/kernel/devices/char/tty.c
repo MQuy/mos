@@ -37,6 +37,8 @@ static struct tty_struct *create_tty_struct(struct tty_driver *driver, int idx)
 	tty->driver = driver;
 	tty->ldisc = &tty_ldisc_N_TTY;
 	tty->termios = &driver->init_termios;
+	tty->winsize.ws_col = 80;
+	tty->winsize.ws_row = 40;
 	sprintf(tty->name, "%s/%d", driver->name, idx);
 
 	INIT_LIST_HEAD(&tty->read_wait.list);
@@ -100,34 +102,46 @@ static int tiocspgrp(struct tty_struct *tty, int arg)
 static int tcgets(struct tty_struct *tty, int arg)
 {
 	struct termios *term = (struct termios *)arg;
-	if (current_process->tty)
-	{
-		memcpy(term, current_process->tty->termios, sizeof(struct termios));
-		return 0;
-	}
-	return -EFAULT;
+	memcpy(term, tty->termios, sizeof(struct termios));
+	return 0;
 }
 
-static unsigned int tcsets(struct tty_struct *tty, unsigned int arg)
+static int tcsets(struct tty_struct *tty, unsigned int arg)
 {
 	struct termios *term = (struct termios *)arg;
-	if (current_process->tty)
-	{
-		memcpy(current_process->tty->termios, term, sizeof(struct termios));
-		return 0;
-	}
-	return -EFAULT;
+	memcpy(tty->termios, term, sizeof(struct termios));
+	return 0;
 }
 
-static unsigned int fionread(struct tty_struct *tty, unsigned int arg)
+static int fionread(struct tty_struct *tty, unsigned int arg)
 {
 	int *bytes = (int *)arg;
-	if (current_process->tty)
-	{
-		*bytes = current_process->tty->read_count;
-		return 0;
-	}
-	return -EFAULT;
+	*bytes = tty->read_count;
+	return 0;
+}
+
+static int tiocgwinsz(struct tty_struct *tty, unsigned int arg)
+{
+	struct winsize *ws = (struct winsize *)arg;
+	memcpy(ws, &tty->winsize, sizeof(struct winsize));
+	return 0;
+}
+
+static int tiocswinsz(struct tty_struct *tty, unsigned int arg)
+{
+	struct winsize *ws = (struct winsize *)arg;
+
+	bool changes = false;
+	if (ws->ws_col != tty->winsize.ws_col || ws->ws_row != tty->winsize.ws_row ||
+		ws->ws_xpixel != tty->winsize.ws_xpixel || ws->ws_ypixel != tty->winsize.ws_ypixel)
+		changes = true;
+
+	memcpy(&tty->winsize, ws, sizeof(struct winsize));
+
+	if (changes)
+		do_kill(tty->pgrp, SIGWINCH);
+
+	return 0;
 }
 
 static int ptmx_open(struct vfs_inode *inode, struct vfs_file *file)
@@ -218,6 +232,7 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 	{
 	case TCGETS:
 		return tcgets(tty, arg);
+	// TODO: 2020-11-26 Implement different actions based on TCSETS, TCSETSW and TCSETSF
 	case TCSETS:
 	case TCSETSW:
 	case TCSETSF:
@@ -230,6 +245,10 @@ static int tty_ioctl(struct vfs_inode *inode, struct vfs_file *file, unsigned in
 		return tiocspgrp(tty, arg);
 	case FIONREAD:
 		return fionread(tty, arg);
+	case TIOCGWINSZ:
+		return tiocgwinsz(tty, arg);
+	case TIOCSWINSZ:
+		return tiocswinsz(tty, arg);
 	default:
 		assert_not_implemented("cmd %d is not supported", cmd);
 		break;
