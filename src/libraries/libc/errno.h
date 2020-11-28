@@ -93,5 +93,7 @@
 #define EWOULDBLOCK EAGAIN
 
 extern int errno;
+extern char *program_invocation_name;
+extern char *program_invocation_short_name;
 
 #endif

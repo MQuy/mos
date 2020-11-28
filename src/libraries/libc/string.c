@@ -119,12 +119,12 @@ int strlsplat(const char *s1, int pos, char **sf, char **sl)
 		return -1;
 
 	size_t length = strlen(s1);
-	if (pos)
+	if (pos && sf)
 	{
 		*sf = calloc(pos + 1, sizeof(char));
 		memcpy(*sf, s1, pos);
 	}
-	if (pos < (int)length)
+	if (pos < (int)length && sl)
 	{
 		*sl = calloc(length - pos, sizeof(char));
 		memcpy(*sl, s1 + pos + 1, length - 1 - pos);
