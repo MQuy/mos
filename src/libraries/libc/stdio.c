@@ -31,8 +31,8 @@ bool valid_stream(FILE *stream)
 
 void assert_stream(FILE *stream)
 {
-	assert(stream->read_base <= stream->read_ptr && stream->read_ptr <= stream->read_end + 1);
-	assert(stream->write_base <= stream->write_ptr && stream->write_ptr <= stream->write_end + 1);
+	assert(stream->_IO_read_base <= stream->_IO_read_ptr && stream->_IO_read_ptr <= stream->_IO_read_end + 1);
+	assert(stream->_IO_write_base <= stream->_IO_write_ptr && stream->_IO_write_ptr <= stream->_IO_write_end + 1);
 }
 
 FILE *fopen(const char *filename, const char *mode)
@@ -54,6 +54,21 @@ FILE *fopen(const char *filename, const char *mode)
 	return fdopen(fd, mode);
 }
 
+void fchange_mode(FILE *stream, const char *mode)
+{
+	// TODO: MQ 2020-10-11 Support mode `b`
+	if (mode[0] == 'r' && mode[1] != '+')
+		stream->_flags |= _IO_NO_WRITES;
+	else if ((mode[0] == 'w' || mode[0] == 'a') && mode[1] != '+')
+		stream->_flags |= _IO_NO_READS;
+
+	if (mode[0] == 'a')
+	{
+		stream->_flags |= _IO_IS_APPENDING;
+		stream->pos = lseek(stream->fd, 0, SEEK_END);
+	}
+}
+
 FILE *fdopen(int fd, const char *mode)
 {
 	FILE *stream = calloc(1, sizeof(FILE));
@@ -61,41 +76,54 @@ FILE *fdopen(int fd, const char *mode)
 	stream->bkup_chr = -1;
 	list_add_tail(&stream->sibling, &lstream);
 
-	// TODO: MQ 2020-10-11 Support mode `b`
-	if (mode[0] == 'r' && mode[1] != '+')
-		stream->flags |= _IO_NO_WRITES;
-	else if ((mode[0] == 'w' || mode[0] == 'a') && mode[1] != '+')
-		stream->flags |= _IO_NO_READS;
-
-	if (mode[0] == 'a')
-	{
-		stream->flags |= _IO_IS_APPENDING;
-		stream->pos = lseek(fd, 0, SEEK_END);
-	}
+	fchange_mode(stream, mode);
 
 	// fill in blksize and mode
 	struct stat stat = {0};
 	fstat(fd, &stat);
 
 	if (S_ISREG(stat.st_mode))
-		stream->flags |= _IO_FULLY_BUF;
+		stream->_flags |= _IO_FULLY_BUF;
 	else if (isatty(fd))
-		stream->flags |= _IO_LINE_BUF;
+		stream->_flags |= _IO_LINE_BUF;
 	else
-		stream->flags |= _IO_UNBUFFERED;
+		stream->_flags |= _IO_UNBUFFERED;
 
 	stream->blksize = stat.st_blksize;
 	return stream;
 }
 
+FILE *freopen(const char *pathname, const char *mode,
+			  FILE *stream)
+{
+	if (valid_stream(stream))
+		return errno = -EBADF, NULL;
+
+	fflush(stream);
+	if (!pathname)
+		fclose(stream);
+	clearerr(stream);
+
+	FILE *newstream = stream;
+	if (pathname)
+	{
+		newstream = fopen(pathname, mode);
+		fclose(stream);
+	}
+	else
+		fchange_mode(stream, mode);
+
+	return newstream;
+}
+
 int feof(FILE *stream)
 {
-	return stream->flags & _IO_EOF_SEEN;
+	return stream->_flags & _IO_EOF_SEEN;
 }
 
 int ferror(FILE *stream)
 {
-	return stream->flags & _IO_ERR_SEEN;
+	return stream->_flags & _IO_ERR_SEEN;
 }
 
 int fileno(FILE *stream)
@@ -107,19 +135,19 @@ int fileno(FILE *stream)
 
 void clearerr(FILE *stream)
 {
-	stream->flags &= ~(_IO_ERR_SEEN || _IO_EOF_SEEN);
+	stream->_flags &= ~(_IO_ERR_SEEN || _IO_EOF_SEEN);
 }
 
 static size_t fnget(void *ptr, size_t size, FILE *stream)
 {
 	assert_stream(stream);
 
-	if (stream->read_ptr + size > stream->read_end || !stream->read_end)
+	if (stream->_IO_read_ptr + size > stream->_IO_read_end || !stream->_IO_read_end)
 	{
-		if (stream->flags & _IO_EOF_SEEN)
+		if (stream->_flags & _IO_EOF_SEEN)
 			return EOF;
 
-		int count = (stream->flags & _IO_FULLY_BUF || stream->flags & _IO_LINE_BUF)
+		int count = (stream->_flags & _IO_FULLY_BUF || stream->_flags & _IO_LINE_BUF)
 						? ALIGN_UP(stream->pos + size, max(stream->blksize, 1)) - stream->pos
 						: size;
 		char *buf = calloc(count, sizeof(char));
@@ -128,19 +156,19 @@ static size_t fnget(void *ptr, size_t size, FILE *stream)
 		// end of file
 		if (!count)
 		{
-			stream->flags |= _IO_EOF_SEEN;
+			stream->_flags |= _IO_EOF_SEEN;
 			free(buf);
 			return EOF;
 		}
 
-		free(stream->read_base);
-		stream->read_base = stream->read_ptr = buf;
-		stream->read_end = buf + count;
+		free(stream->_IO_read_base);
+		stream->_IO_read_base = stream->_IO_read_ptr = buf;
+		stream->_IO_read_end = buf + count;
 	}
 
-	memcpy(ptr, stream->read_ptr, size);
+	memcpy(ptr, stream->_IO_read_ptr, size);
 	stream->pos += size;
-	stream->read_ptr += size;
+	stream->_IO_read_ptr += size;
 	return size;
 }
 
@@ -204,29 +232,29 @@ int ungetc(int c, FILE *stream)
 	if (c == EOF || stream->bkup_chr != -1)
 		return EOF;
 
-	if (stream->read_ptr == stream->read_base)
+	if (stream->_IO_read_ptr == stream->_IO_read_base)
 	{
-		int size = stream->read_end - stream->read_base + 2;
+		int size = stream->_IO_read_end - stream->_IO_read_base + 2;
 		char *buf = calloc(size, sizeof(char));
 
-		memcpy(buf + 1, stream->read_base, size - 1);
-		free(stream->read_base);
+		memcpy(buf + 1, stream->_IO_read_base, size - 1);
+		free(stream->_IO_read_base);
 
-		stream->read_base = buf;
-		stream->read_ptr = buf + 1;
-		stream->read_end = buf + size;
+		stream->_IO_read_base = buf;
+		stream->_IO_read_ptr = buf + 1;
+		stream->_IO_read_end = buf + size;
 	}
 	stream->pos--;
-	stream->bkup_chr = *stream->read_ptr--;
-	*stream->read_ptr = (unsigned char)c;
-	stream->flags &= ~_IO_EOF_SEEN;
+	stream->bkup_chr = *stream->_IO_read_ptr--;
+	*stream->_IO_read_ptr = (unsigned char)c;
+	stream->_flags &= ~_IO_EOF_SEEN;
 	return (unsigned char)c;
 }
 
 void rewind(FILE *stream)
 {
 	fseek(stream, 0, SEEK_SET);
-	stream->flags &= ~_IO_ERR_SEEN;
+	stream->_flags &= ~_IO_ERR_SEEN;
 }
 
 int fseek(FILE *stream, long int off, int whence)
@@ -246,11 +274,11 @@ int fseek(FILE *stream, long int off, int whence)
 	stream->pos = offset;
 	lseek(stream->fd, offset, SEEK_SET);
 
-	free(stream->read_base);
-	stream->read_base = stream->read_end = stream->read_ptr = NULL;
+	free(stream->_IO_read_base);
+	stream->_IO_read_base = stream->_IO_read_end = stream->_IO_read_ptr = NULL;
 	stream->bkup_chr = -1;
 
-	stream->flags &= ~_IO_EOF_SEEN;
+	stream->_flags &= ~_IO_EOF_SEEN;
 	return 0;
 }
 
@@ -265,23 +293,23 @@ static int fnput(const char *s, int size, FILE *stream)
 {
 	assert_stream(stream);
 
-	int remaining_len = stream->write_end - stream->write_ptr;
-	int current_len = stream->write_end - stream->write_base;
+	int remaining_len = stream->_IO_write_end - stream->_IO_write_ptr;
+	int current_len = stream->_IO_write_end - stream->_IO_write_base;
 
 	if (remaining_len < size)
 	{
 		int new_len = max(max(size, current_len * 2), MIN_WRITE_BUF_LEN);
 		char *buf = calloc(new_len, sizeof(char));
 
-		memcpy(buf, stream->write_base, current_len);
-		free(stream->write_base);
+		memcpy(buf, stream->_IO_write_base, current_len);
+		free(stream->_IO_write_base);
 
-		stream->write_base = buf;
-		stream->write_ptr = buf + current_len - remaining_len;
-		stream->write_end = buf + new_len;
+		stream->_IO_write_base = buf;
+		stream->_IO_write_ptr = buf + current_len - remaining_len;
+		stream->_IO_write_end = buf + new_len;
 	}
-	memcpy(stream->write_ptr, s, size);
-	stream->write_ptr += size;
+	memcpy(stream->_IO_write_ptr, s, size);
+	stream->_IO_write_ptr += size;
 	stream->pos += size;
 	return size;
 }
@@ -331,7 +359,7 @@ int fflush(FILE *stream)
 		FILE *iter;
 		list_for_each_entry(iter, &lstream, sibling)
 		{
-			if (!(iter->flags & _IO_NO_WRITES))
+			if (!(iter->_flags & _IO_NO_WRITES))
 				fflush(iter);
 		}
 		return 0;
@@ -341,15 +369,15 @@ int fflush(FILE *stream)
 	if (!valid_stream(stream))
 		return -EBADF;
 
-	int unwritten_len = stream->write_ptr - stream->write_base;
+	int unwritten_len = stream->_IO_write_ptr - stream->_IO_write_base;
 
 	if (!unwritten_len)
 		return 0;
 
-	write(stream->fd, stream->write_base, unwritten_len);
-	free(stream->write_base);
+	write(stream->fd, stream->_IO_write_base, unwritten_len);
+	free(stream->_IO_write_base);
 
-	stream->write_base = stream->write_ptr = stream->write_end = NULL;
+	stream->_IO_write_base = stream->_IO_write_ptr = stream->_IO_write_end = NULL;
 	return 0;
 }
 
@@ -360,8 +388,8 @@ int fclose(FILE *stream)
 		return -EBADF;
 
 	fflush(stream);
-	free(stream->read_base);
-	stream->read_base = stream->read_ptr = stream->read_end = NULL;
+	free(stream->_IO_read_base);
+	stream->_IO_read_base = stream->_IO_read_ptr = stream->_IO_read_end = NULL;
 
 	close(stream->fd);
 	stream->fd = -1;
@@ -380,10 +408,10 @@ int fsetpos(FILE *stream, const fpos_t *pos)
 	fflush(stream);
 
 	stream->pos = *pos;
-	stream->flags &= ~_IO_EOF_SEEN;
+	stream->_flags &= ~_IO_EOF_SEEN;
 
 	if (stream->bkup_chr == -1)
-		*stream->write_ptr++ = stream->bkup_chr;
+		*stream->_IO_write_ptr++ = stream->bkup_chr;
 
 	return 0;
 }
@@ -469,18 +497,18 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size)
 
 	if (mode == _IOFBF)
 	{
-		stream->flags &= ~(_IO_LINE_BUF | _IO_UNBUFFERED);
-		stream->flags |= _IO_FULLY_BUF;
+		stream->_flags &= ~(_IO_LINE_BUF | _IO_UNBUFFERED);
+		stream->_flags |= _IO_FULLY_BUF;
 	}
 	else if (mode == _IOLBF)
 	{
-		stream->flags &= ~(_IO_FULLY_BUF | _IO_UNBUFFERED);
-		stream->flags |= _IO_LINE_BUF;
+		stream->_flags &= ~(_IO_FULLY_BUF | _IO_UNBUFFERED);
+		stream->_flags |= _IO_LINE_BUF;
 	}
 	else
 	{
-		stream->flags &= ~(_IO_FULLY_BUF | _IO_LINE_BUF);
-		stream->flags |= _IO_UNBUFFERED;
+		stream->_flags &= ~(_IO_FULLY_BUF | _IO_LINE_BUF);
+		stream->_flags |= _IO_UNBUFFERED;
 	}
 
 	// TODO: MQ 2020-10-26 Implement customized stream buffer

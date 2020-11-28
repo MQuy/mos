@@ -281,6 +281,20 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 			if (i >= 0 && input[i - 1] == '\n')
 				tab->cursor_line->seconds = time(NULL);
 		}
+		else if (ch == '\b')
+		{
+			if (tab->cursor_column == 0)
+			{
+				struct terminal_line *first_line = list_first_entry_or_null(&tab->lines, struct terminal_line, sibling);
+				if (tab->cursor_line != first_line)
+				{
+					tab->cursor_line = list_prev_entry(tab->cursor_line, sibling);
+					tab->cursor_column = strlen(tab->cursor_line->content);
+				}
+			}
+			else
+				tab->cursor_column--;
+		}
 		else if (ch == '\177')
 		{
 			struct terminal_line *cursor_line = tab->cursor_line;

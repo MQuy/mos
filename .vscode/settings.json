@@ -109,7 +109,11 @@
     "pr64411.C": "cpp",
     "internet": "c",
     "typeindex": "c",
-    "lambda-for.C": "cpp"
+    "lambda-for.C": "cpp",
+    "complex": "c",
+    "fstream": "c",
+    "iomanip": "c",
+    "regex": "c"
 },
   "C_Cpp.default.cppStandard": "gnu++20",
   "C_Cpp.default.cStandard": "gnu18"

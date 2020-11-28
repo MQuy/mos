@@ -60,6 +60,28 @@
 #define STDOUT_FILENO 1 /* standard output file descriptor */
 #define STDERR_FILENO 2 /* standard error file descriptor */
 
+#define _PC_2_SYMLINKS 1
+#define _PC_ALLOC_SIZE_MIN 2
+#define _PC_ASYNC_IO 3
+#define _PC_CHOWN_RESTRICTED 4
+#define _PC_FILESIZEBITS 5
+#define _PC_LINK_MAX 6
+#define _PC_MAX_CANON 7
+#define _PC_MAX_INPUT 8
+#define _PC_NAME_MAX 9
+#define _PC_NO_TRUNC 10
+#define _PC_PATH_MAX 11
+#define _PC_PIPE_BUF 12
+#define _PC_PRIO_IO 13
+#define _PC_REC_INCR_XFER_SIZE 14
+#define _PC_REC_MAX_XFER_SIZE 15
+#define _PC_REC_MIN_XFER_SIZE 16
+#define _PC_REC_XFER_ALIGN 17
+#define _PC_SYMLINK_MAX 18
+#define _PC_SYNC_IO 19
+#define _PC_TIMESTAMP_RESOLUTION 20
+#define _PC_VDISABLE 21
+
 // FIXME MQ 2020-05-12 copy define constants from https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
 #define __NR_exit 1
 #define __NR_fork 2
