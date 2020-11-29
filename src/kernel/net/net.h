@@ -106,7 +106,7 @@ enum socket_state
 	SS_CONNECTED = 3,	  /* connected to socket		*/
 	SS_DISCONNECTING = 4, /* in process of disconnecting	*/
 	SS_DISCONNECTED = 5,
-} socket_state;
+};
 
 enum socket_type
 {

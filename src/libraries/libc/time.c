@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
@@ -73,4 +74,17 @@ time_t mktime(struct tm *timeptr)
 	unsigned int doy = (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;  // [0, 365]
 	unsigned int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;					  // [0, 146096]
 	return era * 146097 + (doe)-719468;
+}
+
+struct tm *gmtime(const time_t *timer)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+struct tm *gmtime_r(const time_t *restrict timer,
+					struct tm *restrict result)
+{
+	assert_not_reached();
+	__builtin_unreachable();
 }

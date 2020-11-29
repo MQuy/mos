@@ -20,7 +20,6 @@
 #define INT_MIN INT32_MIN
 
 #define UINT_MAX UINT32_MAX
-#define UINT_MIN UINT32_MIN
 
 #define CHAR_BIT 8
 #define SCHAR_MIN (-128)

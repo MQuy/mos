@@ -65,7 +65,7 @@ void fchange_mode(FILE *stream, const char *mode)
 	if (mode[0] == 'a')
 	{
 		stream->_flags |= _IO_IS_APPENDING;
-		stream->pos = lseek(stream->fd, 0, SEEK_END);
+		stream->_offset = lseek(stream->fd, 0, SEEK_END);
 	}
 }
 
@@ -148,7 +148,7 @@ static size_t fnget(void *ptr, size_t size, FILE *stream)
 			return EOF;
 
 		int count = (stream->_flags & _IO_FULLY_BUF || stream->_flags & _IO_LINE_BUF)
-						? ALIGN_UP(stream->pos + size, max(stream->blksize, 1)) - stream->pos
+						? ALIGN_UP(stream->_offset + size, max(stream->blksize, 1)) - stream->_offset
 						: size;
 		char *buf = calloc(count, sizeof(char));
 
@@ -167,7 +167,7 @@ static size_t fnget(void *ptr, size_t size, FILE *stream)
 	}
 
 	memcpy(ptr, stream->_IO_read_ptr, size);
-	stream->pos += size;
+	stream->_offset += size;
 	stream->_IO_read_ptr += size;
 	return size;
 }
@@ -212,12 +212,12 @@ size_t fread(void *ptr, size_t size, size_t nitems, FILE *stream)
 
 long int ftell(FILE *stream)
 {
-	return stream->pos;
+	return stream->_offset;
 }
 
 off_t ftello(FILE *stream)
 {
-	return stream->pos;
+	return stream->_offset;
 }
 
 int getchar()
@@ -244,7 +244,7 @@ int ungetc(int c, FILE *stream)
 		stream->_IO_read_ptr = buf + 1;
 		stream->_IO_read_end = buf + size;
 	}
-	stream->pos--;
+	stream->_offset--;
 	stream->bkup_chr = *stream->_IO_read_ptr--;
 	*stream->_IO_read_ptr = (unsigned char)c;
 	stream->_flags &= ~_IO_EOF_SEEN;
@@ -268,10 +268,10 @@ int fseek(FILE *stream, long int off, int whence)
 
 	loff_t offset = off;
 	if (whence == SEEK_CUR)
-		offset = stream->pos + off;
+		offset = stream->_offset + off;
 	else if (whence == SEEK_END)
 		offset = stat.st_size + off;
-	stream->pos = offset;
+	stream->_offset = offset;
 	lseek(stream->fd, offset, SEEK_SET);
 
 	free(stream->_IO_read_base);
@@ -310,7 +310,7 @@ static int fnput(const char *s, int size, FILE *stream)
 	}
 	memcpy(stream->_IO_write_ptr, s, size);
 	stream->_IO_write_ptr += size;
-	stream->pos += size;
+	stream->_offset += size;
 	return size;
 }
 
@@ -399,7 +399,7 @@ int fclose(FILE *stream)
 
 int fgetpos(FILE *stream, fpos_t *pos)
 {
-	*pos = stream->pos;
+	*pos = stream->_offset;
 	return 0;
 }
 
@@ -407,7 +407,7 @@ int fsetpos(FILE *stream, const fpos_t *pos)
 {
 	fflush(stream);
 
-	stream->pos = *pos;
+	stream->_offset = *pos;
 	stream->_flags &= ~_IO_EOF_SEEN;
 
 	if (stream->bkup_chr == -1)

@@ -99,6 +99,9 @@ unsigned long long strtoull(const char *restrict, char **restrict, int);
 int unlockpt(int);
 int unsetenv(const char *name);
 char *mktemp(char *template);
+int wctomb(char *s, wchar_t wchar);
+size_t wcstombs(char *restrict s, const wchar_t *restrict pwcs,
+				size_t n);
 
 void *reallocarray(void *ptr, size_t nmemb, size_t size);
 void _clear_on_exit();

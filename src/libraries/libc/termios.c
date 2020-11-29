@@ -27,3 +27,27 @@ int tcflow(int fd, int action)
 {
 	return ioctl(fd, TCXONC, action);
 }
+
+speed_t cfgetispeed(const struct termios *termios_p)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+speed_t cfgetospeed(const struct termios *termios_p)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int cfsetispeed(struct termios *termios_p, speed_t speed)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int cfsetospeed(struct termios *termios_p, speed_t speed)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}

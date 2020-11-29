@@ -208,5 +208,9 @@ struct termios
 
 int tcsetattr(int fd, int opts, const struct termios *tp);
 int tcflow(int fd, int action);
+speed_t cfgetispeed(const struct termios *termios_p);
+speed_t cfgetospeed(const struct termios *termios_p);
+int cfsetispeed(struct termios *termios_p, speed_t speed);
+int cfsetospeed(struct termios *termios_p, speed_t speed);
 
 #endif

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -177,6 +178,24 @@ int execve(const char *pathname, char *const argv[], char *const envp[])
 	return syscall_execve(pathname, argv, envp);
 }
 
+int execvp(const char *file, char *const argv[])
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int execlp(const char *file, const char *arg0, ...)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int execl(const char *path, const char *arg0, ...)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
 _syscall3(lseek, int, off_t, int);
 int lseek(int fd, off_t offset, int whence)
 {
@@ -270,4 +289,84 @@ char *getcwd(char *buf, size_t size)
 		buf = calloc(size, sizeof(char));
 
 	return (char *)syscall_getcwd(buf, size);
+}
+
+int fsync(int fd)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int fdatasync(int fd)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int link(const char *path1, const char *path2)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int linkat(int fd1, const char *path1, int fd2,
+		   const char *path2, int flag)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int chown(const char *path, uid_t owner, gid_t group)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int fchownat(int fd, const char *path, uid_t owner, gid_t group,
+			 int flag)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int fchown(int fildes, uid_t owner, gid_t group)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+long fpathconf(int fildes, int name)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+long pathconf(const char *path, int name)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int mkdir(const char *path, mode_t mode)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int mkdirat(int fd, const char *path, mode_t mode)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int rmdir(const char *path)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+long sysconf(int name)
+{
+	assert_not_reached();
+	__builtin_unreachable();
 }

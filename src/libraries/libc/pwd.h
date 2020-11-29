@@ -22,8 +22,21 @@ struct passwd
 };
 
 FILE *openpw(void);
+struct passwd *getpwnam(const char *username);
 struct passwd *getpwuid(uid_t uid);
-int getpwuid_r(uid_t uid, struct passwd *ret, char *buf, size_t buflen, struct passwd **ret_ptr);
-int fgetpwent_r(FILE *fp, struct passwd *result, char *buf, size_t buf_len, struct passwd **result_pointer);
-
+int getpwnam_r(const char *username,
+			   struct passwd *ret,
+			   char *buf,
+			   size_t buflen,
+			   struct passwd **ret_ptr);
+int getpwuid_r(uid_t uid,
+			   struct passwd *ret,
+			   char *buf,
+			   size_t buflen,
+			   struct passwd **ret_ptr);
+int fgetpwent_r(FILE *fp,
+				struct passwd *result,
+				char *buf,
+				size_t buf_len,
+				struct passwd **result_pointer);
 #endif

@@ -43,6 +43,9 @@ struct tm *localtime(const time_t *timer);
 time_t mktime(struct tm *timeptr);
 int clock_gettime(clockid_t clk_id, struct timespec *tp);
 size_t strftime(char *s, size_t maxsize, const char *format, const struct tm *timptr);
+struct tm *gmtime(const time_t *timer);
+struct tm *gmtime_r(const time_t *restrict timer,
+					struct tm *restrict result);
 
 extern long timezone;
 extern int daylight;

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -41,4 +42,16 @@ _syscall4(mknodat, int, const char *, mode_t, dev_t);
 int mknodat(int fd, const char *path, mode_t mode, dev_t dev)
 {
 	return syscall_mknodat(fd, path, mode, dev);
+}
+
+int mkfifo(const char *path, mode_t mode)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+int mkfifoat(int fd, const char *path, mode_t mode)
+{
+	assert_not_reached();
+	__builtin_unreachable();
 }

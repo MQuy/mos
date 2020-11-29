@@ -35,8 +35,16 @@ typedef unsigned short u_short;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 
+typedef unsigned int rlim_t;
+
 typedef unsigned int __socklen_t;
 typedef int __locale_t;
 typedef __WINT_TYPE__ __wint_t;
+typedef long __fsword_t;
+typedef unsigned long fsblkcnt_t;
+typedef unsigned long fsfilcnt_t;
+
+#define __need_size_t
+#include <stddef.h>
 
 #endif

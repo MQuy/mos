@@ -1,9 +1,13 @@
 #ifndef _LIBC_UNISTD_H
 #define _LIBC_UNISTD_H 1
 
+#include <bits/confname.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
+
+/* These may be used to determine what facilities are present at compile time.
+   Their values can be obtained at run time from `sysconf'.  */
 
 #ifdef __USE_XOPEN2K8
 /* POSIX Standard approved as ISO/IEC 9945-1 as of September 2008.  */
@@ -22,6 +26,9 @@
 #define _POSIX_VERSION 199009L
 #endif
 
+/* These are not #ifdef __USE_POSIX2 because they are
+   in the theoretically application-owned namespace.  */
+
 #ifdef __USE_XOPEN2K8
 #define __POSIX2_THIS_VERSION 200809L
 /* The utilities on GNU systems also correspond to this version.  */
@@ -37,7 +44,26 @@
 #endif
 
 /* The utilities on GNU systems also correspond to this version.  */
-#define _POSIX2_VERSION __POSIX2_THIS_VERSIO
+#define _POSIX2_VERSION __POSIX2_THIS_VERSION
+
+/* This symbol was required until the 2001 edition of POSIX.  */
+#define _POSIX2_C_VERSION __POSIX2_THIS_VERSION
+
+/* If defined, the implementation supports the
+   C Language Bindings Option.  */
+#define _POSIX2_C_BIND __POSIX2_THIS_VERSION
+
+/* If defined, the implementation supports the
+   C Language Development Utilities Option.  */
+#define _POSIX2_C_DEV __POSIX2_THIS_VERSION
+
+/* If defined, the implementation supports the
+   Software Development Utilities Option.  */
+#define _POSIX2_SW_DEV __POSIX2_THIS_VERSION
+
+/* If defined, the implementation supports the
+   creation of locales with the localedef utility.  */
+#define _POSIX2_LOCALEDEF __POSIX2_THIS_VERSION
 
 #define R_OK 4 /* Test for read permission. */
 #define W_OK 2 /* Test for write permission. */
@@ -239,6 +265,9 @@ int write(int fd, const char *buf, size_t size);
 int close(int fd);
 int lseek(int fd, off_t offset, int whence);
 int execve(const char *pathname, char *const argv[], char *const envp[]);
+int execvp(const char *file, char *const argv[]);
+int execlp(const char *file, const char *arg0, ...);
+int execl(const char *path, const char *arg0, ...);
 int dup2(int oldfd, int newfd);
 int brk(intptr_t increment);
 int sbrk(intptr_t increment);
@@ -281,11 +310,32 @@ extern char **environ;
 int access(const char *path, int amode);
 int faccessat(int fd, const char *path, int amode, int flag);
 
+int link(const char *path1, const char *path2);
+int linkat(int fd1, const char *path1, int fd2,
+		   const char *path2, int flag);
 int unlink(const char *path);
 int unlinkat(int fd, const char *path, int flag);
 
 int dup(int fildes);
 int chdir(const char *path);
 int fchdir(int fildes);
+
+int fsync(int fd);
+int fdatasync(int fd);
+
+int chown(const char *path, uid_t owner, gid_t group);
+int fchownat(int fd, const char *path, uid_t owner, gid_t group,
+			 int flag);
+int fchown(int fildes, uid_t owner, gid_t group);
+
+long fpathconf(int fildes, int name);
+long pathconf(const char *path, int name);
+
+int mkdir(const char *path, mode_t mode);
+int mkdirat(int fd, const char *path, mode_t mode);
+
+int rmdir(const char *path);
+
+long sysconf(int name);
 
 #endif
