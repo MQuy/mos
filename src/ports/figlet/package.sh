@@ -7,9 +7,11 @@ sudo mkdir "/mnt/${DISK_NAME}"
 sudo mount -o loop ../../hdd.img "/mnt/${DISK_NAME}"
 
 rm -rf figlet-2.2.5
-rm -f figlet-2.2.5.tar.gz
 
-wget http://ftp.figlet.org/pub/figlet/program/unix/figlet-2.2.5.tar.gz
+if [ ! -f figlet-2.2.5.tar.gz ]; then
+  wget http://ftp.figlet.org/pub/figlet/program/unix/figlet-2.2.5.tar.gz
+fi
+
 tar -xzvf figlet-2.2.5.tar.gz
 
 cd figlet-2.2.5
