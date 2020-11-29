@@ -36,7 +36,7 @@ struct dirent *readdir(DIR *dirp)
 	if (dirp->fd < 0)
 		return errno = EBADF, NULL;
 
-	if (!dirp->size || dirp->pos == dirp->len)
+	if (!dirp->size || dirp->pos == dirp->size)
 	{
 		memset(dirp->buf, 0, dirp->len);
 		dirp->size = getdents(dirp->fd, (struct dirent *)dirp->buf, dirp->len);

@@ -148,10 +148,18 @@ static void draw_terminal_line(struct terminal_line *line, int from_row, int to_
 				char ch = line->content[i];
 				if (jx + get_character_width(ch) > width)
 					break;
-				psf_putchar(ch,
-							jx + HORIZONTAL_PADDING, py + VERTICAL_PADDING,
-							0xffffffff, 0,
-							container_win->graphic.buf, container_win->graphic.width * 4);
+				if (ch == '\t')
+					for (int i = 0; i < 4; ++i)
+						psf_putchar(' ',
+									jx + HORIZONTAL_PADDING + i, py + VERTICAL_PADDING,
+									0xffffffff, 0,
+									container_win->graphic.buf, container_win->graphic.width * 4);
+
+				else
+					psf_putchar(ch,
+								jx + HORIZONTAL_PADDING, py + VERTICAL_PADDING,
+								0xffffffff, 0,
+								container_win->graphic.buf, container_win->graphic.width * 4);
 				jx += get_character_width(ch);
 				i++;
 			}

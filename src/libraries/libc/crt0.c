@@ -11,6 +11,8 @@ void _start(int argc, char** argv, char** envp)
 
 	program_invocation_name = argv && argv[0] ? argv[0] : "";
 	strlsplat(program_invocation_name, strliof(program_invocation_name, "/"), NULL, &program_invocation_short_name);
+	if (!program_invocation_short_name)
+		program_invocation_short_name = strdup(program_invocation_name);
 
 	int code = main(argc, argv, envp);
 

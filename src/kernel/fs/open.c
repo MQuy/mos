@@ -23,7 +23,10 @@ struct vfs_dentry *alloc_dentry(struct vfs_dentry *parent, char *name)
 
 int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode)
 {
-	nd->dentry = current_process->fs->d_root;
+	if (path[0] == '/')
+		nd->dentry = current_process->fs->mnt_root->mnt_root;
+	else
+		nd->dentry = current_process->fs->d_root;
 	nd->mnt = current_process->fs->mnt_root;
 
 	char part_name[256] = {0};
