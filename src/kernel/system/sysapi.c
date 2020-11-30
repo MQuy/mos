@@ -8,6 +8,7 @@
 #include <include/errno.h>
 #include <include/fcntl.h>
 #include <include/limits.h>
+#include <include/utsname.h>
 #include <ipc/message_queue.h>
 #include <ipc/signal.h>
 #include <net/net.h>
@@ -669,6 +670,17 @@ static int32_t sys_clock_gettime(clockid_t clk_id, struct timespec *tp)
 	return 0;
 }
 
+static int32_t sys_uname(struct utsname *info)
+{
+	strcpy(info->sysname, "mOS");
+	strcpy(info->nodename, "root");
+	strcpy(info->release, "0.1.0");
+	strcpy(info->version, "2020-11-30");
+	strcpy(info->machine, "x86");
+
+	return 0;
+}
+
 static int32_t sys_debug_printf(enum debug_level level, const char *out)
 {
 	return debug_printf(level, out);
@@ -738,6 +750,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
+#define __NR_uname 122
 #define __NR_sigprocmask 126
 #define __NR_fchdir 133
 #define __NR_getpgid 132
@@ -838,6 +851,7 @@ static void *syscalls[] = {
 	[__NR_mq_send] = sys_mq_send,
 	[__NR_mq_receive] = sys_mq_receive,
 	[__NR_waitid] = sys_waitid,
+	[__NR_uname] = sys_uname,
 	[__NR_getptsname] = sys_getptsname,
 	[__NR_clock_gettime] = sys_clock_gettime,
 	[__NR_dprintf] = sys_debug_printf,

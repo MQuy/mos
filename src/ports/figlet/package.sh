@@ -3,9 +3,6 @@ set -Eeuo pipefail
 
 DISK_NAME=mos
 
-sudo mkdir "/mnt/${DISK_NAME}"
-sudo mount -o loop ../../hdd.img "/mnt/${DISK_NAME}"
-
 rm -rf figlet-2.2.5
 
 if [ ! -f figlet-2.2.5.tar.gz ]; then
@@ -19,7 +16,13 @@ patch -p1 < ../figlet-2.2.5.patch
 
 make clean
 make CC=i386-mos-gcc LD=i386-mos-gcc
+
+sudo mkdir "/mnt/${DISK_NAME}"
+sudo mount -o loop ../../../hdd.img "/mnt/${DISK_NAME}"
+
 sudo make install DESTDIR=/mnt/${DISK_NAME} BINDIR=/bin MANDIR=/man
 
 sudo umount "/mnt/${DISK_NAME}"
 sudo rm -rf "/mnt/${DISK_NAME}"
+
+cd ..

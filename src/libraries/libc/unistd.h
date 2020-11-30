@@ -167,6 +167,7 @@
 #define __NR_listen 105
 #define __NR_stat 106
 #define __NR_fstat 108
+#define __NR_uname 122
 #define __NR_sigprocmask 126
 #define __NR_fchdir 133
 #define __NR_getpgid 132

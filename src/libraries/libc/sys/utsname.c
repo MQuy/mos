@@ -1,8 +1,10 @@
 #include <assert.h>
+#include <errno.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 
-int uname(struct utsname *buf)
+_syscall1(uname, struct utsname *);
+int uname(struct utsname *info)
 {
-	assert_not_reached();
-	__builtin_unreachable();
+	SYSCALL_RETURN_ORIGINAL(syscall_uname(info));
 }

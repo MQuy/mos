@@ -3,9 +3,6 @@ set -Eeuo pipefail
 
 DISK_NAME=mos
 
-sudo mkdir "/mnt/${DISK_NAME}"
-sudo mount -o loop ../../hdd.img "/mnt/${DISK_NAME}"
-
 rm -rf bash-5.0
 rm -rf build-bash
 
@@ -25,8 +22,13 @@ mkdir build-bash && cd build-bash
   ac_cv_func_sysconf=no ac_cv_func_select=no ac_cv_func_uname=no # remove these options when are supported in libc
 
 make clean && make CC=i386-pc-mos-gcc LD=i386-pc-mos-gcc -j4
+
+sudo mkdir "/mnt/${DISK_NAME}"
+sudo mount -o loop ../../../hdd.img "/mnt/${DISK_NAME}"
+
 sudo make install prefix=/mnt/${DISK_NAME}
-cd ..
 
 sudo umount "/mnt/${DISK_NAME}"
 sudo rm -rf "/mnt/${DISK_NAME}"
+
+cd ..
