@@ -5,7 +5,7 @@
 
 mOS is the unix-like operating system developed from scratch and aims to POSIX compliant.
 
-[![](https://i.imgur.com/DZB1mn9.png)](https://www.youtube.com/watch?v=y3h7E1nkaUs "mOS")
+[![](https://i.imgur.com/aAyBOnm.png)](https://www.youtube.com/watch?v=26ewW8YthTQ "mOS")
 
 ### Work-in-process features
 
@@ -18,8 +18,8 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 - [x] Terminal
 - [x] mOS toolchain
 - [x] Port figlet
-- [ ] Libc
-- [ ] Port GNU Bash
+- [x] Libc
+- [x] Port GNU Bash, Coreutils
 - [ ] Unit testing
 - [ ] Dynamic linker
 - [ ] Port GCC (the GNU Compiler Collection)

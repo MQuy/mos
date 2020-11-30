@@ -1,0 +1,37 @@
+diff --git a/configure b/configure
+index 60bf83e94..c3bc505bf 100755
+--- a/configure
++++ b/configure
+@@ -43853,11 +43853,11 @@ $as_echo "#define MOUNTED_INTERIX_STATVFS 1" >>confdefs.h
+     esac
+   fi
+ 
+-  if test -z "$ac_list_mounted_fs"; then
+-    as_fn_error $? "could not determine how to read list of mounted file systems" "$LINENO" 5
++  # if test -z "$ac_list_mounted_fs"; then
++    # as_fn_error $? "could not determine how to read list of mounted file systems" "$LINENO" 5
+     # FIXME -- no need to abort building the whole package
+     # Can't build mountlist.c or anything that needs its functions
+-  fi
++  # fi
+ 
+   if test $ac_list_mounted_fs = found; then
+     gl_cv_list_mounted_fs=yes
+@@ -68565,6 +68565,9 @@ fi
+ # Put this message here, after gl_WARN_ADD's chatter.
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether this system supports stdbuf" >&5
+ $as_echo_n "checking whether this system supports stdbuf... " >&6; }
++if ${stdbuf_supported+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
+ CFLAGS="-fPIC $CFLAGS"
+ LDFLAGS="-shared $LDFLAGS"
+ stdbuf_supported=no
+@@ -68595,6 +68598,7 @@ if ac_fn_c_try_link "$LINENO"; then :
+ fi
+ rm -f core conftest.err conftest.$ac_objext \
+     conftest$ac_exeext conftest.$ac_ext
++fi
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $stdbuf_supported" >&5
+ $as_echo "$stdbuf_supported" >&6; }
+ if test "$stdbuf_supported" = "yes" && test -z "$EXEEXT"; then
