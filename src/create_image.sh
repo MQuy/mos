@@ -26,10 +26,6 @@ if [[ "$unamestr" == 'Linux' ]]; then
   cd ../..
   cd apps/terminal && make clean && make
   cd ../..
-  cd apps/shell && make clean && make
-  cd ../..
-  cd apps/uname && make clean && make
-  cd ../..
   cd apps/host && make clean && make
   cd ../..
   cd apps/calculator && make clean && make
@@ -39,6 +35,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
 
   for dir in apps/cmd/*
   do
+    [ -d "$dir" ] || continue
     name=$(basename $dir)
     rm -f $dir/$name 
     i386-mos-gcc -g $dir/$name.c -o $dir/$name
@@ -47,8 +44,6 @@ if [[ "$unamestr" == 'Linux' ]]; then
 
   sudo cp apps/window_server/window_server "/mnt/${DISK_NAME}/bin"
   sudo cp apps/terminal/terminal "/mnt/${DISK_NAME}/bin"
-  sudo cp apps/shell/shell "/mnt/${DISK_NAME}/bin"
-  sudo cp apps/uname/uname "/mnt/${DISK_NAME}/bin"
   sudo cp apps/host/host "/mnt/${DISK_NAME}/bin"
   sudo cp apps/calculator/calculator "/mnt/${DISK_NAME}/bin"
   sudo cp apps/ld/ld "/mnt/${DISK_NAME}/bin"
@@ -84,10 +79,6 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
   cd ../..
   cd apps/terminal && make clean && make
   cd ../..
-  cd apps/shell && make clean && make
-  cd ../..
-  cd apps/uname && make clean && make
-  cd ../..
   cd apps/host && make clean && make
   cd ../..
   cd apps/calculator && make clean && make
@@ -98,8 +89,6 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
   mkdir "/Volumes/${VOLUME_NAME}/bin"
   cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
   cp apps/terminal/terminal "/Volumes/${VOLUME_NAME}/bin"
-  cp apps/shell/shell "/Volumes/${VOLUME_NAME}/bin"
-  cp apps/uname/uname "/Volumes/${VOLUME_NAME}/bin"
   cp apps/host/host "/Volumes/${VOLUME_NAME}/bin"
   cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
   cp apps/ld/ld "/Volumes/${VOLUME_NAME}/bin"
