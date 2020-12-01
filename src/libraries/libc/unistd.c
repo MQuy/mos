@@ -20,7 +20,12 @@ int tcsetpgrp(int fd, pid_t pid)
 
 pid_t tcgetpgrp(int fd)
 {
-	return ioctl(fd, TIOCGPGRP, 0);
+	pid_t pgrp;
+
+	if (ioctl(fd, TIOCGPGRP, &pgrp) < 0)
+		return -1;
+
+	return pgrp;
 }
 
 int usleep(useconds_t usec)

@@ -78,12 +78,16 @@ static int tiocsctty(struct tty_struct *tty, int arg)
 	return 0;
 }
 
-static int tiocgpgrp(struct tty_struct *tty, __unused int arg)
+static int tiocgpgrp(struct tty_struct *tty, int arg)
 {
+	pid_t *pgrp = (pid_t *)arg;
+
 	if (current_process->tty != tty)
 		return -ENOTTY;
 
-	return tty->pgrp;
+	if (pgrp)
+		*pgrp = tty->pgrp;
+	return 0;
 }
 
 static int tiocspgrp(struct tty_struct *tty, int arg)
