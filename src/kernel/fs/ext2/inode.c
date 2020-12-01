@@ -78,7 +78,8 @@ static int ext2_add_entry(struct vfs_superblock *sb, uint32_t block, void *arg)
 	struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
 	while (size < sb->s_blocksize && (char *)entry < block_buf + sb->s_blocksize)
 	{
-		if (!entry->ino)
+		// NOTE: MQ 2020-12-01 some ext2 tools mark entry with zero indicate an unused entry
+		if (!entry->ino && (!entry->rec_len || entry->rec_len >= EXT2_DIR_REC_LEN(filename_length)))
 		{
 			entry->ino = dentry->d_inode->i_ino;
 			if (S_ISREG(dentry->d_inode->i_mode))
@@ -89,7 +90,7 @@ static int ext2_add_entry(struct vfs_superblock *sb, uint32_t block, void *arg)
 				assert_not_implemented();
 			entry->name_len = filename_length;
 			memcpy(entry->name, dentry->d_name, entry->name_len);
-			entry->rec_len = new_rec_len;
+			entry->rec_len = max(new_rec_len, entry->rec_len);
 
 			ext2_bwrite_block(sb, block, block_buf);
 			return 0;
@@ -145,7 +146,7 @@ static int ext2_delete_entry(struct vfs_superblock *sb, uint32_t block, void *ar
 	uint32_t size = 0;
 	struct ext2_dir_entry *prev = NULL;
 	struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
-	while (size < sb->s_blocksize && entry->ino != 0)
+	while (size < sb->s_blocksize)
 	{
 		memcpy(tmpname, entry->name, entry->name_len);
 		tmpname[entry->name_len] = 0;
@@ -177,7 +178,7 @@ static int ext2_find_ino(struct vfs_superblock *sb, uint32_t block, void *arg)
 	char tmpname[NAME_MAX];
 	uint32_t size = 0;
 	struct ext2_dir_entry *entry = (struct ext2_dir_entry *)block_buf;
-	while (size < sb->s_blocksize && entry->ino != 0)
+	while (size < sb->s_blocksize)
 	{
 		memcpy(tmpname, entry->name, entry->name_len);
 		tmpname[entry->name_len] = 0;
