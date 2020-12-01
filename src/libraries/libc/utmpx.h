@@ -1,6 +1,7 @@
 #ifndef _LIBC_UTMPX_H
 #define _LIBC_UTMPX_H 1
 
+#include <paths.h>
 #include <sys/time.h>
 
 #define __UT_LINESIZE 32

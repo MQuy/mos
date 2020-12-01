@@ -19,6 +19,12 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo mkdir -p "/mnt/${DISK_NAME}/usr/share"
   sudo mkdir -p "/mnt/${DISK_NAME}/var/mail"
 
+  sudo mkdir -p "/mnt/${DISK_NAME}/var/log"
+  sudo touch "/mnt/${DISK_NAME}/var/log/wtmp"
+
+  sudo mkdir -p "/mnt/${DISK_NAME}/var/run"
+  sudo touch "/mnt/${DISK_NAME}/var/run/utmp"
+
   sudo cp -R assets/fonts "/mnt/${DISK_NAME}/usr/share"
   sudo cp -R assets/images "/mnt/${DISK_NAME}/usr/share"
 
