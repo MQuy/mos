@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -9,5 +10,5 @@ int ioctl(int fd, unsigned int cmd, ...)
 	va_start(ap, cmd);
 	unsigned long arg = va_arg(ap, unsigned long);
 	va_end(ap);
-	return syscall_ioctl(fd, cmd, arg);
+	SYSCALL_RETURN(syscall_ioctl(fd, cmd, arg));
 }

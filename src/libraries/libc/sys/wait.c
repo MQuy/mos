@@ -16,5 +16,5 @@ pid_t waitpid(pid_t pid, int *wstatus, int options)
 _syscall4(waitid, idtype_t, id_t, struct infop *, int);
 int waitid(idtype_t idtype, id_t id, struct infop *infop, int options)
 {
-	SYSCALL_RETURN_ORIGINAL(syscall_waitid(idtype, id, infop, options));
+	SYSCALL_RETURN(syscall_waitid(idtype, id, infop, options));
 }

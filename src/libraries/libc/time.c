@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
@@ -10,19 +11,19 @@ char *tzname[2];
 _syscall1(time, time_t *);
 time_t time(time_t *tloc)
 {
-	return syscall_time(tloc);
+	SYSCALL_RETURN_ORIGINAL(syscall_time(tloc));
 }
 
 _syscall2(nanosleep, const struct timespec *, struct timespec *);
 int nanosleep(const struct timespec *req, struct timespec *rem)
 {
-	return syscall_nanosleep(req, rem);
+	SYSCALL_RETURN(syscall_nanosleep(req, rem));
 }
 
 _syscall2(clock_gettime, clockid_t, struct timespec *);
 int clock_gettime(clockid_t clk_id, struct timespec *tp)
 {
-	return syscall_clock_gettime(clk_id, tp);
+	SYSCALL_RETURN(syscall_clock_gettime(clk_id, tp));
 }
 
 clock_t clock()

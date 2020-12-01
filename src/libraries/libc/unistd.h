@@ -256,6 +256,7 @@
 
 #define SYSCALL_RETURN(expr) ({ int ret = expr; if (ret < 0) { return errno = -ret, -1; } return 0; })
 #define SYSCALL_RETURN_ORIGINAL(expr) ({ int ret = expr; if (ret < 0) { return errno = -ret, -1; } return ret; })
+#define SYSCALL_RETURN_POINTER(expr) ({ int ret = expr; if (ret < 0) { return errno = -ret, -1; } return ret; })
 
 struct dirent;
 

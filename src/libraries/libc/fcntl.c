@@ -17,7 +17,7 @@ int open(const char* path, int flags, ...)
 		va_end(ap);
 	}
 
-	return syscall_open(path, flags, mode);
+	SYSCALL_RETURN_ORIGINAL(syscall_open(path, flags, mode));
 }
 
 _syscall3(fcntl, int, int, unsigned long);
