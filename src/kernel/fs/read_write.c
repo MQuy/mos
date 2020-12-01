@@ -22,15 +22,21 @@ char *vfs_read(const char *path)
 ssize_t vfs_fread(int32_t fd, char *buf, size_t count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
+	if (fd < 0 || !file)
+		return -EBADF;
 
-	if (file->f_mode & FMODE_CAN_READ)
+	if (file && file->f_mode & FMODE_CAN_READ)
 		return file->f_op->read(file, buf, count, file->f_pos);
-	return -EBADF;
+
+	return -EINVAL;
 }
 
 ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
+	if (fd < 0 || !file)
+		return -EBADF;
+
 	loff_t ppos = file->f_pos;
 
 	if (file->f_flags & O_APPEND)
@@ -38,7 +44,8 @@ ssize_t vfs_fwrite(int32_t fd, const char *buf, size_t count)
 
 	if (file->f_mode & FMODE_CAN_WRITE)
 		return file->f_op->write(file, buf, count, ppos);
-	return -EBADF;
+
+	return -EINVAL;
 }
 
 loff_t generic_file_llseek(struct vfs_file *file, loff_t offset, int whence)
@@ -62,9 +69,11 @@ loff_t generic_file_llseek(struct vfs_file *file, loff_t offset, int whence)
 loff_t vfs_flseek(int32_t fd, loff_t offset, int whence)
 {
 	struct vfs_file *file = current_process->files->fd[fd];
+	if (fd < 0 || !file)
+		return -EBADF;
 
-	if (file->f_op->llseek)
+	if (file && file->f_op && file->f_op->llseek)
 		return file->f_op->llseek(file, offset, whence);
 
-	return -1;
+	return -EINVAL;
 }

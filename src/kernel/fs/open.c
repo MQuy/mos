@@ -99,13 +99,13 @@ struct vfs_file *get_empty_filp()
 	struct vfs_file *file = kcalloc(1, sizeof(struct vfs_file));
 	file->f_maxcount = INT_MAX;
 	atomic_set(&file->f_count, 1);
+
 	return file;
 }
 
 int32_t vfs_open(const char *path, int32_t flags, ...)
 {
 	int fd = find_unused_fd_slot(0);
-
 	mode_t mode = 0;
 	if (flags & O_CREAT)
 	{
@@ -219,8 +219,11 @@ int vfs_stat(const char *path, struct kstat *stat)
 
 int vfs_fstat(int32_t fd, struct kstat *stat)
 {
-	struct vfs_file *f = current_process->files->fd[fd];
-	return do_getattr(f->f_vfsmnt, f->f_dentry, stat);
+	struct vfs_file *file = current_process->files->fd[fd];
+	if (fd < 0 || !file)
+		return -EBADF;
+
+	return do_getattr(file->f_vfsmnt, file->f_dentry, stat);
 }
 
 int vfs_mknod(const char *path, int mode, dev_t dev)
