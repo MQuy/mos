@@ -1,46 +1,54 @@
 #ifndef INCLUDE_ERRNO_H
 #define INCLUDE_ERRNO_H
 
-// RedHat 7.3
+#define EPERM 1	   /* Operation not permitted */
+#define ENOENT 2   /* No such file or directory */
+#define ESRCH 3	   /* No such process */
+#define EINTR 4	   /* Interrupted system call */
+#define EIO 5	   /* I/O error */
+#define ENXIO 6	   /* No such device or address */
+#define E2BIG 7	   /* Argument list too long */
+#define ENOEXEC 8  /* Exec format error */
+#define EBADF 9	   /* Bad file number */
+#define ECHILD 10  /* No child processes */
+#define EAGAIN 11  /* Try again */
+#define ENOMEM 12  /* Out of memory */
+#define EACCES 13  /* Permission denied */
+#define EFAULT 14  /* Bad address */
+#define ENOTBLK 15 /* Block device required */
+#define EBUSY 16   /* Device or resource busy */
+#define EEXIST 17  /* File exists */
+#define EXDEV 18   /* Cross-device link */
+#define ENODEV 19  /* No such device */
+#define ENOTDIR 20 /* Not a directory */
+#define EISDIR 21  /* Is a directory */
+#define EINVAL 22  /* Invalid argument */
+#define ENFILE 23  /* File table overflow */
+#define EMFILE 24  /* Too many open files */
+#define ENOTTY 25  /* Not a typewriter */
+#define ETXTBSY 26 /* Text file busy */
+#define EFBIG 27   /* File too large */
+#define ENOSPC 28  /* No space left on device */
+#define ESPIPE 29  /* Illegal seek */
+#define EROFS 30   /* Read-only file system */
+#define EMLINK 31  /* Too many links */
+#define EPIPE 32   /* Broken pipe */
+#define EDOM 33	   /* Math argument out of domain of func */
+#define ERANGE 34  /* Math result not representable */
 
-#define EPERM 1			   /* Operation not permitted */
-#define ENOENT 2		   /* No such file or directory */
-#define ESRCH 3			   /* No such process */
-#define EINTR 4			   /* Interrupted system call */
-#define EIO 5			   /* I/O error */
-#define ENXIO 6			   /* No such device or address */
-#define E2BIG 7			   /* Arg list too long */
-#define ENOEXEC 8		   /* Exec format error */
-#define EBADF 9			   /* Bad file number */
-#define ECHILD 10		   /* No child processes */
-#define EAGAIN 11		   /* Try again */
-#define ENOMEM 12		   /* Out of memory */
-#define EACCES 13		   /* Permission denied */
-#define EFAULT 14		   /* Bad address */
-#define ENOTBLK 15		   /* Block device required */
-#define EBUSY 16		   /* Device or resource busy */
-#define EEXIST 17		   /* File exists */
-#define EXDEV 18		   /* Cross-device link */
-#define ENODEV 19		   /* No such device */
-#define ENOTDIR 20		   /* Not a directory */
-#define EISDIR 21		   /* Is a directory */
-#define EINVAL 22		   /* Invalid argument */
-#define ENFILE 23		   /* File table overflow */
-#define EMFILE 24		   /* Too many open files */
-#define ENOTTY 25		   /* Not a typewriter */
-#define ETXTBSY 26		   /* Text file busy */
-#define EFBIG 27		   /* File too large */
-#define ENOSPC 28		   /* No space left on device */
-#define ESPIPE 29		   /* Illegal seek */
-#define EROFS 30		   /* Read-only file system */
-#define EMLINK 31		   /* Too many links */
-#define EPIPE 32		   /* Broken pipe */
-#define EDOM 33			   /* Math argument out of domain of func */
-#define ERANGE 34		   /* Math result not representable */
-#define EDEADLK 35		   /* Resource deadlock would occur */
-#define ENAMETOOLONG 36	   /* File name too long */
-#define ENOLCK 37		   /* No record locks available */
-#define ENOSYS 38		   /* Function not implemented */
+#define EDEADLK 35		/* Resource deadlock would occur */
+#define ENAMETOOLONG 36 /* File name too long */
+#define ENOLCK 37		/* No record locks available */
+
+/*
+ * This error code is special: arch syscall entry code will return
+ * -ENOSYS if users try to call a syscall that doesn't exist.  To keep
+ * failures of syscalls that really do exist distinguishable from
+ * failures due to attempts to use a nonexistent syscall, syscall
+ * implementations should refrain from returning -ENOSYS.
+ */
+#define ENOSYS 38 /* Invalid system call number */
+
 #define ENOTEMPTY 39	   /* Directory not empty */
 #define ELOOP 40		   /* Too many symbolic links encountered */
 #define EWOULDBLOCK EAGAIN /* Operation would block */
@@ -120,7 +128,7 @@
 #define EHOSTUNREACH 113   /* No route to host */
 #define EALREADY 114	   /* Operation already in progress */
 #define EINPROGRESS 115	   /* Operation now in progress */
-#define ESTALE 116		   /* Stale NFS file handle */
+#define ESTALE 116		   /* Stale file handle */
 #define EUCLEAN 117		   /* Structure needs cleaning */
 #define ENOTNAM 118		   /* Not a XENIX named type file */
 #define ENAVAIL 119		   /* No XENIX semaphores available */
@@ -128,9 +136,41 @@
 #define EREMOTEIO 121	   /* Remote I/O error */
 #define EDQUOT 122		   /* Quota exceeded */
 
-#define ENOMEDIUM 123	/* No medium found */
-#define EMEDIUMTYPE 124 /* Wrong medium type */
-#define ENOTFOUND 125	/* Not found */
+#define ENOMEDIUM 123	 /* No medium found */
+#define EMEDIUMTYPE 124	 /* Wrong medium type */
+#define ECANCELED 125	 /* Operation Canceled */
+#define ENOKEY 126		 /* Required key not available */
+#define EKEYEXPIRED 127	 /* Key has expired */
+#define EKEYREVOKED 128	 /* Key has been revoked */
+#define EKEYREJECTED 129 /* Key was rejected by service */
+
+/* for robust mutexes */
+#define EOWNERDEAD 130		/* Owner died */
+#define ENOTRECOVERABLE 131 /* State not recoverable */
+
+#define ERFKILL 132 /* Operation not possible due to RF-kill */
+
+#define EHWPOISON 133 /* Memory page has hardware error */
+
 #define ERESTARTSYS 512
+#define ERESTARTNOINTR 513
+#define ERESTARTNOHAND 514		  /* restart if no handler.. */
+#define ENOIOCTLCMD 515			  /* No ioctl command */
+#define ERESTART_RESTARTBLOCK 516 /* restart by calling sys_restart_syscall */
+#define EPROBE_DEFER 517		  /* Driver requests probe retry */
+#define EOPENSTALE 518			  /* open found a stale dentry */
+#define ENOPARAM 519			  /* Parameter not supported */
+
+/* Defined for the NFSv3 protocol */
+#define EBADHANDLE 521		/* Illegal NFS file handle */
+#define ENOTSYNC 522		/* Update synchronization mismatch */
+#define EBADCOOKIE 523		/* Cookie is stale */
+#define ENOTSUPP 524		/* Operation is not supported */
+#define ETOOSMALL 525		/* Buffer or request is too small */
+#define ESERVERFAULT 526	/* An untranslatable error occurred */
+#define EBADTYPE 527		/* Type not supported by server */
+#define EJUKEBOX 528		/* Request initiated, but will not complete before timeout */
+#define EIOCBQUEUED 529		/* iocb queued, will get completion event */
+#define ERECALLCONFLICT 530 /* conflict with recalled state */
 
 #endif

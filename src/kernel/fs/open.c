@@ -75,7 +75,7 @@ int path_walk(struct nameidata *nd, const char *path, int32_t flags, mode_t mode
 				else
 				{
 					log("%s is not exist", path);
-					return -EACCES;
+					return -ENOENT;
 				}
 			}
 			else if (i == length && flags & O_CREAT && flags & O_EXCL)

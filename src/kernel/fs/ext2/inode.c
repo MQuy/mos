@@ -18,7 +18,7 @@ static int ext2_recursive_block_action(struct vfs_superblock *sb,
 	assert(level <= 3);
 	if (level > 0)
 	{
-		int ret = -ENOTFOUND;
+		int ret = -ENOENT;
 		uint32_t *block_buf = (uint32_t *)ext2_bread_block(sb, block);
 		for (int i = 0, nblocks = sb->s_blocksize / 4; i < nblocks; ++i)
 			if ((ret = ext2_recursive_block_action(sb, level - 1, block_buf[i], arg, action)) >= 0)

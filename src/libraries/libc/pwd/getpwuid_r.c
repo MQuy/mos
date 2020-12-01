@@ -44,5 +44,5 @@ int getpwuid_r(uid_t uid,
 		return *ret_ptr = *ret_ptr, 0;
 	}
 	fclose(fpasswd);
-	return *ret_ptr = NULL, errnum ? errnum : (errno = ENOUSER);
+	return *ret_ptr = NULL, errnum ? errnum : (errno = EIO);
 }
