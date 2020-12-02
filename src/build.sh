@@ -10,7 +10,8 @@ then
   rm mos.iso
 fi
 
-cd kernel && make clean && make && cp kernel.bin ../mos.bin && cd ../
+cd kernel && make clean && make && cp kernel.bin ../mos.bin
+cd ../
 
 if grub-file --is-x86-multiboot mos.bin; then
   echo multiboot confirmed

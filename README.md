@@ -71,6 +71,17 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 **Ubuntu**
 
 - install gcc cross compilier via https://wiki.osdev.org/GCC_Cross-Compiler#The_Build
+
+- open src/toolchain/build.sh and modify SYSROOT and PREFIX variables to fit in your case
+
+  ```
+  PREFIX="$HOME/opt/cross"
+  TARGET=i386-mos
+  # SYSROOT cannot locate inside PREFIX
+  SYSROOT="$HOME/Projects/mos/src/toolchain/sysroot" 
+  JOBCOUNT=$(nproc)
+  ```
+
 - install mos toolchain
 
   ```
