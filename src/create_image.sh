@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 unamestr=`uname`
 
-cd libraries/libc && make clean && make && cd ../..
+cd libraries/libc && make clean && make
+cd ../..
 
 if [[ "$unamestr" == 'Linux' ]]; then
   dd if=/dev/zero of=hdd.img count=819200 bs=512
