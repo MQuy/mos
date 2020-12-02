@@ -2,6 +2,7 @@
 #define MEMORY_VMM_H
 
 #include <include/list.h>
+#include <include/types.h>
 #include <stdint.h>
 
 #include "kernel_info.h"
@@ -102,7 +103,7 @@ void *kalign_heap(size_t size);
 struct vm_area_struct *get_unmapped_area(uint32_t addr, uint32_t len);
 int32_t do_mmap(uint32_t addr,
 				size_t len, uint32_t prot,
-				uint32_t flag, int32_t fd);
+				uint32_t flag, int32_t fd, off_t off);
 int do_munmap(struct mm_struct *mm, uint32_t addr, size_t len);
 uint32_t do_brk(uint32_t addr, size_t len);
 

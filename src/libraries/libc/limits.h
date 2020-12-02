@@ -52,4 +52,6 @@
 
 #define TTY_NAME_MAX 32
 
+#define HIGHER_HALF_ADDRESS 0xc0000000
+
 #endif

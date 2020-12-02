@@ -1,6 +1,9 @@
 #ifndef INCLUDE_MMAN_H
 #define INCLUDE_MMAN_H
 
+#include <include/types.h>
+#include <stddef.h>
+
 #define PROT_READ 0x1			  /* page can be read */
 #define PROT_WRITE 0x2			  /* page can be written */
 #define PROT_EXEC 0x4			  /* page can be executed */
@@ -14,5 +17,15 @@
 #define MAP_TYPE 0x0f	   /* Mask for type of mapping */
 #define MAP_FIXED 0x10	   /* Interpret addr exactly */
 #define MAP_ANONYMOUS 0x20 /* don't use a file */
+
+struct kmmap_args
+{
+	void *addr;
+	size_t len;
+	int prot;
+	int flags;
+	int fildes;
+	off_t off;
+};
 
 #endif

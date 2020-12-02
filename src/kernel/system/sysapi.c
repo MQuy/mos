@@ -8,6 +8,7 @@
 #include <include/errno.h>
 #include <include/fcntl.h>
 #include <include/limits.h>
+#include <include/mman.h>
 #include <include/utsname.h>
 #include <ipc/message_queue.h>
 #include <ipc/signal.h>
@@ -211,11 +212,21 @@ static int32_t sys_mknod(const char *path, mode_t mode, dev_t dev)
 
 static int32_t sys_getcwd(char *buf, size_t size)
 {
+	if (!buf || !size)
+		return -EINVAL;
+
 	char *abs_path = kcalloc(MAXPATHLEN, sizeof(char));
 	vfs_build_path_backward(current_process->fs->d_root, abs_path);
 
-	strcpy(buf, abs_path);
-	return (int32_t)buf;
+	int32_t ret = (int32_t)buf;
+	int plen = strlen(abs_path);
+	if (plen < size)
+		memcpy(buf, abs_path, plen + 1);
+	else
+		ret = -ERANGE;
+
+	kfree(abs_path);
+	return ret;
 }
 
 static int32_t sys_getdents(unsigned int fd, struct dirent *dirent, unsigned int count)
@@ -273,10 +284,9 @@ static int32_t sys_pipe(int32_t *fd)
 	return do_pipe(fd);
 }
 
-static int32_t sys_mmap(uint32_t addr, size_t length, uint32_t prot, uint32_t flags,
-						int32_t fd)
+static int32_t sys_mmap(struct kmmap_args *args)
 {
-	return do_mmap(addr, length, prot, flags, fd);
+	return do_mmap((uint32_t)args->addr, args->len, args->prot, args->flags, args->fildes, args->off);
 }
 
 static int32_t sys_munmap(void *addr, size_t len)
