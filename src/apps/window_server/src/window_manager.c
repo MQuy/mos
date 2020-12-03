@@ -107,6 +107,7 @@ void handle_window_remove(struct msgui_close *msgclose)
 {
 	struct window *win = find_window_in_root(msgclose->sender);
 	remove_window(win);
+	desktop->active_window = NULL;
 }
 
 static int icon_ini_handler(__unused void *_desktop, const char *section, const char *name,
@@ -389,7 +390,7 @@ void handle_mouse_event(struct mouse_event *mevent)
 		if (active_win && active_win == desktop->active_window)
 		{
 			struct xevent *event = create_xbutton_event(BUTTON_LEFT, XBUTTON_PRESS, desktop->mouse.graphic.x, desktop->mouse.graphic.y, desktop->event_state);
-			int32_t fd = mq_open(active_win->name, O_RDONLY, &(struct mq_attr){
+			int32_t fd = mq_open(active_win->name, O_WRONLY, &(struct mq_attr){
 																 .mq_msgsize = sizeof(struct xevent),
 																 .mq_maxmsg = 32,
 															 });
