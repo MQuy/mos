@@ -45,36 +45,71 @@ int memory_bitmap_first_free()
 
 int memory_bitmap_first_frees(size_t size)
 {
+	// uncomment for first fit allocation of the virtual memory
+	// if (size == 0)
+	// 	return -1;
+
+	// if (size == 1)
+	// 	return memory_bitmap_first_free();
+
+	// for (uint32_t i = 0; i < max_frames / 32; i++)
+	// 	if (memory_bitmap[i] != 0xffffffff)
+	// 		for (int j = 0; j < 32; j++)
+	// 		{  //! test each bit in the dword
+
+	// 			int bit = 1 << j;
+	// 			if (!(memory_bitmap[i] & bit))
+	// 			{
+	// 				int startingBit = i * 32;
+	// 				startingBit += j;  //get the free bit in the dword at index i
+
+	// 				uint32_t free = 0;	//loop through each bit to see if its enough space
+	// 				for (uint32_t count = 0; count <= size; count++)
+	// 				{
+	// 					if (!memory_bitmap_test(startingBit + count))
+	// 						free++;	 // this bit is clear (free frame)
+
+	// 					if (free == size)
+	// 						return i * 32 + j;	//free count==size needed; return index
+	// 				}
+	// 			}
+	// 		}
+
+	// return -1;
+
+	// comment/uncomment for best fit allocation of virtual memory
 	if (size == 0)
 		return -1;
 
-	if (size == 1)
-		return memory_bitmap_first_free();
-
-	for (uint32_t i = 0; i < max_frames / 32; i++)
-		if (memory_bitmap[i] != 0xffffffff)
-			for (int j = 0; j < 32; j++)
-			{  //! test each bit in the dword
-
-				int bit = 1 << j;
-				if (!(memory_bitmap[i] & bit))
-				{
-					int startingBit = i * 32;
-					startingBit += j;  //get the free bit in the dword at index i
-
-					uint32_t free = 0;	//loop through each bit to see if its enough space
-					for (uint32_t count = 0; count <= size; count++)
-					{
-						if (!memory_bitmap_test(startingBit + count))
-							free++;	 // this bit is clear (free frame)
-
-						if (free == size)
-							return i * 32 + j;	//free count==size needed; return index
-					}
-				}
+	int min = INT16_MAX, freeblock_min = -1;
+	for (uint32_t i = 0, j = 0; i < max_frames; i += j + 1)
+	{
+		j = 0;
+		if (memory_bitmap[i / 32] == 0xffffffff)
+		{
+			i = i / 32 + 1;
+			i *= 32;
+		}
+		else if (!memory_bitmap_test(i))
+		{
+			uint32_t free = 0; //loop through each bit to see if its enough space and swap if it is less than min
+			while (!memory_bitmap_test(i + j) && i + j < max_frames)
+			{
+				free++;
+				j++;
 			}
+			j--;
+			if (free == size)
+				return i; //free==size prefered; return index
 
-	return -1;
+			if (free > size && min > free)
+			{
+				min = free;
+				freeblock_min = i;
+			}
+		}
+	}
+	return freeblock_min;
 }
 
 void pmm_init(struct multiboot_tag_basic_meminfo *multiboot_meminfo, struct multiboot_tag_mmap *multiboot_mmap)
@@ -138,9 +173,7 @@ void *pmm_alloc_block()
 {
 	if (max_frames <= used_frames)
 		return 0;
-
-	int frame = memory_bitmap_first_free();
-
+	int frame = memory_bitmap_first_frees(1);
 	if (frame == -1)
 		return 0;
 
