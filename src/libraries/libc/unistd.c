@@ -293,7 +293,7 @@ char *getcwd(char *buf, size_t size)
 	if (!buf)
 		buf = calloc(size, sizeof(char));
 
-	return (char *)syscall_getcwd(buf, size);
+	SYSCALL_RETURN_POINTER(syscall_getcwd(buf, size));
 }
 
 int fsync(int fd)

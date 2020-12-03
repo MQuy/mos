@@ -90,7 +90,7 @@ static int ext2_add_entry(struct vfs_superblock *sb, uint32_t block, void *arg)
 				assert_not_implemented();
 			entry->name_len = filename_length;
 			memcpy(entry->name, dentry->d_name, entry->name_len);
-			entry->rec_len = max(new_rec_len, entry->rec_len);
+			entry->rec_len = max_t(uint16_t, new_rec_len, entry->rec_len);
 
 			ext2_bwrite_block(sb, block, block_buf);
 			return 0;

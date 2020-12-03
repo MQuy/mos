@@ -85,32 +85,32 @@ struct Elf32_Layout *elf_load(const char *path)
 		// text segment
 		if ((ph->p_flags & PF_X) != 0 && (ph->p_flags & PF_R) != 0)
 		{
-			do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
+			do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1, 0);
 			mm->start_code = ph->p_vaddr;
 			mm->end_code = ph->p_vaddr + ph->p_memsz;
 		}
 		// data segment
 		else if ((ph->p_flags & PF_W) != 0 && (ph->p_flags & PF_R) != 0)
 		{
-			do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
+			do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1, 0);
 			mm->start_data = ph->p_vaddr;
 			mm->end_data = ph->p_memsz;
 		}
 		// eh frame
 		else
-			do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1);
+			do_mmap(ph->p_vaddr, ph->p_memsz, 0, 0, -1, 0);
 
 		// NOTE: MQ 2019-11-26 According to elf's spec, p_memsz may be larger than p_filesz due to bss section
 		memset((char *)ph->p_vaddr, 0, ph->p_memsz);
 		memcpy((char *)ph->p_vaddr, buf + ph->p_offset, ph->p_filesz);
 	}
 
-	uint32_t heap_start = do_mmap(0, UHEAP_SIZE, 0, 0, -1);
+	uint32_t heap_start = do_mmap(0, UHEAP_SIZE, 0, 0, -1, 0);
 	mm->start_brk = heap_start;
 	mm->brk = heap_start;
 	mm->end_brk = USER_HEAP_TOP;
 
-	uint32_t stack_start = do_mmap(0, STACK_SIZE, 0, 0, -1);
+	uint32_t stack_start = do_mmap(0, STACK_SIZE, 0, 0, -1, 0);
 	layout->stack = stack_start + STACK_SIZE;
 
 	return layout;

@@ -118,7 +118,7 @@ int do_munmap(struct mm_struct *mm, uint32_t addr, size_t len)
 
 int32_t do_mmap(uint32_t addr,
 				size_t len, uint32_t prot,
-				uint32_t flag, int32_t fd)
+				uint32_t flag, int32_t fd, __unused off_t off)
 {
 	struct vfs_file *file = fd >= 0 ? current_process->files->fd[fd] : NULL;
 	uint32_t aligned_addr = ALIGN_DOWN(addr, PMM_FRAME_SIZE);
