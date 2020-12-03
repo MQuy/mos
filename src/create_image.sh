@@ -37,6 +37,8 @@ if [[ "$unamestr" == 'Linux' ]]; then
   cd ../..
   cd apps/calculator && make clean && make
   cd ../..
+  cd apps/shutdown && make clean && make
+  cd ../..
   cd apps/ld && rm -f ld && i386-mos-gcc -g ld.c -o ld
   cd ../..
 
@@ -53,6 +55,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo cp apps/terminal/terminal "/mnt/${DISK_NAME}/bin"
   sudo cp apps/host/host "/mnt/${DISK_NAME}/bin"
   sudo cp apps/calculator/calculator "/mnt/${DISK_NAME}/bin"
+  sudo cp apps/shutdown/shutdown "/mnt/${DISK_NAME}/bin"
   sudo cp apps/ld/ld "/mnt/${DISK_NAME}/bin"
 
   sudo mkdir "/mnt/${DISK_NAME}/etc"
@@ -90,6 +93,8 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
   cd ../..
   cd apps/calculator && make clean && make
   cd ../..
+  cd apps/shutdown && make clean && make
+  cd ../..
   cd apps/ld && make clean && make
   cd ../..
 
@@ -98,6 +103,7 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
   cp apps/terminal/terminal "/Volumes/${VOLUME_NAME}/bin"
   cp apps/host/host "/Volumes/${VOLUME_NAME}/bin"
   cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
+  cp apps/shutdown/shutdown "/Volumes/${DISK_NAME}/bin"
   cp apps/ld/ld "/Volumes/${VOLUME_NAME}/bin"
 
   mkdir "/Volumes/${VOLUME_NAME}/etc"
