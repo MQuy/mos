@@ -54,6 +54,8 @@ struct desktop
 	unsigned int event_state;
 };
 
+#define WINDOW_EVENT_CLICK "click"
+
 struct window
 {
 	char name[WINDOW_NAME_LENGTH];

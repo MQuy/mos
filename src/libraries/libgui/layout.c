@@ -256,7 +256,7 @@ void init_window_bar(struct window *win)
 	btn_close->icon = close_buf;
 	gui_create_button(&block->window, btn_close, win->graphic.width - 20, 4, 16, 16, true, NULL);
 	bmp_draw(&btn_close->window.graphic, close_buf, 4, 4);
-	btn_close->window.add_event_listener(&btn_close->window, "click", close_window);
+	btn_close->window.add_event_listener(&btn_close->window, WINDOW_EVENT_CLICK, close_window);
 
 	struct ui_button *btn_minus = calloc(1, sizeof(struct ui_button));
 	char *minus_buf = load_bmp("/usr/share/images/minus.bmp");
@@ -332,7 +332,7 @@ void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *
 						struct window *active_win = find_child_element_from_position(win, win->graphic.x, win->graphic.y, bevent->x, bevent->y);
 						if (active_win)
 						{
-							EVENT_HANDLER handler = hashmap_get(&active_win->events, "click");
+							EVENT_HANDLER handler = hashmap_get(&active_win->events, WINDOW_EVENT_CLICK);
 							if (handler)
 								handler(active_win);
 						}

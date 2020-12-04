@@ -1,5 +1,6 @@
 #include "window_manager.h"
 
+#include <assert.h>
 #include <fcntl.h>
 #include <libcore/hashtable/hashmap.h>
 #include <libcore/ini/ini.h>
@@ -11,6 +12,16 @@
 #include <sys/cdefs.h>
 #include <sys/mman.h>
 #include <unistd.h>
+
+#define ICON_IMAGE_WIDTH 48
+#define ICON_IMAGE_HEIGHT 48
+#define ICON_IMAGE_PADDING 4
+#define ICON_BOX_WIDTH 88
+#define ICON_BOX_HEIGHT 82
+#define ICON_LABEL_MARGIN_TOP 2
+#define ICON_LABEL_MARGIN_LEFT 4
+#define CURSOR_WIDTH 20
+#define CURSOR_HEIGHT 20
 
 static struct desktop *desktop;
 static char *desktop_buf;
@@ -118,13 +129,14 @@ static int icon_ini_handler(__unused void *_desktop, const char *section, const 
 	{
 		icon = calloc(1, sizeof(struct icon));
 
-		icon->icon_graphic.x = 20;
-		icon->icon_graphic.y = 4;
-		icon->icon_graphic.width = icon->icon_graphic.height = 48;
+		icon->icon_graphic.x = (ICON_BOX_WIDTH - ICON_IMAGE_WIDTH) / 2;
+		icon->icon_graphic.y = ICON_IMAGE_PADDING;
+		icon->icon_graphic.width = ICON_IMAGE_WIDTH;
+		icon->icon_graphic.height = ICON_IMAGE_HEIGHT;
 		icon->icon_graphic.buf = calloc(icon->icon_graphic.width * icon->icon_graphic.height * 4, sizeof(char));
 
-		icon->box_graphic.width = 88;
-		icon->box_graphic.height = 82;
+		icon->box_graphic.width = ICON_BOX_WIDTH;
+		icon->box_graphic.height = ICON_BOX_HEIGHT;
 		icon->box_graphic.buf = calloc(icon->box_graphic.width * icon->box_graphic.height * 4, sizeof(char));
 
 		hashmap_put(&desktop->icons, section, icon);
@@ -165,8 +177,8 @@ static void init_mouse()
 	struct graphic *graphic = &desktop->mouse.graphic;
 	graphic->x = 0;
 	graphic->y = 0;
-	graphic->width = 20;
-	graphic->height = 20;
+	graphic->width = CURSOR_WIDTH;
+	graphic->height = CURSOR_HEIGHT;
 	graphic->buf = calloc(graphic->width * graphic->height * 4, sizeof(char));
 
 	char *buf = load_bmp("/usr/share/images/cursor.bmp");
@@ -250,10 +262,12 @@ static void draw_desktop_icons(char *buf)
 		// 4 ------- 24 ----- 4
 		if (icon->active)
 		{
-			for (int j = 0; j < 56; ++j)
+			int size = ICON_IMAGE_WIDTH + ICON_IMAGE_PADDING * 2;
+			int margin_left = (ICON_BOX_WIDTH - ICON_IMAGE_WIDTH - ICON_IMAGE_PADDING * 2) / 2;
+			for (int j = 0; j < size; ++j)
 			{
-				char *iblock = box_graphic->buf + j * box_graphic->width * 4 + 16 * 4;
-				for (int i = 0; i < 56; ++i)
+				char *iblock = box_graphic->buf + (j * box_graphic->width + margin_left) * 4;
+				for (int i = 0; i < size; ++i)
 				{
 					iblock[0] = 0xAA;
 					iblock[1] = 0xAA;
@@ -270,9 +284,11 @@ static void draw_desktop_icons(char *buf)
 		// TODO Implement multi lines label
 		if (label_length <= 10)
 		{
-			uint8_t padding = ((10 - label_length) / 2) * 8;
-			psf_puts(icon->label, 4 + padding, 58, 0xffffffff, 0x00000000, box_graphic->buf, box_graphic->width * 4);
+			uint8_t padding = ((10 - label_length) / 2) * get_character_width(' ');
+			psf_puts(icon->label, ICON_LABEL_MARGIN_LEFT + padding, ICON_IMAGE_WIDTH + ICON_IMAGE_PADDING * 2 + ICON_LABEL_MARGIN_TOP, 0xffffffff, 0x00000000, box_graphic->buf, box_graphic->width * 4);
 		}
+		else
+			assert_not_implemented();
 		draw_alpha_graphic(
 			box_graphic->buf, box_graphic->width * 4,
 			icon_graphic->buf, icon_graphic->x, icon_graphic->y, icon_graphic->width, icon_graphic->height);
