@@ -281,7 +281,7 @@ int ini_parse(const char *filename, ini_handler handler, void *user)
 {
 	int error;
 
-	int32_t fd = open(filename, O_RDONLY, 0);
+	int32_t fd = open(filename, O_RDONLY);
 	if (!fd)
 		return -1;
 	error = ini_parse_file(fd, handler, user);

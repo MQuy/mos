@@ -15,7 +15,7 @@
 
 void init_fonts()
 {
-	uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", O_RDONLY, 0);
+	uint32_t fd = open("/usr/share/fonts/ter-powerline-v16n.psf", O_RDONLY);
 
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);
@@ -212,7 +212,7 @@ void gui_close(struct window *win)
 
 char *load_bmp(char *path)
 {
-	int32_t fd = open(path, O_RDONLY, 0);
+	int32_t fd = open(path, O_RDONLY);
 
 	struct stat *stat = calloc(1, sizeof(struct stat));
 	fstat(fd, stat);

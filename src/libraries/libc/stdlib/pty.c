@@ -4,7 +4,7 @@
 
 int posix_openpt(int flags)
 {
-	return open("/dev/ptmx", flags, 0);
+	return open("/dev/ptmx", flags);
 }
 
 char *ptsname(int fd)
