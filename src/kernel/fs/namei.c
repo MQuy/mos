@@ -35,8 +35,8 @@ static void absolutize_path_from_process(const char *path, char **abs_path)
 	{
 		*abs_path = kcalloc(MAXPATHLEN, sizeof(char));
 		vfs_build_path_backward(current_process->fs->d_root, *abs_path);
-		strcpy(*abs_path, "/");
-		strcpy(*abs_path, path);
+		strcat(*abs_path, "/");
+		strcat(*abs_path, path);
 	}
 	else
 		*abs_path = path;
@@ -80,7 +80,7 @@ int vfs_rename(const char *oldpath, const char *newpath)
 	absolutize_path_from_process(newpath, &abs_newpath);
 
 	int oldfd, newfd;
-	if ((oldfd = vfs_open(oldpath, O_RDONLY)) < 0)
+	if ((oldfd = vfs_open(abs_oldpath, O_RDONLY)) < 0)
 		return oldfd;
 
 	struct vfs_file *oldfilp = current_process->files->fd[oldfd];
@@ -88,7 +88,7 @@ int vfs_rename(const char *oldpath, const char *newpath)
 	struct vfs_inode *old_dir = old_dentry->d_parent->d_inode;
 
 	mode_t old_mode = old_dentry->d_inode->i_mode;
-	newfd = vfs_open(newpath, O_RDONLY);
+	newfd = vfs_open(abs_newpath, O_RDONLY);
 	if (newfd >= 0)
 	{
 		struct kstat old_stat;
@@ -110,12 +110,12 @@ int vfs_rename(const char *oldpath, const char *newpath)
 		else if (S_ISDIR(old_mode) && S_ISDIR(new_mode) && new_stat.st_size > 0)
 			return -ENOTEMPTY;
 
-		vfs_unlink(newpath, 0);
+		vfs_unlink(abs_newpath, 0);
 	}
 
 	char *new_dirpath = NULL;
 	char *new_filename = NULL;
-	strlsplat(newpath, strliof(newpath, "/"), &new_dirpath, &new_filename);
+	strlsplat(abs_newpath, strliof(abs_newpath, "/"), &new_dirpath, &new_filename);
 	if (!new_dirpath)
 		new_dirpath = "/";
 
@@ -136,7 +136,7 @@ int vfs_rename(const char *oldpath, const char *newpath)
 
 	if (ret >= 0)
 	{
-		vfs_unlink(oldpath, 0);
+		vfs_unlink(abs_oldpath, 0);
 		list_del(&old_dentry->d_sibling);
 	}
 

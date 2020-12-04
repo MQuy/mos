@@ -21,10 +21,10 @@
 
 extern volatile uint64_t jiffies;
 
-static int absolutize_path_from_fd(int dirfd, const char *path, char **abs_path)
+static int interpret_path_from_fd(int dirfd, const char *path, char **interpreted_path)
 {
-	if (path[0] == '/')
-		*abs_path = path;
+	if (path[0] == '/' || (path[0] != '/' && dirfd == AT_FDCWD))
+		*interpreted_path = path;
 	else
 	{
 		struct vfs_file *df = current_process->files->fd[dirfd];
@@ -33,10 +33,10 @@ static int absolutize_path_from_fd(int dirfd, const char *path, char **abs_path)
 		if (!(df->f_dentry->d_inode->i_mode & S_IFDIR))
 			return -ENOTDIR;
 
-		*abs_path = kcalloc(MAXPATHLEN, sizeof(char));
-		vfs_build_path_backward(df->f_dentry, *abs_path);
-		strcpy(*abs_path, "/");
-		strcpy(*abs_path, path);
+		*interpreted_path = kcalloc(MAXPATHLEN, sizeof(char));
+		vfs_build_path_backward(df->f_dentry, *interpreted_path);
+		strcpy(*interpreted_path, "/");
+		strcpy(*interpreted_path, path);
 	}
 	return 0;
 }
@@ -154,15 +154,15 @@ static int32_t sys_renameat(int olddirfd, const char *oldpath,
 							int newdirfd, const char *newpath)
 {
 	int ret;
-	char *abs_oldpath, *abs_newpath;
-	if ((ret = absolutize_path_from_fd(olddirfd, oldpath, &abs_oldpath)) >= 0 &&
-		(ret = absolutize_path_from_fd(newdirfd, newpath, &abs_newpath)) >= 0)
-		ret = vfs_rename(abs_oldpath, abs_newpath);
+	char *interpreted_oldpath, *interpreted_newpath;
+	if ((ret = interpret_path_from_fd(olddirfd, oldpath, &interpreted_oldpath)) >= 0 &&
+		(ret = interpret_path_from_fd(newdirfd, newpath, &interpreted_newpath)) >= 0)
+		ret = vfs_rename(interpreted_oldpath, interpreted_newpath);
 
-	if (abs_oldpath != oldpath)
-		kfree(abs_oldpath);
-	if (abs_newpath != newpath)
-		kfree(abs_newpath);
+	if (interpreted_oldpath != oldpath)
+		kfree(interpreted_oldpath);
+	if (interpreted_newpath != newpath)
+		kfree(interpreted_newpath);
 	return ret;
 }
 
@@ -190,18 +190,14 @@ static int32_t sys_chmod(const char *path, mode_t mode)
 
 static int32_t sys_mknodat(int fd, const char *path, mode_t mode, dev_t dev)
 {
-	int ret = 0;
-	char *abs_path;
-	if (path[0] != '/')
-		ret = absolutize_path_from_fd(fd, path, &abs_path);
-	else
-		abs_path = path;
+	char *interpreted_path;
+	int ret = interpret_path_from_fd(fd, path, &interpreted_path);
 
 	if (ret >= 0)
-		ret = vfs_mknod(abs_path, mode, dev);
+		ret = vfs_mknod(interpreted_path, mode, dev);
 
-	if (abs_path != path)
-		kfree(abs_path);
+	if (interpreted_path != path)
+		kfree(interpreted_path);
 	return ret;
 }
 
@@ -374,18 +370,14 @@ static int32_t sys_unlinkat(int fd, const char *path, int flag)
 	if (flag && flag & ~AT_REMOVEDIR)
 		return -EINVAL;
 
-	int ret = 0;
-	char *abs_path;
-	if (path[0] != '/' && fd != AT_FDCWD)
-		ret = absolutize_path_from_fd(fd, path, &abs_path);
-	else
-		abs_path = path;
+	char *interpreted_path;
+	int ret = interpret_path_from_fd(fd, path, &interpreted_path);
 
 	if (ret >= 0)
-		ret = vfs_unlink(abs_path, flag);
+		ret = vfs_unlink(interpreted_path, flag);
 
-	if (abs_path != path)
-		kfree(abs_path);
+	if (interpreted_path != path)
+		kfree(interpreted_path);
 	return ret;
 }
 
