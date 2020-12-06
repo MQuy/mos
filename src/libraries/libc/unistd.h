@@ -86,6 +86,8 @@
 #define STDOUT_FILENO 1 /* standard output file descriptor */
 #define STDERR_FILENO 2 /* standard error file descriptor */
 
+#define _CS_PATH 0
+
 #define _PC_2_SYMLINKS 1
 #define _PC_ALLOC_SIZE_MIN 2
 #define _PC_ASYNC_IO 3
@@ -277,6 +279,7 @@ int execv(const char *pathname, char *const argv[]);
 int execvp(const char *file, char *const argv[]);
 int execvpe(const char *file, char *const argv[],
 			char *const envp[]);
+size_t confstr(int name, char *buf, size_t len);
 int dup2(int oldfd, int newfd);
 int brk(intptr_t increment);
 int sbrk(intptr_t increment);

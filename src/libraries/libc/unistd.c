@@ -3,6 +3,8 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <termio.h>
 #include <time.h>
 #include <unistd.h>
@@ -268,8 +270,58 @@ int execvp(const char *file, char *const argv[])
 int execvpe(const char *file, char *const argv[],
 			char *const envp[])
 {
-	assert_not_reached();
-	__builtin_unreachable();
+	for (int i = 0, length = strlen(file); i < length; ++i)
+	{
+		if (file[i] == '/')
+			return execve(file, argv, envp);
+	}
+
+	char *path;
+	char *envpath = getenv("PATH");
+	if (!envpath)
+	{
+		path = calloc(MAXPATHLEN, sizeof(char));
+		confstr(_CS_PATH, path, 0);
+	}
+	else
+		path = envpath;
+
+	char pathname[MAXPATHLEN] = {0};
+	struct stat sf;
+	int ret = -1;
+	int i = 0;
+	int length = strlen(path);
+	for (int pstart = 0; true;)
+	{
+		char ch = path[i++];
+		if (ch == ':')
+		{
+			pathname[pstart] = 0;
+			pstart = 0;
+			strcat(pathname, "/");
+			strcat(pathname, file);
+			if ((ret = stat(pathname, &sf)) >= 0)
+				break;
+		}
+		else
+			pathname[pstart++] = ch;
+
+		if (i == length)
+		{
+			pathname[pstart] = 0;
+			strcat(pathname, "/");
+			strcat(pathname, file);
+			break;
+		}
+	}
+
+	if (path != envpath)
+		free(path);
+
+	if ((i == length && (ret = stat(pathname, &sf)) >= 0) || (i < length && ret >= 0))
+		return execve(pathname, argv, envp);
+
+	return ret;
 }
 
 _syscall3(lseek, int, off_t, int);
@@ -442,6 +494,12 @@ int rmdir(const char *path)
 }
 
 long sysconf(int name)
+{
+	assert_not_reached();
+	__builtin_unreachable();
+}
+
+size_t confstr(int name, char *buf, size_t len)
 {
 	assert_not_reached();
 	__builtin_unreachable();
