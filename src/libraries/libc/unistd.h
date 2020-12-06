@@ -270,9 +270,13 @@ int write(int fd, const char *buf, size_t size);
 int close(int fd);
 int lseek(int fd, off_t offset, int whence);
 int execve(const char *pathname, char *const argv[], char *const envp[]);
-int execvp(const char *file, char *const argv[]);
-int execlp(const char *file, const char *arg0, ...);
 int execl(const char *path, const char *arg0, ...);
+int execlp(const char *file, const char *arg0, ...);
+int execle(const char *path, const char *arg0, ...);
+int execv(const char *pathname, char *const argv[]);
+int execvp(const char *file, char *const argv[]);
+int execvpe(const char *file, char *const argv[],
+			char *const envp[]);
 int dup2(int oldfd, int newfd);
 int brk(intptr_t increment);
 int sbrk(intptr_t increment);

@@ -29,7 +29,6 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 
 🍀 Optional features
 
-- [ ] POSIX compliant
 - [ ] Setup 2-level paging in boot.asm
 
 ### Get started
@@ -80,7 +79,7 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   PREFIX="$HOME/opt/cross"
   TARGET=i386-pc-mos
   # SYSROOT cannot locate inside PREFIX
-  SYSROOT="$HOME/Projects/mos/src/toolchain/sysroot" 
+  SYSROOT="$HOME/Projects/mos/src/toolchain/sysroot"
   JOBCOUNT=$(nproc)
   ```
 
@@ -95,7 +94,7 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 
   ```
   $ cd src && mkdir logs
-  $ ./create_image.sh 
+  $ ./create_image.sh
   $ cd src/ports/bash && ./package.sh
   $ cd src/ports/coreutils && ./package.sh
   $ ./build.sh qemu iso

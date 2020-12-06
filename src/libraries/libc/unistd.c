@@ -183,19 +183,90 @@ int execve(const char *pathname, char *const argv[], char *const envp[])
 	SYSCALL_RETURN_ORIGINAL(syscall_execve(pathname, argv, envp));
 }
 
-int execvp(const char *file, char *const argv[])
+int get_argc_from_execlx(va_list ap, const char *arg0)
 {
-	assert_not_reached();
-	__builtin_unreachable();
+	int argc = arg0 ? 1 : 0;
+	while (arg0 && va_arg(ap, const char *))
+		argc++;
+	return argc;
+}
+
+char **get_argv_from_execlx(va_list ap, int argc, const char *arg0)
+{
+	char **argv = calloc(argc + 1, sizeof(char *));
+	argv[0] = arg0;
+	for (int i = 1; i < argc; ++i)
+		argv[i] = va_arg(ap, const char *);
+	argv[argc] = NULL;
+
+	return argv;
+}
+
+int execl(const char *path, const char *arg0, ...)
+{
+	va_list ap;
+
+	va_start(ap, arg0);
+	int argc = get_argc_from_execlx(ap, arg0);
+	va_end(ap);
+
+	va_start(ap, arg0);
+	char **argv = get_argv_from_execlx(ap, argc, arg0);
+	va_end(ap);
+
+	int ret = execve(path, argv, environ);
+	free(argv);
+	return ret;
 }
 
 int execlp(const char *file, const char *arg0, ...)
 {
-	assert_not_reached();
-	__builtin_unreachable();
+	va_list ap;
+
+	va_start(ap, arg0);
+	int argc = get_argc_from_execlx(ap, arg0);
+	va_end(ap);
+
+	va_start(ap, arg0);
+	char **argv = get_argv_from_execlx(ap, argc, arg0);
+	va_end(ap);
+
+	int ret = execvpe(file, argv, environ);
+	free(argv);
+	return ret;
 }
 
-int execl(const char *path, const char *arg0, ...)
+int execle(const char *path, const char *arg0, ...)
+{
+	va_list ap;
+
+	va_start(ap, arg0);
+	int argc = get_argc_from_execlx(ap, arg0);
+	va_end(ap);
+
+	va_start(ap, arg0);
+	char **argv = get_argv_from_execlx(ap, argc, arg0);
+	char **envp = va_arg(ap, char **);
+	va_end(ap);
+
+	int ret = execve(path, argv, envp);
+	free(argv);
+	free(envp);
+	return ret;
+}
+
+int execv(const char *pathname, char *const argv[])
+{
+	return execve(pathname, argv, environ);
+}
+
+int execvp(const char *file, char *const argv[])
+{
+	return execvpe(file, argv, environ);
+}
+
+int execvpe(const char *file, char *const argv[],
+			char *const envp[])
 {
 	assert_not_reached();
 	__builtin_unreachable();

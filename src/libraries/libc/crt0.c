@@ -1,12 +1,14 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 extern void _stdio_init();
 extern int main(int, char**, char**);
 
 void _start(int argc, char** argv, char** envp)
 {
+	environ = envp;
 	_stdio_init();
 
 	program_invocation_name = argv && argv[0] ? argv[0] : "";
