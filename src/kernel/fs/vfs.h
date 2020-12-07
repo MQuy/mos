@@ -227,6 +227,7 @@ int vfs_ftruncate(int32_t fd, int32_t length);
 struct vfs_file *get_empty_filp();
 int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigned int count);
 int vfs_setattr(struct vfs_dentry *d, struct iattr *attrs);
+int vfs_access(const char *path, int amode);
 
 // read_write.c
 char *vfs_read(const char *path);
@@ -244,5 +245,6 @@ int vfs_unlink(const char *path, int flag);
 int vfs_rename(const char *oldpath, const char *newpath);
 int generic_memory_rename(struct vfs_inode *old_dir, struct vfs_dentry *old_dentry,
 						  struct vfs_inode *new_dir, struct vfs_dentry *new_dentry);
+int vfs_mkdir(const char *path, mode_t mode);
 
 #endif

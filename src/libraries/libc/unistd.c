@@ -475,18 +475,6 @@ long pathconf(const char *path, int name)
 	__builtin_unreachable();
 }
 
-int mkdir(const char *path, mode_t mode)
-{
-	assert_not_reached();
-	__builtin_unreachable();
-}
-
-int mkdirat(int fd, const char *path, mode_t mode)
-{
-	assert_not_reached();
-	__builtin_unreachable();
-}
-
 int rmdir(const char *path)
 {
 	assert_not_reached();

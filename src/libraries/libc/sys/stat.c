@@ -56,3 +56,15 @@ int mkfifoat(int fd, const char *path, mode_t mode)
 	assert_not_reached();
 	__builtin_unreachable();
 }
+
+_syscall2(mkdir, const char *, mode_t);
+int mkdir(const char *path, mode_t mode)
+{
+	SYSCALL_RETURN(syscall_mkdir(path, mode));
+}
+
+_syscall3(mkdirat, int, const char *, mode_t);
+int mkdirat(int fd, const char *path, mode_t mode)
+{
+	SYSCALL_RETURN(syscall_mkdirat(fd, path, mode));
+}

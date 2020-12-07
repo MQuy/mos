@@ -295,7 +295,7 @@ static struct vfs_inode *ext2_create_inode(struct vfs_inode *dir, struct vfs_den
 		ext2_bwrite_block(inode->i_sb, block, block_buf);
 	}
 	else
-		assert_not_implemented();
+		assert_not_reached();
 
 	sb->s_op->write_inode(inode);
 	dentry->d_inode = inode;

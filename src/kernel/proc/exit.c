@@ -29,6 +29,7 @@ static void exit_files(struct process *proc)
 		{
 			file->f_op->release(file->f_dentry->d_inode, file);
 			kfree(file);
+			proc->files->fd[i] = 0;
 		}
 	}
 }

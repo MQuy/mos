@@ -134,6 +134,7 @@
 #define __NR_access 33
 #define __NR_kill 37
 #define __NR_rename 38
+#define __NR_mkdir 39
 #define __NR_dup 41
 #define __NR_pipe 42
 #define __NR_times 43
@@ -185,6 +186,7 @@
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
+#define __NR_mkdirat 296
 #define __NR_mknodat 297
 #define __NR_unlinkat 301
 #define __NR_renameat 302
@@ -342,9 +344,6 @@ int fchown(int fildes, uid_t owner, gid_t group);
 
 long fpathconf(int fildes, int name);
 long pathconf(const char *path, int name);
-
-int mkdir(const char *path, mode_t mode);
-int mkdirat(int fd, const char *path, mode_t mode);
 
 int rmdir(const char *path);
 

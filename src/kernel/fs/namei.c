@@ -154,3 +154,15 @@ int generic_memory_rename(struct vfs_inode *old_dir, struct vfs_dentry *old_dent
 
 	return 0;
 }
+
+int vfs_mkdir(const char *path, mode_t mode)
+{
+	int ret = vfs_open(path, O_RDONLY);
+	if (ret <= 0 && ret != -ENOENT)
+		return ret;
+	else if (ret >= 0)
+		return -EEXIST;
+
+	struct nameidata nd;
+	return path_walk(&nd, path, O_CREAT, mode | S_IFDIR);
+}

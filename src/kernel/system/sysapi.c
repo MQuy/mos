@@ -302,32 +302,7 @@ static int32_t sys_ftruncate(uint32_t fd, int32_t length)
 
 static int32_t sys_access(const char *path, int amode)
 {
-	if (amode & ~(R_OK || W_OK || X_OK || F_OK))
-		return -EINVAL;
-
-	char *abs_path;
-	if (path[0] != '/')
-	{
-		abs_path = kcalloc(PATH_MAX, sizeof(char));
-		vfs_build_path_backward(current_process->fs->d_root, abs_path);
-		strcpy(abs_path, "/");
-		strcpy(abs_path, path);
-	}
-	else
-		abs_path = path;
-
-	int fd = vfs_open(path, O_RDWR);
-
-	if (abs_path != path)
-		kfree(abs_path);
-	if (fd < 0)
-		return -ENOENT;
-
-	struct vfs_file *file = current_process->files->fd[fd];
-	if (!(amode & R_OK && file->f_mode & FMODE_CAN_READ) || !(amode & W_OK && file->f_mode & FMODE_CAN_WRITE))
-		return -EACCES;
-
-	return vfs_close(fd);
+	return vfs_access(path, amode);
 }
 
 static int32_t sys_faccessat(int fd, const char *path, int amode, int flag)
@@ -335,27 +310,14 @@ static int32_t sys_faccessat(int fd, const char *path, int amode, int flag)
 	if (flag && flag & ~(AT_SYMLINK_NOFOLLOW || AT_EACCESS))
 		return -EINVAL;
 
-	char *abs_path;
-	if (path[0] != '/' && fd != AT_FDCWD)
-	{
-		struct vfs_file *df = current_process->files->fd[fd];
-		if (!df)
-			return -EBADF;
-		if (!(df->f_dentry->d_inode->i_mode & S_IFDIR))
-			return -ENOTDIR;
+	char *interpreted_path;
+	int ret = interpret_path_from_fd(fd, path, &interpreted_path);
 
-		abs_path = kcalloc(MAXPATHLEN, sizeof(char));
-		vfs_build_path_backward(df->f_dentry, abs_path);
-		strcpy(abs_path, "/");
-		strcpy(abs_path, path);
-	}
-	else
-		abs_path = path;
+	if (ret >= 0)
+		ret = sys_access(interpreted_path, amode);
 
-	int ret = sys_access(abs_path, amode);
-
-	if (abs_path != path)
-		kfree(abs_path);
+	if (interpreted_path != path)
+		kfree(interpreted_path);
 
 	return ret;
 }
@@ -375,6 +337,24 @@ static int32_t sys_unlinkat(int fd, const char *path, int flag)
 
 	if (ret >= 0)
 		ret = vfs_unlink(interpreted_path, flag);
+
+	if (interpreted_path != path)
+		kfree(interpreted_path);
+	return ret;
+}
+
+static int32_t sys_mkdir(const char *path, mode_t mode)
+{
+	return vfs_mkdir(path, mode);
+}
+
+static int32_t sys_mkdirat(int fd, const char *path, mode_t mode)
+{
+	char *interpreted_path;
+	int ret = interpret_path_from_fd(fd, path, &interpreted_path);
+
+	if (ret >= 0)
+		ret = vfs_mkdir(interpreted_path, mode);
 
 	if (interpreted_path != path)
 		kfree(interpreted_path);
@@ -717,6 +697,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_access 33
 #define __NR_kill 37
 #define __NR_rename 38
+#define __NR_mkdir 39
 #define __NR_dup 41
 #define __NR_pipe 42
 #define __NR_times 43
@@ -768,6 +749,7 @@ static int32_t sys_debug_println(enum debug_level level, const char *out)
 #define __NR_mq_send (__NR_mq_open + 3)
 #define __NR_mq_receive (__NR_mq_open + 4)
 #define __NR_waitid 284
+#define __NR_mkdirat 296
 #define __NR_mknodat 297
 #define __NR_unlinkat 301
 #define __NR_renameat 302
@@ -796,6 +778,8 @@ static void *syscalls[] = {
 	[__NR_fchmod] = sys_fchmod,
 	[__NR_mknod] = sys_mknod,
 	[__NR_mknodat] = sys_mknodat,
+	[__NR_mkdir] = sys_mkdir,
+	[__NR_mkdirat] = sys_mkdirat,
 	[__NR_getcwd] = sys_getcwd,
 	[__NR_waitpid] = sys_waitpid,
 	[__NR_getdents] = sys_getdents,

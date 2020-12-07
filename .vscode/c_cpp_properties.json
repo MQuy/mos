@@ -13,10 +13,10 @@
             "macFrameworkPath": [
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks"
             ],
-            "compilerPath": "/usr/local/bin/i386-elf-gcc",
+            "compilerPath": "/usr/bin/gcc-10",
             "intelliSenseMode": "${default}",
-            "cStandard": "gnu18",
-            "cppStandard": "gnu++20"
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17"
         }
     ],
     "version": 4

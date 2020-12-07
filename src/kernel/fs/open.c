@@ -316,3 +316,33 @@ int generic_memory_readdir(struct vfs_file *file, struct dirent *dirent, unsigne
 	}
 	return entries_size;
 }
+
+int vfs_access(const char *path, int amode)
+{
+	if (amode & ~(R_OK || W_OK || X_OK || F_OK))
+		return -EINVAL;
+
+	char *abs_path;
+	if (path[0] != '/')
+	{
+		abs_path = kcalloc(PATH_MAX, sizeof(char));
+		vfs_build_path_backward(current_process->fs->d_root, abs_path);
+		strcpy(abs_path, "/");
+		strcpy(abs_path, path);
+	}
+	else
+		abs_path = path;
+
+	int fd = vfs_open(path, O_RDWR);
+
+	if (abs_path != path)
+		kfree(abs_path);
+	if (fd < 0)
+		return -ENOENT;
+
+	struct vfs_file *file = current_process->files->fd[fd];
+	if (!(amode & R_OK && file->f_mode & FMODE_CAN_READ) || !(amode & W_OK && file->f_mode & FMODE_CAN_WRITE))
+		return -EACCES;
+
+	return vfs_close(fd);
+}
