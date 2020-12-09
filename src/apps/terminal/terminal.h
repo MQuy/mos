@@ -1,5 +1,5 @@
-#ifndef TAB_H
-#define TAB_H
+#ifndef TERMINAL_H
+#define TERMINAL_H 1
 
 #include <list.h>
 #include <sys/types.h>
@@ -21,6 +21,7 @@ struct terminal_tab
 	struct list_head lines;
 	struct terminal_line *scroll_line;
 	pid_t shell_pid;
+	uint32_t text_background, text_color;
 	unsigned int line_count, row_count;
 	struct terminal_line *cursor_line;
 	unsigned int cursor_column;

@@ -254,6 +254,7 @@ int32_t thread_page_fault(struct interrupt_registers *regs)
 		return IRQ_HANDLER_STOP;
 	}
 
+	assert_not_reached();
 	return IRQ_HANDLER_CONTINUE;
 }
 

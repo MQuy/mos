@@ -11,6 +11,7 @@
   - [Signals](#signals-1)
   - [PTY](#pty)
   - [Terminal](#terminal-1)
+  - [ANSI escape code](#ansi-escape-code)
 
 ### Terminology
 
@@ -748,5 +749,83 @@ main() {
           - output `cwd`
           - no foregroup ground and set `foreground_gid = shell->pid`
   7. go back to step 3
+}
+```
+
+#### ANSI escape code
+
+```c++
+# escape_parser.c
+enum {
+ ASCI_SINGLE_SHIFT_TWO = 0,
+ ASCI_SINGLE_SHIFT_THREE = 1,
+ ASCI_DEVICE_CONTROL_STRING = 2,
+ ASCI_CONTROL_SEQUENCE_INTRODUCER = 3,
+};
+
+struct asci_sequence {
+  int type;
+  char *data;
+};
+
+enum {
+  ASCI_CURSOR_UP = 0,
+  ASCI_CURSOR_DOWN = 1,
+  ASCI_CURSOR_FORWARD = 2,
+  ASCI_CURSOR_BACK = 3,
+  ASCI_CURSOR_NEXTLINE = 4,
+  ASCI_CURSOR_PREVLINE = 5,
+  ASCI_CURSOR_HA = 6,
+  ASCI_CURSOR_POSITION = 7,
+  ASCI_ERASE = 8,
+  ASCI_ERASE_LINE = 9,
+  ASCI_SCROLL_UP = 10,
+  ASCI_SCROLL_DOWN = 11,
+  ASCI_HV_POSITION = 12,
+  ASCI_SELECT_GRAPHIC_POSITION = 13,
+};
+
+struct asci_control {
+  int type;
+  char *data;
+};
+
+void convert_key_event_to_code(keycode, state) {
+  1. hash table `ht_printable`, value is printable characters (ascii) and key
+    - is unsigned integer
+    - 3 top bits are CTRL|SHIFT|ALT
+    - other bits are keycode (from X11)
+  2. look up `ht_printable` -> return if found
+  3. hash table `ht_sequences`, value is ansi sequences and key the same as `ht_printable`
+  4. look up `ht_sequences` -> return if found
+}
+
+int parse_control_sequence(input, sequence) {
+  1. control = sequence->data = calloc(1, sizeof(struct asci_control))
+  2. iterate input from index 2
+    - if ch == terminated code (A, B, C ...)
+      - depend on which terminated code, we set `control->type` a corresponding value
+      - copy that range into `control->data`
+      - return 0
+  3. return -1
+}
+
+int parse_asci_sequence_from_input(input, sequence) {
+  1. if input[0] != '\33' -> step 3
+  2. if input[1] == '['
+    - sequence->type = ASCI_CONTROL_SEQUENCE_INTRODUCER
+    - return parse_control_sequence(input, sequence)
+  3. return -1
+}
+
+void handle_asci_control(tab, control) {
+  1. if `control->type` == CUU
+    - parse data
+    - terminal_move_cursor_up(tab, n)
+}
+
+void handle_asci_sequence(tab, sequence) {
+  1. if CSI -> handle_asci_control(tab, sequence->data)
+  2. else raise
 }
 ```

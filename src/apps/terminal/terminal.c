@@ -34,6 +34,8 @@ static struct terminal_tab *alloc_terminal_tab()
 	tab->scroll_line = line;
 	tab->cursor_line = line;
 	tab->line_count = tab->row_count = 1;
+	tab->text_background = 0;
+	tab->text_color = 0xffffffff;
 	INIT_LIST_HEAD(&tab->lines);
 	list_add_tail(&line->sibling, &tab->lines);
 
@@ -133,7 +135,7 @@ static void draw_cursor(struct terminal_line *from_line, int from_row, struct te
 		gui_draw_retangle(container_win, cursor_x + HORIZONTAL_PADDING, relative_row * get_character_height(0) + VERTICAL_PADDING, get_character_width(0), get_character_height(0), 0xd0d0d0ff);
 }
 
-static void draw_terminal_line(struct terminal_line *line, int from_row, int to_row, int prow)
+static void draw_terminal_line(struct terminal_tab *tab, struct terminal_line *line, int from_row, int to_row, int prow)
 {
 	int width = iterm->width - 2 * HORIZONTAL_PADDING;
 	int py = prow * get_character_height(0);
@@ -152,13 +154,13 @@ static void draw_terminal_line(struct terminal_line *line, int from_row, int to_
 					for (int i = 0; i < 4; ++i)
 						psf_putchar(' ',
 									jx + HORIZONTAL_PADDING + i, py + VERTICAL_PADDING,
-									0xffffffff, 0,
+									tab->text_color, tab->text_background,
 									container_win->graphic.buf, container_win->graphic.width * 4);
 
 				else
 					psf_putchar(ch,
 								jx + HORIZONTAL_PADDING, py + VERTICAL_PADDING,
-								0xffffffff, 0,
+								tab->text_color, tab->text_background,
 								container_win->graphic.buf, container_win->graphic.width * 4);
 				jx += get_character_width(ch);
 				i++;
@@ -231,7 +233,7 @@ static void draw_terminal()
 			ifrom = from_row;
 		if (iter_line == to_line)
 			ito = to_row;
-		draw_terminal_line(iter_line, ifrom, ito, irow);
+		draw_terminal_line(tab, iter_line, ifrom, ito, irow);
 		irow += ito - ifrom + 1;
 	}
 
