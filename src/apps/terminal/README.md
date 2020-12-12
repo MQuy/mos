@@ -11,6 +11,7 @@
   - [Signals](#signals-1)
   - [PTY](#pty)
   - [Terminal](#terminal-1)
+  - [Terminal V2](#terminal-v2)
   - [ANSI escape code](#ansi-escape-code)
 
 ### Terminology
@@ -749,6 +750,101 @@ main() {
           - output `cwd`
           - no foregroup ground and set `foreground_gid = shell->pid`
   7. go back to step 3
+}
+```
+
+#### Terminal V2
+
+```c++
+struct terminal_style {
+  unsigned int background, color;
+  char bold : 1;
+  char light : 1;
+  char italic : 1;
+  char underline : 1;
+  char slow_blink : 1;
+  char rapid_blink : 1;
+  char reverse_video : 1;
+  char strike_throught : 1;
+  unsigned int references;
+}
+
+struct terminal_unit {
+  unsigned char content;
+  struct terminal_row *row;
+  struct list_head sibling;
+  struct terminal_style *style;
+}
+
+struct terminal_row {
+  struct list_head units;
+  unsigned short columns;
+
+  struct terminal_group *group;
+  struct terminal *terminal;
+  struct list_head sibling;
+}
+
+struct terminal_group {
+  struct terminal_row *rows;
+  unsigned short number_of_rows;
+
+  struct terminal *terminal;
+  struct list_head sibling;
+}
+
+struct terminal_config {
+  char vertical_padding : 4;
+  char horizontal_padding : 4;
+  char tabspan;
+  unsigned short max_lines;
+  short screen_columns;
+  short screen_rows;
+}
+
+struct terminal {
+  struct list_head groups;
+  struct list_head rows;
+
+  struct terminal_row *cursor_row;
+  unsigned short cursor_unit_index;
+  struct terminal_row *scroll_row;
+  struct terminal_style *current_style;
+
+  struct window *win;
+  struct terminal_config config;
+}
+
+struct terminal *alloc_terminal(struct window *win) {
+  1. allocate terminal style `style` with background (black) and color (white)
+  2. allocate terminal `term` with window and empty groups, rows
+    - init terminal config
+    - set style as above
+  3. allocate terminal group `group` with `term`
+    - append it to `term->groups`
+  4. allocate terminal row `row` with empty units and zero columns
+    - append it to `term->rows`
+    - append it to `group->rows`
+}
+
+void terminal_draw_cursor(struct terminal *term, int x, int y) {
+  4. draw
+}
+
+void terminal_draw_unit(struct terminal_unit *unit, int *x, int y) {
+  1. draw `unit->content` at x, y
+  2. increase x with unit content width (check tab width based on terminal config tabspan)
+}
+
+void terminal_draw_row(struct terminal_row *row, int y) {
+  1. for each unit in `row->units`
+    - draw unit (accumulate x)
+    - if cursor is row -> draw
+}
+
+void terminal_draw(struct terminal *term) {
+  1. iterate `screen_rows` times from `term->scroll_row`
+    - draw for each row
 }
 ```
 
