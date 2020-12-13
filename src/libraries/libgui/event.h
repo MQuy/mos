@@ -330,5 +330,4 @@ struct xevent
 struct xevent *create_xkey_event(uint32_t key, enum xevent_action action, unsigned int state);
 struct xevent *create_xmotion_event(int32_t x, int32_t y, unsigned int state);
 struct xevent *create_xbutton_event(uint8_t button, enum xevent_action action, int32_t x, int32_t y, unsigned int state);
-int convert_keycode_to_ascii(unsigned int keycode, unsigned int state, unsigned char *buf, int *length);
 #endif

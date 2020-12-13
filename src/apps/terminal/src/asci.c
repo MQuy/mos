@@ -95,6 +95,7 @@ static struct keycode_ascii asciis[] = {
 	{KEY_DOT, '.'},
 	{KEY_SLASH, '\\'},
 	{KEY_SPACE, ' '},
+	{KEY_BACKSPACE, '\177'},
 
 	// with control
 	{CTRL_PART | KEY_A, 1},
@@ -177,73 +178,73 @@ static struct keycode_ascii asciis[] = {
 	{SHIFT_PART | KEY_SLASH, '|'},
 
 	// with alt
-	{ALT_PART | KEY_1, 0xA1},			// �
-	{ALT_PART | KEY_2, 0x99},			// �
-	{ALT_PART | KEY_3, 0xA3},			// �
-	{ALT_PART | KEY_4, 0xA2},			// �
-	{ALT_PART | KEY_6, 0xA7},			// �
-	{ALT_PART | KEY_7, 0xB6},			// �
-	{ALT_PART | KEY_8, 0x95},			// �
-	{ALT_PART | KEY_9, 0xAA},			// �
-	{ALT_PART | KEY_0, 0xBA},			// �
-	{ALT_PART | KEY_MINUS, 0x96},		// �
-	{ALT_PART | KEY_Q, 0x9C},			// �
-	{ALT_PART | KEY_R, 0xAE},			// �
-	{ALT_PART | KEY_T, 0x86},			// �
-	{ALT_PART | KEY_Y, 0xA5},			// �
-	{ALT_PART | KEY_U, 0xA8},			// �
-	{ALT_PART | KEY_O, 0xF8},			// �
-	{ALT_PART | KEY_LEFTBRACE, 0x93},	// �
-	{ALT_PART | KEY_LEFTBRACE, 0x94},	// �
-	{ALT_PART | KEY_A, 0xE5},			// �
-	{ALT_PART | KEY_S, 0xDF},			// �
-	{ALT_PART | KEY_F, 0x83},			// �
-	{ALT_PART | KEY_G, 0xA9},			// �
-	{ALT_PART | KEY_L, 0xAC},			// �
-	{ALT_PART | KEY_SEMICOLON, 0x85},	// �
-	{ALT_PART | KEY_APOSTROPHE, 0xE6},	// �
+	{ALT_PART | KEY_1, 0xA1},			// ¡
+	{ALT_PART | KEY_2, 0x99},			// ™
+	{ALT_PART | KEY_3, 0xA3},			// £
+	{ALT_PART | KEY_4, 0xA2},			// ¢
+	{ALT_PART | KEY_6, 0xA7},			// §
+	{ALT_PART | KEY_7, 0xB6},			// ¶
+	{ALT_PART | KEY_8, 0x95},			// •
+	{ALT_PART | KEY_9, 0xAA},			// ª
+	{ALT_PART | KEY_0, 0xBA},			// º
+	{ALT_PART | KEY_MINUS, 0x96},		// –
+	{ALT_PART | KEY_Q, 0x9C},			// œ
+	{ALT_PART | KEY_R, 0xAE},			// ®
+	{ALT_PART | KEY_T, 0x86},			// †
+	{ALT_PART | KEY_Y, 0xA5},			// ¥
+	{ALT_PART | KEY_U, 0xA8},			// ¨
+	{ALT_PART | KEY_O, 0xF8},			// ø
+	{ALT_PART | KEY_LEFTBRACE, 0x93},	// “
+	{ALT_PART | KEY_LEFTBRACE, 0x94},	// ”
+	{ALT_PART | KEY_A, 0xE5},			// å
+	{ALT_PART | KEY_S, 0xDF},			// ß
+	{ALT_PART | KEY_F, 0x83},			// ƒ
+	{ALT_PART | KEY_G, 0xA9},			// ©
+	{ALT_PART | KEY_L, 0xAC},			// ¬
+	{ALT_PART | KEY_SEMICOLON, 0x85},	// …
+	{ALT_PART | KEY_APOSTROPHE, 0xE6},	// æ
 	{ALT_PART | KEY_GRAVE, 0x60},		// `
-	{ALT_PART | KEY_BACKSLASH, 0xF7},	// �
-	{ALT_PART | KEY_C, 0xE7},			// �
-	{ALT_PART | KEY_N, 0x98},			// �
-	{ALT_PART | KEY_M, 0xB5},			// �
-	{ALT_PART | KEY_SLASH, 0xAB},		// �
+	{ALT_PART | KEY_BACKSLASH, 0xF7},	// ÷
+	{ALT_PART | KEY_C, 0xE7},			// ç
+	{ALT_PART | KEY_N, 0x98},			// ˜
+	{ALT_PART | KEY_M, 0xB5},			// µ
+	{ALT_PART | KEY_SLASH, 0xAB},		// «
 
 	// with shift and alt
-	{SHIFT_PART | ALT_PART | KEY_2, 0x80},			 // �
-	{SHIFT_PART | ALT_PART | KEY_3, 0x8B},			 // �
-	{SHIFT_PART | ALT_PART | KEY_4, 0x9B},			 // �
-	{SHIFT_PART | ALT_PART | KEY_7, 0x87},			 // �
-	{SHIFT_PART | ALT_PART | KEY_8, 0xB0},			 // �
-	{SHIFT_PART | ALT_PART | KEY_9, 0xB7},			 // �
-	{SHIFT_PART | ALT_PART | KEY_0, 0x82},			 // �
-	{SHIFT_PART | ALT_PART | KEY_MINUS, 0x97},		 // �
-	{SHIFT_PART | ALT_PART | KEY_EQUAL, 0xB1},		 // �
-	{SHIFT_PART | ALT_PART | KEY_Q, 0x8C},			 // �
-	{SHIFT_PART | ALT_PART | KEY_W, 0x84},			 // �
-	{SHIFT_PART | ALT_PART | KEY_E, 0xB4},			 // �
-	{SHIFT_PART | ALT_PART | KEY_R, 0x89},			 // �
-	{SHIFT_PART | ALT_PART | KEY_Y, 0xC1},			 // �
-	{SHIFT_PART | ALT_PART | KEY_U, 0xA8},			 // �
-	{SHIFT_PART | ALT_PART | KEY_I, 0x88},			 // �
-	{SHIFT_PART | ALT_PART | KEY_O, 0xD8},			 // �
-	{SHIFT_PART | ALT_PART | KEY_RIGHTBRACE, 0x94},	 // �
-	{SHIFT_PART | ALT_PART | KEY_RIGHTBRACE, 0x92},	 // �
-	{SHIFT_PART | ALT_PART | KEY_A, 0xC5},			 // �
-	{SHIFT_PART | ALT_PART | KEY_S, 0xCD},			 // �
-	{SHIFT_PART | ALT_PART | KEY_D, 0xCE},			 // �
-	{SHIFT_PART | ALT_PART | KEY_F, 0xCF},			 // �
-	{SHIFT_PART | ALT_PART | KEY_H, 0xD3},			 // �
-	{SHIFT_PART | ALT_PART | KEY_J, 0xD4},			 // �
-	{SHIFT_PART | ALT_PART | KEY_L, 0xD2},			 // �
-	{SHIFT_PART | ALT_PART | KEY_SEMICOLON, 0xDA},	 // �
-	{SHIFT_PART | ALT_PART | KEY_APOSTROPHE, 0xC6},	 // �
-	{SHIFT_PART | ALT_PART | KEY_BACKSLASH, 0xBF},	 // �
-	{SHIFT_PART | ALT_PART | KEY_Z, 0xB8},			 // �
-	{SHIFT_PART | ALT_PART | KEY_C, 0xC7},			 // �
-	{SHIFT_PART | ALT_PART | KEY_N, 0x98},			 // �
-	{SHIFT_PART | ALT_PART | KEY_M, 0xC2},			 // �
-	{SHIFT_PART | ALT_PART | KEY_COMMA, 0xAF},		 // �
+	{SHIFT_PART | ALT_PART | KEY_2, 0x80},			 // €
+	{SHIFT_PART | ALT_PART | KEY_3, 0x8B},			 // ‹
+	{SHIFT_PART | ALT_PART | KEY_4, 0x9B},			 // ›
+	{SHIFT_PART | ALT_PART | KEY_7, 0x87},			 // ‡
+	{SHIFT_PART | ALT_PART | KEY_8, 0xB0},			 // °
+	{SHIFT_PART | ALT_PART | KEY_9, 0xB7},			 // ·
+	{SHIFT_PART | ALT_PART | KEY_0, 0x82},			 // ‚
+	{SHIFT_PART | ALT_PART | KEY_MINUS, 0x97},		 // —
+	{SHIFT_PART | ALT_PART | KEY_EQUAL, 0xB1},		 // ±
+	{SHIFT_PART | ALT_PART | KEY_Q, 0x8C},			 // Œ
+	{SHIFT_PART | ALT_PART | KEY_W, 0x84},			 // „
+	{SHIFT_PART | ALT_PART | KEY_E, 0xB4},			 // ´
+	{SHIFT_PART | ALT_PART | KEY_R, 0x89},			 // ‰
+	{SHIFT_PART | ALT_PART | KEY_Y, 0xC1},			 // Á
+	{SHIFT_PART | ALT_PART | KEY_U, 0xA8},			 // ¨
+	{SHIFT_PART | ALT_PART | KEY_I, 0x88},			 // ˆ
+	{SHIFT_PART | ALT_PART | KEY_O, 0xD8},			 // Ø
+	{SHIFT_PART | ALT_PART | KEY_RIGHTBRACE, 0x94},	 // ”
+	{SHIFT_PART | ALT_PART | KEY_RIGHTBRACE, 0x92},	 // ’
+	{SHIFT_PART | ALT_PART | KEY_A, 0xC5},			 // Å
+	{SHIFT_PART | ALT_PART | KEY_S, 0xCD},			 // Í
+	{SHIFT_PART | ALT_PART | KEY_D, 0xCE},			 // Î
+	{SHIFT_PART | ALT_PART | KEY_F, 0xCF},			 // Ï
+	{SHIFT_PART | ALT_PART | KEY_H, 0xD3},			 // Ó
+	{SHIFT_PART | ALT_PART | KEY_J, 0xD4},			 // Ô
+	{SHIFT_PART | ALT_PART | KEY_L, 0xD2},			 // Ò
+	{SHIFT_PART | ALT_PART | KEY_SEMICOLON, 0xDA},	 // Ú
+	{SHIFT_PART | ALT_PART | KEY_APOSTROPHE, 0xC6},	 // Æ
+	{SHIFT_PART | ALT_PART | KEY_BACKSLASH, 0xBF},	 // ¿
+	{SHIFT_PART | ALT_PART | KEY_Z, 0xB8},			 // ¸
+	{SHIFT_PART | ALT_PART | KEY_C, 0xC7},			 // Ç
+	{SHIFT_PART | ALT_PART | KEY_N, 0x98},			 // ˜
+	{SHIFT_PART | ALT_PART | KEY_M, 0xC2},			 // Â
+	{SHIFT_PART | ALT_PART | KEY_COMMA, 0xAF},		 // ¯
 };
 
 struct keycode_sequence sequences[] = {
@@ -266,7 +267,7 @@ void asci_init()
 	for (int i = 0; i < nitems; ++i)
 	{
 		struct keycode_sequence *ks = &sequences[i];
-		hashmap_put(&msequence, &ks->keycode, &ks->sequence);
+		hashmap_put(&msequence, &ks->keycode, ks->sequence);
 	}
 }
 

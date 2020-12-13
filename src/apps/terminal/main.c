@@ -58,7 +58,7 @@ static void handle_x11_event(struct xevent *evt)
 		{
 			int nbuf = 0;
 			unsigned char buf[100] = {0};
-			convert_keycode_to_ascii(kevt->key, kevt->state, buf, &nbuf);
+			nbuf = convert_key_event_to_code(kevt->key, kevt->state, buf);
 
 			if (nbuf > 0)
 				write(active_ptm, (const char *)buf, nbuf);
@@ -93,6 +93,7 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 
 int main()
 {
+	asci_init();
 	app_win = init_window(50, 50, 600, 400);
 	container_win = list_last_entry(&app_win->children, struct window, sibling);
 	iterm = terminal_allocate(container_win);

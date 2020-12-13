@@ -750,4 +750,8 @@ static inline int list_is_poison(const struct list_head *entry)
 	return entry->prev == LIST_POISON1 && entry->next == LIST_POISON2;
 }
 
+#define list_is_last_entry(pos, head, member) list_is_last(&pos->member, head)
+
+#define list_is_head_entry(pos, head, member) (&pos->member == head)
+
 #endif

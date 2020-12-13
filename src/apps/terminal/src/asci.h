@@ -21,4 +21,7 @@ struct asci_control
 	void *data;
 };
 
+void asci_init();
+int convert_key_event_to_code(unsigned int keycode, unsigned int state, unsigned char *buf);
+
 #endif

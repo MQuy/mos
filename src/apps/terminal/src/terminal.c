@@ -8,6 +8,17 @@
 #include <string.h>
 #include <termio.h>
 
+int terminal_get_unit_colspan(struct terminal_unit *unit)
+{
+	return unit->content == '\t' ? unit->row->terminal->config.tabspan : 1;
+}
+
+int terminal_get_unit_width(struct terminal_unit *unit)
+{
+	struct psf_t *font = get_current_font();
+	return terminal_get_unit_colspan(unit) * font->width;
+}
+
 struct terminal_row *terminal_allocate_row(struct terminal *term, struct terminal_row *at_row)
 {
 	struct terminal_row *new_row = calloc(1, sizeof(struct terminal_row));
@@ -81,15 +92,27 @@ struct terminal *terminal_allocate(struct window *win)
 	return term;
 }
 
-int terminal_get_unit_colspan(struct terminal_unit *unit)
+void terminal_free_unit(struct terminal_unit *unit)
 {
-	return unit->content == '\t' ? unit->row->terminal->config.tabspan : 1;
+	unit->row->columns -= terminal_get_unit_colspan(unit);
+	unit->style->references--;
+	list_del(&unit->sibling);
+	free(unit);
 }
 
-int terminal_get_unit_width(struct terminal_unit *unit)
+void terminal_free_row(struct terminal_row *row)
 {
-	struct psf_t *font = get_current_font();
-	return terminal_get_unit_colspan(unit) * font->width;
+	assert(!row->columns);
+	list_del(&row->sibling);
+	row->group->number_of_rows--;
+	free(row);
+}
+
+void terminal_free_group(struct terminal_group *group)
+{
+	assert(!group->number_of_rows);
+	list_del(&group->sibling);
+	free(group);
 }
 
 void terminal_move_cursor(struct terminal *term, int x, int y, int whence)
@@ -263,19 +286,103 @@ void terminal_input_newline(struct terminal *term)
 	term->cursor_unit_index = 0;
 }
 
+struct terminal_unit *terminal_get_unit_from_index(struct terminal_row *row, int index)
+{
+	int i = 0;
+	struct terminal_unit *iter;
+	list_for_each_entry(iter, &row->units, sibling)
+	{
+		if (i++ == index)
+			return iter;
+	}
+
+	return NULL;
+}
+
+void terminal_input_erase_shift(struct terminal_group *group, struct terminal_row *row, int index)
+{
+	if (group->number_of_rows == index + 1)
+		return;
+
+	struct terminal_row *next_row = list_next_entry(row, sibling);
+	struct terminal_unit *iter, *next;
+	list_for_each_entry_safe(iter, next, &row->units, sibling)
+	{
+		int colspan = terminal_get_unit_colspan(iter);
+		if (colspan + row->columns < group->terminal->config.screen_columns)
+		{
+			list_del(&iter->sibling);
+			list_add_tail(&iter->sibling, &row->units);
+			row->columns += colspan;
+		}
+		else
+			break;
+	}
+	terminal_input_erase_shift(group, next_row, index + 1);
+}
+
 void terminal_input_erase(struct terminal *term)
 {
+	struct terminal_group *group = term->cursor_row->group;
+
+	int i = 0;
+	struct terminal_row *iter = group->child;
+	list_for_each_entry_from(iter, &term->rows, sibling)
+	{
+		if (iter == term->cursor_row)
+		{
+			struct terminal_unit *unit = terminal_get_unit_from_index(iter, term->cursor_unit_index);
+			// row is empty
+			if (!unit)
+			{
+				assert(!term->cursor_unit_index);
+
+				struct terminal_row *first_row = list_first_entry(&term->rows, struct terminal_row, sibling);
+				if (first_row != iter)
+				{
+					term->cursor_row = list_prev_entry(iter, sibling);
+					term->cursor_unit_index = term->cursor_row->columns - 1;
+
+					terminal_free_row(iter);
+					if (!group->number_of_rows)
+						terminal_free_group(iter->group);
+				}
+			}
+			else if (i + 1 < group->number_of_rows)
+			{
+				struct terminal_row *next_row = list_next_entry(iter, sibling);
+				if (next_row->columns)
+				{
+					terminal_free_unit(unit);
+					terminal_input_erase_shift(group, iter, i);
+				}
+				// next row is empty
+				else
+				{
+					terminal_free_unit(unit);
+					terminal_free_row(next_row);
+				}
+			}
+			// last row in a group
+			else
+				terminal_free_unit(unit);
+
+			return;
+		}
+		i++;
+	}
 }
 
 void terminal_input_back(struct terminal *term)
 {
 	if (!term->cursor_unit_index)
 	{
-		struct terminal_row *first_row = list_first_entry(&term->rows, struct terminal_row, sibling);
-		if (first_row != term->cursor_row)
+		struct terminal_group *group = term->cursor_row->group;
+		if (group->child != term->cursor_row)
 		{
-			term->cursor_row = list_prev_entry(term->cursor_row, sibling);
-			term->cursor_unit_index = term->cursor_row->columns;
+			struct terminal_row *prev_row = list_prev_entry(term->cursor_row, sibling);
+			term->cursor_row = prev_row;
+			term->cursor_unit_index = min(0, prev_row->columns - 1);
 		}
 	}
 	else
