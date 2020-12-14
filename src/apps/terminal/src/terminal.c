@@ -362,7 +362,7 @@ void terminal_input_rearrange_in_group(struct terminal_row *from_row)
 		from_row->columns = columns;
 }
 
-void terminal_input_printable(struct terminal *term, char ch)
+void terminal_input_printable(struct terminal *term, unsigned char ch)
 {
 	struct terminal_unit *unit = terminal_get_unit_from_index(term->cursor_row, term->cursor_unit_index);
 
@@ -488,7 +488,7 @@ void terminal_input_back(struct terminal *term)
 		{
 			struct terminal_row *prev_row = list_prev_entry(term->cursor_row, sibling);
 			term->cursor_row = prev_row;
-			term->cursor_unit_index = min(0, prev_row->columns - 1);
+			term->cursor_unit_index = max(0, prev_row->columns - 1);
 		}
 	}
 	else
@@ -504,7 +504,7 @@ void terminal_input(struct terminal *term, char *input)
 {
 	for (int i = 0, length = strlen(input); i < length; ++i)
 	{
-		char ch = input[i];
+		unsigned char ch = input[i];
 
 		if (ch == '\033')
 			terminal_input_sequence(term, input, &i);
@@ -516,7 +516,7 @@ void terminal_input(struct terminal *term, char *input)
 			term->cursor_unit_index = 0;
 		else if (ch == '\n')
 			terminal_input_newline(term);
-		else
+		else if (ch >= 32)
 			terminal_input_printable(term, ch);
 	}
 }
