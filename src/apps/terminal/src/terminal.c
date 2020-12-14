@@ -114,7 +114,7 @@ struct terminal *terminal_allocate(struct window *win)
 	INIT_LIST_HEAD(&term->rows);
 
 	struct terminal_style *style = calloc(1, sizeof(struct terminal_style));
-	style->background = 0;
+	style->background = 0xff000000;
 	style->color = 0xffffffff;
 	term->style = style;
 
@@ -230,26 +230,29 @@ void terminal_draw_cursor(struct terminal *term, int x, int y)
 	gui_draw_retangle(term->win,
 					  x, y,
 					  get_character_width(' '), get_character_height(' '),
-					  0xd0d0d0ff);
+					  0xffd0d0d0);
 }
 
-void terminal_draw_unit(struct terminal_unit *unit, int x, int y)
+void terminal_draw_unit(struct terminal_unit *unit, int x, int y, int selected)
 {
 	struct terminal *term = unit->row->terminal;
 	struct terminal_style *style = unit->style;
+
+	uint32_t color = selected ? style->background : style->color;
+	uint32_t background = selected ? style->background & 0xffffff : style->background;
 
 	unsigned char ch = unit->content;
 	if (ch == '\t')
 		for (int i = 0; i < term->config.tabspan; ++i)
 			psf_putchar(' ',
 						x + i * get_character_width(' '), y,
-						style->color, style->background,
+						color, background,
 						term->win->graphic.buf, term->win->graphic.width * 4);
 
 	else
 		psf_putchar(ch,
 					x, y,
-					style->color, style->background,
+					color, background,
 					term->win->graphic.buf, term->win->graphic.width * 4);
 }
 
@@ -265,10 +268,10 @@ void terminal_draw_row(struct terminal_row *row, int y)
 		if (i == term->config.screen_columns)
 			break;
 
-		terminal_draw_unit(iter, x, y);
-
-		if (row == term->cursor_row && i == term->cursor_unit_index)
+		int at_cursor = row == term->cursor_row && i == term->cursor_unit_index;
+		if (at_cursor)
 			terminal_draw_cursor(term, x, y);
+		terminal_draw_unit(iter, x, y, at_cursor);
 
 		x += terminal_get_unit_width(iter);
 		i++;

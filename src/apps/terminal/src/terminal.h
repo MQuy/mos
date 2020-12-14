@@ -15,7 +15,7 @@
 
 struct terminal_style
 {
-	unsigned int background, color;
+	uint32_t background, color;
 	char bold : 1;
 	char light : 1;
 	char italic : 1;

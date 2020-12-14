@@ -79,7 +79,7 @@ void psf_putchar(
 	uint32_t c,
 	/* cursor position on screen, in characters not in pixels */
 	uint32_t cx, uint32_t cy,
-	/* foreground and background colors, say 0xFFFFFF and 0x000000 */
+	/* foreground and background colors in little endian */
 	uint32_t fg, uint32_t bg, char *fb, uint32_t scanline)
 {
 	/* cast the address to PSF header struct */
@@ -110,7 +110,11 @@ void psf_putchar(
 		/* display a row */
 		for (x = 0; x < font->width; x++)
 		{
-			*((uint32_t *)(fb + line)) = ((int)*glyph) & (mask) ? fg : bg;
+			if (((int)*glyph) & (mask))
+				*((uint32_t *)(fb + line)) = fg;
+			// NOTE: MQ 2020-12-13 Only support full transparent background
+			else if (bg & 0xffffff != 0)
+				*((uint32_t *)(fb + line)) = bg;
 			/* adjust to the next pixel */
 			mask >>= 1;
 			line += 4;

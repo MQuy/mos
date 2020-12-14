@@ -247,9 +247,12 @@ static struct keycode_ascii asciis[] = {
 	{SHIFT_PART | ALT_PART | KEY_COMMA, 0xAF},		 // ¯
 };
 
+// NOTE: MQ 2020-12-14
+// in cursor row, gnu bash only supports subset of asci escape sequence
+// bash-5.0/lib/readline/readline.c#bind_arrow_keys_internal
 struct keycode_sequence sequences[] = {
-	{KEY_KP4, "\33[1D"},  // keypad left arrow
-	{KEY_KP6, "\33[1C"},  // keypad right arrow
+	{KEY_KP4, "\33[D"},	 // keypad left arrow
+	{KEY_KP6, "\33[C"},	 // keypad right arrow
 };
 
 void asci_init()

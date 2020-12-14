@@ -5,7 +5,7 @@
 #include <include/cdefs.h>
 #include <utils/debug.h>
 
-#define kernel_panic(fmt, ...) ({ disable_interrupts(); err(fmt, ##__VA_ARGS__); while(true); })
+#define kernel_panic(fmt, ...) ({ disable_interrupts(); err(fmt, ##__VA_ARGS__); __asm__ __volatile__("int $0x01"); })
 
 static int32_t divide_by_zero_fault(struct interrupt_registers *regs)
 {
