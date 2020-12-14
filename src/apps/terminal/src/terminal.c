@@ -19,14 +19,61 @@ int terminal_get_unit_width(struct terminal_unit *unit)
 	return terminal_get_unit_colspan(unit) * font->width;
 }
 
+int terminal_get_row_index_in_group(struct terminal_row *row)
+{
+	struct terminal_group *group = row->group;
+	struct terminal_row *iter = group->child;
+	int i = 0;
+	list_for_each_entry_from(iter, &group->terminal->rows, sibling)
+	{
+		if (iter == row)
+			return i;
+
+		if (i + 1 == group->number_of_rows)
+			break;
+		i++;
+	}
+	return -1;
+}
+
+int terminal_get_columns_till_index(struct terminal_row *row, int index)
+{
+	int columns = 0;
+	int i = 0;
+	struct terminal_unit *iter;
+	list_for_each_entry(iter, &row->units, sibling)
+	{
+		if (i++ > index)
+			break;
+		columns += terminal_get_unit_colspan(iter);
+	}
+	return columns;
+}
+
+struct terminal_unit *terminal_get_unit_from_index(struct terminal_row *row, int index)
+{
+	int i = 0;
+	struct terminal_unit *iter;
+	list_for_each_entry(iter, &row->units, sibling)
+	{
+		if (i++ == index)
+			return iter;
+	}
+
+	return NULL;
+}
+
 struct terminal_row *terminal_allocate_row(struct terminal *term, struct terminal_row *at_row)
 {
+	struct terminal_group *group = at_row->group;
 	struct terminal_row *new_row = calloc(1, sizeof(struct terminal_row));
 	new_row->columns = 0;
-	new_row->group = at_row->group;
+	new_row->group = group;
 	new_row->terminal = term;
 	INIT_LIST_HEAD(&new_row->units);
 	list_add(&new_row->sibling, &at_row->sibling);
+
+	group->number_of_rows++;
 
 	return new_row;
 }
@@ -60,8 +107,8 @@ struct terminal *terminal_allocate(struct window *win)
 	term->config.horizontal_padding = HORIZONTAL_PADDING;
 	term->config.vertical_padding = VERTICAL_PADDING;
 	term->config.max_lines = MAX_LINES;
-	term->config.screen_columns = win->graphic.width / get_character_width(' ');
-	term->config.screen_rows = win->graphic.height / get_character_height(' ');
+	term->config.screen_columns = (win->graphic.width - 2 * HORIZONTAL_PADDING) / get_character_width(' ');
+	term->config.screen_rows = (win->graphic.height - 2 * VERTICAL_PADDING) / get_character_height(' ');
 	term->config.tabspan = 4;
 	INIT_LIST_HEAD(&term->groups);
 	INIT_LIST_HEAD(&term->rows);
@@ -248,34 +295,106 @@ void terminal_draw(struct terminal *term)
 	}
 }
 
-void terminal_input_printable(struct terminal *term, char ch)
+void terminal_input_shift_exceed_units(struct terminal_row *row, struct terminal_unit *from_unit)
 {
-	struct terminal_unit *unit = calloc(1, sizeof(struct terminal_unit));
-	unit->content = ch;
-	unit->style = term->style;
+	struct terminal_group *group = row->group;
+	struct terminal_row *next_row;
+	if (terminal_get_row_index_in_group(row) + 1 < row->group->number_of_rows)
+		next_row = list_next_entry(row, sibling);
+	else
+		next_row = terminal_allocate_row(group->terminal, row);
 
-	if (term->cursor_row->columns == term->config.screen_columns)
+	struct terminal_unit *iter = from_unit, *next;
+	struct list_head *anchor = &next_row->units;
+	list_for_each_entry_safe_from(iter, next, &row->units, sibling)
 	{
-		struct terminal_group *group = term->cursor_row->group;
-		group->number_of_rows++;
+		list_del(&iter->sibling);
+		list_add(&iter->sibling, anchor);
+		anchor = &iter->sibling;
+		next_row->columns += terminal_get_unit_colspan(iter);
+	}
+}
 
-		struct terminal_row *new_row = terminal_allocate_row(term, term->cursor_row);
-		new_row->columns = 1;
+void terminal_input_rearrange_in_group(struct terminal_row *from_row)
+{
+	struct terminal_group *group = from_row->group;
+	struct terminal *term = group->terminal;
 
-		unit->row = new_row;
-		list_add_tail(&unit->sibling, &new_row->units);
+	int columns = terminal_get_columns_till_index(from_row, INT16_MAX);
+	if (columns > term->config.screen_columns)
+	{
+		struct terminal_unit *iter;
+		int acc_columns = 0;
+		list_for_each_entry(iter, &from_row->units, sibling)
+		{
+			int colspan = terminal_get_unit_colspan(iter);
+			if (acc_columns + colspan > term->config.screen_columns && iter->content != '\t')
+			{
+				terminal_input_shift_exceed_units(from_row, iter);
+				break;
+			}
+			acc_columns += colspan;
+		}
+		from_row->columns = acc_columns;
 
-		term->cursor_row = new_row;
-		term->cursor_unit_index = new_row->columns;
+		if (terminal_get_row_index_in_group(from_row) + 1 < group->number_of_rows)
+			terminal_input_rearrange_in_group(list_next_entry(from_row, sibling));
+	}
+	else if (columns < term->config.screen_columns && terminal_get_row_index_in_group(from_row) + 1 < group->number_of_rows)
+	{
+		struct terminal_row *next_row = list_next_entry(from_row, sibling);
+		struct terminal_unit *iter, *next;
+		list_for_each_entry_safe(iter, next, &next_row->units, sibling)
+		{
+			int colspan = terminal_get_unit_colspan(iter);
+			if (from_row->columns + colspan > term->config.screen_columns)
+				break;
+
+			list_del(&iter->sibling);
+			next_row->columns -= colspan;
+
+			list_add_tail(&iter->sibling, &from_row->units);
+			from_row->columns += colspan;
+		}
+		terminal_input_rearrange_in_group(next_row);
 	}
 	else
+		from_row->columns = columns;
+}
+
+void terminal_input_printable(struct terminal *term, char ch)
+{
+	struct terminal_unit *unit = terminal_get_unit_from_index(term->cursor_row, term->cursor_unit_index);
+
+	if (!unit)
 	{
+		unit = calloc(1, sizeof(struct terminal_unit));
 		unit->row = term->cursor_row;
 		list_add_tail(&unit->sibling, &term->cursor_row->units);
-
-		term->cursor_row->columns += terminal_get_unit_colspan(unit);
-		term->cursor_unit_index = term->cursor_row->columns;
 	}
+
+	unit->content = ch;
+	unit->style = term->style;
+	terminal_input_rearrange_in_group(term->cursor_row);
+
+	int columns = terminal_get_columns_till_index(term->cursor_row, term->cursor_unit_index);
+	if (columns >= term->config.screen_columns)
+	{
+		struct terminal_group *group = term->cursor_row->group;
+
+		int cursor_row_index = terminal_get_row_index_in_group(term->cursor_row);
+		assert(cursor_row_index >= 0);
+
+		struct terminal_row *next_row;
+		if (cursor_row_index + 1 == group->number_of_rows)
+			next_row = terminal_allocate_row(term, term->cursor_row);
+		else
+			next_row = list_next_entry(term->cursor_row, sibling);
+		term->cursor_row = next_row;
+		term->cursor_unit_index = 0;
+	}
+	else
+		term->cursor_unit_index++;
 }
 
 void terminal_input_newline(struct terminal *term)
@@ -284,19 +403,6 @@ void terminal_input_newline(struct terminal *term)
 
 	term->cursor_row = group->child;
 	term->cursor_unit_index = 0;
-}
-
-struct terminal_unit *terminal_get_unit_from_index(struct terminal_row *row, int index)
-{
-	int i = 0;
-	struct terminal_unit *iter;
-	list_for_each_entry(iter, &row->units, sibling)
-	{
-		if (i++ == index)
-			return iter;
-	}
-
-	return NULL;
 }
 
 void terminal_input_erase_shift(struct terminal_group *group, struct terminal_row *row, int index)
@@ -354,7 +460,7 @@ void terminal_input_erase(struct terminal *term)
 				if (next_row->columns)
 				{
 					terminal_free_unit(unit);
-					terminal_input_erase_shift(group, iter, i);
+					terminal_input_rearrange_in_group(iter);
 				}
 				// next row is empty
 				else

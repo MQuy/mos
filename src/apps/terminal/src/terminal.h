@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 #define CHARACTERS_PER_LINE 256
+#define MAX_COLUMNS 4096
 #define MAX_ROWS 400
 
 #define CURSOR_SET 0 /* move cursor from beginning of terminal */

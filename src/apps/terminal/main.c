@@ -40,6 +40,13 @@ static void init_terminal_dev(struct terminal *term)
 
 		setsid();
 		ioctl(fds, TIOCSCTTY, 0);
+		// Maximum tty column and row to prevent gnu bash to columnize and rowize
+		struct winsize ws;
+		ioctl(fds, TIOCGWINSZ, &ws);
+		ws.ws_col = MAX_COLUMNS;
+		ws.ws_row = MAX_ROWS;
+		ioctl(fds, TIOCSWINSZ, &ws);
+
 		execve("/bin/bash", NULL, NULL);
 	}
 	else
@@ -94,7 +101,7 @@ static void handle_master_event(struct pollfd *pfds, unsigned int nfds)
 int main()
 {
 	asci_init();
-	app_win = init_window(50, 50, 600, 400);
+	app_win = init_window(50, 50, 656, 432);
 	container_win = list_last_entry(&app_win->children, struct window, sibling);
 	iterm = terminal_allocate(container_win);
 	init_terminal_dev(iterm);
