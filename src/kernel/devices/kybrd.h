@@ -9,11 +9,6 @@
 #define KYBRD_MAJOR 11
 #define KYBRD_PACKET_QUEUE_LEN 16
 
-#define SHIFT_MASK (1 << 0)
-#define LOCK_MASK (1 << 1)
-#define CONTROL_MASK (1 << 2)
-#define ALT_MASK (1 << 3)
-
 #define KEY_RESERVED 0
 #define KEY_ESC 1
 #define KEY_1 2

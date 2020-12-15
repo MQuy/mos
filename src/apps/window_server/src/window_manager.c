@@ -396,7 +396,7 @@ static struct icon *find_icon_from_mouse_position(int32_t px, int32_t py)
 
 void handle_mouse_event(struct mouse_event *mevent)
 {
-	desktop->event_state = (desktop->event_state & ~0b1110000) || mevent->state;
+	desktop->event_state = (desktop->event_state & ~0b1110000) | mevent->state;
 	mouse_change(mevent);
 
 	if ((mevent->buttons & BUTTON_LEFT) && !(desktop->event_state & BUTTON_LEFT_MASK))
@@ -443,7 +443,7 @@ void handle_mouse_event(struct mouse_event *mevent)
 
 void handle_keyboard_event(struct key_event *kevent)
 {
-	desktop->event_state = (desktop->event_state & ~0b1111) || kevent->state;
+	desktop->event_state = (desktop->event_state & ~0b1111) | kevent->state;
 	if (desktop->active_window)
 	{
 		struct xevent *event = create_xkey_event(kevent->key, kevent->type, desktop->event_state);

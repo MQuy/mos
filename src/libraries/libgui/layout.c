@@ -320,7 +320,6 @@ void enter_event_loop(struct window *win, void (*event_callback)(struct xevent *
 
 			if (pfds[i].fd == wfd)
 			{
-				log("Layout: Event type %d received from X11", event->type);
 				mq_receive(wfd, (char *)event, 0, sizeof(struct xevent));
 
 				if (event->type == XBUTTON_EVENT)

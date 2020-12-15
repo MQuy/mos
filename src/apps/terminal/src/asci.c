@@ -8,9 +8,13 @@
 
 #include "terminal.h"
 
+// NOTE: MQ 2020-12-15
+// (ALT | SHIFT | CTRL | CAPSLOCK)
+// Use bits order from kernel/devices/kybrd.c#kybrd_set_event_state
 #define ALT_PART 0x80000000
 #define SHIFT_PART 0x40000000
 #define CTRL_PART 0x20000000
+#define CAPSLOCK_PART 0x10000000
 
 static struct hashmap mprintable, msequence;
 
@@ -248,11 +252,15 @@ static struct keycode_ascii asciis[] = {
 };
 
 // NOTE: MQ 2020-12-14
-// in cursor row, gnu bash only supports subset of asci escape sequence
+// in cursor row, gnu bash only supports subset of CSI_sequences
 // bash-5.0/lib/readline/readline.c#bind_arrow_keys_internal
+// we should use standard keymap instead
+// bash-5.0/lib/readline/emacs_keymap.c
 struct keycode_sequence sequences[] = {
-	{KEY_KP4, "\33[D"},	 // keypad left arrow
-	{KEY_KP6, "\33[C"},	 // keypad right arrow
+	{KEY_KP4, "\x02"},	// keypad left arrow
+	{KEY_KP6, "\x06"},	// keypad right arrow
+	{KEY_KP8, "\x10"},	// keypad up arrow
+	{KEY_KP2, "\x0E"},	// keypad down arrow
 };
 
 void asci_init()
@@ -278,15 +286,16 @@ int convert_key_event_to_code(unsigned int keycode, unsigned int state, unsigned
 {
 	int count = 0;
 	char *value = NULL;
+	unsigned int keystate = keycode | (state << 28);
 
 	// ascii code
-	if ((value = hashmap_get(&mprintable, &keycode)))
+	if ((value = hashmap_get(&mprintable, &keystate)))
 	{
 		count = 1;
 		*buf = *value;
 	}
 	// asci escape sequence
-	else if ((value = hashmap_get(&msequence, &keycode)))
+	else if ((value = hashmap_get(&msequence, &keystate)))
 	{
 		count = strlen(value);
 		memcpy(buf, value, count);

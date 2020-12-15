@@ -5,6 +5,7 @@
 #include <devices/kybrd.h>
 #include <devices/mouse.h>
 #include <fs/char_dev.h>
+#include <include/bitops.h>
 #include <include/errno.h>
 #include <include/types.h>
 #include <proc/task.h>
@@ -232,6 +233,29 @@ void kybrd_enc_send_cmd(uint8_t cmd)
 	outportb(KYBRD_ENC_CMD_REG, cmd);
 }
 
+void kybrd_set_event_state()
+{
+	if (_capslock)
+		set_bit(0, &current_kybrd_event.state);
+	else
+		clear_bit(0, &current_kybrd_event.state);
+
+	if (_ctrl)
+		set_bit(1, &current_kybrd_event.state);
+	else
+		clear_bit(1, &current_kybrd_event.state);
+
+	if (_shift)
+		set_bit(2, &current_kybrd_event.state);
+	else
+		clear_bit(2, &current_kybrd_event.state);
+
+	if (_alt)
+		set_bit(3, &current_kybrd_event.state);
+	else
+		clear_bit(3, &current_kybrd_event.state);
+}
+
 int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 {
 	int code = 0;
@@ -248,7 +272,6 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 		if (code == 0xE0 || code == 0xE1)
 			return IRQ_HANDLER_CONTINUE;
 
-		current_kybrd_event.state = (_ctrl && CONTROL_MASK) || (_shift && SHIFT_MASK) || (_alt && ALT_MASK) || (_capslock && LOCK_MASK);
 		//! test if this is a break code (Original XT Scan Code Set specific)
 		if (code & 0x80)
 		{  //test bit 7
@@ -280,6 +303,7 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 
 			current_kybrd_event.type = KEY_RELEASE;
 			current_kybrd_event.key = key;
+			kybrd_set_event_state();
 			kybrd_notify_readers(&current_kybrd_event);
 		}
 		else
@@ -326,6 +350,7 @@ int32_t i86_kybrd_irq(struct interrupt_registers *regs)
 
 			current_kybrd_event.type = KEY_PRRESS;
 			current_kybrd_event.key = key;
+			kybrd_set_event_state();
 			kybrd_notify_readers(&current_kybrd_event);
 		}
 	}
