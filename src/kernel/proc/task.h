@@ -127,7 +127,7 @@ struct process
 	gid_t gid;
 	sid_t sid;
 
-	char name[256];
+	char *name;
 	struct process *parent;
 	struct thread *thread;
 	struct pdirectory *pdir;

@@ -144,7 +144,7 @@ static struct process *create_process(struct process *parent, const char *name, 
 	else
 		proc->pdir = vmm_get_directory();
 	proc->parent = parent;
-	strcpy(proc->name, name);
+	proc->name = strdup(name);
 	proc->files = clone_file_descriptor_table(parent);
 	proc->fs = kcalloc(1, sizeof(struct fs_struct));
 	proc->mm = kcalloc(1, sizeof(struct mm_struct));
@@ -314,7 +314,7 @@ struct process *process_fork(struct process *parent)
 	proc->sid = parent->sid;
 	proc->parent = parent;
 	proc->tty = parent->tty;
-	strcpy(proc->name, parent->name);
+	proc->name = strdup(parent->name);
 	INIT_LIST_HEAD(&proc->wait_chld.list);
 	proc->mm = clone_mm_struct(parent);
 	memcpy(&proc->sighand, &parent->sighand, sizeof(parent->sighand));
@@ -389,7 +389,8 @@ int32_t process_execve(const char *path, char *const argv[], char *const envp[])
 		kernel_envp[i] = kcalloc(ilength + 1, sizeof(char));
 		memcpy(kernel_envp[i], envp[i], ilength);
 	}
-	strcpy(current_process->name, path);
+	kfree(current_process->name);
+	current_process->name = strdup(path);
 
 	char *tmp_path = strdup(path);
 	elf_unload();
