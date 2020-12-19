@@ -26,7 +26,6 @@ static void ext2_read_nth_block(struct vfs_superblock *sb, uint32_t block, char 
 		int32_t pstart = (ppos > *p) ? ppos - *p : 0;
 		uint32_t pend = ((ppos + count) < (*p + sb->s_blocksize)) ? (*p + sb->s_blocksize - ppos - count) : 0;
 		memcpy(*iter_buf, block_buf + pstart, sb->s_blocksize - pstart - pend);
-		ext2_bwrite_block(sb, block, block_buf);
 		*p += sb->s_blocksize;
 		*iter_buf += sb->s_blocksize - pstart - pend;
 	}
