@@ -60,3 +60,41 @@
   x = f() + g() <- f may be evaluated before g or vice versa
   a[i] = i++
   ```
+
+### Chapter 3: Control Flow
+
+- all case expressions must be different.
+- put `break` after the last case even though it's logically unnecessary (good for added cases at the end later)
+- the commas, separate function arguments, variables in declarations ..., are not comma operations, and do not guarantee left to right evaluation
+
+### Chapter 4: Funtions and Program Structure
+
+- if the return type is omitted, `int` is assumed
+- lacking of function prototype, a function is implicitly declared by its first appearance in an expression
+- `register` variables are to be placed in machine registers (compiler can ignore the advice) and is only applied to automatic variables/function parameters
+- a `static` variable is initialized only the first time encountering
+- in absence of explicit initialization, external and static variables are guaranted to be zero
+- if fewer initializers for an array, missing elements will be zero for external, static and automatic variables
+- `#include "filename"` searchs for the file where the source program is found; if not found there, will be looking like `#include <filename>` which follows an implementation-defined rule
+- `#define dprint(epxr) #expr`, with actual argument, each `"` is replaced by `\"` and each `\` by `\\`
+
+### Chapter 5: Pointers and Arrays
+
+- `&` operator only applies to objects (variables and array elements) in memory, not for expressions, constants, or register variables
+- a pointer is a variable while array name is not
+- `char *msg = "now is the time"` <- undefined behaviour if modifying the string contents
+
+### Chapter 6: Structures
+
+- only legal operations on a structure are copying/assigning as a unit, taking its address (`&`), and accessing its members
+- `sizeof` cannot be used in `#if` because preprocessor which doesn't parse type names. But the expression in `#define` is not evaluated by preprocessor, so it is legal
+- don't assume the size of structure is the sum of sizes of its members due to alignment for different objects
+- it is illegal for a structure to contain an instance of itself (pointer of itself, is not an issue)
+- `typedef` doesn't create a new type (new name for existing type), like `#define` except it is interpreted by the compiler
+- a union may only be initialized with a value of the type of its first member
+- bit fields in structure don't have address, so `&` operator cannot be applied and left-right or right-left order depends on machine (little or big endian)
+  ```c
+  struct {
+    unsigned int is_static : 1;
+  }
+  ```
