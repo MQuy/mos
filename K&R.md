@@ -98,3 +98,18 @@
     unsigned int is_static : 1;
   }
   ```
+
+### Appendix A: Reference Manual
+
+- there are two types of storage classes: automatic and static
+  - automatic objects are local to block, and are discarded on exit from the block (`register` variables are automatic)
+  - static objects appear local to block but retain their values across exit and reentry (objects declared outside of all blocks are always static)
+- `lvalue` is an expression referring to an object which is named region of storage
+- when converting
+  - a integer to given unsigned type, in two's complement representation
+    - narrower unsigned type: left-truncate bits
+    - wider unsigned type: zero-filling unsigned values and sign-extending signed values
+  - a integer to signed type, the value is unchanged if it fits, otherwise, implementation-defined
+  - negative floating values to unsigned integral types is not specified
+- removing qualifiers, when converting pointer of the same type, doesn't change operation on the underlying object
+- the term "actual argument" is used for an expression passed by a function call, "formal argument" for input object described in function declaration
