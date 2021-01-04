@@ -90,3 +90,19 @@
   - tags (one namespace for all structs, enums and unions)
   - member names (each struct or union has its own namespace)
   - everything else
+
+### Chap 5: Thinking of Linking
+
+- Benefits of dynamic linking
+  - is smaller than its sl counterpart (avoid coping library into executable)
+  - when linking to a particular library share a single copy of the library at runtime
+  - permits easy versioning of libraries, new libraries can be shipped -> old program can get benefit without be relinked
+  - allows users to select at runtime which library to execute against (for example one for speed, one for memory efficiency or containing debugging info)
+- five special secrets of linking with libraries
+  - dynamic libraries are called "lib*something.so*", static libraries are called "lib*something.a*"
+  - you tell the compiler to link with, for example, "libthread.so" by giving the option -lthread
+  - the compiler expects to find the libraries in certain directories (for example _-Lpathname -Rpathname_)
+  - identify your libraries by looking at the headers files you have used (sometimes, you have to use tools like _nm_ to manually search for a needed symbol)
+  - symbol from static libraries are extracted when needed (looking for _undefined_ symbols) by linker, while all library symbols go to the virtual address space for dynamic libraries
+    ✍️ in static linking, if there is no undefined, so nothing will be extracted -> you have to put like this `gcc main.c -lm`
+- interposing is the practice of supplanting a library function by user-written function of the same name, usually for debugging or performance reasons
