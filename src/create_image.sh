@@ -49,16 +49,14 @@ if [[ "$unamestr" == 'Linux' ]]; then
     sudo cp $dir/$name "/mnt/${DISK_NAME}/bin"
   done
 
-  sudo umount "/mnt/${DISK_NAME}"
-  sudo rm -rf "/mnt/${DISK_NAME}"
-  cd ports
-  cd bash && ./package.sh && cd ..
-  cd coreutils && ./package.sh && cd ..
-  cd ..
-  sudo mkdir "/mnt/${DISK_NAME}"
-  sudo mount -o loop hdd.img "/mnt/${DISK_NAME}"
-
-
+  # sudo umount "/mnt/${DISK_NAME}"
+  # sudo rm -rf "/mnt/${DISK_NAME}"
+  # cd ports
+  # cd bash && ./package.sh && cd ..
+  # cd coreutils && ./package.sh && cd ..
+  # cd ..
+  # sudo mkdir "/mnt/${DISK_NAME}"
+  # sudo mount -o loop hdd.img "/mnt/${DISK_NAME}"
 
   sudo cp apps/window_server/window_server "/mnt/${DISK_NAME}/bin"
   sudo cp apps/terminal/terminal "/mnt/${DISK_NAME}/bin"

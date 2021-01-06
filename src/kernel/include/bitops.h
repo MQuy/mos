@@ -1,7 +1,7 @@
 #ifndef INCLUDE_BITOPS_H
 #define INCLUDE_BITOPS_H
 
-#define ADDR (*(volatile long*)addr)
+#define ADDR (*(volatile int*)addr)
 
 /**
  * ffz - find first zero in word.
@@ -9,7 +9,7 @@
  *
  * Undefined if no zero exists, so code should check against ~0UL first.
  */
-static inline unsigned long ffz(unsigned long word)
+static inline unsigned int ffz(unsigned int word)
 {
 	__asm__("bsfl %1,%0"
 			: "=r"(word)
@@ -22,7 +22,7 @@ static inline unsigned long ffz(unsigned long word)
  * @nr: the bit to set
  * @addr: the address to start counting from
  */
-static inline void set_bit(int nr, volatile unsigned long* addr)
+static inline void set_bit(int nr, volatile unsigned int* addr)
 {
 	__asm__(
 		"btsl %1,%0"
@@ -30,7 +30,7 @@ static inline void set_bit(int nr, volatile unsigned long* addr)
 		: "Ir"(nr));
 }
 
-static inline void clear_bit(int nr, volatile unsigned long* addr)
+static inline void clear_bit(int nr, volatile unsigned int* addr)
 {
 	__asm__ __volatile__(
 		"btrl %1,%0"
@@ -38,7 +38,7 @@ static inline void clear_bit(int nr, volatile unsigned long* addr)
 		: "Ir"(nr));
 }
 
-static inline int test_bit(int nr, const unsigned long* addr)
+static inline int test_bit(int nr, const unsigned int* addr)
 {
 	int mask;
 

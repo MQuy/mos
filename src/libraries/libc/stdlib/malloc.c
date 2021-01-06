@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <libc-pointer-arith.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,6 +108,8 @@ void *malloc(size_t size)
 		return NULL;
 
 	struct block_meta *block, *last;
+
+	size = ALIGN_UP(size, 4);
 
 	if (blocklist)
 	{

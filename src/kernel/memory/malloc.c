@@ -77,6 +77,8 @@ void *kmalloc(size_t size)
 
 	struct block_meta *block;
 
+	size = ALIGN_UP(size, 4);
+
 	if (kblocklist)
 	{
 		struct block_meta *last = kblocklist;
