@@ -47,7 +47,7 @@
   - values can be generated for you
 - `%` operator cannot be applied to float/double
 - the direction of truncate for / and sign of the result for `%` are machine-dependent for negative operands
-- when an operator has operands of different types, the lower type is promoted to the higher type (except for `float` to save computing time)
+- when an operator has operands of different types, the lower type is promoted to the higher type (except for `float` to save computing time) and type promotion doesn't have to be done if compiler can guarantee the same result
 - comparison between signed and unsigned values are machine-dependent because they depend on the sizes of the various integer types
 - rounding or truncating when converting double to float is implementation-dependent
 - `char` values (except printable character) can be signed/unsigned depend on machine -> when converting `char` to `int`, it might be negative
@@ -70,7 +70,7 @@
 ### Chapter 4: Funtions and Program Structure
 
 - if the return type is omitted, `int` is assumed
-- lacking of function prototype, a function is implicitly declared by its first appearance in an expression
+- lacking of function prototype, a function is implicitly declared by its first appearance in an expression and type promotion is happened
 - `register` variables are to be placed in machine registers (compiler can ignore the advice) and is only applied to automatic variables/function parameters
 - a `static` variable is initialized only the first time encountering
 - in absence of explicit initialization, external and static variables are guaranted to be zero

@@ -91,6 +91,38 @@
   - member names (each struct or union has its own namespace)
   - everything else
 
+### Chap 4: The Shocking Truth: C Arrays and Pointers Are Not the Same!
+
+- definition occurs in only one place while declaration ocurrs multiple times
+- the main different between pointer and array is address vs content of address (it is much clear when looking at assembly version of c)
+  ```c
+  char a[] = "hello"; a[i];
+  1. a doesn't exist, when refer to a, it is replace with the first element address, say 0x1000
+  2. get content from address (0x1000 + i)
+  -----
+  char *a = "hello"; a[i];
+  1. a is memory address, in x86 it is 4-byte, say 0x1000
+  2. get content from address 0x1000, say 0x5000
+  3. get content from address (0x5000 + i)
+  ```
+  so when the scenario like below
+  ```c
+  # file1.c
+  char a[] = "hello";
+  -------
+  # file2.c
+  extern char *a;
+  doing a[0] ->
+  1. content of address a, in x86, it is "hell" (0x6C6C6568)
+  2. get content of 0x6C6C6568 -> might corrupt your program
+  ```
+- a pointer definition does not allocate space for what is pointed at, only for pointer
+  ```c
+  char *p = "hello"; // work
+  int *i = 10; // work, in this case 10 is memory address
+  float *f = 3.14; // doesn't work, since 3.14 is value
+  ```
+
 ### Chap 5: Thinking of Linking
 
 - Benefits of dynamic linking
@@ -106,3 +138,40 @@
   - symbol from static libraries are extracted when needed (looking for _undefined_ symbols) by linker, while all library symbols go to the virtual address space for dynamic libraries
     ✍️ in static linking, if there is no undefined, so nothing will be extracted -> you have to put like this `gcc main.c -lm`
 - interposing is the practice of supplanting a library function by user-written function of the same name, usually for debugging or performance reasons
+
+### Chap 9: More about Arrays
+
+- array of type parameters are coverted to pointer of type by the compiler, other cases, they are as they are defined (while pointers are always pointers)
+  ```c
+  my_function(int *a) {}
+  my_function(int a[]) {}
+  my_function(int a[100]) {}
+  are the same
+  ```
+  the reason for c to treat array parameters as pointers is efficiency (you don't want to copy array when passing to a function). Other data arguments are passed by value except arrays and functions
+- an array reference `a[i]` is always rewritten to `*(a + 1)` by the compiler
+  ```c
+  a[6] == 6[a] // true <- *(a + 6) == *(6 + a)
+  ```
+- array names are not modifiable l-values
+  ```c
+  int p[] = {1, 2};
+  p = 0; // doesn't work
+  int *c;
+  c =  0; // work
+  ----
+  void demo(int a[]) {
+    a = 0; // work <- compiler converts `int a[]` to `int *a`
+  }
+  ```
+- multidimentional array is a single block of memory while array of array, each of which can be of different lengths and occupy their own memory block
+  C only supports array of array
+
+### Notes
+
+- `long double` is 80-bit extended precision on x86 processors -> occupy 96 bits
+  ```c
+    long double a = 3.14, b = a; // sizeof(a) == 16UL
+    a == b; // true
+    memcmp(&a, &b, sizeof(a)); // false because of uninitialized padding bytes
+  ```
