@@ -166,6 +166,45 @@
   ```
 - multidimentional array is a single block of memory while array of array, each of which can be of different lengths and occupy their own memory block
   C only supports array of array
+  ```c
+  int carrot[10][20]; // carrot is a 10-element array, each element is 20-int array
+  carrot[i][j] == *(*(carrot + i) + j) // true
+  carrot + i == (char *)carrot + i * 20 * 4 // carrot == int (*)[20]
+  ```
+
+### More About Pointers
+
+- Iliffe vector is a data structure used to implement n-dimensional arrays in one-dimensional array
+  ```c
+  int *box[10];
+  ```
+- when looking at `squash[i][j]`, you cannot tell whether it is declared as
+  ```c
+  int squash[10][20];
+  vs
+  int (*squash)[20];
+  vs
+  int **squash;
+  vs
+  int *squash[20];
+  ```
+- array name is written as a pointer argument isn't recursive
+  ```c
+  char c[8][10] -> char (*c)[10]
+  char *c[15] -> char **c
+  char (*c)[10] -> char (*c)[10]
+  char **c -> char **c
+  ```
+- no way to pass general multidimensional array to a function, you could either use one-dimension array (convert two into one using `arr[row_size * i + j]`) or rewrite the matrix to Iliffe vector
+  ```c
+  void do_something(int a[][3][5]) {}
+  ---
+  int a[100][3][5]; do_something(a); // work
+  int b[2][3][5]; do_something(b); // work
+  ---
+  int c[5][3][3]; do_something(c); // not compile
+  int d[2][4][5]; do_something(d); // not compile
+  ```
 
 ### Notes
 
