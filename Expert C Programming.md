@@ -206,6 +206,10 @@
   int d[2][4][5]; do_something(d); // not compile
   ```
 
+### Appendix: Secrets of Programmer Job Interviewer
+
+- library calls are part of the language or application, and system calls are part of the operating system
+
 ### Notes
 
 - `long double` is 80-bit extended precision on x86 processors -> occupy 96 bits
@@ -214,3 +218,20 @@
     a == b; // true
     memcmp(&a, &b, sizeof(a)); // false because of uninitialized padding bytes
   ```
+- [why `calloc` exists?](https://vorpus.org/blog/why-does-calloc-exist/)
+  - `calloc` checks for overflow and errors out if the multiplication cannot fit into 32-bit or 64-bit integer (depend on how os/kernel is implemented)
+  ```c
+  malloc(INTPTR_MAX * INTPTR_MAX); // work
+  calloc(INTPTR_MAX, INTPTR_MAX); // error
+  ```
+  - when a operating system hands out memory to a process (depend on how os/kernel is implemented), it always zeros it out first (for security reason).
+    - for large buffer, it probably comes from os -> `calloc` cheats by skipping zeroing out.
+    - for small buffer, `calloc` == `malloc` + `memset`
+  - when handing 1GB of memory using, kernel probably does the trick that only mapping/zeroing out the first block 4KB and mark the rest as copy-on-write. Later when writing that rest, kernel actualy does the job. with `malloc` + `memset`, we do the mapping/zeroing out upfront while `calloc` we could do it later
+- some compilers permit multiple characters in a character constant, the actual value is implementation-defined
+  ```c
+  char str[] = 'yes'; // valid
+  ```
+- [The Clockwise/Spiral Rule to parse C declaration](http://c-faq.com/decl/spiral.anderson.html)
+- only the four operators `&&`, `||`, `?:` and `,` specify an order of evaluation, others evaluate their operands in undefined order
+- better to declare a variable as `unsigned` when we expect it to non-negative then depending our implementation-defined like right-shift, division ...

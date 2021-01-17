@@ -55,10 +55,14 @@
 - `expr1 op= expr2` is equivalent to `expr1 = exrp1 op expr2` except that `expr1` is computed only once
 - `expr1 ? expr2 : expr3` -> type of exrp1 is deteminated by the higher type between `expr2` and `expr3` regarding the result of `expr1` is true or false
 - doesn't specify the order in operands of an operator are evaluated. The same for function arguments, nested assignments, and increment/decrement, cause side effects, can lead to different results
-
   ```c
   x = f() + g() <- f may be evaluated before g or vice versa
   a[i] = i++
+  ```
+- unsigned integers modulo wrapping is the defined behaviour and the term overflow never applies. For signed integers, the behaviour is undefined, usually is wrapped around following two's complement
+  ```c
+  (unsigned char)255 + 1 == 0
+  (char)127 + 1 == -128
   ```
 
 ### Chapter 3: Control Flow
@@ -69,6 +73,13 @@
 
 ### Chapter 4: Funtions and Program Structure
 
+- C declaration philosophy is that a declaration is similiar as usage (only removing a variable name)
+  ```c
+  float *g();
+  void *p = g;
+  (float *())p();
+  ```
+- declaration is an expression -> `float (f) == float f`
 - if the return type is omitted, `int` is assumed
 - lacking of function prototype, a function is implicitly declared by its first appearance in an expression and type promotion is happened
 - `register` variables are to be placed in machine registers (compiler can ignore the advice) and is only applied to automatic variables/function parameters
