@@ -235,3 +235,14 @@
 - [The Clockwise/Spiral Rule to parse C declaration](http://c-faq.com/decl/spiral.anderson.html)
 - only the four operators `&&`, `||`, `?:` and `,` specify an order of evaluation, others evaluate their operands in undefined order
 - better to declare a variable as `unsigned` when we expect it to non-negative then depending our implementation-defined like right-shift, division ...
+- [a definition is the special kind of declaration](https://en.cppreference.com/w/c/language/declarations)
+  - every declaration of an `enum` or `typedef` is a definition
+  - for function, declaration that includes body is a function definition
+  - for objects, declaration that allocates storage (not `extern`) is a definition
+  ```c
+  extern int n; // declaration
+  int n; // declaration
+  int n = 10; // definition
+  ```
+  - for structs and unions, declaration that specify list of members is a definition
+- [C rules and recommendation](https://wiki.sei.cmu.edu/confluence/display/c/SEI+CERT+C+Coding+Standard)
