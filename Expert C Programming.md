@@ -246,3 +246,10 @@
   ```
   - for structs and unions, declaration that specify list of members is a definition
 - [C rules and recommendation](https://wiki.sei.cmu.edu/confluence/display/c/SEI+CERT+C+Coding+Standard)
+- adjacent strings are concatenated one by one
+  ```c
+  char x[] = "hello" " world"; // x == "hello world"
+  char y[] = "\x12" "3"; // y == "\0223", not "\x123"
+                         // "\x12" "3" are two characters while "\x123" is one multibyte character
+  ```
+-
