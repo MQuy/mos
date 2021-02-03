@@ -79,7 +79,6 @@
   void *p = g;
   (float *())p();
   ```
-- declaration is an expression -> `float (f) == float f`
 - if the return type is omitted, `int` is assumed
 - lacking of function prototype, a function is implicitly declared by its first appearance in an expression and type promotion is happened
 - `register` variables are to be placed in machine registers (compiler can ignore the advice) and is only applied to automatic variables/function parameters
