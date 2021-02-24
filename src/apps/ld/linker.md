@@ -20,3 +20,7 @@ Static linker takes a collection of relocatable object files and generates a ful
 > Note: when resolving references using static libraries, linker only copies relocatable object files whose symbols are used
 
 ### Dynamic Linking
+
+### References
+
+- [A Brief history of Unix and the Unix linker](https://github.com/rui314/mold#a-brief-history-of-unix-and-the-unix-linker)
