@@ -7,8 +7,8 @@ HEADERS = $(wildcard *.h **/*.h)
 # Nice syntax for file extension replacement
 LIBC_OBJ = ${A_SOURCES:.S=.o} ${C_SOURCES:.c=.o}
 
-CC = i386-mos-gcc
-AR = i386-mos-ar
+CC = i386-pc-mos-gcc
+AR = i386-pc-mos-ar
 
 # -g: Use debugging symbols in gcc
 CFLAGS= -g -std=gnu99 -Wall -Wextra -Wno-unused-parameter -Wno-discarded-qualifiers -Wno-comment -Wno-multichar -Wno-sequence-point -Wno-switch -Wno-unused-function -Wno-unused-value -Wno-sign-compare -Wno-implicit-fallthrough

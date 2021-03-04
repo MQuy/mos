@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 PREFIX="$HOME/opt/cross"
-TARGET=i386-mos
+TARGET=i386-pc-mos
 # SYSROOT cannot locate inside PREFIX
 SYSROOT="$HOME/Projects/mos/src/toolchain/sysroot"
 JOBCOUNT=$(nproc)
@@ -49,6 +49,7 @@ gcc_fetch() {
 gcc_build() {
   cd gcc-9.1.0
   patch -p1 < ../gcc-9.1.0.patch
+  ./contrib/download_prerequisites
   cd .. && mkdir build-gcc
   cd build-gcc
   ../gcc-9.1.0/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot=$SYSROOT --enable-languages=c,c++

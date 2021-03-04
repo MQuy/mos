@@ -22,14 +22,16 @@ then
 
     cd gnulib
     patch -p1 < $CURRENT_DIR/gnulib.patch
+    cd ..
+
+    # cross-compiling has the issue of missing primes.h -> we use native tool to generate primes.h
+    ./configure ac_cv_header_sys_cdefs_h=yes ac_cv_header_sys_sysctl_h=xyes
+    make -j4 CFLAGS="-Wno-error=suggest-attribute=const -Wno-error=stringop-overflow"
+    make distclean
 
     # ports/coreutils
     cd $CURRENT_DIR
     rm -rf build-coreutils && mkdir build-coreutils && cd build-coreutils
-
-    # cross-compiling has the issue of missing primes.h -> we use native tool to generate primes.h
-    $COREUTILS_DIR/configure ac_cv_header_sys_cdefs_h=yes
-    make -j4 CFLAGS="-Wno-error=suggest-attribute=const"
   fi
 
   # ports/coreutils

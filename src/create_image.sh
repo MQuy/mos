@@ -37,7 +37,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
   cd ../..
   cd apps/calculator && make clean && make
   cd ../..
-  cd apps/ld && rm -f ld && i386-mos-gcc -g ld.c -o ld
+  cd apps/ld && rm -f ld && i386-pc-mos-gcc -g ld.c -o ld
   cd ../..
 
   for dir in apps/cmd/*
@@ -45,7 +45,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
     [ -d "$dir" ] || continue
     name=$(basename $dir)
     rm -f $dir/$name 
-    i386-mos-gcc -g $dir/$name.c -o $dir/$name
+    i386-pc-mos-gcc -g $dir/$name.c -o $dir/$name
     sudo cp $dir/$name "/mnt/${DISK_NAME}/bin"
   done
 

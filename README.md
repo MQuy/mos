@@ -69,12 +69,16 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
 
 **Ubuntu**
 
+- Install packakges
+  ```bash
+  $ sudo apt install build-essential autopoint bison gperf texi2html texinfo qemu automake-1.15 nasm xorriso qemu-system-i386
+  ```
+
 - Install gcc cross compilier via https://wiki.osdev.org/GCC_Cross-Compiler#The_Build
 
 - Install GCC (Version 9.1.0) & Binutils (Version 2.32).
 
 - Open src/toolchain/build.sh and modify SYSROOT and PREFIX variables to fit in your case
-
   ```
   PREFIX="$HOME/opt/cross"
   TARGET=i386-pc-mos
@@ -84,19 +88,18 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   ```
 
 - Install mos toolchain
-
   ```
   $ cd src/toolchain
-  $ ./build
+  $ ./build.sh
   ```
 
 - Run Emulator
-
   ```
   $ cd src && mkdir logs
   $ ./create_image.sh
-  $ cd src/ports/bash && ./package.sh
-  $ cd src/ports/coreutils && ./package.sh
+  $ cd ports/figlet && ./package.sh && cd ../..
+  $ cd ports/bash && ./package.sh make && cd ../..
+  $ cd ports/coreutils && ./package.sh make && cd ../..
   $ ./build.sh qemu iso
   ```
 
@@ -110,13 +113,12 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   ```
 
 ✍️ To get userspace address for debugging
-
-```
-$ i386-mos-readelf -e program
-# find the line below and copy Addr
-# [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
-# [ x] .text             PROGBITS        xxx      xxx    xxx    00 AX   0   0  4
-```
+  ```
+  $ i386-mos-readelf -e program
+  # find the line below and copy Addr
+  # [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  # [ x] .text             PROGBITS        xxx      xxx    xxx    00 AX   0   0  4
+  ```
 
 **Unit Test**
 
