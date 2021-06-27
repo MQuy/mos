@@ -252,4 +252,6 @@
   char y[] = "\x12" "3"; // y == "\0223", not "\x123"
                          // "\x12" "3" are two characters while "\x123" is one multibyte character
   ```
--
+- depend on environment, C can be classified as [runtime system](https://prev.rust-lang.org/en-US/faq.html#does-rust-have-a-runtime) or not
+  - freestanding: not
+  - hosted environment: standard library (gnu `libc`, window `msvcrt.dll`) and `crt0.o`
