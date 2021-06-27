@@ -1,7 +1,7 @@
 ### Chapter 2: It's Not a bug, It's a Language Feature
 
-- The details of a language make the different between a reliable and an error-prone one.
-  - In Summer 1961, incorrect precision in orbital trajectory calculator program at NASA happened due to
+- The details of a language make the difference between a reliable and an error-prone one.
+  - In Summer 1961, incorrect precision in the orbital trajectory calculator program at NASA happened due to
     Fortran's feature. Blank characters are not significant and can even occur in the middle of an identifier (to help cardpunch walloppers and readability of programs)
   ```fortran
   DO 10 I=1.10
@@ -29,7 +29,7 @@
     "nami",
   }
   ```
-- too much default visiblity
+- too much default visibility
 
 #### SINS OF MISSION
 
@@ -42,7 +42,7 @@
               // use for variable, not require
   ```
 - some of the operators have the wrong precedence like ==/!= higher than bitwise.
-  Long story short, early C has no separate operators for & and &&, & is intepreted as && when boolean is expected. Later, && was introduced and Dennis was afraid to change the precedence due to backwards compatibility. In retrospect, he said it would be better to just change it
+  Long story short, early C has no separate operators for & and &&, & is interpreted as && when boolean is expected. Later, && was introduced and Dennis was afraid to change the precedence due to backward compatibility. In retrospect, he said it would be better to just change it
 
 #### SINS OF OMISSION
 
@@ -63,7 +63,7 @@
   char (*j)[20];
   j = (char (*)[20])malloc(20); // have to keep redundant parentheses around the asterisk
   ```
-- function arugments might not be pushed into stack, they can be in registers for speed when possible
+- function arguments might not be pushed into the stack, they can be in registers for speed when possible
 - when assigning struct, struct elements are treated as first-class
   ```c
   struct s { int a[100]; }
@@ -87,17 +87,17 @@
   ```
 - there are multiple namespaces in C (everything within a namespace must be unique)
   - label names
-  - tags (one namespace for all structs, enums and unions)
-  - member names (each struct or union has its own namespace)
+  - tags (one namespace for all structs, enums, and unions)
+  - member names (each struct or union has its namespace)
   - everything else
 
 ### Chap 4: The Shocking Truth: C Arrays and Pointers Are Not the Same!
 
-- definition occurs in only one place while declaration ocurrs multiple times
-- the main different between pointer and array is address vs content of address (it is much clear when looking at assembly version of c)
+- definition occurs in only one place while declaration occurs multiple times
+- the main difference between pointer and array is addressed vs content of address (it is much clear when looking at the assembly version of c)
   ```c
   char a[] = "hello"; a[i];
-  1. a doesn't exist, when refer to a, it is replace with the first element address, say 0x1000
+  1. a doesn't exist, when referring to a, it is replaced with the first element address, say 0x1000
   2. get content from address (0x1000 + i)
   -----
   char *a = "hello"; a[i];
@@ -128,16 +128,16 @@
 - Benefits of dynamic linking
   - is smaller than its sl counterpart (avoid coping library into executable)
   - when linking to a particular library share a single copy of the library at runtime
-  - permits easy versioning of libraries, new libraries can be shipped -> old program can get benefit without be relinked
-  - allows users to select at runtime which library to execute against (for example one for speed, one for memory efficiency or containing debugging info)
+  - permits easy versioning of libraries, new libraries can be shipped -> old program can get the benefit without being relinked
+  - allows users to select at runtime which library to execute against (for example one for speed, one for memory efficiency, or containing debugging info)
 - five special secrets of linking with libraries
   - dynamic libraries are called "lib*something.so*", static libraries are called "lib*something.a*"
   - you tell the compiler to link with, for example, "libthread.so" by giving the option -lthread
   - the compiler expects to find the libraries in certain directories (for example _-Lpathname -Rpathname_)
   - identify your libraries by looking at the headers files you have used (sometimes, you have to use tools like _nm_ to manually search for a needed symbol)
-  - symbol from static libraries are extracted when needed (looking for _undefined_ symbols) by linker, while all library symbols go to the virtual address space for dynamic libraries
+  - symbol from static libraries are extracted when needed (looking for _undefined_ symbols) by the linker, while all library symbols go to the virtual address space for dynamic libraries
     ✍️ in static linking, if there is no undefined, so nothing will be extracted -> you have to put like this `gcc main.c -lm`
-- interposing is the practice of supplanting a library function by user-written function of the same name, usually for debugging or performance reasons
+- interposing is the practice of supplanting a library function with user-written function of the same name, usually for debugging or performance reasons
 
 ### Chap 9: More about Arrays
 
@@ -164,7 +164,7 @@
     a = 0; // work <- compiler converts `int a[]` to `int *a`
   }
   ```
-- multidimentional array is a single block of memory while array of array, each of which can be of different lengths and occupy their own memory block
+- multidimentional array is a single block of memory while an array of array, each of which can be of different lengths and occupy their memory block
   C only supports array of array
   ```c
   int carrot[10][20]; // carrot is a 10-element array, each element is 20-int array
@@ -174,7 +174,7 @@
 
 ### More About Pointers
 
-- Iliffe vector is a data structure used to implement n-dimensional arrays in one-dimensional array
+- Iliffe vector is a data structure used to implement n-dimensional arrays in a one-dimensional array
   ```c
   int *box[10];
   ```
@@ -224,20 +224,20 @@
   malloc(INTPTR_MAX * INTPTR_MAX); // work
   calloc(INTPTR_MAX, INTPTR_MAX); // error
   ```
-  - when a operating system hands out memory to a process (depend on how os/kernel is implemented), it always zeros it out first (for security reason).
+  - when an operating system hands out memory to a process (depend on how os/kernel is implemented), it always zeros it out first (for security reasons).
     - for large buffer, it probably comes from os -> `calloc` cheats by skipping zeroing out.
     - for small buffer, `calloc` == `malloc` + `memset`
-  - when handing 1GB of memory using, kernel probably does the trick that only mapping/zeroing out the first block 4KB and mark the rest as copy-on-write. Later when writing that rest, kernel actualy does the job. with `malloc` + `memset`, we do the mapping/zeroing out upfront while `calloc` we could do it later
+  - when handing 1GB of memory using, kernel probably does the trick that only mapping/zeroing out the first block 4KB and mark the rest as copy-on-write. Later when writing that rest, the kernel does the job. with `malloc` + `memset`, we do the mapping/zeroing out upfront while `calloc` we could do it later
 - some compilers permit multiple characters in a character constant, the actual value is implementation-defined
   ```c
   char str[] = 'yes'; // valid
   ```
 - [The Clockwise/Spiral Rule to parse C declaration](http://c-faq.com/decl/spiral.anderson.html)
 - only the four operators `&&`, `||`, `?:` and `,` specify an order of evaluation, others evaluate their operands in undefined order
-- better to declare a variable as `unsigned` when we expect it to non-negative then depending our implementation-defined like right-shift, division ...
+- better to declare a variable as `unsigned` when we expect it to non-negative than depending on our implementation-defined like right-shift, division ...
 - [a definition is the special kind of declaration](https://en.cppreference.com/w/c/language/declarations)
   - every declaration of an `enum` or `typedef` is a definition
-  - for function, declaration that includes body is a function definition
+  - for function, a declaration that includes body is a function definition
   - for objects, declaration that allocates storage (not `extern`) is a definition
   ```c
   extern int n; // declaration
