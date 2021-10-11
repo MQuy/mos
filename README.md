@@ -3,7 +3,7 @@
 ![license MIT](https://img.shields.io/badge/license-MIT-blue>)
 [![By Vietnamese](https://raw.githubusercontent.com/webuild-community/badge/master/svg/by.svg)](https://webuild.community)
 
-mOS is the unix-like operating system developed from scratch and aims to POSIX compliant.
+mOS is the UNIX-like operating system developed from scratch and aims to be POSIX compliant.
 
 [![](https://i.imgur.com/aAyBOnm.png)](https://www.youtube.com/watch?v=26ewW8YthTQ "mOS")
 
@@ -41,7 +41,7 @@ mOS is the unix-like operating system developed from scratch and aims to POSIX c
   $ brew install qemu nasm gdb i386-elf-gcc i386-elf-grub bochs e2fsprogs xorriso
   ```
 
-- open your bash config and add lines below. Depends on your bash, config file might be different. I use `ohmyzsh`, so it is `.zshrc`
+- open your bash config and add lines below. Depending on your bash config, the file might be different. I use `ohmyzsh`, so it is `.zshrc`
 
   ```
   # .zshrc
@@ -127,13 +127,13 @@ $ cd test && git clone https://github.com/ThrowTheSwitch/Unity.git unity
 $ make clean && make
 ```
 
-**Debuging**
+**Debugging**
 
-in `build.sh`, adding `-s -S` right after `qemu` to switch to debug mode. Currently, I use vscode + [native debuge](https://marketplace.visualstudio.com/items?itemName=webfreak.debug) -> click Run -> choose "Attach to QEMU"
+in `build.sh`, adding `-s -S` right after `qemu` to switch to debug mode. Currently, I use vscode + [native debug](https://marketplace.visualstudio.com/items?itemName=webfreak.debug) -> click Run -> choose "Attach to QEMU"
 
 **Monitoring**
 
-by default mOS log outputs to terminal. If you want to monitor via file, doing following steps
+by default, mOS logs output to terminal. If you want to monitor via file, doing following steps
 
 ```
 # src/build.sh#L71
@@ -146,7 +146,7 @@ by default mOS log outputs to terminal. If you want to monitor via file, doing f
 $ tail -f serial.log | while read line ; do echo $line ; done
 ```
 
-✍🏻 Using `tail` in pipe way to color the output (like above) causes a delay -> have to manually saving in ide to get latest changes
+✍🏻 Using `tail` in pipe way to color the output (like above) causes a delay -> have to manually save in the IDE to get latest changes
 
 ### References
 
