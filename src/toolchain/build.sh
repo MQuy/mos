@@ -1,10 +1,10 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-PREFIX="$HOME/opt/cross"
+PREFIX="/Volumes/Desktop/osdev/mos-opt/cross"
 TARGET=i386-pc-mos
 # SYSROOT cannot locate inside PREFIX
-SYSROOT="$HOME/Projects/mos/src/toolchain/sysroot"
+SYSROOT="/Volumes/Desktop/osdev/mos/src/toolchain/sysroot"
 JOBCOUNT=$(nproc)
 
 setup() {

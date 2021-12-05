@@ -7,7 +7,7 @@ cd libraries/libc && make clean && make
 cd ../..
 
 if [[ "$unamestr" == 'Linux' ]]; then
-  dd if=/dev/zero of=hdd.img count=819200 bs=512
+  dd if=/dev/zero of=hdd.img count=819200 bs=4096
   DISK_NAME=mos
   mkfs.ext2 hdd.img
   sudo mkdir "/mnt/${DISK_NAME}"
@@ -37,8 +37,6 @@ if [[ "$unamestr" == 'Linux' ]]; then
   cd ../..
   cd apps/calculator && make clean && make
   cd ../..
-  cd apps/ld && rm -f ld && i386-pc-mos-gcc -g ld.c -o ld
-  cd ../..
 
   for dir in apps/cmd/*
   do
@@ -49,20 +47,10 @@ if [[ "$unamestr" == 'Linux' ]]; then
     sudo cp $dir/$name "/mnt/${DISK_NAME}/bin"
   done
 
-  # sudo umount "/mnt/${DISK_NAME}"
-  # sudo rm -rf "/mnt/${DISK_NAME}"
-  # cd ports
-  # cd bash && ./package.sh && cd ..
-  # cd coreutils && ./package.sh && cd ..
-  # cd ..
-  # sudo mkdir "/mnt/${DISK_NAME}"
-  # sudo mount -o loop hdd.img "/mnt/${DISK_NAME}"
-
   sudo cp apps/window_server/window_server "/mnt/${DISK_NAME}/bin"
   sudo cp apps/terminal/terminal "/mnt/${DISK_NAME}/bin"
   sudo cp apps/host/host "/mnt/${DISK_NAME}/bin"
   sudo cp apps/calculator/calculator "/mnt/${DISK_NAME}/bin"
-  sudo cp apps/ld/ld "/mnt/${DISK_NAME}/bin"
 
   sudo mkdir "/mnt/${DISK_NAME}/etc"
   sudo cp assets/passwd "/mnt/${DISK_NAME}/etc"
@@ -79,7 +67,7 @@ if [[ "$unamestr" == 'Linux' ]]; then
   sudo umount "/mnt/${DISK_NAME}"
   sudo rm -rf "/mnt/${DISK_NAME}"
 elif [[ "$unamestr" == 'Darwin' ]]; then
-  dd if=/dev/zero of=hdd.img count=20480 bs=512
+  dd if=/dev/zero of=hdd.img count=20480 bs=4096
   VOLUME_NAME=hdd
   DISK_NAME="$(hdiutil attach -nomount hdd.img)"
   $(brew --prefix e2fsprogs)/sbin/mkfs.ext2 $DISK_NAME
@@ -99,15 +87,12 @@ elif [[ "$unamestr" == 'Darwin' ]]; then
   cd ../..
   cd apps/calculator && make clean && make
   cd ../..
-  cd apps/ld && make clean && make
-  cd ../..
 
   mkdir "/Volumes/${VOLUME_NAME}/bin"
   cp apps/window_server/window_server "/Volumes/${VOLUME_NAME}/bin"
   cp apps/terminal/terminal "/Volumes/${VOLUME_NAME}/bin"
   cp apps/host/host "/Volumes/${VOLUME_NAME}/bin"
   cp apps/calculator/calculator "/Volumes/${VOLUME_NAME}/bin"
-  cp apps/ld/ld "/Volumes/${VOLUME_NAME}/bin"
 
   mkdir "/Volumes/${VOLUME_NAME}/etc"
   cp apps/window_server/desktop.ini "/Volumes/${VOLUME_NAME}/etc"

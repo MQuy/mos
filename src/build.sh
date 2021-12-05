@@ -49,7 +49,7 @@ else
   cat mbr.img fs.img > mos.img
   rm mbr.img fs.img
   hdiutil attach mos.img -mountpoint /Volumes/$VOLUME_NAME
-  /usr/local/sbin/i386-elf-grub-install --modules="part_msdos biosdisk ext2 multiboot configfile" --root-directory="/Volumes/${VOLUME_NAME}" mos.img
+  grub-install --modules="part_msdos biosdisk ext2 multiboot configfile" --root-directory="/Volumes/${VOLUME_NAME}" mos.img
   cp grub.cfg "/Volumes/${VOLUME_NAME}/boot/grub/grub.cfg"
   cp mos.bin "/Volumes/${VOLUME_NAME}/boot/mos.bin"
   cp sample.txt "/Volumes/${VOLUME_NAME}/sample.txt"

@@ -1,8 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-DISK_NAME=mos
-
 if [ "${1-default}" == "make" ]
 then
   rm -rf bash-5.0
@@ -28,12 +26,28 @@ else
   cd build-bash
 fi
 
-sudo mkdir "/mnt/${DISK_NAME}"
-sudo mount -o loop ../../../hdd.img "/mnt/${DISK_NAME}"
+unamestr=`uname`
+if [[ "$unamestr" == 'Linux' ]]; then
+  DISK_NAME=mos
 
-sudo make install prefix=/mnt/${DISK_NAME}
+  sudo mkdir "/mnt/${DISK_NAME}"
+  sudo mount -o loop ../../../hdd.img "/mnt/${DISK_NAME}"
 
-sudo umount "/mnt/${DISK_NAME}"
-sudo rm -rf "/mnt/${DISK_NAME}"
+  sudo make install prefix=/mnt/${DISK_NAME}
 
-cd ..
+  sudo umount "/mnt/${DISK_NAME}"
+  sudo rm -rf "/mnt/${DISK_NAME}"
+
+  cd ../../
+
+elif [[ "$unamestr" == 'Darwin' ]]; then
+  VOLUME_NAME=hdd
+  DISK_NAME="$(hdiutil attach -nomount ../../../hdd.img)"
+  hdiutil attach ../../../hdd.img -mountpoint /Volumes/$VOLUME_NAME
+
+  sudo make install prefix=/Volumes/${VOLUME_NAME}
+
+  hdiutil detach $DISK_NAME
+
+  cd ../../
+fi

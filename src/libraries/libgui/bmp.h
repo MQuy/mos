@@ -70,7 +70,7 @@ struct ciexyztriple
 	struct ciexyz ciexyzRed;	// A 96-bit CIEXYZ Object that defines the red chromaticity values.
 	struct ciexyz ciexyzGreen;	// A 96-bit CIEXYZ Object that defines the green chromaticity values.
 	struct ciexyz ciexyzBlue;	// A 96-bit CIEXYZ Object that defines the blue chromaticity values.
-} ciexyztriple;
+}; //ciexyztriple;
 
 // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapv4header
 struct dip_bitmapv4header  // 108 bytes, for total offset of 122 bytes
@@ -95,7 +95,7 @@ struct dip_bitmapv4header  // 108 bytes, for total offset of 122 bytes
 	uint32_t bV4GammaRed;
 	uint32_t bV4GammaGreen;
 	uint32_t bV4GammaBlue;
-} dip_bitmapv4header;
+}; //dip_bitmapv4header;
 
 // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapv5header
 struct dip_bitmapv5header  // 124 bytes, for a total offset of 138 bytes
